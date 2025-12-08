@@ -2,7 +2,8 @@
 
 A modern, responsive web application for browsing and watching public domain movies from the Internet Archive. Features high-quality movie posters from TMDB, genre filtering, and an embedded video player.
 
-![Archive Movie Browser](https://archive.org/services/img/feature_films)
+<img width="1841" height="1294" alt="image" src="https://github.com/user-attachments/assets/cfe7ca9c-537c-4db3-9bb2-aebbffa3b083" />
+
 
 ## Features
 
@@ -72,6 +73,9 @@ npm run build
 The built files will be in the `dist` directory.
 
 ## Usage
+
+![Archive Movie Browser](https://archive.org/services/img/feature_films)
+
 
 ### Browsing Movies
 - Use the genre pills to filter by category (default: Horror)
