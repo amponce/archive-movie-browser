@@ -39,12 +39,13 @@ export default function ArchiveMovieBrowser() {
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
-  const [genreFilter, setGenreFilter] = useState('all');
+  const [genreFilter, setGenreFilter] = useState('Horror');
   const [minRuntime, setMinRuntime] = useState(40);
   const [contentType, setContentType] = useState('features'); // 'features' or 'trailers'
   const [sortBy, setSortBy] = useState('downloads');
   const [page, setPage] = useState(1);
-  const [rowsPerPage] = useState(500);
+  const [rowsPerPage] = useState(50);
+  const [displayLimit, setDisplayLimit] = useState(24); // Show 24 movies at a time for smooth scrolling
 
   // Initialize TMDB service
   useEffect(() => {
@@ -90,26 +91,29 @@ export default function ArchiveMovieBrowser() {
     }
   }, [activeSearch, sortBy, rowsPerPage, genreFilter]);
 
-  // Fetch when page 1 is needed (initial load or filter changes)
-  // fetchMovies changes when activeSearch, sortBy, rowsPerPage, or genreFilter change
-  useEffect(() => {
-    if (page === 1) {
-      fetchMovies(1, false);
-    }
-  }, [fetchMovies, page]);
+  // Track current fetch to prevent race conditions
+  const fetchIdRef = useRef(0);
 
-  // Handle pagination - load more pages
+  // Single useEffect for fetching - triggered by filter changes or pagination
   useEffect(() => {
-    if (page > 1) {
-      fetchMovies(page, true);
-    }
-  }, [page, fetchMovies]);
+    const currentFetchId = ++fetchIdRef.current;
+    const shouldAppend = page > 1;
+
+    // Only proceed if this is still the latest fetch request
+    const doFetch = async () => {
+      if (currentFetchId !== fetchIdRef.current) return;
+      await fetchMovies(page, shouldAppend);
+    };
+
+    doFetch();
+  }, [fetchMovies, page]);
 
   // Handle search submit
   const handleSearch = () => {
     setActiveSearch(searchQuery);
     setGenreFilter('all');
     setPage(1);
+    setDisplayLimit(24);
     setMoviesWithoutImages(new Set());
   };
 
@@ -117,6 +121,7 @@ export default function ArchiveMovieBrowser() {
   const handleGenreChange = (genre) => {
     setGenreFilter(genre);
     setPage(1);
+    setDisplayLimit(24);
     setMoviesWithoutImages(new Set());
   };
 
@@ -124,7 +129,13 @@ export default function ArchiveMovieBrowser() {
   const handleSortChange = (newSort) => {
     setSortBy(newSort);
     setPage(1);
+    setDisplayLimit(24);
     setMoviesWithoutImages(new Set());
+  };
+
+  // Show more movies within current page
+  const handleShowMore = () => {
+    setDisplayLimit(prev => prev + 24);
   };
 
   // Track movies that failed to load images (no poster available)
@@ -147,18 +158,23 @@ export default function ArchiveMovieBrowser() {
 
   // Filter movies by runtime and content type
   const filteredByRuntime = useMemo(() => {
+    if (!movies || !Array.isArray(movies)) {
+      return [];
+    }
+
     let filtered;
     if (contentType === 'trailers') {
       // Trailers/shorts: under 30 minutes or no runtime data (likely short content)
-      filtered = movies.filter(m => m.runtimeMinutes === 0 || m.runtimeMinutes <= 30);
+      filtered = movies.filter(m => m && (m.runtimeMinutes === 0 || m.runtimeMinutes <= 30));
     } else {
       // Full movies: filter by minimum runtime (must have runtime data)
-      filtered = movies.filter(m => m.runtimeMinutes >= minRuntime);
+      filtered = movies.filter(m => m && m.runtimeMinutes >= minRuntime);
     }
 
     // If no active search, filter out movies known to not have TMDB posters
     if (!activeSearch && tmdbApiKey) {
       filtered = filtered.filter(m => {
+        if (!m) return false;
         // Check if we already know this movie has no poster
         if (moviesWithoutImages.has(m.identifier)) return false;
         // Check TMDB cache
@@ -191,21 +207,32 @@ export default function ArchiveMovieBrowser() {
 
   // Filter by genre and apply client-side sorting for TMDB rating
   const displayedMovies = useMemo(() => {
+    if (!filteredByRuntime || !Array.isArray(filteredByRuntime)) {
+      return [];
+    }
+
     let filtered = genreFilter === 'all'
       ? filteredByRuntime
-      : filteredByRuntime.filter(m => m.genres.includes(genreFilter));
+      : filteredByRuntime.filter(m => m && m.genres && m.genres.includes(genreFilter));
 
     // Client-side sort by TMDB rating
     if (sortBy === 'tmdb_rating') {
       filtered = [...filtered].sort((a, b) => {
-        const ratingA = tmdbRatings[a.identifier] || 0;
-        const ratingB = tmdbRatings[b.identifier] || 0;
+        const ratingA = tmdbRatings[a?.identifier] || 0;
+        const ratingB = tmdbRatings[b?.identifier] || 0;
         return ratingB - ratingA;
       });
     }
 
     return filtered;
   }, [filteredByRuntime, genreFilter, sortBy, tmdbRatings]);
+
+  // Visible movies (limited for performance)
+  const visibleMovies = useMemo(() => {
+    return displayedMovies.slice(0, displayLimit);
+  }, [displayedMovies, displayLimit]);
+
+  const hasMoreToShow = displayedMovies.length > displayLimit;
 
   // Pagination
   const totalPages = Math.ceil(totalResults / rowsPerPage);
@@ -405,7 +432,9 @@ export default function ArchiveMovieBrowser() {
         {/* Stats bar */}
         <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-gray-400">
           <span>
-            Showing <strong className="text-white">{displayedMovies.length}</strong> {contentType === 'trailers' ? 'shorts' : 'movies'}
+            Showing <strong className="text-white">{visibleMovies.length}</strong>
+            {displayedMovies.length > visibleMovies.length && ` of ${displayedMovies.length}`}
+            {' '}{contentType === 'trailers' ? 'shorts' : 'movies'}
             {genreFilter !== 'all' && ` in ${genreFilter}`}
           </span>
           {contentType !== 'trailers' && (
@@ -414,10 +443,6 @@ export default function ArchiveMovieBrowser() {
               <span>{minRuntime}+ min runtime</span>
             </>
           )}
-          <span className="text-gray-600">|</span>
-          <span>
-            Page {page} • <button onClick={() => setPage(p => p + 1)} className="text-yellow-400 hover:underline">Load more</button>
-          </span>
           {tmdbApiKey && (
             <>
               <span className="text-gray-600">|</span>
@@ -448,7 +473,7 @@ export default function ArchiveMovieBrowser() {
         )}
 
         {/* Movie grid/list */}
-        {!loading && displayedMovies.length > 0 && (
+        {!loading && visibleMovies.length > 0 && (
           <div
             className={
               viewMode === 'grid'
@@ -456,7 +481,7 @@ export default function ArchiveMovieBrowser() {
                 : 'space-y-3'
             }
           >
-            {displayedMovies.map((movie) => (
+            {visibleMovies.map((movie) => (
               <MovieCard
                 key={movie.identifier}
                 movie={movie}
@@ -471,7 +496,7 @@ export default function ArchiveMovieBrowser() {
         )}
 
         {/* Empty state */}
-        {!loading && displayedMovies.length === 0 && !error && (
+        {!loading && visibleMovies.length === 0 && !error && (
           <div className="text-center py-16 text-gray-400">
             <Film className="w-16 h-16 mx-auto mb-4 opacity-30" />
             <p className="text-lg">No movies found matching your criteria</p>
@@ -479,27 +504,33 @@ export default function ArchiveMovieBrowser() {
           </div>
         )}
 
-        {/* Pagination */}
-        {!loading && displayedMovies.length > 0 && (
-          <div className="flex items-center justify-center gap-4 mt-8 pt-8 border-t border-gray-800">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-lg disabled:opacity-50 hover:bg-gray-700 disabled:hover:bg-gray-800"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
-            </button>
+        {/* Show More / Load More buttons */}
+        {!loading && visibleMovies.length > 0 && (
+          <div className="flex flex-col items-center gap-4 mt-8 pt-8 border-t border-gray-800">
+            {/* Show More - reveals more from current batch */}
+            {hasMoreToShow && (
+              <button
+                onClick={handleShowMore}
+                className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-gray-900 font-medium rounded-lg hover:bg-yellow-400"
+              >
+                Show More ({displayedMovies.length - visibleMovies.length} remaining)
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
 
-            <span className="text-gray-400">Page {page}</span>
-
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-gray-900 font-medium rounded-lg hover:bg-yellow-400"
-            >
-              Load More
-              <ChevronRight className="w-4 h-4" />
-            </button>
+            {/* Load More from API - fetches next page */}
+            {!hasMoreToShow && (
+              <button
+                onClick={() => {
+                  setPage((p) => p + 1);
+                  setDisplayLimit(24);
+                }}
+                className="flex items-center gap-2 px-6 py-3 bg-gray-800 text-white font-medium rounded-lg hover:bg-gray-700"
+              >
+                Load Next Page
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         )}
       </main>
