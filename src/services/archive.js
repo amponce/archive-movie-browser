@@ -3,6 +3,23 @@
 const ARCHIVE_API = 'https://archive.org/advancedsearch.php';
 const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
 
+// Content filter - block inappropriate content
+function isBlockedContent(movie) {
+  if (!movie) return true;
+
+  // Handle title being string or array
+  const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
+  const titleLower = String(title || '').toLowerCase();
+  const identifierLower = String(movie.identifier || '').toLowerCase();
+
+  // Block content with problematic patterns
+  if (titleLower.includes('the child') || identifierLower.includes('thechild')) {
+    return true;
+  }
+
+  return false;
+}
+
 // Standard movie genre categories for normalization
 export const STANDARD_GENRES = [
   'Action',
@@ -234,28 +251,32 @@ class ArchiveService {
       return { movies: [], total: 0 };
     }
 
-    const movies = data.response.docs.map(movie => {
-      const runtimeMinutes = this.parseRuntime(movie.runtime);
-      const genres = this.extractGenres(movie.subject);
+    const movies = data.response.docs
+      .filter(movie => !isBlockedContent(movie)) // Filter out inappropriate content
+      .map(movie => {
+        const runtimeMinutes = this.parseRuntime(movie.runtime);
+        const genres = this.extractGenres(movie.subject);
+        // Handle title being string or array
+        const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
 
-      return {
-        id: movie.identifier,
-        identifier: movie.identifier,
-        title: movie.title || movie.identifier,
-        year: movie.year ? parseInt(movie.year, 10) : null,
-        runtimeMinutes,
-        runtime: movie.runtime,
-        genres: genres.length > 0 ? genres : ['Uncategorized'],
-        downloads: movie.downloads || 0,
-        rating: movie.avg_rating || null,
-        description: movie.description,
-        creator: Array.isArray(movie.creator) ? movie.creator[0] : movie.creator,
-        archiveUrl: `https://archive.org/details/${movie.identifier}`,
-        thumbnailUrl: `https://archive.org/services/img/${movie.identifier}`,
-        embedUrl: `https://archive.org/embed/${movie.identifier}`,
-        date: movie.date || movie.publicdate
-      };
-    });
+        return {
+          id: movie.identifier,
+          identifier: movie.identifier,
+          title: title || movie.identifier,
+          year: movie.year ? parseInt(movie.year, 10) : null,
+          runtimeMinutes,
+          runtime: movie.runtime,
+          genres: genres.length > 0 ? genres : ['Uncategorized'],
+          downloads: movie.downloads || 0,
+          rating: movie.avg_rating || null,
+          description: movie.description,
+          creator: Array.isArray(movie.creator) ? movie.creator[0] : movie.creator,
+          archiveUrl: `https://archive.org/details/${movie.identifier}`,
+          thumbnailUrl: `https://archive.org/services/img/${movie.identifier}`,
+          embedUrl: `https://archive.org/embed/${movie.identifier}`,
+          date: movie.date || movie.publicdate
+        };
+      });
 
     // Filter by runtime if specified
     const filteredMovies = minRuntime > 0
