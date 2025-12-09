@@ -39,7 +39,7 @@ export default function ArchiveMovieBrowser() {
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
-  const [genreFilter, setGenreFilter] = useState('Horror');
+  const [genreFilter, setGenreFilter] = useState('all');
   const [minRuntime, setMinRuntime] = useState(40);
   const [contentType, setContentType] = useState('features'); // 'features' or 'trailers'
   const [sortBy, setSortBy] = useState('downloads');
@@ -60,9 +60,12 @@ export default function ArchiveMovieBrowser() {
     setError(null);
 
     try {
+      // tmdb_rating is client-side only, use downloads for API sorting
+      const apiSortBy = sortBy === 'tmdb_rating' ? 'downloads' : sortBy;
+
       const result = await archiveService.fetchMovies({
         searchQuery: activeSearch,
-        sortBy,
+        sortBy: apiSortBy,
         page: pageNum,
         rowsPerPage,
         genre: genreFilter !== 'all' ? genreFilter : null
@@ -87,12 +90,17 @@ export default function ArchiveMovieBrowser() {
     }
   }, [activeSearch, sortBy, rowsPerPage, genreFilter]);
 
+  // Fetch when page 1 is needed (initial load or filter changes)
+  // fetchMovies changes when activeSearch, sortBy, rowsPerPage, or genreFilter change
   useEffect(() => {
     if (page === 1) {
-      // Reset filter state on new search
-      setMoviesWithoutImages(new Set());
       fetchMovies(1, false);
-    } else {
+    }
+  }, [fetchMovies, page]);
+
+  // Handle pagination - load more pages
+  useEffect(() => {
+    if (page > 1) {
       fetchMovies(page, true);
     }
   }, [page, fetchMovies]);
@@ -100,8 +108,23 @@ export default function ArchiveMovieBrowser() {
   // Handle search submit
   const handleSearch = () => {
     setActiveSearch(searchQuery);
-    setPage(1);
     setGenreFilter('all');
+    setPage(1);
+    setMoviesWithoutImages(new Set());
+  };
+
+  // Handle genre filter change
+  const handleGenreChange = (genre) => {
+    setGenreFilter(genre);
+    setPage(1);
+    setMoviesWithoutImages(new Set());
+  };
+
+  // Handle sort change
+  const handleSortChange = (newSort) => {
+    setSortBy(newSort);
+    setPage(1);
+    setMoviesWithoutImages(new Set());
   };
 
   // Track movies that failed to load images (no poster available)
@@ -197,7 +220,7 @@ export default function ArchiveMovieBrowser() {
             <div className="flex items-center gap-3">
               <Film className="w-8 h-8 text-yellow-400" />
               <div>
-                <h1 className="text-xl font-bold">Archive.org Movie Browser</h1>
+                <h1 className="text-xl font-bold">Archive.org Movies</h1>
                 <p className="text-xs text-gray-500">
                   Browse full-length films from the Internet Archive
                 </p>
@@ -329,10 +352,7 @@ export default function ArchiveMovieBrowser() {
                 <SlidersHorizontal className="w-4 h-4 text-gray-400 hidden sm:block" />
                 <select
                   value={sortBy}
-                  onChange={(e) => {
-                    setSortBy(e.target.value);
-                    setPage(1);
-                  }}
+                  onChange={(e) => handleSortChange(e.target.value)}
                   className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
                 >
                   <option value="downloads">Popular</option>
@@ -357,10 +377,7 @@ export default function ArchiveMovieBrowser() {
             </div>
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => {
-                  setGenreFilter('all');
-                  setPage(1);
-                }}
+                onClick={() => handleGenreChange('all')}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   genreFilter === 'all'
                     ? 'bg-yellow-500 text-gray-900'
@@ -372,10 +389,7 @@ export default function ArchiveMovieBrowser() {
               {STANDARD_GENRES.slice(0, 12).map((genre) => (
                 <button
                   key={genre}
-                  onClick={() => {
-                    setGenreFilter(genre);
-                    setPage(1);
-                  }}
+                  onClick={() => handleGenreChange(genre)}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     genreFilter === genre
                       ? 'bg-yellow-500 text-gray-900'
