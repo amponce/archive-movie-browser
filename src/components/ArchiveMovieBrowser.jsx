@@ -72,11 +72,13 @@ export default function ArchiveMovieBrowser() {
         genre: genreFilter !== 'all' ? genreFilter : null
       });
 
-      // Deduplicate movies by identifier
+      // Deduplicate movies by title (same movie uploaded multiple times)
       const seen = new Set();
       const uniqueMovies = result.movies.filter(m => {
-        if (seen.has(m.identifier)) return false;
-        seen.add(m.identifier);
+        // Create a normalized key from title (lowercase, trimmed)
+        const titleKey = (m.title || '').toLowerCase().trim();
+        if (seen.has(titleKey)) return false;
+        seen.add(titleKey);
         return true;
       });
       setMovies(uniqueMovies);
