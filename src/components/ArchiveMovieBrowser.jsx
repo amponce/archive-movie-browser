@@ -55,8 +55,8 @@ export default function ArchiveMovieBrowser() {
   }, [tmdbApiKey]);
 
 
-  // Fetch movies
-  const fetchMovies = useCallback(async (pageNum, shouldAppend = false) => {
+  // Fetch movies - always replaces, never appends
+  const fetchMovies = useCallback(async (pageNum) => {
     setLoading(true);
     setError(null);
 
@@ -72,40 +72,26 @@ export default function ArchiveMovieBrowser() {
         genre: genreFilter !== 'all' ? genreFilter : null
       });
 
-      if (shouldAppend && pageNum > 1) {
-        // Append new results to existing movies
-        setMovies(prev => {
-          const existingIds = new Set(prev.map(m => m.identifier));
-          const newMovies = result.movies.filter(m => !existingIds.has(m.identifier));
-          return [...prev, ...newMovies];
-        });
-      } else {
-        setMovies(result.movies);
-      }
+      // Deduplicate movies by identifier
+      const seen = new Set();
+      const uniqueMovies = result.movies.filter(m => {
+        if (seen.has(m.identifier)) return false;
+        seen.add(m.identifier);
+        return true;
+      });
+      setMovies(uniqueMovies);
       setTotalResults(result.total);
     } catch (err) {
       setError(err.message);
-      if (!shouldAppend) setMovies([]);
+      setMovies([]);
     } finally {
       setLoading(false);
     }
   }, [activeSearch, sortBy, rowsPerPage, genreFilter]);
 
-  // Track current fetch to prevent race conditions
-  const fetchIdRef = useRef(0);
-
-  // Single useEffect for fetching - triggered by filter changes or pagination
+  // Fetch when page or filters change
   useEffect(() => {
-    const currentFetchId = ++fetchIdRef.current;
-    const shouldAppend = page > 1;
-
-    // Only proceed if this is still the latest fetch request
-    const doFetch = async () => {
-      if (currentFetchId !== fetchIdRef.current) return;
-      await fetchMovies(page, shouldAppend);
-    };
-
-    doFetch();
+    fetchMovies(page);
   }, [fetchMovies, page]);
 
   // Handle search submit
@@ -504,33 +490,49 @@ export default function ArchiveMovieBrowser() {
           </div>
         )}
 
-        {/* Show More / Load More buttons */}
-        {!loading && visibleMovies.length > 0 && (
+        {/* Pagination */}
+        {!loading && displayedMovies.length > 0 && (
           <div className="flex flex-col items-center gap-4 mt-8 pt-8 border-t border-gray-800">
-            {/* Show More - reveals more from current batch */}
+            {/* Show More within current page */}
             {hasMoreToShow && (
               <button
                 onClick={handleShowMore}
                 className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-gray-900 font-medium rounded-lg hover:bg-yellow-400"
               >
                 Show More ({displayedMovies.length - visibleMovies.length} remaining)
-                <ChevronRight className="w-4 h-4" />
               </button>
             )}
 
-            {/* Load More from API - fetches next page */}
-            {!hasMoreToShow && (
+            {/* Page navigation */}
+            <div className="flex items-center gap-4">
               <button
                 onClick={() => {
-                  setPage((p) => p + 1);
+                  setPage(p => Math.max(1, p - 1));
                   setDisplayLimit(24);
                 }}
-                className="flex items-center gap-2 px-6 py-3 bg-gray-800 text-white font-medium rounded-lg hover:bg-gray-700"
+                disabled={page === 1}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-lg disabled:opacity-50 hover:bg-gray-700 disabled:hover:bg-gray-800"
               >
-                Load Next Page
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </button>
+
+              <span className="text-gray-400">
+                Page <strong className="text-white">{page}</strong> of {totalPages || '?'}
+              </span>
+
+              <button
+                onClick={() => {
+                  setPage(p => p + 1);
+                  setDisplayLimit(24);
+                }}
+                disabled={page >= totalPages}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-lg disabled:opacity-50 hover:bg-gray-700 disabled:hover:bg-gray-800"
+              >
+                Next
                 <ChevronRight className="w-4 h-4" />
               </button>
-            )}
+            </div>
           </div>
         )}
       </main>
