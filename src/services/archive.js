@@ -7,8 +7,10 @@ const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
 function isBlockedContent(movie) {
   if (!movie) return true;
 
-  const titleLower = (movie.title || '').toLowerCase();
-  const identifierLower = (movie.identifier || '').toLowerCase();
+  // Handle title being string or array
+  const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
+  const titleLower = String(title || '').toLowerCase();
+  const identifierLower = String(movie.identifier || '').toLowerCase();
 
   // Block content with problematic patterns
   if (titleLower.includes('the child') || identifierLower.includes('thechild')) {
@@ -254,11 +256,13 @@ class ArchiveService {
       .map(movie => {
         const runtimeMinutes = this.parseRuntime(movie.runtime);
         const genres = this.extractGenres(movie.subject);
+        // Handle title being string or array
+        const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
 
         return {
           id: movie.identifier,
           identifier: movie.identifier,
-          title: movie.title || movie.identifier,
+          title: title || movie.identifier,
           year: movie.year ? parseInt(movie.year, 10) : null,
           runtimeMinutes,
           runtime: movie.runtime,
