@@ -5,7 +5,8 @@ const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
 
 // Video categories/collections available on Archive.org
 export const VIDEO_CATEGORIES = [
-  { id: 'moviesandfilms', name: 'All Movies', description: 'Full-length films from the Archive' },
+  { id: 'movies', name: 'Movies', description: 'The main movies collection on Archive.org' },
+  { id: 'moviesandfilms', name: 'Movies & Films', description: 'Full-length films from the Archive' },
   { id: 'feature_films', name: 'Feature Films', description: 'Classic feature-length movies' },
   { id: 'silent_films', name: 'Silent Films', description: 'Silent era classics' },
   { id: 'film_noir', name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
