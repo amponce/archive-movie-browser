@@ -45,7 +45,7 @@ export default function ArchiveMovieBrowser() {
   const [minRuntime, setMinRuntime] = useState(40);
   const [contentType, setContentType] = useState('features'); // 'features' or 'trailers'
   const [sortBy, setSortBy] = useState('downloads');
-  const [category, setCategory] = useState('moviesandfilms'); // Video collection/category
+  const [category, setCategory] = useState('horror_movies'); // Video collection/category
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(50);
   const [displayLimit, setDisplayLimit] = useState(24); // Show 24 movies at a time for smooth scrolling
