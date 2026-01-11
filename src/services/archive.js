@@ -216,20 +216,9 @@ class ArchiveService {
       genre = null
     } = options;
 
-    // Different collections may use different mediatypes
-    // Most movie collections use 'movies', but some use 'video' or both
-    const videoCollections = [
-      'artsandmusicvideos', 'computersandtechvideos', 'newsandpublicaffairs',
-      'sports', 'spiritualityandreligion', 'videogamemovies', 'vlogs', 'youth_media'
-    ];
-
-    let query;
-    if (videoCollections.includes(collection)) {
-      // These collections primarily contain videos, not movies
-      query = `collection:"${collection}" AND (mediatype:movies OR mediatype:video)`;
-    } else {
-      query = `collection:"${collection}" AND mediatype:movies`;
-    }
+    // Just filter by collection - the collection itself defines content type
+    // Adding mediatype filter is too restrictive for many collections
+    let query = `collection:"${collection}"`;
 
     if (searchQuery) {
       // Search in title, subject, and creator
