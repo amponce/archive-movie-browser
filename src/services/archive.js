@@ -4,29 +4,23 @@ const ARCHIVE_API = 'https://archive.org/advancedsearch.php';
 const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
 
 // Video categories/collections available on Archive.org
+// Collection IDs are case-sensitive and must match exactly
 export const VIDEO_CATEGORIES = [
-  { id: 'movies', name: 'Movies', description: 'The main movies collection on Archive.org' },
-  { id: 'moviesandfilms', name: 'Movies & Films', description: 'Full-length films from the Archive' },
   { id: 'feature_films', name: 'Feature Films', description: 'Classic feature-length movies' },
+  { id: 'moviesandfilms', name: 'Movies & Films', description: 'Full-length films from the Archive' },
+  { id: 'Film_Noir', name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
+  { id: 'SciFi_Horror', name: 'Sci-Fi & Horror', description: 'Science fiction and horror films' },
   { id: 'silent_films', name: 'Silent Films', description: 'Silent era classics' },
-  { id: 'film_noir', name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
-  { id: 'scifi', name: 'Sci-Fi', description: 'Science fiction films' },
-  { id: 'horror_movies', name: 'Horror', description: 'Horror and thriller films' },
-  { id: 'comedies', name: 'Comedy', description: 'Comedy films' },
-  { id: 'classic_cartoons', name: 'Classic Cartoons', description: 'Vintage animation and cartoons' },
-  { id: 'animationandcartoons', name: 'Animation', description: 'Animated films and shorts' },
-  { id: 'classic_tv', name: 'Classic TV', description: 'Classic television shows' },
+  { id: 'animationandcartoons', name: 'Animation & Cartoons', description: 'Animated films and shorts' },
   { id: 'television', name: 'Television', description: 'TV shows and broadcasts' },
   { id: 'prelinger', name: 'Prelinger Archives', description: 'Educational and ephemeral films' },
-  { id: 'documentary', name: 'Documentaries', description: 'Documentary films' },
-  { id: 'short_films', name: 'Short Films', description: 'Short films and clips' },
+  { id: 'opensource_movies', name: 'Community Video', description: 'Community contributed films' },
   { id: 'artsandmusicvideos', name: 'Arts & Music', description: 'Music videos and art films' },
   { id: 'computersandtechvideos', name: 'Tech Videos', description: 'Technology and computer content' },
   { id: 'newsandpublicaffairs', name: 'News & Public Affairs', description: 'News broadcasts and documentaries' },
-  { id: 'sports', name: 'Sports', description: 'Sports footage and broadcasts' },
-  { id: 'spiritualityandreligion', name: 'Spirituality', description: 'Religious and spiritual content' },
-  { id: 'videogamemovies', name: 'Gaming', description: 'Video game related content' },
-  { id: 'opensource_movies', name: 'Open Source', description: 'Community contributed films' },
+  { id: 'spiritualityandreligion', name: 'Spirituality & Religion', description: 'Religious and spiritual content' },
+  { id: 'sports', name: 'Sports Videos', description: 'Sports footage and broadcasts' },
+  { id: 'videogamearchive', name: 'Video Games', description: 'Video game related content' },
   { id: 'vlogs', name: 'Vlogs', description: 'Video blogs and personal content' },
   { id: 'youth_media', name: 'Youth Media', description: 'Content created by youth' }
 ];
