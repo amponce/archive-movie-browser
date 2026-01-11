@@ -41,7 +41,7 @@ export default function ArchiveMovieBrowser() {
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
-  const [genreFilter, setGenreFilter] = useState('Horror');
+  const [genreFilter, setGenreFilter] = useState('all');
   const [minRuntime, setMinRuntime] = useState(40);
   const [contentType, setContentType] = useState('features'); // 'features' or 'trailers'
   const [sortBy, setSortBy] = useState('downloads');
