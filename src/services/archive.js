@@ -3,6 +3,33 @@
 const ARCHIVE_API = 'https://archive.org/advancedsearch.php';
 const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
 
+// Video categories/collections available on Archive.org
+export const VIDEO_CATEGORIES = [
+  { id: 'moviesandfilms', name: 'All Movies', description: 'Full-length films from the Archive' },
+  { id: 'feature_films', name: 'Feature Films', description: 'Classic feature-length movies' },
+  { id: 'silent_films', name: 'Silent Films', description: 'Silent era classics' },
+  { id: 'film_noir', name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
+  { id: 'scifi', name: 'Sci-Fi', description: 'Science fiction films' },
+  { id: 'horror_movies', name: 'Horror', description: 'Horror and thriller films' },
+  { id: 'comedies', name: 'Comedy', description: 'Comedy films' },
+  { id: 'classic_cartoons', name: 'Classic Cartoons', description: 'Vintage animation and cartoons' },
+  { id: 'animationandcartoons', name: 'Animation', description: 'Animated films and shorts' },
+  { id: 'classic_tv', name: 'Classic TV', description: 'Classic television shows' },
+  { id: 'television', name: 'Television', description: 'TV shows and broadcasts' },
+  { id: 'prelinger', name: 'Prelinger Archives', description: 'Educational and ephemeral films' },
+  { id: 'documentary', name: 'Documentaries', description: 'Documentary films' },
+  { id: 'short_films', name: 'Short Films', description: 'Short films and clips' },
+  { id: 'artsandmusicvideos', name: 'Arts & Music', description: 'Music videos and art films' },
+  { id: 'computersandtechvideos', name: 'Tech Videos', description: 'Technology and computer content' },
+  { id: 'newsandpublicaffairs', name: 'News & Public Affairs', description: 'News broadcasts and documentaries' },
+  { id: 'sports', name: 'Sports', description: 'Sports footage and broadcasts' },
+  { id: 'spiritualityandreligion', name: 'Spirituality', description: 'Religious and spiritual content' },
+  { id: 'videogamemovies', name: 'Gaming', description: 'Video game related content' },
+  { id: 'opensource_movies', name: 'Open Source', description: 'Community contributed films' },
+  { id: 'vlogs', name: 'Vlogs', description: 'Video blogs and personal content' },
+  { id: 'youth_media', name: 'Youth Media', description: 'Content created by youth' }
+];
+
 // Content filter - block inappropriate content
 function isBlockedContent(movie) {
   if (!movie) return true;
@@ -183,13 +210,25 @@ class ArchiveService {
     const {
       searchQuery = '',
       collection = 'moviesandfilms',
-      mediaType = 'movies',
       minRuntime = null,
       year = null,
       genre = null
     } = options;
 
-    let query = `collection:"${collection}" AND mediatype:${mediaType}`;
+    // Different collections may use different mediatypes
+    // Most movie collections use 'movies', but some use 'video' or both
+    const videoCollections = [
+      'artsandmusicvideos', 'computersandtechvideos', 'newsandpublicaffairs',
+      'sports', 'spiritualityandreligion', 'videogamemovies', 'vlogs', 'youth_media'
+    ];
+
+    let query;
+    if (videoCollections.includes(collection)) {
+      // These collections primarily contain videos, not movies
+      query = `collection:"${collection}" AND (mediatype:movies OR mediatype:video)`;
+    } else {
+      query = `collection:"${collection}" AND mediatype:movies`;
+    }
 
     if (searchQuery) {
       // Search in title, subject, and creator
@@ -217,10 +256,11 @@ class ArchiveService {
       page = 1,
       rowsPerPage = 200,
       minRuntime = 0,
-      genre = null
+      genre = null,
+      collection = 'moviesandfilms'
     } = options;
 
-    const query = this.buildQuery({ searchQuery, genre });
+    const query = this.buildQuery({ searchQuery, genre, collection });
 
     const fields = [
       'identifier',
