@@ -3,6 +3,28 @@
 const ARCHIVE_API = 'https://archive.org/advancedsearch.php';
 const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
 
+// Video categories/collections available on Archive.org
+// Collection IDs are case-sensitive and must match exactly
+export const VIDEO_CATEGORIES = [
+  { id: 'feature_films', name: 'Feature Films', description: 'Classic feature-length movies' },
+  { id: 'moviesandfilms', name: 'Movies & Films', description: 'Full-length films from the Archive' },
+  { id: 'Film_Noir', name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
+  { id: 'SciFi_Horror', name: 'Sci-Fi & Horror', description: 'Science fiction and horror films' },
+  { id: 'silent_films', name: 'Silent Films', description: 'Silent era classics' },
+  { id: 'animationandcartoons', name: 'Animation & Cartoons', description: 'Animated films and shorts' },
+  { id: 'television', name: 'Television', description: 'TV shows and broadcasts' },
+  { id: 'prelinger', name: 'Prelinger Archives', description: 'Educational and ephemeral films' },
+  { id: 'opensource_movies', name: 'Community Video', description: 'Community contributed films' },
+  { id: 'artsandmusicvideos', name: 'Arts & Music', description: 'Music videos and art films' },
+  { id: 'computersandtechvideos', name: 'Tech Videos', description: 'Technology and computer content' },
+  { id: 'newsandpublicaffairs', name: 'News & Public Affairs', description: 'News broadcasts and documentaries' },
+  { id: 'spiritualityandreligion', name: 'Spirituality & Religion', description: 'Religious and spiritual content' },
+  { id: 'sports', name: 'Sports Videos', description: 'Sports footage and broadcasts' },
+  { id: 'videogamearchive', name: 'Video Games', description: 'Video game related content' },
+  { id: 'vlogs', name: 'Vlogs', description: 'Video blogs and personal content' },
+  { id: 'youth_media', name: 'Youth Media', description: 'Content created by youth' }
+];
+
 // Content filter - block inappropriate content
 function isBlockedContent(movie) {
   if (!movie) return true;
@@ -183,13 +205,14 @@ class ArchiveService {
     const {
       searchQuery = '',
       collection = 'moviesandfilms',
-      mediaType = 'movies',
       minRuntime = null,
       year = null,
       genre = null
     } = options;
 
-    let query = `collection:"${collection}" AND mediatype:${mediaType}`;
+    // Just filter by collection - the collection itself defines content type
+    // Adding mediatype filter is too restrictive for many collections
+    let query = `collection:"${collection}"`;
 
     if (searchQuery) {
       // Search in title, subject, and creator
@@ -217,10 +240,11 @@ class ArchiveService {
       page = 1,
       rowsPerPage = 200,
       minRuntime = 0,
-      genre = null
+      genre = null,
+      collection = 'moviesandfilms'
     } = options;
 
-    const query = this.buildQuery({ searchQuery, genre });
+    const query = this.buildQuery({ searchQuery, genre, collection });
 
     const fields = [
       'identifier',

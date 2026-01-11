@@ -11,9 +11,11 @@ import {
   List,
   ChevronLeft,
   ChevronRight,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Library,
+  Calendar
 } from 'lucide-react';
-import archiveService, { STANDARD_GENRES } from '../services/archive';
+import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES } from '../services/archive';
 import tmdbService, { hasCachedPoster } from '../services/tmdb';
 import MovieCard from './MovieCard';
 import SettingsModal from './SettingsModal';
@@ -39,13 +41,17 @@ export default function ArchiveMovieBrowser() {
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState('');
-  const [genreFilter, setGenreFilter] = useState('Horror');
+  const [genreFilter, setGenreFilter] = useState('all');
   const [minRuntime, setMinRuntime] = useState(40);
   const [contentType, setContentType] = useState('features'); // 'features' or 'trailers'
   const [sortBy, setSortBy] = useState('downloads');
+  const [category, setCategory] = useState('SciFi_Horror'); // Video collection/category
   const [page, setPage] = useState(1);
   const [rowsPerPage] = useState(50);
   const [displayLimit, setDisplayLimit] = useState(24); // Show 24 movies at a time for smooth scrolling
+
+  // Get current category info
+  const currentCategory = VIDEO_CATEGORIES.find(c => c.id === category) || VIDEO_CATEGORIES[0];
 
   // Initialize TMDB service
   useEffect(() => {
@@ -61,15 +67,28 @@ export default function ArchiveMovieBrowser() {
     setError(null);
 
     try {
+      // Parse sort value (may include direction like "date desc" or "date asc")
+      let apiSortBy = sortBy;
+      let sortOrder = 'desc';
+
       // tmdb_rating is client-side only, use downloads for API sorting
-      const apiSortBy = sortBy === 'tmdb_rating' ? 'downloads' : sortBy;
+      if (sortBy === 'tmdb_rating') {
+        apiSortBy = 'downloads';
+      } else if (sortBy.includes(' ')) {
+        // Parse "field direction" format
+        const [field, direction] = sortBy.split(' ');
+        apiSortBy = field;
+        sortOrder = direction;
+      }
 
       const result = await archiveService.fetchMovies({
         searchQuery: activeSearch,
         sortBy: apiSortBy,
+        sortOrder,
         page: pageNum,
         rowsPerPage,
-        genre: genreFilter !== 'all' ? genreFilter : null
+        genre: genreFilter !== 'all' ? genreFilter : null,
+        collection: category
       });
 
       // Deduplicate movies by title (same movie uploaded multiple times)
@@ -89,7 +108,7 @@ export default function ArchiveMovieBrowser() {
     } finally {
       setLoading(false);
     }
-  }, [activeSearch, sortBy, rowsPerPage, genreFilter]);
+  }, [activeSearch, sortBy, rowsPerPage, genreFilter, category]);
 
   // Fetch when page or filters change
   useEffect(() => {
@@ -119,6 +138,15 @@ export default function ArchiveMovieBrowser() {
     setPage(1);
     setDisplayLimit(24);
     setMoviesWithoutImages(new Set());
+  };
+
+  // Handle category change
+  const handleCategoryChange = (newCategory) => {
+    setCategory(newCategory);
+    setPage(1);
+    setDisplayLimit(24);
+    setMoviesWithoutImages(new Set());
+    setGenreFilter('all'); // Reset genre filter when changing category
   };
 
   // Show more movies within current page
@@ -235,9 +263,9 @@ export default function ArchiveMovieBrowser() {
             <div className="flex items-center gap-3">
               <Film className="w-8 h-8 text-yellow-400" />
               <div>
-                <h1 className="text-xl font-bold">Archive.org Movies</h1>
+                <h1 className="text-xl font-bold">Archive.org Videos</h1>
                 <p className="text-xs text-gray-500">
-                  Browse full-length films from the Internet Archive
+                  {currentCategory.description}
                 </p>
               </div>
             </div>
@@ -315,6 +343,22 @@ export default function ArchiveMovieBrowser() {
 
             {/* Filters row */}
             <div className="flex flex-wrap gap-2">
+              {/* Category/Collection dropdown */}
+              <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
+                <Library className="w-4 h-4 text-yellow-400 hidden sm:block" />
+                <select
+                  value={category}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer max-w-[140px] sm:max-w-none"
+                >
+                  {VIDEO_CATEGORIES.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Content type toggle */}
               <div className="flex bg-gray-800 rounded-lg p-1">
                 <button
@@ -370,12 +414,14 @@ export default function ArchiveMovieBrowser() {
                   onChange={(e) => handleSortChange(e.target.value)}
                   className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
                 >
-                  <option value="downloads">Popular</option>
-                  <option value="avg_rating">Archive Rating</option>
-                  <option value="tmdb_rating">Rating (IMDB/TMDB)</option>
-                  <option value="date">Newest</option>
-                  <option value="publicdate">Recently Added</option>
-                  <option value="title">A-Z</option>
+                  <option value="downloads">Most Popular</option>
+                  <option value="avg_rating">Top Rated (Archive)</option>
+                  <option value="tmdb_rating">Top Rated (TMDB)</option>
+                  <option value="date desc">Release Date (Newest)</option>
+                  <option value="date asc">Release Date (Oldest)</option>
+                  <option value="publicdate desc">Recently Added</option>
+                  <option value="publicdate asc">Oldest Added</option>
+                  <option value="title">Title A-Z</option>
                 </select>
               </div>
             </div>
@@ -545,12 +591,12 @@ export default function ArchiveMovieBrowser() {
           <p>
             Data sourced from{' '}
             <a
-              href="https://archive.org/details/moviesandfilms"
+              href={`https://archive.org/details/${category}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-yellow-400 hover:underline"
             >
-              Internet Archive's Movies Collection
+              Internet Archive's {currentCategory.name} Collection
             </a>
           </p>
           {tmdbApiKey && (
