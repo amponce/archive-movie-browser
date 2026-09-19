@@ -128,6 +128,31 @@ const UPLOAD_NOISE = /\b(\d{3,4}p|4k|\d+fps|\d+kb|full hd|hd|uhd|blu ?ray|bdrip|
 const FILM_YEAR = /\b(18|19|20)\d{2}\b/g;
 
 class ArchiveService {
+  normalizeMovie(movie) {
+    const runtimeMinutes = this.parseRuntime(movie.runtime);
+    const genres = this.extractGenres(movie.subject);
+    const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
+
+    return {
+      id: movie.identifier,
+      identifier: movie.identifier,
+      title: title || movie.identifier,
+      year: movie.year ? parseInt(movie.year, 10) : null,
+      runtimeMinutes,
+      runtime: movie.runtime,
+      genres: genres.length > 0 ? genres : ['Uncategorized'],
+      downloads: movie.downloads || 0,
+      rating: movie.avg_rating || null,
+      description: movie.description,
+      creator: Array.isArray(movie.creator) ? movie.creator[0] : movie.creator,
+      archiveUrl: `https://archive.org/details/${movie.identifier}`,
+      thumbnailUrl: `https://archive.org/services/img/${movie.identifier}`,
+      embedUrl: `https://archive.org/embed/${movie.identifier}`,
+      date: movie.date || movie.publicdate,
+      publicDate: movie.publicdate
+    };
+  }
+
   // Key that is equal for re-uploads of one film:
   // "Title", "The Title-hd", "title_512kb", "Title (1959) [1080p Blu-Ray]"
   dedupeKey(title) {
@@ -309,31 +334,7 @@ class ArchiveService {
 
     const movies = data.response.docs
       .filter(movie => !isBlockedContent(movie)) // Filter out inappropriate content
-      .map(movie => {
-        const runtimeMinutes = this.parseRuntime(movie.runtime);
-        const genres = this.extractGenres(movie.subject);
-        // Handle title being string or array
-        const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
-
-        return {
-          id: movie.identifier,
-          identifier: movie.identifier,
-          title: title || movie.identifier,
-          year: movie.year ? parseInt(movie.year, 10) : null,
-          runtimeMinutes,
-          runtime: movie.runtime,
-          genres: genres.length > 0 ? genres : ['Uncategorized'],
-          downloads: movie.downloads || 0,
-          rating: movie.avg_rating || null,
-          description: movie.description,
-          creator: Array.isArray(movie.creator) ? movie.creator[0] : movie.creator,
-          archiveUrl: `https://archive.org/details/${movie.identifier}`,
-          thumbnailUrl: `https://archive.org/services/img/${movie.identifier}`,
-          embedUrl: `https://archive.org/embed/${movie.identifier}`,
-          date: movie.date || movie.publicdate,
-          publicDate: movie.publicdate
-        };
-      });
+      .map(movie => this.normalizeMovie(movie));
 
     // Filter by runtime if specified
     const filteredMovies = minRuntime > 0
@@ -410,6 +411,15 @@ class ArchiveService {
     }
 
     return response.json();
+  }
+
+  // Fetch and normalize one item's metadata for direct, hash-based links.
+  async getMovieByIdentifier(identifier) {
+    const data = await this.getMetadata(identifier);
+    return this.normalizeMovie({
+      ...data.metadata,
+      identifier: data.metadata?.identifier || identifier
+    });
   }
 
   // Format runtime for display

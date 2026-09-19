@@ -27,6 +27,30 @@ export default function ArchiveMovieBrowser() {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
 
+  // Allow a shared #identifier URL to open an Archive.org item directly.
+  useEffect(() => {
+    const identifier = window.location.hash.slice(1);
+    if (!identifier) return;
+
+    let cancelled = false;
+    let decodedIdentifier;
+    try {
+      decodedIdentifier = decodeURIComponent(identifier);
+    } catch {
+      decodedIdentifier = identifier;
+    }
+
+    archiveService.getMovieByIdentifier(decodedIdentifier)
+      .then((movie) => {
+        if (!cancelled) setSelectedMovie(movie);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error('Failed to open movie from URL hash:', err);
+      });
+
+    return () => { cancelled = true; };
+  }, []);
+
   // TMDB API key from environment variable only
   const tmdbApiKey = TMDB_API_KEY;
 
