@@ -366,22 +366,23 @@ export default function ArchiveMovieBrowser() {
                 </button>
               </div>
 
-              {/* Runtime filter */}
-              <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
-                <Clock className="w-4 h-4 text-gray-400 hidden sm:block" />
-                <select
-                  value={minRuntime}
-                  onChange={(e) => setMinRuntime(Number(e.target.value))}
-                  className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
-                >
-                  <option value={0}>Any length</option>
-                  <option value={20}>20+ min</option>
-                  <option value={40}>40+ min</option>
-                  <option value={60}>60+ min</option>
-                  <option value={75}>75+ min</option>
-                  <option value={90}>90+ min</option>
-                </select>
-              </div>
+              {contentType !== 'trailers' && (
+                <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
+                  <Clock className="w-4 h-4 text-gray-400 hidden sm:block" />
+                  <select
+                    value={minRuntime}
+                    onChange={(e) => setMinRuntime(Number(e.target.value))}
+                    className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
+                  >
+                    <option value={0}>Any length</option>
+                    <option value={20}>20+ min</option>
+                    <option value={40}>40+ min</option>
+                    <option value={60}>60+ min</option>
+                    <option value={75}>75+ min</option>
+                    <option value={90}>90+ min</option>
+                  </select>
+                </div>
+              )}
 
               {/* Sort */}
               <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
