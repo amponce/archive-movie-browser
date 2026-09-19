@@ -366,21 +366,31 @@ export default function ArchiveMovieBrowser() {
                 </button>
               </div>
 
-              {/* Runtime filter */}
+              {/* Runtime filter. Shorts are hard-capped at ≤30 min, so do not show a live select. */}
               <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
                 <Clock className="w-4 h-4 text-gray-400 hidden sm:block" />
-                <select
-                  value={minRuntime}
-                  onChange={(e) => setMinRuntime(Number(e.target.value))}
-                  className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
-                >
-                  <option value={0}>Any length</option>
-                  <option value={20}>20+ min</option>
-                  <option value={40}>40+ min</option>
-                  <option value={60}>60+ min</option>
-                  <option value={75}>75+ min</option>
-                  <option value={90}>90+ min</option>
-                </select>
+                {contentType === 'trailers' ? (
+                  <span
+                    className="py-2 text-xs sm:text-sm text-gray-400 cursor-default select-none"
+                    title="Shorts are limited to 30 minutes or less"
+                    aria-label="Runtime is limited to 30 minutes or less in Shorts mode"
+                  >
+                    ≤30 min
+                  </span>
+                ) : (
+                  <select
+                    value={minRuntime}
+                    onChange={(e) => setMinRuntime(Number(e.target.value))}
+                    className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
+                  >
+                    <option value={0}>Any length</option>
+                    <option value={20}>20+ min</option>
+                    <option value={40}>40+ min</option>
+                    <option value={60}>60+ min</option>
+                    <option value={75}>75+ min</option>
+                    <option value={90}>90+ min</option>
+                  </select>
+                )}
               </div>
 
               {/* Sort */}
