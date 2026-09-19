@@ -84,6 +84,28 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
     }
   }, [isPlaying]);
 
+    // Escape closes the overlay, lock body scroll, Back button closes too
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    window.history.pushState({ modal: true }, '');
+    const onPop = () => onClose();
+    window.addEventListener('popstate', onPop);
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('popstate', onPop);
+    };
+  }, [onClose]);
+
+
   // Fetch TMDB data
   useEffect(() => {
     if (!movie) return;
