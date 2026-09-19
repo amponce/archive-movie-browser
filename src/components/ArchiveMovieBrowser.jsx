@@ -11,7 +11,6 @@ import {
   List,
   SlidersHorizontal,
   Library,
-  Calendar
 } from 'lucide-react';
 import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES } from '../services/archive';
 import tmdbService, { hasCachedPoster } from '../services/tmdb';
@@ -188,23 +187,6 @@ export default function ArchiveMovieBrowser() {
 
     return filtered;
   }, [movies, activeSearch, moviesWithoutImages, tmdbApiKey]);
-
-  // Get genres from filtered movies
-  const availableGenres = useMemo(() => {
-    const genreCounts = {};
-    filteredByRuntime.forEach(movie => {
-      movie.genres.forEach(genre => {
-        if (genre !== 'Uncategorized') {
-          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
-        }
-      });
-    });
-
-    // Sort by count, then alphabetically
-    return Object.entries(genreCounts)
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .map(([genre, count]) => ({ genre, count }));
-  }, [filteredByRuntime]);
 
   // Filter by genre and apply client-side sorting for TMDB rating
   const displayedMovies = useMemo(() => {

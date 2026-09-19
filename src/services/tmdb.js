@@ -242,25 +242,6 @@ class TMDBService {
     return `${TMDB_IMAGE_BASE}/${size}${backdropPath}`;
   }
 
-  // Batch search for multiple movies
-  async searchMovies(movies, onProgress = null) {
-    const results = new Map();
-    const total = movies.length;
-    let completed = 0;
-
-    for (const movie of movies) {
-      const result = await this.searchMovie(movie.title, movie.year);
-      results.set(movie.identifier, result);
-
-      completed++;
-      if (onProgress) {
-        onProgress(completed, total);
-      }
-    }
-
-    return results;
-  }
-
   // Get TMDB genres mapping
   async getGenres() {
     if (!this.enabled) return {};
