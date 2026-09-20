@@ -1,6 +1,6 @@
 // TMDB API Service for movie poster matching
 // Get your API key at: https://www.themoviedb.org/settings/api
-import { cleanMovieTitle, selectMovieMatch } from './movieMatching.js';
+import { cleanMovieTitle, selectMovieMatch, titleCandidates, filmYearFromTitle, bestStrictMatch } from './movieMatching.js';
 
 const TMDB_API_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
@@ -164,30 +164,35 @@ class TMDBService {
   // Internal method to fetch from TMDB API
   async _fetchFromTMDB(title, year, cacheKey) {
     try {
-      const cleanedTitle = this.cleanTitle(title);
-      const params = new URLSearchParams({
-        api_key: this.apiKey,
-        query: cleanedTitle,
-        include_adult: false
-      });
+      // Try the tidied title, then guesses at the real title hidden in it (at most four
+      // requests, and only on a miss). The year is not sent: Archive.org years are often
+      // the upload year, so same-titled films are told apart by the closest year instead.
+      const filmYear = filmYearFromTitle(title) ?? year;
+      let bestMatch = null;
+      const guesses = [];
+      for (const candidate of titleCandidates(title)) {
+        const params = new URLSearchParams({
+          api_key: this.apiKey,
+          query: candidate.query,
+          include_adult: false
+        });
 
-      if (year) {
-        params.append('year', year);
+        const response = await this.throttledFetch(`${TMDB_API_BASE}/search/movie?${params}`);
+        if (!response.ok) {
+          // Not cached: an outage or rate limit must not hide this film's poster for a week
+          console.warn('TMDB search failed:', response.status);
+          return null;
+        }
+
+        const data = await response.json();
+        const match = selectMovieMatch(data.results, candidate.query, filmYear, { strict: candidate.strict });
+        if (match && !candidate.strict) {
+          bestMatch = match;
+          break;
+        }
+        guesses.push(match);
       }
-
-      const response = await this.throttledFetch(
-        `${TMDB_API_BASE}/search/movie?${params}`
-      );
-
-      if (!response.ok) {
-        console.warn('TMDB search failed:', response.status);
-        this.setCache(title, year, null);
-        return null;
-      }
-
-      const data = await response.json();
-
-      const bestMatch = selectMovieMatch(data.results, cleanedTitle, year);
+      bestMatch = bestMatch || bestStrictMatch(guesses, filmYear);
 
       const result = bestMatch ? {
         id: bestMatch.id,
@@ -204,7 +209,6 @@ class TMDBService {
       return result;
     } catch (error) {
       console.error('TMDB search error:', error);
-      this.setCache(title, year, null);
       return null;
     }
   }

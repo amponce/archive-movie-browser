@@ -465,3 +465,19 @@ test('buildQuery: a genre spans every film collection, not just the selected one
   assert.ok(archiveService.buildQuery({ collection: 'Film_Noir' }).startsWith('collection:"Film_Noir"'));
   assert.ok(archiveService.buildQuery({ collection: 'Film_Noir', genre: 'Horror', searchQuery: 'dracula' }).includes(' OR television OR '));
 });
+
+test('a film year comes from the title first, and an upload-year value counts as unknown', async () => {
+  const realFetch = globalThis.fetch;
+  mockDocs([
+    { identifier: 'a', title: 'House on Haunted Hill (1999)', year: '2021', publicdate: '2021-06-01T00:00:00Z' },
+    { identifier: 'b', title: 'A Reuploaded Film', year: '2020', publicdate: '2020-10-31T00:00:00Z' },
+    { identifier: 'c', title: 'A Properly Dated Film', year: '1959', publicdate: '2008-03-01T00:00:00Z' },
+    { identifier: 'd', title: 'In The Year 2889', year: '1967', publicdate: '2010-01-01T00:00:00Z' }
+  ]);
+  try {
+    const { movies } = await archiveService.fetchMovies({});
+    assert.deepEqual(movies.map(m => m.year), [1999, null, 1959, 1967]);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

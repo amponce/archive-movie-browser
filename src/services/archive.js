@@ -137,10 +137,20 @@ const GENRE_ALIASES = {
 };
 
 // Words that tell re-uploads of one film apart, not different films
-const UPLOAD_NOISE = /\b(\d{3,4}p|4k|\d+fps|\d+kb|full hd|hd|uhd|blu ?ray|bdrip|brrip|dvdrip|dvd|mpeg\d?|mp4|avi|mkv|full movie|widescreen|colou?rized|restored|remastered|video quality|quality|upgrade|uncut)\b/g;
-const FILM_YEAR = /\b(18|19|20)\d{2}\b/g;
+export const UPLOAD_NOISE = /\b(\d{3,4}p|4k|\d+fps|\d+kb|full hd|hd|uhd|blu ?ray|bdrip|brrip|dvdrip|dvd|mpeg\d?|mp4|avi|mkv|full movie|widescreen|colou?rized|restored|remastered|video quality|quality|upgrade|uncut)\b/g;
+export const FILM_YEAR = /\b(18|19|20)\d{2}\b/g;
 
 class ArchiveService {
+  // The film's year: one written in the title wins ("House on Haunted Hill (1999)"), and a
+  // metadata year equal to the upload year is the uploader's default, so it counts as unknown.
+  filmYear(title, metadataYear, publicDate) {
+    const text = String(title || '');
+    const inTitle = text.replace(FILM_YEAR, '').replace(/[^\p{L}\p{N}]/gu, '') ? text.match(FILM_YEAR)?.[0] : null;
+    if (inTitle) return Number(inTitle);
+    const year = metadataYear ? parseInt(metadataYear, 10) : null;
+    return year && year === Number(String(publicDate || '').slice(0, 4)) ? null : year;
+  }
+
   normalizeMovie(movie) {
     const runtimeMinutes = this.parseRuntime(movie.runtime);
     const genres = this.extractGenres(movie.subject);
@@ -150,7 +160,7 @@ class ArchiveService {
       id: movie.identifier,
       identifier: movie.identifier,
       title: title || movie.identifier,
-      year: movie.year ? parseInt(movie.year, 10) : null,
+      year: this.filmYear(title, movie.year, movie.publicdate),
       runtimeMinutes,
       runtime: movie.runtime,
       genres: genres.length > 0 ? genres : ['Uncategorized'],
