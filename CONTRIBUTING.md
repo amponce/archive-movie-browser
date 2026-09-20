@@ -40,6 +40,11 @@ Keep a PR to one thing. Small PRs get reviewed and merged quickly; a PR that als
 
 Changes to dependencies, `package.json`, build configuration, or anything under `.github/` need the maintainer's sign-off and take longer. If your change needs a new dependency, say why in the issue first; most things here are done without one.
 
+## Two things that catch people out
+
+- **Loading something from a new origin** (a font, an image host, an API)? The site sends a Content-Security-Policy, so add the origin to `vercel.json` or browsers will block it in production while it works fine locally.
+- **You never need API keys.** `npm test`, `npm run dev` and `npm run build` all work without any. Keys are only for posters from TMDB at runtime (optional) and for `npm run index` (maintainers).
+
 ## Using AI tools
 
 Fine, and common. You are responsible for what you submit: run it, test it, and be able to explain it. PRs that were clearly never run get closed.

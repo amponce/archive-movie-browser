@@ -25,12 +25,12 @@ function RelatedMovieCard({ movie, onClick }) {
 
   useEffect(() => {
     // Try to get TMDB poster
-    tmdbService.searchMovie(movie.title, movie.year).then(data => {
+    tmdbService.searchMovie(movie.title, movie.year, movie.identifier).then(data => {
       if (data?.posterPath) {
         setPosterUrl(tmdbService.getPosterUrl(data.posterPath, 'small'));
       }
     }).finally(() => setTmdbChecked(true));
-  }, [movie.title, movie.year]);
+  }, [movie.title, movie.year, movie.identifier]);
 
   const handleClick = (e) => {
     e.preventDefault();
@@ -160,7 +160,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
     setTmdbDetails(null);
 
     // Search for movie on TMDB
-    tmdbService.searchMovie(movie.title, movie.year).then(async (data) => {
+    tmdbService.searchMovie(movie.title, movie.year, movie.identifier).then(async (data) => {
       if (cancelled) return;
       setTmdbData(data);
 

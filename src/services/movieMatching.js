@@ -49,6 +49,33 @@ export function titleCandidates(title) {
   return candidates;
 }
 
+// Queries for building a candidate list offline, where recall matters more than request count.
+// TMDB returns nothing for "DEAD AND BURIED TREASURES presents HOUSE ON HAUNTED HILL", so after
+// the normal queries, try distinctive single words, then windows of 4, 3 and 2 consecutive
+// words. A model then picks among everything these return (see scripts/build-poster-index.mjs).
+const STOP_WORDS = new Set(['the', 'a', 'an', 'of', 'and', 'in', 'on', 'at', 'to', 'by', 'for', 'with', 'from', 'presents', 'feat', 'part', 'episode', 'season', 'series', 'movie', 'movies', 'film', 'films', 'full', 'classic', 'horror', 'version', 'transfer', 'tape', 'trailer']);
+export function candidateQueries(title, limit = 12) {
+  const queries = titleCandidates(title).map(c => c.query);
+  const seen = new Set(queries.map(q => q.toLowerCase()));
+  const add = query => {
+    if (queries.length < limit && query.length >= 2 && !seen.has(query.toLowerCase())) {
+      seen.add(query.toLowerCase());
+      queries.push(query);
+    }
+  };
+  const words = (queries[0] || '').split(' ').filter(Boolean);
+  // Distinctive single words first: they are few and recover the most ("Nosferatu")
+  words.filter(w => w.length >= 6 && !STOP_WORDS.has(w.toLowerCase()) && !/\d/.test(w)).slice(0, 3).forEach(add);
+  for (const size of [4, 3, 2]) {
+    for (let start = 0; start + size <= words.length; start++) {
+      const window = words.slice(start, start + size);
+      // a window made only of filler ("of the") finds nothing useful
+      if (window.some(w => !STOP_WORDS.has(w.toLowerCase()) && !/^\d+$/.test(w))) add(window.join(' '));
+    }
+  }
+  return queries;
+}
+
 // Among films that all matched, the one closest to the known year; the oldest when it is unknown,
 // because this archive is mostly classics and TMDB lists remakes first. Archive.org years run
 // late (re-release, VHS date) but a film cannot be newer than its upload claims, so later

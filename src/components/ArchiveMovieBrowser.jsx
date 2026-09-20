@@ -462,7 +462,6 @@ export default function ArchiveMovieBrowser() {
               <MovieCard
                 key={movie.identifier}
                 movie={movie}
-                tmdbEnabled={!!tmdbApiKey}
                 viewMode={viewMode}
                 onPlay={() => setSelectedMovie(movie)}
                 onTmdbData={(data) => handleTmdbData(movie.identifier, data)}

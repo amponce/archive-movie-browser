@@ -171,3 +171,16 @@ test('a failed request does not block later slots and an idle request starts imm
   await service.throttledFetch('idle');
   assert.deepEqual(starts, [10000, 10000 + interval, 10000 + 6 * interval]);
 });
+
+test('searchMovie answers from the poster index without calling TMDB, even with no API key', async t => {
+  const { service } = await makeService(t);
+  const { setPosterIndex } = await import('./posterIndex.js');
+  setPosterIndex({ indexed_film: { i: 7, t: 'Indexed Film', y: 1950, p: '/i.jpg', v: 6, c: 0.9 }, indexed_none: { n: 1, c: 0.9 } });
+  const fetchMock = t.mock.method(globalThis, 'fetch', async () => ({ ok: true, json: async () => ({ results: [] }) }));
+  service.setApiKey('');
+  assert.equal((await service.searchMovie('Whatever_upload_title', null, 'indexed_film')).posterPath, '/i.jpg');
+  assert.equal(await service.searchMovie('Whatever', null, 'indexed_none'), null);
+  assert.equal(await service.searchMovie('Whatever', null, 'not_indexed'), null, 'no key and not indexed: nothing to show');
+  assert.equal(fetchMock.mock.callCount(), 0);
+  setPosterIndex({});
+});

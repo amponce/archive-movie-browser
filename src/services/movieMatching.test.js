@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanMovieTitle, selectMovieMatch, titleCandidates, filmYearFromTitle, bestStrictMatch } from './movieMatching.js';
+import { cleanMovieTitle, selectMovieMatch, titleCandidates, filmYearFromTitle, bestStrictMatch, candidateQueries } from './movieMatching.js';
 
 const movie = (id, title, year = '1959') => ({ id, title, release_date: `${year}-01-01`, poster_path: `/${id}.jpg` });
 
@@ -111,4 +111,23 @@ test('a match released after the year the upload claims is rejected, not shown a
   // Archive.org years run late (re-release, VHS date), so an older film is still accepted
   assert.equal(selectMovieMatch([movie(1, 'Nosferatu', '1922')], 'Nosferatu', 1929).id, 1);
   assert.equal(bestStrictMatch([movie(1, 'Fright Night', '2016'), movie(2, 'House on Haunted Hill', '1959')], 1960).id, 2);
+});
+
+test('candidateQueries adds short word windows so a film buried in a long upload title is still searched for', () => {
+  const has = (title, query) => candidateQueries(title).map(q => q.toLowerCase()).includes(query.toLowerCase());
+  assert.ok(has('DEAD AND BURIED TREASURES presents HOUSE ON HAUNTED HILL', 'House On Haunted Hill'));
+  assert.ok(has('H 2 House On Haunted Hill ( 1959) Classic Vincent Price Horror Full Movie', 'House On Haunted Hill'));
+  assert.ok(has('Nosferatu (1922) KVC VHS Tape (1984) HQ HEVC Transfer', 'Nosferatu'));
+  assert.ok(has('Nosferatu The Vamprye by Werner Herzog, 1979.', 'Nosferatu'));
+  assert.ok(has('000. BG Nosferatu. 000', 'Nosferatu'));
+  assert.ok(has('Nosferatu. 2024.1080p. WEBRip.x 265.10bit. AAC 5.1 [ YTS. MX]', 'Nosferatu'));
+});
+
+test('candidateQueries starts with the normal queries, has no duplicates, and stays bounded', () => {
+  const queries = candidateQueries('Fright Night: House on Haunted Hill');
+  assert.deepEqual(queries.slice(0, 3), ['Fright Night House on Haunted Hill', 'Fright Night', 'House on Haunted Hill']);
+  assert.equal(new Set(queries.map(q => q.toLowerCase())).size, queries.length);
+  assert.ok(candidateQueries('A Very Long Upload Title With Many Many Words In It That Goes On And On Forever And Ever').length <= 12);
+  assert.deepEqual(candidateQueries('M'), ['M']);
+  assert.ok(!candidateQueries('The House of the Seven Gables').includes('the'), 'no single stop words');
 });

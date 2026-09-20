@@ -1,6 +1,7 @@
 // TMDB API Service for movie poster matching
 // Get your API key at: https://www.themoviedb.org/settings/api
 import { cleanMovieTitle, selectMovieMatch, titleCandidates, filmYearFromTitle, bestStrictMatch } from './movieMatching.js';
+import { indexedMatch } from './posterIndex.js';
 
 const TMDB_API_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
@@ -132,7 +133,11 @@ class TMDBService {
   }
 
   // Search for a movie by title and optional year
-  async searchMovie(title, year = null) {
+  async searchMovie(title, year = null, identifier = null) {
+    // Decided offline for this Archive.org identifier? Then no TMDB request, and no key needed.
+    const indexed = await indexedMatch(identifier);
+    if (indexed !== undefined) return indexed;
+
     if (!this.enabled) return null;
 
     const cacheKey = this.getCacheKey(title, year);

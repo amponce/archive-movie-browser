@@ -4,7 +4,7 @@ import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
 import TitleCover from './TitleCover';
 
-const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode = 'grid', onPlay, onTmdbData }) {
+const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay, onTmdbData }) {
   const [tmdbData, setTmdbData] = useState(null);
   const [tmdbChecked, setTmdbChecked] = useState(false);
   const [posterLoaded, setPosterLoaded] = useState(false);
@@ -14,18 +14,17 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
   useEffect(() => {
     let cancelled = false;
 
-    if (tmdbEnabled && movie.title && !tmdbChecked) {
-      tmdbService.searchMovie(movie.title, movie.year).then(data => {
+    // Always ask: the poster index can answer even when there is no TMDB key
+    if (movie.title && !tmdbChecked) {
+      tmdbService.searchMovie(movie.title, movie.year, movie.identifier).then(data => {
         if (cancelled) return;
         setTmdbData(data);
         setTmdbChecked(true);
       });
-    } else if (!tmdbEnabled && !tmdbChecked) {
-      setTmdbChecked(true);
     }
 
     return () => { cancelled = true; };
-  }, [movie.title, movie.year, tmdbEnabled, tmdbChecked]);
+  }, [movie.title, movie.year, movie.identifier, tmdbChecked]);
 
   // Report TMDB data once when it arrives (separate effect to avoid loops)
   useEffect(() => {

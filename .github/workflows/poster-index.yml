@@ -1,0 +1,48 @@
+name: Poster index
+
+# Decides offline which TMDB film each popular Archive.org upload is, and pushes the refreshed
+# public/poster-index.json to a branch for a maintainer to review and merge.
+# Never runs on pull requests: this workflow holds API keys, and fork code must not reach them.
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: Uploads to index per film collection
+        default: '150'
+  schedule:
+    - cron: '17 6 * * 1' # Mondays 06:17 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # Forks don't have the secrets; don't let their scheduled runs fail every week
+    if: github.repository == 'amponce/archive-movie-browser'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - name: Build the index (only new uploads are decided, so reruns cost pennies)
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          OPEN_ROUTER_API_KEY: ${{ secrets.OPEN_ROUTER_API_KEY }}
+          LIMIT: ${{ inputs.limit || '150' }}
+        run: node scripts/build-poster-index.mjs --limit "$LIMIT"
+      - name: Push the refreshed index to a branch
+        run: |
+          if git diff --quiet -- public/poster-index.json; then
+            echo "No new uploads to index." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C poster-index-refresh
+          git add public/poster-index.json
+          git commit -m "Refresh the poster index"
+          git push --force origin poster-index-refresh
+          echo "Index refreshed. [Open a pull request](https://github.com/${{ github.repository }}/compare/main...poster-index-refresh?expand=1) to review and merge it." >> "$GITHUB_STEP_SUMMARY"
