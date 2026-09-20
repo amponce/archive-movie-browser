@@ -15,9 +15,9 @@ async function makeService(t, stored = null) {
     else delete globalThis.localStorage;
   });
   t.mock.timers.enable({ apis: ['setTimeout'] });
-  const { default: service } = await import(`./tmdb.js?test=${++moduleId}`);
+  const { default: service, MIN_REQUEST_INTERVAL } = await import(`./tmdb.js?test=${++moduleId}`);
   service.setApiKey('test-key');
-  return { service, storage };
+  return { service, storage, interval: MIN_REQUEST_INTERVAL };
 }
 
 test('movie details use the configured key and throttle, share in-flight work, and persist in cache', async t => {
@@ -125,7 +125,7 @@ test('movie details persist only displayed fields, six cast members and the dire
 });
 
 test('concurrent requests reserve distinct start times even while earlier responses are pending', async t => {
-  const { service } = await makeService(t);
+  const { service, interval } = await makeService(t);
   let now = 10000;
   t.mock.method(Date, 'now', () => now);
   const starts = [];
@@ -137,22 +137,22 @@ test('concurrent requests reserve distinct start times even while earlier respon
   const requests = Array.from({ length: 24 }, (_, i) => service.throttledFetch(`movie-${i}`));
   assert.deepEqual(starts, [{ url: 'movie-0', time: 10000 }]);
   for (let i = 1; i < 24; i++) {
-    now += 99;
-    t.mock.timers.tick(99);
+    now += interval - 1;
+    t.mock.timers.tick(interval - 1);
     await Promise.resolve();
     assert.equal(starts.length, i);
     now += 1;
     t.mock.timers.tick(1);
     await Promise.resolve();
     assert.equal(starts.length, i + 1);
-    assert.deepEqual(starts[i], { url: `movie-${i}`, time: 10000 + i * 100 });
+    assert.deepEqual(starts[i], { url: `movie-${i}`, time: 10000 + i * interval });
   }
   finish.forEach(resolve => resolve({ ok: true }));
   await Promise.all(requests);
 });
 
 test('a failed request does not block later slots and an idle request starts immediately', async t => {
-  const { service } = await makeService(t);
+  const { service, interval } = await makeService(t);
   let now = 10000;
   t.mock.method(Date, 'now', () => now);
   const starts = [];
@@ -163,10 +163,10 @@ test('a failed request does not block later slots and an idle request starts imm
   });
   const failure = assert.rejects(service.throttledFetch('fail'), /offline/);
   const next = service.throttledFetch('next');
-  now += 100;
-  t.mock.timers.tick(100);
+  now += interval;
+  t.mock.timers.tick(interval);
   await Promise.all([failure, next]);
-  now += 500;
+  now += 5 * interval;
   await service.throttledFetch('idle');
-  assert.deepEqual(starts, [10000, 10100, 10600]);
+  assert.deepEqual(starts, [10000, 10000 + interval, 10000 + 6 * interval]);
 });

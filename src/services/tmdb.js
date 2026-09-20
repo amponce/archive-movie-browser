@@ -24,7 +24,7 @@ const pendingRequests = new Map();
 
 // Rate limiting
 let lastRequestTime = 0;
-const MIN_REQUEST_INTERVAL = 100; // ms between requests
+export const MIN_REQUEST_INTERVAL = 25; // ms between requests
 
 // Load cache from localStorage on init
 function loadCacheFromStorage() {
