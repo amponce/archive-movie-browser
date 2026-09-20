@@ -225,7 +225,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
                   <div className="flex items-center justify-center gap-1 text-white">
                     <Clock className="w-5 h-5" />
                     <span className="text-xl font-bold">
-                      {tmdbDetails?.runtime || movie.runtimeMinutes}
+                      {tmdbDetails?.runtime || Math.round(movie.runtimeMinutes)}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">Minutes</p>
