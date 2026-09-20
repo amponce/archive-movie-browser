@@ -1,6 +1,6 @@
 # Archive Movie Browser
 
-A modern, responsive web application for browsing and watching public domain movies from the Internet Archive. Features high-quality movie posters from TMDB, genre filtering, and an embedded video player.
+A modern, responsive web application for browsing and watching films hosted on the Internet Archive. Features high-quality movie posters from TMDB, genre filtering, and an embedded video player.
 
 <img width="1841" height="1294" alt="image" src="https://github.com/user-attachments/assets/cfe7ca9c-537c-4db3-9bb2-aebbffa3b083" />
 
@@ -13,7 +13,7 @@ It runs without any configuration. For movie posters, add `VITE_TMDB_API_KEY` in
 
 ## Features
 
-- **Browse Public Domain Films** - Access thousands of free, legal movies from Archive.org's collection
+- **Browse the Internet Archive's films** - A front end to Archive.org's video collections: it shows what Archive.org hosts, with better search, filtering and posters
 - **High-Quality Posters** - Automatically matches movies with TMDB for professional movie posters
 - **Genre Filtering** - Filter by Horror, Sci-Fi, Comedy, Drama, and more
 - **Smart Search** - Search titles, subjects, and creators across every collection in the app at once
