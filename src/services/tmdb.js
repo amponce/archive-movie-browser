@@ -257,7 +257,7 @@ class TMDBService {
     try {
       const params = new URLSearchParams({
         api_key: this.apiKey,
-        append_to_response: 'credits,similar,recommendations'
+        append_to_response: 'credits'
       });
       const response = await this.throttledFetch(`${TMDB_API_BASE}/movie/${id}?${params}`);
       if (!response.ok) {
@@ -265,7 +265,21 @@ class TMDBService {
         return null;
       }
 
-      const data = await response.json();
+      const details = await response.json();
+      // Persist only what MovieDetailPage displays; full responses can crowd
+      // the shared poster cache out of localStorage after a few detail views.
+      const fields = [
+        'title', 'tagline', 'overview', 'release_date', 'original_language',
+        'budget', 'vote_average', 'runtime', 'backdrop_path', 'genres',
+      ];
+      const data = Object.fromEntries(
+        fields.filter(field => field in details).map(field => [field, details[field]])
+      );
+      const director = details.credits?.crew?.find(person => person.job === 'Director');
+      data.credits = {
+        cast: details.credits?.cast?.slice(0, 6) || [],
+        crew: director ? [director] : [],
+      };
       tmdbCache.set(cacheKey, { data, timestamp: Date.now() });
       debouncedSave();
       return data;
