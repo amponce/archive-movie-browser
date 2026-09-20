@@ -60,10 +60,10 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
     return (
       <div
         role="button"
-      tabIndex={0}
-      aria-label={`Open ${movie.title}`}
-      onKeyDown={handleKeyDown}
-      onClick={onPlay}
+        tabIndex={0}
+        aria-label={`Open ${movie.title}`}
+        onKeyDown={handleKeyDown}
+        onClick={onPlay}
         className="movie-card group block bg-gray-800 rounded-lg overflow-hidden hover:ring-2 hover:ring-yellow-400 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
