@@ -85,6 +85,15 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     if (!window.history.state?.movieDetail) {
+      // A shared URL is already a detail URL. Make its underlying history
+      // entry the browse page so closing the overlay also clears the hash.
+      if (window.location.hash) {
+        window.history.replaceState(
+          window.history.state,
+          '',
+          window.location.pathname + window.location.search
+        );
+      }
       window.history.pushState(
         { movieDetail: true, identifier: movie.identifier },
         '',
