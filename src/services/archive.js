@@ -295,6 +295,10 @@ class ArchiveService {
       query += ` AND year:${year}`;
     }
 
+    // Collections contain sub-collections ("Silent Films", "Vintage Cartoons"), which are
+    // folders, not videos. A mediatype:movies filter would be too strict for some collections.
+    query += ' AND NOT mediatype:collection';
+
     return query;
   }
 

@@ -138,7 +138,7 @@ test('buildQuery matches all search words and drops query syntax characters', ()
 });
 
 test('buildQuery ignores a search made only of punctuation', () => {
-  assert.equal(archiveService.buildQuery({ searchQuery: '"" ()', collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror"');
+  assert.equal(archiveService.buildQuery({ searchQuery: '"" ()', collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection');
 });
 
 test('fetchMovies throws when Archive.org returns an error body with HTTP 200', async () => {
@@ -229,7 +229,7 @@ test('buildQuery searches every app collection, but browses only the selected on
   assert.ok(search.startsWith('collection:(feature_films OR '), search);
   assert.ok(search.includes(' OR Film_Noir OR ') && !search.includes('collection:"SciFi_Horror"'), search);
 
-  assert.equal(archiveService.buildQuery({ collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror"');
+  assert.equal(archiveService.buildQuery({ collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection');
 });
 
 function mockDocs(docs) {
@@ -399,5 +399,12 @@ test('fetchMovies retries when Archive.org fails transiently', async () => {
     assert.equal(calls, 1, 'a bad request is not retried');
   } finally {
     globalThis.fetch = realFetch;
+  }
+});
+
+test('buildQuery excludes collection items, which are folders rather than videos', () => {
+  for (const options of [{ collection: 'feature_films' }, { searchQuery: 'casablanca' }, { collection: 'Film_Noir', genre: 'Horror' }]) {
+    const query = archiveService.buildQuery(options);
+    assert.ok(query.endsWith(' AND NOT mediatype:collection'), query);
   }
 });
