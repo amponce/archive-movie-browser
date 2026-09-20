@@ -315,6 +315,28 @@ class ArchiveService {
     return query;
   }
 
+  // Query for search suggestions: every typed word is a prefix of some title word, in any
+  // order, within the film collections. Null when there is too little to go on.
+  buildSuggestQuery(text) {
+    const words = (this.searchWords(text) || []).filter(word => word.length >= 2);
+    if (!words.length || words.join('').length < 3) return null;
+    const films = VIDEO_CATEGORIES.filter(c => c.films).map(c => c.id).join(' OR ');
+    return `collection:(${films}) AND title:(${words.map(w => `${w}*`).join(' AND ')}) AND NOT mediatype:collection`;
+  }
+
+  // A few distinct, most-downloaded films whose titles match what is being typed.
+  // Archive.org takes 1.5-4 s, so callers debounce, pass an AbortSignal, and show local matches first.
+  async suggestTitles(text, { signal, limit = 6 } = {}) {
+    const query = this.buildSuggestQuery(text);
+    if (!query) return [];
+    const { movies } = await this.fetchMovies({ query, rowsPerPage: 30, signal });
+    const seen = new Set();
+    return movies.filter(movie => {
+      const key = this.dedupeKey(movie.title);
+      return seen.has(key) ? false : seen.add(key);
+    }).slice(0, limit);
+  }
+
   // Fetch movies from Archive.org
   async fetchMovies(options = {}) {
     const {
@@ -326,10 +348,12 @@ class ArchiveService {
       minRuntime = 0,
       genre = null,
       collection = 'moviesandfilms',
-      retryDelayMs = 600
+      retryDelayMs = 600,
+      signal,
+      query: queryOverride = null
     } = options;
 
-    const query = this.buildQuery({ searchQuery, genre, collection });
+    const query = queryOverride || this.buildQuery({ searchQuery, genre, collection });
 
     const fields = [
       'identifier',
@@ -354,12 +378,12 @@ class ArchiveService {
     for (let attempt = 1; ; attempt++) {
       let failure;
       try {
-        response = await fetch(url);
+        response = await fetch(url, signal ? { signal } : undefined);
         if (response.ok) break;
         failure = new Error(`Archive.org API error: ${response.status}`);
         if (response.status < 500) throw failure;
       } catch (err) {
-        if (err === failure) throw err;
+        if (err === failure || err.name === 'AbortError') throw err; // a cancelled request is not a failure
         failure = failure || err;
       }
       if (attempt === 3) throw failure;

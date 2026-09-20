@@ -1,0 +1,216 @@
+import React, { useState, useEffect, useMemo, useId } from 'react';
+import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock } from 'lucide-react';
+import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES } from '../services/archive';
+import { matchRanges, localSuggestions, rememberSearch } from '../services/suggest';
+
+const RECENT_KEY = 'recent-searches';
+const ICONS = { search: Search, film: Film, genre: Filter, collection: Library, recent: Clock };
+const HINTS = { genre: 'Genre', collection: 'Collection', recent: 'Recent search' };
+
+// Archive.org answers in 1.5-4 s, so remember what it said for the rest of the visit
+const remoteCache = new Map();
+
+function readRecent() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+    return Array.isArray(stored) ? stored.filter(item => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+// The matched part of each word in yellow, the rest as it is
+function Highlighted({ text, ranges }) {
+  const parts = [];
+  let cursor = 0;
+  (ranges || []).forEach(([start, end]) => {
+    if (start > cursor) parts.push(text.slice(cursor, start));
+    parts.push(<span key={start} className="text-yellow-400 font-semibold">{text.slice(start, end)}</span>);
+    cursor = end;
+  });
+  parts.push(text.slice(cursor));
+  return <>{parts}</>;
+}
+
+// Search input with suggestions as you type. Instant matches come from what the page already
+// has (genres, collections, loaded films, recent searches); film titles from Archive.org follow
+// about a second later. Follows the ARIA combobox pattern: arrows move, Enter picks, Escape closes.
+export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPickGenre, onPickCollection, movies, loading }) {
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
+  const [remote, setRemote] = useState([]);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const [recent, setRecent] = useState(readRecent);
+  const listId = useId();
+
+  const local = useMemo(
+    () => localSuggestions(value, { genres: STANDARD_GENRES, collections: VIDEO_CATEGORIES, movies, recent }),
+    [value, movies, recent]
+  );
+
+  // Titles from Archive.org: wait for a pause in typing, cancel the previous request
+  useEffect(() => {
+    const text = value.trim().toLowerCase();
+    if (!open || !archiveService.buildSuggestQuery(text)) {
+      setRemote([]);
+      setRemoteLoading(false);
+      return;
+    }
+    if (remoteCache.has(text)) {
+      setRemote(remoteCache.get(text));
+      setRemoteLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    setRemoteLoading(true);
+    const timer = setTimeout(() => {
+      archiveService.suggestTitles(text, { signal: controller.signal })
+        .then(films => {
+          remoteCache.set(text, films);
+          setRemote(films);
+          setRemoteLoading(false);
+        })
+        .catch(err => {
+          if (err.name !== 'AbortError') setRemoteLoading(false); // suggestions are a nicety; fail quietly
+        });
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [value, open]);
+
+  // One list: "search for ...", then genres, collections and recent searches, then films.
+  // Films from the page and from Archive.org are ranked together: a title that starts with
+  // what was typed comes before one that only contains it.
+  const items = useMemo(() => {
+    const text = value.trim();
+    const list = text ? [{ type: 'search', label: text, ranges: [] }] : [];
+    list.push(...local.filter(s => s.type !== 'film'));
+
+    const films = local.filter(s => s.type === 'film');
+    const listed = new Set(films.map(s => archiveService.dedupeKey(s.label)));
+    remote.forEach(movie => {
+      const key = archiveService.dedupeKey(movie.title);
+      const ranges = matchRanges(movie.title, text);
+      if (ranges && !listed.has(key)) {
+        listed.add(key);
+        films.push({ type: 'film', label: movie.title, ranges, movie });
+      }
+    });
+    const startsWithQuery = film => Number(film.ranges[0]?.[0] === 0);
+    list.push(...films.sort((a, b) => startsWithQuery(b) - startsWithQuery(a)).slice(0, 8));
+    return list;
+  }, [value, local, remote]);
+
+  useEffect(() => setActive(-1), [value]);
+
+  const runSearch = (text) => {
+    const next = rememberSearch(recent, text);
+    setRecent(next);
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* private mode */ }
+    setOpen(false);
+    onSearch(text);
+  };
+
+  const pick = (item) => {
+    setOpen(false);
+    if (item.type === 'film') return onOpenFilm(item.movie);
+    if (item.type === 'genre') return onPickGenre(item.genre);
+    if (item.type === 'collection') return onPickCollection(item.collectionId);
+    onChange(item.label); // 'search' and 'recent' both run a full search
+    runSearch(item.label);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!open) return setOpen(true);
+      if (!items.length) return;
+      const step = e.key === 'ArrowDown' ? 1 : -1;
+      setActive(index => (index + step + items.length + (index === -1 && step === -1 ? 1 : 0)) % items.length);
+    } else if (e.key === 'Enter') {
+      if (open && active >= 0 && items[active]) pick(items[active]);
+      else runSearch(value);
+    } else if (e.key === 'Escape' && open) {
+      e.stopPropagation(); // close the list, not whatever is behind it
+      setOpen(false);
+    }
+  };
+
+  const showList = open && (items.length > 0 || remoteLoading);
+
+  return (
+    <div className="flex-1 relative flex">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+      <input
+        type="text"
+        role="combobox"
+        aria-label="Search movies"
+        aria-autocomplete="list"
+        aria-expanded={showList}
+        aria-controls={listId}
+        aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
+        autoComplete="off"
+        placeholder="Search movies..."
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+        onKeyDown={handleKeyDown}
+        className="flex-1 pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:border-yellow-400 min-w-0"
+      />
+      <button
+        onClick={() => runSearch(value)}
+        disabled={loading}
+        className="px-3 sm:px-4 py-2 bg-yellow-500 text-gray-900 font-medium rounded-r-lg hover:bg-yellow-400 disabled:opacity-50 flex items-center gap-1 sm:gap-2 flex-shrink-0"
+      >
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+        <span className="hidden sm:inline">Search</span>
+      </button>
+
+      {showList && (
+        <ul
+          id={listId}
+          role="listbox"
+          aria-label="Search suggestions"
+          className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[70vh] overflow-y-auto bg-gray-800 border border-gray-700 rounded-lg shadow-2xl py-1"
+          onMouseDown={(e) => e.preventDefault()} // keep focus in the input so a click registers before blur
+        >
+          {items.map((item, index) => {
+            const Icon = ICONS[item.type];
+            return (
+              <li
+                key={`${item.type}-${item.movie?.identifier || item.label}`}
+                id={`${listId}-${index}`}
+                role="option"
+                aria-selected={index === active}
+                onMouseEnter={() => setActive(index)}
+                onClick={() => pick(item)}
+                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer text-sm ${index === active ? 'bg-gray-700' : ''}`}
+              >
+                <Icon className={`w-4 h-4 flex-shrink-0 ${item.type === 'film' ? 'text-yellow-400' : 'text-gray-400'}`} />
+                <span className="flex-1 min-w-0 truncate text-gray-100">
+                  {item.type === 'search' ? <>Search for “{item.label}”</> : <Highlighted text={item.label} ranges={item.ranges} />}
+                </span>
+                <span className="flex-shrink-0 text-xs text-gray-500 tabular-nums">
+                  {item.type === 'film' ? item.movie.year : HINTS[item.type]}
+                </span>
+              </li>
+            );
+          })}
+          {remoteLoading && (
+            <li role="presentation" className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Looking up titles on Archive.org
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}

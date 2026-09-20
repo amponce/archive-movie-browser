@@ -481,3 +481,30 @@ test('a film year comes from the title first, and an upload-year value counts as
     globalThis.fetch = realFetch;
   }
 });
+
+test('buildSuggestQuery matches word prefixes in titles across the film collections', () => {
+  const query = archiveService.buildSuggestQuery('Haun hou');
+  assert.equal(query, 'collection:(feature_films OR moviesandfilms OR Film_Noir OR SciFi_Horror OR silent_films) AND title:(haun* AND hou*) AND NOT mediatype:collection');
+  assert.equal(archiveService.buildSuggestQuery('a'), null, 'too short to be worth a request');
+  assert.equal(archiveService.buildSuggestQuery('"" ()'), null);
+});
+
+test('suggestTitles returns a few distinct films and can be cancelled without retrying', async () => {
+  const realFetch = globalThis.fetch;
+  try {
+    mockDocs([
+      { identifier: 'n1', title: 'Nosferatu', year: '1922', downloads: 900 },
+      { identifier: 'n2', title: 'Nosferatu_DVD_quality', year: '1922', downloads: 800 },
+      { identifier: 'n3', title: 'Nosferatu the Vampyre', year: '1979', downloads: 700 },
+    ]);
+    const films = await archiveService.suggestTitles('nosf');
+    assert.deepEqual(films.map(f => f.identifier), ['n1', 'n3'], 're-uploads of one film collapse into one suggestion');
+
+    let calls = 0;
+    globalThis.fetch = async (url, { signal } = {}) => { calls++; const e = new Error('aborted'); e.name = 'AbortError'; throw e; };
+    await assert.rejects(() => archiveService.suggestTitles('dracula', { signal: new AbortController().signal }), { name: 'AbortError' });
+    assert.equal(calls, 1, 'a cancelled request is not retried');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
-  Search,
   Film,
   Clock,
   Filter,
-  RefreshCw,
   Loader2,
   Settings,
   Grid,
@@ -15,6 +13,7 @@ import {
 import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, defaultMinRuntime, runtimeFilter } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import MovieCard from './MovieCard';
+import SearchBox from './SearchBox';
 import SettingsModal from './SettingsModal';
 import MovieDetailPage from './MovieDetailPage';
 
@@ -132,8 +131,9 @@ export default function ArchiveMovieBrowser() {
   }, [fetchMovies]);
 
   // Handle search submit
-  const handleSearch = () => {
-    setActiveSearch(searchQuery);
+  const handleSearch = (text = searchQuery) => {
+    setSearchQuery(text);
+    setActiveSearch(text.trim());
     setGenreFilter('all');
   };
 
@@ -247,34 +247,24 @@ export default function ArchiveMovieBrowser() {
           <div className="space-y-3">
             {/* Search row */}
             <div className="flex gap-2">
-              <div className="flex-1 relative flex">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search movies..."
-                  aria-label="Search movies"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    // Emptying the box ends the search
-                    if (e.target.value === '') setActiveSearch('');
-                  }}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="flex-1 pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:border-yellow-400 min-w-0"
-                />
-                <button
-                  onClick={handleSearch}
-                  disabled={loading}
-                  className="px-3 sm:px-4 py-2 bg-yellow-500 text-gray-900 font-medium rounded-r-lg hover:bg-yellow-400 disabled:opacity-50 flex items-center gap-1 sm:gap-2 flex-shrink-0"
-                >
-                  {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="w-4 h-4" />
-                  )}
-                  <span className="hidden sm:inline">Search</span>
-                </button>
-              </div>
+              <SearchBox
+                value={searchQuery}
+                onChange={(text) => {
+                  setSearchQuery(text);
+                  // Emptying the box ends the search
+                  if (text === '') setActiveSearch('');
+                }}
+                onSearch={handleSearch}
+                onOpenFilm={setSelectedMovie}
+                onPickGenre={(genre) => {
+                  setSearchQuery('');
+                  setActiveSearch('');
+                  handleGenreChange(genre);
+                }}
+                onPickCollection={handleCategoryChange}
+                movies={movies}
+                loading={loading}
+              />
             </div>
 
             {/* Filters row */}
