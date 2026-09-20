@@ -1,7 +1,8 @@
 import React, { useState, useEffect, memo } from 'react';
-import { Clock, Download, Star, ExternalLink, Play, Film, Image as ImageIcon } from 'lucide-react';
+import { Clock, Download, Star, ExternalLink, Play, Image as ImageIcon } from 'lucide-react';
 import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
+import TitleCover from './TitleCover';
 
 const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode = 'grid', onPlay, onTmdbData }) {
   const [tmdbData, setTmdbData] = useState(null);
@@ -37,7 +38,6 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
     : null;
 
   const archiveThumbnailUrl = movie.thumbnailUrl;
-  const posterUrl = tmdbPosterUrl || archiveThumbnailUrl;
 
   const handlePosterError = () => {
     setPosterError(true);
@@ -90,22 +90,7 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
           ) : tmdbChecked ? (
             // No real poster: Archive.org thumbnails are a random frame, often cropped
             // opening credits, so use it only as a blurred backdrop behind the title
-            <div className="absolute inset-0 bg-gray-800">
-              <img
-                src={archiveThumbnailUrl}
-                alt=""
-                className="w-full h-full object-cover blur scale-110 opacity-80"
-                onError={(e) => { e.target.style.display = 'none'; }}
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent flex flex-col justify-end p-3">
-                <Film className="w-5 h-5 text-yellow-400 mb-2" />
-                <span className="text-base font-bold text-white leading-tight line-clamp-4">
-                  {movie.title}
-                </span>
-                {movie.year && <span className="text-xs text-gray-400 mt-1">{movie.year}</span>}
-              </div>
-            </div>
+            <TitleCover src={archiveThumbnailUrl} title={movie.title} year={movie.year} />
           ) : null}
 
           {/* Hover overlay */}
@@ -182,24 +167,22 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
     >
       {/* Thumbnail */}
       <div className="relative w-20 h-28 flex-shrink-0 bg-gray-700 rounded overflow-hidden">
-        {!posterLoaded && (
+        {(!tmdbChecked || (tmdbPosterUrl && !posterLoaded)) && (
           <div className="absolute inset-0 skeleton" />
         )}
 
-        {posterUrl && !posterError ? (
+        {tmdbPosterUrl && !posterError ? (
           <img
-            src={posterUrl}
+            src={tmdbPosterUrl}
             alt={movie.title}
             className={`w-full h-full object-cover ${posterLoaded ? 'opacity-100' : 'opacity-0'}`}
             onLoad={handlePosterLoad}
             onError={handlePosterError}
             loading="lazy"
           />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <ImageIcon className="w-6 h-6 text-gray-500" />
-          </div>
-        )}
+        ) : tmdbChecked ? (
+          <TitleCover src={archiveThumbnailUrl} title={movie.title} size="thumb" />
+        ) : null}
 
         {tmdbData && (
           <div className="absolute top-1 right-1 bg-green-600 text-white text-[10px] px-1 rounded">

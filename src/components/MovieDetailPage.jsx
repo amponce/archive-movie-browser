@@ -15,10 +15,13 @@ import {
 } from 'lucide-react';
 import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
+import TitleCover from './TitleCover';
 
 // Sub-component for related movies with TMDB poster support
 function RelatedMovieCard({ movie, onClick }) {
-  const [posterUrl, setPosterUrl] = useState(movie.thumbnailUrl);
+  const [posterUrl, setPosterUrl] = useState(null);
+  const [posterFailed, setPosterFailed] = useState(false);
+  const [tmdbChecked, setTmdbChecked] = useState(false);
 
   useEffect(() => {
     // Try to get TMDB poster
@@ -26,7 +29,7 @@ function RelatedMovieCard({ movie, onClick }) {
       if (data?.posterPath) {
         setPosterUrl(tmdbService.getPosterUrl(data.posterPath, 'small'));
       }
-    });
+    }).finally(() => setTmdbChecked(true));
   }, [movie.title, movie.year]);
 
   const handleClick = (e) => {
@@ -46,14 +49,16 @@ function RelatedMovieCard({ movie, onClick }) {
       onKeyDown={(e) => e.key === 'Enter' && handleClick(e)}
     >
       <div className="relative aspect-[2/3] bg-gray-800 rounded-lg overflow-hidden mb-2">
-        <img
-          src={posterUrl}
-          alt={movie.title}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.src = movie.thumbnailUrl;
-          }}
-        />
+        {posterUrl && !posterFailed ? (
+          <img
+            src={posterUrl}
+            alt={movie.title}
+            className="w-full h-full object-cover"
+            onError={() => setPosterFailed(true)}
+          />
+        ) : tmdbChecked ? (
+          <TitleCover src={movie.thumbnailUrl} title={movie.title} size="small" />
+        ) : null}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
           <Play className="w-10 h-10 text-yellow-400 fill-yellow-400" />
         </div>
@@ -188,7 +193,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
   const embedUrl = `https://archive.org/embed/${movie.identifier}`;
   const posterUrl = tmdbData?.posterPath
     ? tmdbService.getPosterUrl(tmdbData.posterPath, 'large')
-    : movie.thumbnailUrl;
+    : null;
   const backdropUrl = tmdbDetails?.backdrop_path
     ? tmdbService.getBackdropUrl(tmdbDetails.backdrop_path, 'w1280')
     : null;
@@ -238,13 +243,15 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
           {/* Poster */}
           <div className="flex-shrink-0 w-full lg:w-80">
             <div className="relative aspect-[2/3] bg-gray-800 rounded-lg overflow-hidden shadow-2xl">
-              {posterUrl && (
+              {posterUrl ? (
                 <img
                   src={posterUrl}
                   alt={movie.title}
                   className="w-full h-full object-cover"
                 />
-              )}
+              ) : !loading ? (
+                <TitleCover src={movie.thumbnailUrl} title={movie.title} year={movie.year} />
+              ) : null}
 
               {/* Play button overlay */}
               {!isPlaying && (
