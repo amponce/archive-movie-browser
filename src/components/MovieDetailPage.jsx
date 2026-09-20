@@ -257,7 +257,8 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
               {!isPlaying && (
                 <button
                   onClick={() => setIsPlaying(true)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 hover:bg-black/40 transition-colors group"
+                  aria-label={`Play ${movie.title}`}
+                  className="absolute inset-0 flex items-center justify-center bg-transparent hover:bg-black/40 focus-visible:bg-black/40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-yellow-400 transition-colors group"
                 >
                   <div className="w-20 h-20 rounded-full bg-yellow-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Play className="w-10 h-10 text-gray-900 fill-gray-900 ml-1" />
