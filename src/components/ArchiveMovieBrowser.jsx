@@ -18,8 +18,6 @@ import MovieCard from './MovieCard';
 import SettingsModal from './SettingsModal';
 import MovieDetailPage from './MovieDetailPage';
 
-const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
-
 export default function ArchiveMovieBrowser() {
   // Settings & UI state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -51,7 +49,7 @@ export default function ArchiveMovieBrowser() {
   }, []);
 
   // TMDB API key from environment variable only
-  const tmdbApiKey = TMDB_API_KEY;
+  const tmdbApiKey = tmdbService.apiKey;
 
   // Data state
   const [movies, setMovies] = useState([]);
@@ -70,14 +68,6 @@ export default function ArchiveMovieBrowser() {
 
   // Get current category info
   const currentCategory = VIDEO_CATEGORIES.find(c => c.id === category) || VIDEO_CATEGORIES[0];
-
-  // Initialize TMDB service
-  useEffect(() => {
-    if (tmdbApiKey) {
-      tmdbService.setApiKey(tmdbApiKey);
-    }
-  }, [tmdbApiKey]);
-
 
   // Only the latest request may update state (older responses can arrive last)
   const latestRequest = useRef(0);

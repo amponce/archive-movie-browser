@@ -16,8 +16,6 @@ import {
 import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
 
-const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
-
 // Sub-component for related movies with TMDB poster support
 function RelatedMovieCard({ movie, onClick }) {
   const [posterUrl, setPosterUrl] = useState(movie.thumbnailUrl);
@@ -163,18 +161,9 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
 
       // If we found a match, fetch detailed info
       if (data?.id) {
-        try {
-          const detailsRes = await fetch(
-            `https://api.themoviedb.org/3/movie/${data.id}?api_key=${TMDB_API_KEY}&append_to_response=credits,similar,recommendations`
-          );
-          if (detailsRes.ok) {
-            const details = await detailsRes.json();
-            if (cancelled) return;
-            setTmdbDetails(details);
-          }
-        } catch (err) {
-          console.error('Failed to fetch TMDB details:', err);
-        }
+        const details = await tmdbService.getMovieDetails(data.id);
+        if (cancelled) return;
+        setTmdbDetails(details);
       }
       if (!cancelled) setLoading(false);
     });
@@ -201,7 +190,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
     ? tmdbService.getPosterUrl(tmdbData.posterPath, 'large')
     : movie.thumbnailUrl;
   const backdropUrl = tmdbDetails?.backdrop_path
-    ? `https://image.tmdb.org/t/p/w1280${tmdbDetails.backdrop_path}`
+    ? tmdbService.getBackdropUrl(tmdbDetails.backdrop_path, 'w1280')
     : null;
 
   const director = tmdbDetails?.credits?.crew?.find(c => c.job === 'Director');
@@ -374,7 +363,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
                     <div key={actor.id} className="flex items-center gap-2 bg-gray-800 rounded-full pr-3">
                       {actor.profile_path ? (
                         <img
-                          src={`https://image.tmdb.org/t/p/w92${actor.profile_path}`}
+                          src={tmdbService.getProfileUrl(actor.profile_path)}
                           alt={actor.name}
                           className="w-8 h-8 rounded-full object-cover"
                         />

@@ -230,6 +230,51 @@ class TMDBService {
     }
   }
 
+  // Get full movie details through the same cache and throttle as searches.
+  async getMovieDetails(id) {
+    if (!this.enabled) return null;
+
+    const cacheKey = `details:${id}`;
+    const cached = tmdbCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      return cached.data;
+    }
+
+    if (pendingRequests.has(cacheKey)) {
+      return pendingRequests.get(cacheKey);
+    }
+
+    const requestPromise = this._fetchMovieDetails(id, cacheKey);
+    pendingRequests.set(cacheKey, requestPromise);
+    try {
+      return await requestPromise;
+    } finally {
+      pendingRequests.delete(cacheKey);
+    }
+  }
+
+  async _fetchMovieDetails(id, cacheKey) {
+    try {
+      const params = new URLSearchParams({
+        api_key: this.apiKey,
+        append_to_response: 'credits,similar,recommendations'
+      });
+      const response = await this.throttledFetch(`${TMDB_API_BASE}/movie/${id}?${params}`);
+      if (!response.ok) {
+        console.warn('TMDB details failed:', response.status);
+        return null;
+      }
+
+      const data = await response.json();
+      tmdbCache.set(cacheKey, { data, timestamp: Date.now() });
+      debouncedSave();
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch TMDB details:', error);
+      return null;
+    }
+  }
+
   // Get poster URL
   getPosterUrl(posterPath, size = 'medium') {
     if (!posterPath) return null;
@@ -240,6 +285,12 @@ class TMDBService {
   getBackdropUrl(backdropPath, size = 'original') {
     if (!backdropPath) return null;
     return `${TMDB_IMAGE_BASE}/${size}${backdropPath}`;
+  }
+
+  // Get cast profile URL
+  getProfileUrl(profilePath, size = 'w92') {
+    if (!profilePath) return null;
+    return `${TMDB_IMAGE_BASE}/${size}${profilePath}`;
   }
 
   // Get TMDB genres mapping
@@ -279,6 +330,6 @@ class TMDBService {
 }
 
 // Export singleton instance
-export const tmdbService = new TMDBService(null);
+export const tmdbService = new TMDBService(import.meta.env?.VITE_TMDB_API_KEY || '');
 
 export default tmdbService;
