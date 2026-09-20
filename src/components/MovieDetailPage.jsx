@@ -5,6 +5,7 @@ import {
   Clock,
   Star,
   Play,
+  Calendar,
   Users,
   Film,
   Globe,
