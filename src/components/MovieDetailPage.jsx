@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   X,
   ExternalLink,
@@ -75,6 +75,58 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
   const [loading, setLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const playerRef = React.useRef(null);
+  const onCloseRef = useRef(onClose);
+  const hasRenderedIdentifierRef = useRef(false);
+
+  // Keep the page fixed while the full-screen overlay is displayed, and give
+  // this overlay session one history entry that the browser can return from.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    if (!window.history.state?.movieDetail) {
+      window.history.pushState(
+        { movieDetail: true, identifier: movie.identifier },
+        '',
+        `#${encodeURIComponent(movie.identifier)}`
+      );
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  // Related movies reuse this overlay. Replace its one history entry instead
+  // of adding an entry for every related movie viewed.
+  useEffect(() => {
+    if (!hasRenderedIdentifierRef.current) {
+      hasRenderedIdentifierRef.current = true;
+      return;
+    }
+    window.history.replaceState(
+      { movieDetail: true, identifier: movie.identifier },
+      '',
+      `#${encodeURIComponent(movie.identifier)}`
+    );
+  }, [movie.identifier]);
+
+  onCloseRef.current = onClose;
+
+  // Closing always goes through history so the browser Back button, Escape,
+  // and the in-page button have identical behavior.
+  useEffect(() => {
+    const handlePopState = () => onCloseRef.current();
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') window.history.back();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Scroll to player when it opens
   useEffect(() => {
@@ -162,7 +214,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
       <div className="sticky top-0 z-10 bg-gray-900/90 backdrop-blur border-b border-gray-800">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
-            onClick={onClose}
+            onClick={() => window.history.back()}
             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -224,7 +276,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
                   <div className="flex items-center justify-center gap-1 text-white">
                     <Clock className="w-5 h-5" />
                     <span className="text-xl font-bold">
-                      {tmdbDetails?.runtime || movie.runtimeMinutes}
+                      {tmdbDetails?.runtime || Math.round(movie.runtimeMinutes)}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">Minutes</p>

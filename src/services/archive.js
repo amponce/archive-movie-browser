@@ -5,12 +5,15 @@ const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
 
 // Video categories/collections available on Archive.org
 // Collection IDs are case-sensitive and must match exactly
+// `films: true` marks collections of narrative films; genre pills browse across all of them.
+// `features: true` marks collections of feature-length films, which default to a 40+ minute
+// filter. Everything else is mostly shorts or has no runtime recorded, so it defaults to any length.
 export const VIDEO_CATEGORIES = [
-  { id: 'feature_films', name: 'Feature Films', description: 'Classic feature-length movies' },
-  { id: 'moviesandfilms', name: 'Movies & Films', description: 'Full-length films from the Archive' },
-  { id: 'Film_Noir', name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
-  { id: 'SciFi_Horror', name: 'Sci-Fi & Horror', description: 'Science fiction and horror films' },
-  { id: 'silent_films', name: 'Silent Films', description: 'Silent era classics' },
+  { id: 'feature_films', films: true, features: true, name: 'Feature Films', description: 'Classic feature-length movies' },
+  { id: 'moviesandfilms', films: true, features: true, name: 'Movies & Films', description: 'Full-length films from the Archive' },
+  { id: 'Film_Noir', films: true, features: true, name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
+  { id: 'SciFi_Horror', films: true, features: true, name: 'Sci-Fi & Horror', description: 'Science fiction and horror films' },
+  { id: 'silent_films', films: true, name: 'Silent Films', description: 'Silent era classics' },
   { id: 'animationandcartoons', name: 'Animation & Cartoons', description: 'Animated films and shorts' },
   { id: 'television', name: 'Television', description: 'TV shows and broadcasts' },
   { id: 'prelinger', name: 'Prelinger Archives', description: 'Educational and ephemeral films' },
@@ -20,10 +23,23 @@ export const VIDEO_CATEGORIES = [
   { id: 'newsandpublicaffairs', name: 'News & Public Affairs', description: 'News broadcasts and documentaries' },
   { id: 'spiritualityandreligion', name: 'Spirituality & Religion', description: 'Religious and spiritual content' },
   { id: 'sports', name: 'Sports Videos', description: 'Sports footage and broadcasts' },
-  { id: 'videogamearchive', name: 'Video Games', description: 'Video game related content' },
+  { id: 'gamevideos', name: 'Video Games', description: 'Video game related content' },
   { id: 'vlogs', name: 'Vlogs', description: 'Video blogs and personal content' },
   { id: 'youth_media', name: 'Youth Media', description: 'Content created by youth' }
 ];
+
+// Minimum runtime (minutes) a collection should start with
+export function defaultMinRuntime(collectionId) {
+  return VIDEO_CATEGORIES.find(c => c.id === collectionId)?.features ? 40 : 0;
+}
+
+// Predicate for the Full Movies / Shorts toggle. Many Archive.org items have no runtime
+// recorded, which is not evidence of a short, so only a known runtime can exclude a film.
+export function runtimeFilter({ shorts = false, minRuntime = 0 } = {}) {
+  return (movie) =>
+    movie.runtimeMinutes === 0 ||
+    (shorts ? movie.runtimeMinutes <= 30 : movie.runtimeMinutes >= minRuntime);
+}
 
 // Content filter - block inappropriate content
 function isBlockedContent(movie) {
@@ -128,6 +144,31 @@ const UPLOAD_NOISE = /\b(\d{3,4}p|4k|\d+fps|\d+kb|full hd|hd|uhd|blu ?ray|bdrip|
 const FILM_YEAR = /\b(18|19|20)\d{2}\b/g;
 
 class ArchiveService {
+  normalizeMovie(movie) {
+    const runtimeMinutes = this.parseRuntime(movie.runtime);
+    const genres = this.extractGenres(movie.subject);
+    const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
+
+    return {
+      id: movie.identifier,
+      identifier: movie.identifier,
+      title: title || movie.identifier,
+      year: movie.year ? parseInt(movie.year, 10) : null,
+      runtimeMinutes,
+      runtime: movie.runtime,
+      genres: genres.length > 0 ? genres : ['Uncategorized'],
+      downloads: movie.downloads || 0,
+      rating: movie.avg_rating || null,
+      description: movie.description,
+      creator: Array.isArray(movie.creator) ? movie.creator[0] : movie.creator,
+      archiveUrl: `https://archive.org/details/${movie.identifier}`,
+      thumbnailUrl: `https://archive.org/services/img/${movie.identifier}`,
+      embedUrl: `https://archive.org/embed/${movie.identifier}`,
+      date: movie.date || movie.publicdate,
+      publicDate: movie.publicdate
+    };
+  }
+
   // Key that is equal for re-uploads of one film:
   // "Title", "The Title-hd", "title_512kb", "Title (1959) [1080p Blu-Ray]"
   dedupeKey(title) {
@@ -246,6 +287,11 @@ class ArchiveService {
 
     // Add genre filter to query for better results
     if (genre && genre !== 'all') {
+      // One collection rarely has more than a handful of a genre (Horror in Film Noir: 23),
+      // so a genre browses every film collection (10,000+). A search already covers everything.
+      if (!words) {
+        query = `collection:(${VIDEO_CATEGORIES.filter(c => c.films).map(c => c.id).join(' OR ')})`;
+      }
       // Include aliases so the server matches what normalizeGenre() maps to this genre
       const names = [genre, ...Object.keys(GENRE_ALIASES).filter(alias => GENRE_ALIASES[alias] === genre)];
       query += ` AND subject:(${names.map(n => `"${n}"`).join(' OR ')})`;
@@ -254,6 +300,10 @@ class ArchiveService {
     if (year) {
       query += ` AND year:${year}`;
     }
+
+    // Collections contain sub-collections ("Silent Films", "Vintage Cartoons"), which are
+    // folders, not videos. A mediatype:movies filter would be too strict for some collections.
+    query += ' AND NOT mediatype:collection';
 
     return query;
   }
@@ -268,7 +318,8 @@ class ArchiveService {
       rowsPerPage = 200,
       minRuntime = 0,
       genre = null,
-      collection = 'moviesandfilms'
+      collection = 'moviesandfilms',
+      retryDelayMs = 600
     } = options;
 
     const query = this.buildQuery({ searchQuery, genre, collection });
@@ -290,10 +341,22 @@ class ArchiveService {
     const fieldParams = fields.map(f => `fl[]=${f}`).join('&');
     const url = `${ARCHIVE_API}?q=${encodeURIComponent(query)}&${fieldParams}&sort[]=${sortBy}+${sortOrder}&rows=${rowsPerPage}&page=${page}&output=json`;
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Archive.org API error: ${response.status}`);
+    // Archive.org intermittently returns 502s. Its error pages carry no CORS header, so a
+    // browser reports them as "Failed to fetch". Retry those; don't retry a bad request.
+    let response;
+    for (let attempt = 1; ; attempt++) {
+      let failure;
+      try {
+        response = await fetch(url);
+        if (response.ok) break;
+        failure = new Error(`Archive.org API error: ${response.status}`);
+        if (response.status < 500) throw failure;
+      } catch (err) {
+        if (err === failure) throw err;
+        failure = failure || err;
+      }
+      if (attempt === 3) throw failure;
+      await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempt));
     }
 
     const data = await response.json();
@@ -309,31 +372,7 @@ class ArchiveService {
 
     const movies = data.response.docs
       .filter(movie => !isBlockedContent(movie)) // Filter out inappropriate content
-      .map(movie => {
-        const runtimeMinutes = this.parseRuntime(movie.runtime);
-        const genres = this.extractGenres(movie.subject);
-        // Handle title being string or array
-        const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
-
-        return {
-          id: movie.identifier,
-          identifier: movie.identifier,
-          title: title || movie.identifier,
-          year: movie.year ? parseInt(movie.year, 10) : null,
-          runtimeMinutes,
-          runtime: movie.runtime,
-          genres: genres.length > 0 ? genres : ['Uncategorized'],
-          downloads: movie.downloads || 0,
-          rating: movie.avg_rating || null,
-          description: movie.description,
-          creator: Array.isArray(movie.creator) ? movie.creator[0] : movie.creator,
-          archiveUrl: `https://archive.org/details/${movie.identifier}`,
-          thumbnailUrl: `https://archive.org/services/img/${movie.identifier}`,
-          embedUrl: `https://archive.org/embed/${movie.identifier}`,
-          date: movie.date || movie.publicdate,
-          publicDate: movie.publicdate
-        };
-      });
+      .map(movie => this.normalizeMovie(movie));
 
     // Filter by runtime if specified
     const filteredMovies = minRuntime > 0
@@ -410,6 +449,21 @@ class ArchiveService {
     }
 
     return response.json();
+  }
+
+  // Fetch and normalize one item's metadata for direct, hash-based links.
+  async getMovieByIdentifier(identifier) {
+    const data = await this.getMetadata(identifier);
+    if (!data?.metadata || !data.metadata.identifier) {
+      throw new Error(`Archive.org item not found: ${identifier}`);
+    }
+
+    const movie = this.normalizeMovie(data.metadata);
+    if (isBlockedContent(movie)) {
+      throw new Error(`Archive.org item is blocked: ${identifier}`);
+    }
+
+    return movie;
   }
 
   // Format runtime for display

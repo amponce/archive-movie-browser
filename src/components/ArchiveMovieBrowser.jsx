@@ -12,7 +12,7 @@ import {
   SlidersHorizontal,
   Library,
 } from 'lucide-react';
-import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES } from '../services/archive';
+import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, defaultMinRuntime, runtimeFilter } from '../services/archive';
 import tmdbService, { hasCachedPoster } from '../services/tmdb';
 import MovieCard from './MovieCard';
 import SettingsModal from './SettingsModal';
@@ -25,6 +25,30 @@ export default function ArchiveMovieBrowser() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
+
+  // Allow a shared #identifier URL to open an Archive.org item directly.
+  useEffect(() => {
+    const identifier = window.location.hash.slice(1);
+    if (!identifier) return;
+
+    let cancelled = false;
+    let decodedIdentifier;
+    try {
+      decodedIdentifier = decodeURIComponent(identifier);
+    } catch {
+      decodedIdentifier = identifier;
+    }
+
+    archiveService.getMovieByIdentifier(decodedIdentifier)
+      .then((movie) => {
+        if (!cancelled) setSelectedMovie(movie);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error('Failed to open movie from URL hash:', err);
+      });
+
+    return () => { cancelled = true; };
+  }, []);
 
   // TMDB API key from environment variable only
   const tmdbApiKey = TMDB_API_KEY;
@@ -97,11 +121,8 @@ export default function ArchiveMovieBrowser() {
         genre: genreFilter !== 'all' ? genreFilter : null,
         collection: category,
         seenTitles: seen,
-        // Many Archive.org items have no runtime recorded; a search keeps them rather than hiding the film
-        filter: (m) =>
-          ((activeSearch && m.runtimeMinutes === 0) ||
-            (contentType === 'trailers' ? m.runtimeMinutes <= 30 : m.runtimeMinutes >= minRuntime)) &&
-          (genreFilter === 'all' || m.genres.includes(genreFilter))
+        // The server query already applied the genre, so only runtime is checked here
+        filter: runtimeFilter({ shorts: contentType === 'trailers', minRuntime })
       });
       if (requestId !== latestRequest.current) return;
 
@@ -142,6 +163,10 @@ export default function ArchiveMovieBrowser() {
   // Handle category change
   const handleCategoryChange = (newCategory) => {
     setCategory(newCategory);
+    // Cartoons, Prelinger films and most uploads are short or have no runtime, so only
+    // feature-film collections start on the 40+ minute filter
+    setContentType('features');
+    setMinRuntime(defaultMinRuntime(newCategory));
     // Searches span all collections, so picking one means going back to browsing it
     setSearchQuery('');
     setActiveSearch('');
@@ -171,8 +196,9 @@ export default function ArchiveMovieBrowser() {
   const filteredByRuntime = useMemo(() => {
     let filtered = movies;
 
-    // If no active search, filter out movies known to not have TMDB posters
-    if (!activeSearch && tmdbApiKey) {
+    // In feature-film collections, hide movies known to have no TMDB poster. TMDB does not
+    // know cartoon shorts or educational films, so other collections would end up empty.
+    if (!activeSearch && tmdbApiKey && currentCategory.features) {
       filtered = filtered.filter(m => {
         if (!m) return false;
         // Check if we already know this movie has no poster
@@ -186,7 +212,7 @@ export default function ArchiveMovieBrowser() {
     }
 
     return filtered;
-  }, [movies, activeSearch, moviesWithoutImages, tmdbApiKey]);
+  }, [movies, activeSearch, moviesWithoutImages, tmdbApiKey, currentCategory]);
 
   // Filter by genre and apply client-side sorting for TMDB rating
   const displayedMovies = useMemo(() => {
@@ -323,7 +349,7 @@ export default function ArchiveMovieBrowser() {
                 <button
                   onClick={() => {
                     setContentType('features');
-                    setMinRuntime(40);
+                    setMinRuntime(defaultMinRuntime(category));
                   }}
                   className={`px-2 sm:px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition-colors ${
                     contentType === 'features'
@@ -348,21 +374,31 @@ export default function ArchiveMovieBrowser() {
                 </button>
               </div>
 
-              {/* Runtime filter */}
+              {/* Runtime filter. Shorts are hard-capped at ≤30 min, so do not show a live select. */}
               <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
                 <Clock className="w-4 h-4 text-gray-400 hidden sm:block" />
-                <select
-                  value={minRuntime}
-                  onChange={(e) => setMinRuntime(Number(e.target.value))}
-                  className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
-                >
-                  <option value={0}>Any length</option>
-                  <option value={20}>20+ min</option>
-                  <option value={40}>40+ min</option>
-                  <option value={60}>60+ min</option>
-                  <option value={75}>75+ min</option>
-                  <option value={90}>90+ min</option>
-                </select>
+                {contentType === 'trailers' ? (
+                  <span
+                    className="py-2 text-xs sm:text-sm text-gray-400 cursor-default select-none"
+                    title="Shorts are limited to 30 minutes or less"
+                    aria-label="Runtime is limited to 30 minutes or less in Shorts mode"
+                  >
+                    ≤30 min
+                  </span>
+                ) : (
+                  <select
+                    value={minRuntime}
+                    onChange={(e) => setMinRuntime(Number(e.target.value))}
+                    className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
+                  >
+                    <option value={0}>Any length</option>
+                    <option value={20}>20+ min</option>
+                    <option value={40}>40+ min</option>
+                    <option value={60}>60+ min</option>
+                    <option value={75}>75+ min</option>
+                    <option value={90}>90+ min</option>
+                  </select>
+                )}
               </div>
 
               {/* Sort */}
@@ -427,10 +463,10 @@ export default function ArchiveMovieBrowser() {
           <span>
             Showing <strong className="text-white">{displayedMovies.length}</strong>
             {' '}{contentType === 'trailers' ? 'shorts' : 'movies'}
-            {genreFilter !== 'all' && ` in ${genreFilter}`}
+            {genreFilter !== 'all' && ` in ${genreFilter}${activeSearch ? '' : ' across all film collections'}`}
             {activeSearch && ` for "${activeSearch}" across all collections`}
           </span>
-          {contentType !== 'trailers' && (
+          {contentType !== 'trailers' && minRuntime > 0 && (
             <>
               <span className="text-gray-600">|</span>
               <span>{minRuntime}+ min runtime</span>
