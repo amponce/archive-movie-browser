@@ -3,13 +3,12 @@ import { Clock, Download, Star, ExternalLink, Play, Film, Image as ImageIcon } f
 import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
 
-const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode = 'grid', onPlay, onImageStatus, onTmdbData }) {
+const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode = 'grid', onPlay, onTmdbData }) {
   const [tmdbData, setTmdbData] = useState(null);
   const [tmdbChecked, setTmdbChecked] = useState(false);
   const [posterLoaded, setPosterLoaded] = useState(false);
   const [posterError, setPosterError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [statusReported, setStatusReported] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,22 +26,10 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
     return () => { cancelled = true; };
   }, [movie.title, movie.year, tmdbEnabled, tmdbChecked]);
 
-  // Report TMDB data once when checked (separate effect to avoid loops)
+  // Report TMDB data once when it arrives (separate effect to avoid loops)
   useEffect(() => {
-    if (!tmdbChecked || statusReported) return;
-
-    if (tmdbData) {
-      onTmdbData?.(tmdbData);
-      if (tmdbData.posterPath) {
-        onImageStatus?.(true);
-      } else {
-        onImageStatus?.(false);
-      }
-    } else if (tmdbChecked) {
-      onImageStatus?.(false);
-    }
-    setStatusReported(true);
-  }, [tmdbChecked, tmdbData, statusReported]);
+    if (tmdbData) onTmdbData?.(tmdbData);
+  }, [tmdbData]);
 
   // Determine which poster to use
   const tmdbPosterUrl = tmdbData?.posterPath
@@ -55,20 +42,10 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
   const handlePosterError = () => {
     setPosterError(true);
     setPosterLoaded(true);
-    // If both TMDB and archive image failed, report no image
-    if (tmdbChecked && !tmdbPosterUrl && !statusReported) {
-      onImageStatus?.(false);
-      setStatusReported(true);
-    }
   };
 
   const handlePosterLoad = () => {
     setPosterLoaded(true);
-    // Report successful image load
-    if (!statusReported) {
-      onImageStatus?.(true);
-      setStatusReported(true);
-    }
   };
 
   // Grid view (poster-focused)

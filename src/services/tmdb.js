@@ -281,19 +281,4 @@ class TMDBService {
 // Export singleton instance
 export const tmdbService = new TMDBService(null);
 
-// Helper to check if a movie has a cached poster
-export function hasCachedPoster(title, year) {
-  const key = `${title.toLowerCase().trim()}-${year || 'unknown'}`;
-  const cached = tmdbCache.get(key);
-  if (cached && cached.data?.posterPath) {
-    return true;
-  }
-  // If we've checked and it has no poster, return false
-  if (cached && cached.data === null) {
-    return false;
-  }
-  // Not checked yet - return null (unknown)
-  return null;
-}
-
 export default tmdbService;

@@ -13,7 +13,7 @@ import {
   Library,
 } from 'lucide-react';
 import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, defaultMinRuntime, runtimeFilter } from '../services/archive';
-import tmdbService, { hasCachedPoster } from '../services/tmdb';
+import tmdbService from '../services/tmdb';
 import MovieCard from './MovieCard';
 import SettingsModal from './SettingsModal';
 import MovieDetailPage from './MovieDetailPage';
@@ -145,19 +145,16 @@ export default function ArchiveMovieBrowser() {
   const handleSearch = () => {
     setActiveSearch(searchQuery);
     setGenreFilter('all');
-    setMoviesWithoutImages(new Set());
   };
 
   // Handle genre filter change
   const handleGenreChange = (genre) => {
     setGenreFilter(genre);
-    setMoviesWithoutImages(new Set());
   };
 
   // Handle sort change
   const handleSortChange = (newSort) => {
     setSortBy(newSort);
-    setMoviesWithoutImages(new Set());
   };
 
   // Handle category change
@@ -170,70 +167,28 @@ export default function ArchiveMovieBrowser() {
     // Searches span all collections, so picking one means going back to browsing it
     setSearchQuery('');
     setActiveSearch('');
-    setMoviesWithoutImages(new Set());
     setGenreFilter('all'); // Reset genre filter when changing category
   };
 
-  // Track movies that failed to load images (no poster available)
-  const [moviesWithoutImages, setMoviesWithoutImages] = useState(new Set());
   // Track TMDB ratings for client-side sorting
   const [tmdbRatings, setTmdbRatings] = useState({});
 
-  // Stable callbacks for MovieCard
-  const handleImageStatus = useCallback((id, hasImage) => {
-    if (!hasImage) {
-      setMoviesWithoutImages(prev => new Set([...prev, id]));
-    }
-  }, []);
-
+  // Stable callback for MovieCard
   const handleTmdbData = useCallback((id, data) => {
     if (data?.voteAverage) {
       setTmdbRatings(prev => ({ ...prev, [id]: data.voteAverage }));
     }
   }, []);
 
-  // Runtime and genre filtering already happened in fetchMovies
-  const filteredByRuntime = useMemo(() => {
-    let filtered = movies;
-
-    // In feature-film collections, hide movies known to have no TMDB poster. TMDB does not
-    // know cartoon shorts or educational films, so other collections would end up empty.
-    if (!activeSearch && tmdbApiKey && currentCategory.features) {
-      filtered = filtered.filter(m => {
-        if (!m) return false;
-        // Check if we already know this movie has no poster
-        if (moviesWithoutImages.has(m.identifier)) return false;
-        // Check TMDB cache
-        const cachedStatus = hasCachedPoster(m.title, m.year);
-        if (cachedStatus === false) return false;
-        // Unknown or has poster - show it
-        return true;
-      });
-    }
-
-    return filtered;
-  }, [movies, activeSearch, moviesWithoutImages, tmdbApiKey, currentCategory]);
-
-  // Filter by genre and apply client-side sorting for TMDB rating
+  // Runtime and genre filtering already happened in fetchMovies; films with no
+  // TMDB poster stay in the list and get a title cover
   const displayedMovies = useMemo(() => {
-    if (!filteredByRuntime || !Array.isArray(filteredByRuntime)) {
-      return [];
-    }
-
-    let filtered = filteredByRuntime;
-
     // Client-side sort by TMDB rating
     if (sortBy === 'tmdb_rating') {
-      filtered = [...filtered].sort((a, b) => {
-        const ratingA = tmdbRatings[a?.identifier] || 0;
-        const ratingB = tmdbRatings[b?.identifier] || 0;
-        return ratingB - ratingA;
-      });
+      return [...movies].sort((a, b) => (tmdbRatings[b.identifier] || 0) - (tmdbRatings[a.identifier] || 0));
     }
-
-    return filtered;
-  }, [filteredByRuntime, sortBy, tmdbRatings]);
-
+    return movies;
+  }, [movies, sortBy, tmdbRatings]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -517,7 +472,6 @@ export default function ArchiveMovieBrowser() {
                 tmdbEnabled={!!tmdbApiKey}
                 viewMode={viewMode}
                 onPlay={() => setSelectedMovie(movie)}
-                onImageStatus={(hasImage) => handleImageStatus(movie.identifier, hasImage)}
                 onTmdbData={(data) => handleTmdbData(movie.identifier, data)}
               />
             ))}
