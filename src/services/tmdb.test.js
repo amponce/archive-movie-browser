@@ -114,3 +114,50 @@ test('movie details persist only displayed fields, six cast members and the dire
   assert.equal(persisted.credits.cast.length, 6);
   assert.deepEqual(response, original);
 });
+
+test('concurrent requests reserve distinct start times even while earlier responses are pending', async t => {
+  const { service } = await makeService(t);
+  let now = 10000;
+  t.mock.method(Date, 'now', () => now);
+  const starts = [];
+  const finish = [];
+  t.mock.method(globalThis, 'fetch', url => {
+    starts.push({ url, time: now });
+    return new Promise(resolve => finish.push(resolve));
+  });
+  const requests = Array.from({ length: 24 }, (_, i) => service.throttledFetch(`movie-${i}`));
+  assert.deepEqual(starts, [{ url: 'movie-0', time: 10000 }]);
+  for (let i = 1; i < 24; i++) {
+    now += 99;
+    t.mock.timers.tick(99);
+    await Promise.resolve();
+    assert.equal(starts.length, i);
+    now += 1;
+    t.mock.timers.tick(1);
+    await Promise.resolve();
+    assert.equal(starts.length, i + 1);
+    assert.deepEqual(starts[i], { url: `movie-${i}`, time: 10000 + i * 100 });
+  }
+  finish.forEach(resolve => resolve({ ok: true }));
+  await Promise.all(requests);
+});
+
+test('a failed request does not block later slots and an idle request starts immediately', async t => {
+  const { service } = await makeService(t);
+  let now = 10000;
+  t.mock.method(Date, 'now', () => now);
+  const starts = [];
+  t.mock.method(globalThis, 'fetch', async url => {
+    starts.push(now);
+    if (url === 'fail') throw new Error('offline');
+    return { ok: true };
+  });
+  const failure = assert.rejects(service.throttledFetch('fail'), /offline/);
+  const next = service.throttledFetch('next');
+  now += 100;
+  t.mock.timers.tick(100);
+  await Promise.all([failure, next]);
+  now += 500;
+  await service.throttledFetch('idle');
+  assert.deepEqual(starts, [10000, 10100, 10600]);
+});
