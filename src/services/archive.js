@@ -3,6 +3,10 @@
 const ARCHIVE_API = 'https://archive.org/advancedsearch.php';
 const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
 
+const BLOCKED_TITLE_PATTERNS = [/\bthe child\b/i];
+// Identifier separators and year suffixes delimit tokens, but longer words do not.
+const BLOCKED_IDENTIFIER_PATTERNS = [/(^|[^a-z])thechild([^a-z]|$)/i];
+
 // Video categories/collections available on Archive.org
 // Collection IDs are case-sensitive and must match exactly
 // `films: true` marks collections of narrative films; genre pills browse across all of them.
@@ -47,15 +51,8 @@ function isBlockedContent(movie) {
 
   // Handle title being string or array
   const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
-  const titleLower = String(title || '').toLowerCase();
-  const identifierLower = String(movie.identifier || '').toLowerCase();
-
-  // Block content with problematic patterns
-  if (titleLower.includes('the child') || identifierLower.includes('thechild')) {
-    return true;
-  }
-
-  return false;
+  return BLOCKED_TITLE_PATTERNS.some(pattern => pattern.test(String(title || ''))) ||
+    BLOCKED_IDENTIFIER_PATTERNS.some(pattern => pattern.test(String(movie.identifier || '')));
 }
 
 // Standard movie genre categories for normalization

@@ -118,6 +118,53 @@ test('getMovieByIdentifier rejects when item contains blocked title', async () =
   }
 });
 
+const allowedContent = [
+  { identifier: 'thechildrenshour', title: "The Children's Hour" },
+  { identifier: 'thechildhoodofmaximgorky', title: ['The Childhood of Maxim Gorky'] },
+];
+const blockedContent = [
+  { identifier: 'blocked-title', title: 'The Child Film' },
+  { identifier: 'blocked-array-title', title: ['THE CHILD (1977)'] },
+  { identifier: 'thechild-item', title: 'Some Film' },
+  { identifier: 'TheChild1977', title: 'Another Film' },
+  { identifier: 'classic_thechild_1977', title: 'A Third Film' },
+];
+
+test('fetchMovies keeps longer words while filtering blocked titles and identifier tokens', async () => {
+  const realFetch = globalThis.fetch;
+  const docs = [...blockedContent, ...allowedContent];
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({ response: { docs, numFound: docs.length } })
+  });
+  try {
+    const { movies } = await archiveService.fetchMovies({});
+    assert.deepEqual(movies.map(movie => movie.identifier), allowedContent.map(movie => movie.identifier));
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+test('getMovieByIdentifier keeps longer words while rejecting blocked titles and identifier tokens', async () => {
+  const realFetch = globalThis.fetch;
+  try {
+    for (const metadata of blockedContent) {
+      globalThis.fetch = async () => ({ ok: true, json: async () => ({ metadata }) });
+      await assert.rejects(
+        () => archiveService.getMovieByIdentifier(metadata.identifier),
+        { message: `Archive.org item is blocked: ${metadata.identifier}` }
+      );
+    }
+    for (const metadata of allowedContent) {
+      globalThis.fetch = async () => ({ ok: true, json: async () => ({ metadata }) });
+      const movie = await archiveService.getMovieByIdentifier(metadata.identifier);
+      assert.equal(movie.identifier, metadata.identifier);
+    }
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 test('parseRuntime reads two-part values as MM:SS', () => {
   assert.equal(Math.round(archiveService.parseRuntime('20:33')), 21);
   assert.equal(Math.round(archiveService.parseRuntime('51:56')), 52);
