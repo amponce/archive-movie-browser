@@ -48,12 +48,23 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
     setPosterLoaded(true);
   };
 
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (!event.repeat) onPlay?.();
+    }
+  };
+
   // Grid view (poster-focused)
   if (viewMode === 'grid') {
     return (
       <div
-        onClick={onPlay}
-        className="movie-card group block bg-gray-800 rounded-lg overflow-hidden hover:ring-2 hover:ring-yellow-400 transition-all cursor-pointer"
+        role="button"
+      tabIndex={0}
+      aria-label={`Open ${movie.title}`}
+      onKeyDown={handleKeyDown}
+      onClick={onPlay}
+        className="movie-card group block bg-gray-800 rounded-lg overflow-hidden hover:ring-2 hover:ring-yellow-400 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -162,8 +173,12 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
   // List view (detail-focused)
   return (
     <div
+      role="button"
+      tabIndex={0}
+      aria-label={`Open ${movie.title}`}
+      onKeyDown={handleKeyDown}
       onClick={onPlay}
-      className="movie-card flex gap-4 p-3 bg-gray-800 rounded-lg hover:bg-gray-750 group transition-colors cursor-pointer"
+      className="movie-card flex gap-4 p-3 bg-gray-800 rounded-lg hover:bg-gray-750 group transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
     >
       {/* Thumbnail */}
       <div className="relative w-20 h-28 flex-shrink-0 bg-gray-700 rounded overflow-hidden">
