@@ -408,3 +408,13 @@ test('buildQuery excludes collection items, which are folders rather than videos
     assert.ok(query.endsWith(' AND NOT mediatype:collection'), query);
   }
 });
+
+test('buildQuery: a genre spans every film collection, not just the selected one', () => {
+  const query = archiveService.buildQuery({ collection: 'Film_Noir', genre: 'Animation' });
+  assert.ok(query.startsWith('collection:(feature_films OR moviesandfilms OR Film_Noir OR SciFi_Horror OR silent_films) AND subject:('), query);
+  assert.ok(!query.includes('television') && !query.includes('collection:"Film_Noir"'), query);
+
+  // No genre: still just the selected collection. A search still covers everything.
+  assert.ok(archiveService.buildQuery({ collection: 'Film_Noir' }).startsWith('collection:"Film_Noir"'));
+  assert.ok(archiveService.buildQuery({ collection: 'Film_Noir', genre: 'Horror', searchQuery: 'dracula' }).includes(' OR television OR '));
+});

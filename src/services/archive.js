@@ -5,14 +5,15 @@ const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
 
 // Video categories/collections available on Archive.org
 // Collection IDs are case-sensitive and must match exactly
+// `films: true` marks collections of narrative films; genre pills browse across all of them.
 // `features: true` marks collections of feature-length films, which default to a 40+ minute
 // filter. Everything else is mostly shorts or has no runtime recorded, so it defaults to any length.
 export const VIDEO_CATEGORIES = [
-  { id: 'feature_films', features: true, name: 'Feature Films', description: 'Classic feature-length movies' },
-  { id: 'moviesandfilms', features: true, name: 'Movies & Films', description: 'Full-length films from the Archive' },
-  { id: 'Film_Noir', features: true, name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
-  { id: 'SciFi_Horror', features: true, name: 'Sci-Fi & Horror', description: 'Science fiction and horror films' },
-  { id: 'silent_films', name: 'Silent Films', description: 'Silent era classics' },
+  { id: 'feature_films', films: true, features: true, name: 'Feature Films', description: 'Classic feature-length movies' },
+  { id: 'moviesandfilms', films: true, features: true, name: 'Movies & Films', description: 'Full-length films from the Archive' },
+  { id: 'Film_Noir', films: true, features: true, name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
+  { id: 'SciFi_Horror', films: true, features: true, name: 'Sci-Fi & Horror', description: 'Science fiction and horror films' },
+  { id: 'silent_films', films: true, name: 'Silent Films', description: 'Silent era classics' },
   { id: 'animationandcartoons', name: 'Animation & Cartoons', description: 'Animated films and shorts' },
   { id: 'television', name: 'Television', description: 'TV shows and broadcasts' },
   { id: 'prelinger', name: 'Prelinger Archives', description: 'Educational and ephemeral films' },
@@ -286,6 +287,11 @@ class ArchiveService {
 
     // Add genre filter to query for better results
     if (genre && genre !== 'all') {
+      // One collection rarely has more than a handful of a genre (Horror in Film Noir: 23),
+      // so a genre browses every film collection (10,000+). A search already covers everything.
+      if (!words) {
+        query = `collection:(${VIDEO_CATEGORIES.filter(c => c.films).map(c => c.id).join(' OR ')})`;
+      }
       // Include aliases so the server matches what normalizeGenre() maps to this genre
       const names = [genre, ...Object.keys(GENRE_ALIASES).filter(alias => GENRE_ALIASES[alias] === genre)];
       query += ` AND subject:(${names.map(n => `"${n}"`).join(' OR ')})`;

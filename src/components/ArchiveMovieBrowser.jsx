@@ -481,7 +481,7 @@ export default function ArchiveMovieBrowser() {
           <span>
             Showing <strong className="text-white">{displayedMovies.length}</strong>
             {' '}{contentType === 'trailers' ? 'shorts' : 'movies'}
-            {genreFilter !== 'all' && ` in ${genreFilter}`}
+            {genreFilter !== 'all' && ` in ${genreFilter}${activeSearch ? '' : ' across all film collections'}`}
             {activeSearch && ` for "${activeSearch}" across all collections`}
           </span>
           {contentType !== 'trailers' && minRuntime > 0 && (
