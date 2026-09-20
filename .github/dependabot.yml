@@ -6,9 +6,19 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     groups:
-      # One PR for routine bumps; majors come separately so they can be read properly
+      # Packages that only work when upgraded together; a bump of one alone fails `npm ci`
+      react:
+        patterns: ["react", "react-dom"]
+      vite:
+        patterns: ["vite", "@vitejs/*"]
+      # One PR for every other routine bump; majors come separately so they can be read properly
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Tailwind 4 is a migration (its PostCSS plugin moved to @tailwindcss/postcss and the
+      # config format changed), not a version bump. Remove this once someone does that work.
+      - dependency-name: tailwindcss
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
