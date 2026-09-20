@@ -37,7 +37,6 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
     ? tmdbService.getPosterUrl(tmdbData.posterPath, 'medium')
     : null;
 
-  const archiveThumbnailUrl = movie.thumbnailUrl;
 
   const handlePosterError = () => {
     setPosterError(true);
@@ -88,9 +87,8 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
               loading="lazy"
             />
           ) : tmdbChecked ? (
-            // No real poster: Archive.org thumbnails are a random frame, often cropped
-            // opening credits, so use it only as a blurred backdrop behind the title
-            <TitleCover src={archiveThumbnailUrl} title={movie.title} year={movie.year} />
+            // No real poster: show a generated one rather than Archive.org's random video frame
+            <TitleCover movie={movie} />
           ) : null}
 
           {/* Hover overlay */}
@@ -181,7 +179,7 @@ const MovieCard = memo(function MovieCard({ movie, tmdbEnabled = false, viewMode
             loading="lazy"
           />
         ) : tmdbChecked ? (
-          <TitleCover src={archiveThumbnailUrl} title={movie.title} size="thumb" />
+          <TitleCover movie={movie} size="thumb" />
         ) : null}
 
         {tmdbData && (

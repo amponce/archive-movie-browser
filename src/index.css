@@ -74,3 +74,15 @@ select {
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
+
+/* Generated poster titles: heavy condensed display type, tightly leaded like a lobby card */
+.cover-title {
+  font-family: 'Big Shoulders Display', 'Avenir Next Condensed', 'HelveticaNeue-CondensedBlack', Impact, 'Arial Narrow', sans-serif;
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: 0.005em;
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

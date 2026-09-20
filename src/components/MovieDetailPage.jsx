@@ -57,7 +57,7 @@ function RelatedMovieCard({ movie, onClick }) {
             onError={() => setPosterFailed(true)}
           />
         ) : tmdbChecked ? (
-          <TitleCover src={movie.thumbnailUrl} title={movie.title} size="small" />
+          <TitleCover movie={movie} size="small" />
         ) : null}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
           <Play className="w-10 h-10 text-yellow-400 fill-yellow-400" />
@@ -250,7 +250,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
                   className="w-full h-full object-cover"
                 />
               ) : !loading ? (
-                <TitleCover src={movie.thumbnailUrl} title={movie.title} year={movie.year} />
+                <TitleCover movie={movie} />
               ) : null}
 
               {/* Play button overlay */}
