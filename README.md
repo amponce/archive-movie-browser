@@ -171,6 +171,14 @@ Contributions are welcome! Please feel free to submit a Pull Request. Run `npm t
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+## Contributors
+
+Thanks to everyone who has had a pull request merged:
+
+- [@dyk1454683243-sudo](https://github.com/dyk1454683243-sudo) - first outside contributor: the Shorts mode runtime control ([#21](https://github.com/amponce/archive-movie-browser/pull/21))
+
+Want to be next? Issues labelled [good first issue](https://github.com/amponce/archive-movie-browser/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are scoped, with file and line references.
+
 ## Acknowledgments
 
 - Internet Archive for making public domain films accessible
