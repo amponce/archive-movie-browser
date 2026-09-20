@@ -5,11 +5,13 @@ const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
 
 // Video categories/collections available on Archive.org
 // Collection IDs are case-sensitive and must match exactly
+// `features: true` marks collections of feature-length films, which default to a 40+ minute
+// filter. Everything else is mostly shorts or has no runtime recorded, so it defaults to any length.
 export const VIDEO_CATEGORIES = [
-  { id: 'feature_films', name: 'Feature Films', description: 'Classic feature-length movies' },
-  { id: 'moviesandfilms', name: 'Movies & Films', description: 'Full-length films from the Archive' },
-  { id: 'Film_Noir', name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
-  { id: 'SciFi_Horror', name: 'Sci-Fi & Horror', description: 'Science fiction and horror films' },
+  { id: 'feature_films', features: true, name: 'Feature Films', description: 'Classic feature-length movies' },
+  { id: 'moviesandfilms', features: true, name: 'Movies & Films', description: 'Full-length films from the Archive' },
+  { id: 'Film_Noir', features: true, name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
+  { id: 'SciFi_Horror', features: true, name: 'Sci-Fi & Horror', description: 'Science fiction and horror films' },
   { id: 'silent_films', name: 'Silent Films', description: 'Silent era classics' },
   { id: 'animationandcartoons', name: 'Animation & Cartoons', description: 'Animated films and shorts' },
   { id: 'television', name: 'Television', description: 'TV shows and broadcasts' },
@@ -20,10 +22,23 @@ export const VIDEO_CATEGORIES = [
   { id: 'newsandpublicaffairs', name: 'News & Public Affairs', description: 'News broadcasts and documentaries' },
   { id: 'spiritualityandreligion', name: 'Spirituality & Religion', description: 'Religious and spiritual content' },
   { id: 'sports', name: 'Sports Videos', description: 'Sports footage and broadcasts' },
-  { id: 'videogamearchive', name: 'Video Games', description: 'Video game related content' },
+  { id: 'gamevideos', name: 'Video Games', description: 'Video game related content' },
   { id: 'vlogs', name: 'Vlogs', description: 'Video blogs and personal content' },
   { id: 'youth_media', name: 'Youth Media', description: 'Content created by youth' }
 ];
+
+// Minimum runtime (minutes) a collection should start with
+export function defaultMinRuntime(collectionId) {
+  return VIDEO_CATEGORIES.find(c => c.id === collectionId)?.features ? 40 : 0;
+}
+
+// Predicate for the Full Movies / Shorts toggle. Many Archive.org items have no runtime
+// recorded, which is not evidence of a short, so only a known runtime can exclude a film.
+export function runtimeFilter({ shorts = false, minRuntime = 0 } = {}) {
+  return (movie) =>
+    movie.runtimeMinutes === 0 ||
+    (shorts ? movie.runtimeMinutes <= 30 : movie.runtimeMinutes >= minRuntime);
+}
 
 // Content filter - block inappropriate content
 function isBlockedContent(movie) {
@@ -293,7 +308,8 @@ class ArchiveService {
       rowsPerPage = 200,
       minRuntime = 0,
       genre = null,
-      collection = 'moviesandfilms'
+      collection = 'moviesandfilms',
+      retryDelayMs = 600
     } = options;
 
     const query = this.buildQuery({ searchQuery, genre, collection });
@@ -315,10 +331,22 @@ class ArchiveService {
     const fieldParams = fields.map(f => `fl[]=${f}`).join('&');
     const url = `${ARCHIVE_API}?q=${encodeURIComponent(query)}&${fieldParams}&sort[]=${sortBy}+${sortOrder}&rows=${rowsPerPage}&page=${page}&output=json`;
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Archive.org API error: ${response.status}`);
+    // Archive.org intermittently returns 502s. Its error pages carry no CORS header, so a
+    // browser reports them as "Failed to fetch". Retry those; don't retry a bad request.
+    let response;
+    for (let attempt = 1; ; attempt++) {
+      let failure;
+      try {
+        response = await fetch(url);
+        if (response.ok) break;
+        failure = new Error(`Archive.org API error: ${response.status}`);
+        if (response.status < 500) throw failure;
+      } catch (err) {
+        if (err === failure) throw err;
+        failure = failure || err;
+      }
+      if (attempt === 3) throw failure;
+      await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempt));
     }
 
     const data = await response.json();

@@ -350,3 +350,54 @@ test('fetchFiltered ignores a metadata year that is just the upload year', async
     globalThis.fetch = realFetch;
   }
 });
+
+test('only feature-film collections default to the 40 minute minimum', async () => {
+  const { defaultMinRuntime, VIDEO_CATEGORIES } = await import('./archive.js');
+  for (const id of ['feature_films', 'moviesandfilms', 'Film_Noir', 'SciFi_Horror']) {
+    assert.equal(defaultMinRuntime(id), 40, id);
+  }
+  // Cartoons, Prelinger films and most uploads are short or have no runtime recorded
+  for (const id of ['animationandcartoons', 'prelinger', 'silent_films', 'television', 'artsandmusicvideos']) {
+    assert.equal(defaultMinRuntime(id), 0, id);
+  }
+  assert.equal(defaultMinRuntime('not-a-collection'), 0);
+  assert.ok(VIDEO_CATEGORIES.some(c => c.id === 'gamevideos'), 'Video Games uses the live collection id');
+});
+
+test('runtimeFilter only excludes films whose runtime is known and wrong', async () => {
+  const { runtimeFilter } = await import('./archive.js');
+  const full = runtimeFilter({ minRuntime: 40 });
+  assert.equal(full({ runtimeMinutes: 90 }), true);
+  assert.equal(full({ runtimeMinutes: 12 }), false);
+  assert.equal(full({ runtimeMinutes: 0 }), true, 'no runtime recorded is not evidence of a short');
+
+  const shorts = runtimeFilter({ shorts: true });
+  assert.equal(shorts({ runtimeMinutes: 12 }), true);
+  assert.equal(shorts({ runtimeMinutes: 90 }), false);
+  assert.equal(shorts({ runtimeMinutes: 0 }), true);
+});
+
+test('fetchMovies retries when Archive.org fails transiently', async () => {
+  const realFetch = globalThis.fetch;
+  const ok = { ok: true, json: async () => ({ response: { docs: [{ identifier: 'a', title: 'A' }], numFound: 1 } }) };
+  try {
+    // A 502 from Archive.org's edge has no CORS header, so browsers surface it as a thrown TypeError
+    let calls = 0;
+    globalThis.fetch = async () => { calls++; if (calls === 1) throw new TypeError('Failed to fetch'); if (calls === 2) return { ok: false, status: 502 }; return ok; };
+    const result = await archiveService.fetchMovies({ retryDelayMs: 0 });
+    assert.equal(result.movies.length, 1);
+    assert.equal(calls, 3);
+
+    calls = 0;
+    globalThis.fetch = async () => { calls++; return { ok: false, status: 502 }; };
+    await assert.rejects(() => archiveService.fetchMovies({ retryDelayMs: 0 }), /502/);
+    assert.equal(calls, 3, 'gives up after 3 attempts');
+
+    calls = 0;
+    globalThis.fetch = async () => { calls++; return { ok: false, status: 400 }; };
+    await assert.rejects(() => archiveService.fetchMovies({ retryDelayMs: 0 }), /400/);
+    assert.equal(calls, 1, 'a bad request is not retried');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

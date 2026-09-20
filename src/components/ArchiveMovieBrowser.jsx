@@ -13,7 +13,7 @@ import {
   Library,
   Calendar
 } from 'lucide-react';
-import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES } from '../services/archive';
+import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, defaultMinRuntime, runtimeFilter } from '../services/archive';
 import tmdbService, { hasCachedPoster } from '../services/tmdb';
 import MovieCard from './MovieCard';
 import SettingsModal from './SettingsModal';
@@ -122,11 +122,8 @@ export default function ArchiveMovieBrowser() {
         genre: genreFilter !== 'all' ? genreFilter : null,
         collection: category,
         seenTitles: seen,
-        // Many Archive.org items have no runtime recorded; a search keeps them rather than hiding the film
-        filter: (m) =>
-          ((activeSearch && m.runtimeMinutes === 0) ||
-            (contentType === 'trailers' ? m.runtimeMinutes <= 30 : m.runtimeMinutes >= minRuntime)) &&
-          (genreFilter === 'all' || m.genres.includes(genreFilter))
+        // The server query already applied the genre, so only runtime is checked here
+        filter: runtimeFilter({ shorts: contentType === 'trailers', minRuntime })
       });
       if (requestId !== latestRequest.current) return;
 
@@ -167,6 +164,10 @@ export default function ArchiveMovieBrowser() {
   // Handle category change
   const handleCategoryChange = (newCategory) => {
     setCategory(newCategory);
+    // Cartoons, Prelinger films and most uploads are short or have no runtime, so only
+    // feature-film collections start on the 40+ minute filter
+    setContentType('features');
+    setMinRuntime(defaultMinRuntime(newCategory));
     // Searches span all collections, so picking one means going back to browsing it
     setSearchQuery('');
     setActiveSearch('');
@@ -196,8 +197,9 @@ export default function ArchiveMovieBrowser() {
   const filteredByRuntime = useMemo(() => {
     let filtered = movies;
 
-    // If no active search, filter out movies known to not have TMDB posters
-    if (!activeSearch && tmdbApiKey) {
+    // In feature-film collections, hide movies known to have no TMDB poster. TMDB does not
+    // know cartoon shorts or educational films, so other collections would end up empty.
+    if (!activeSearch && tmdbApiKey && currentCategory.features) {
       filtered = filtered.filter(m => {
         if (!m) return false;
         // Check if we already know this movie has no poster
@@ -211,7 +213,7 @@ export default function ArchiveMovieBrowser() {
     }
 
     return filtered;
-  }, [movies, activeSearch, moviesWithoutImages, tmdbApiKey]);
+  }, [movies, activeSearch, moviesWithoutImages, tmdbApiKey, currentCategory]);
 
   // Get genres from filtered movies
   const availableGenres = useMemo(() => {
@@ -365,7 +367,7 @@ export default function ArchiveMovieBrowser() {
                 <button
                   onClick={() => {
                     setContentType('features');
-                    setMinRuntime(40);
+                    setMinRuntime(defaultMinRuntime(category));
                   }}
                   className={`px-2 sm:px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition-colors ${
                     contentType === 'features'
@@ -482,7 +484,7 @@ export default function ArchiveMovieBrowser() {
             {genreFilter !== 'all' && ` in ${genreFilter}`}
             {activeSearch && ` for "${activeSearch}" across all collections`}
           </span>
-          {contentType !== 'trailers' && (
+          {contentType !== 'trailers' && minRuntime > 0 && (
             <>
               <span className="text-gray-600">|</span>
               <span>{minRuntime}+ min runtime</span>
