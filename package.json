@@ -15,10 +15,10 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.1.1",
     "autoprefixer": "^10.6.1",
     "postcss": "^8.5.28",
     "tailwindcss": "^3.4.19",
-    "vite": "^6.0.3"
+    "vite": "^8.3.0"
   }
 }
