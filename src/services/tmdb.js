@@ -1,5 +1,6 @@
 // TMDB API Service for movie poster matching
 // Get your API key at: https://www.themoviedb.org/settings/api
+import { cleanMovieTitle, selectMovieMatch } from './movieMatching.js';
 
 const TMDB_API_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
@@ -126,13 +127,7 @@ class TMDBService {
 
   // Clean movie title for better matching
   cleanTitle(title) {
-    return title
-      .replace(/\s*\(\d{4}\)\s*$/, '') // Remove year in parentheses
-      .replace(/\s*\[\d{4}\]\s*$/, '') // Remove year in brackets
-      .replace(/\s*-\s*\d{4}\s*$/, '') // Remove year after dash
-      .replace(/[^\w\s]/g, ' ') // Remove special characters
-      .replace(/\s+/g, ' ') // Normalize spaces
-      .trim();
+    return cleanMovieTitle(title);
   }
 
   // Search for a movie by title and optional year
@@ -191,24 +186,7 @@ class TMDBService {
 
       const data = await response.json();
 
-      // Find best match
-      let bestMatch = null;
-
-      if (data.results && data.results.length > 0) {
-        // Try to find exact or close title match
-        bestMatch = data.results.find(movie => {
-          const movieTitle = movie.title.toLowerCase();
-          const searchTitle = cleanedTitle.toLowerCase();
-          return movieTitle === searchTitle ||
-                 movieTitle.includes(searchTitle) ||
-                 searchTitle.includes(movieTitle);
-        });
-
-        // If no good match, use first result if it has a poster
-        if (!bestMatch && data.results[0].poster_path) {
-          bestMatch = data.results[0];
-        }
-      }
+      const bestMatch = selectMovieMatch(data.results, cleanedTitle, year);
 
       const result = bestMatch ? {
         id: bestMatch.id,

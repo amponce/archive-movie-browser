@@ -85,6 +85,15 @@ test('profile and backdrop URLs preserve image sizes and handle missing paths', 
   assert.equal(service.getBackdropUrl('/scene.jpg', 'w1280'), 'https://image.tmdb.org/t/p/w1280/scene.jpg');
 });
 
+test('an exact cleaned title wins over an earlier short substring result', async t => {
+  const { service } = await makeService(t);
+  t.mock.method(globalThis, 'fetch', async () => ({ ok: true, json: async () => ({ results: [
+    { id: 1, title: 'M', poster_path: '/wrong.jpg' },
+    { id: 2, title: 'The Last Man', poster_path: '/correct.jpg' },
+  ] }) }));
+  assert.equal((await service.searchMovie('The Last Man (1964)', 1964)).id, 2);
+});
+
 test('movie details persist only displayed fields, six cast members and the director', async t => {
   const { service, storage } = await makeService(t);
   const displayed = {
