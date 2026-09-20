@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { CACHE_VERSION } from './tmdb.js';
 
 let moduleId = 0;
 async function makeService(t, stored = null) {
@@ -47,7 +48,7 @@ test('movie details restore persisted data and refetch expired entries', async t
   const timestamp = Date.now();
   const cached = { id: 43, title: 'Cached' };
   const { service } = await makeService(t, JSON.stringify({
-    version: 1, timestamp, data: { 'details:43': { data: cached, timestamp } }
+    version: CACHE_VERSION, timestamp, data: { 'details:43': { data: cached, timestamp } }
   }));
   const fetchMock = t.mock.method(globalThis, 'fetch', async () => ({
     ok: true, json: async () => ({ id: 43, title: 'Fresh' })
