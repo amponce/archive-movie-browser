@@ -30,6 +30,8 @@ Node 22 or newer. A TMDB key is optional: without one the app works and shows ti
 
 Keep a PR to one thing. Small PRs get reviewed and merged quickly; a PR that also reformats a file or renames things takes much longer.
 
+**Turn off format-on-save for this repo.** The code uses single quotes and 2-space indentation but is not formatted by Prettier, so an editor that formats on save rewrites every line of a file. That buries your change in the diff and makes it conflict with everyone else's PR. The `.editorconfig` sets indentation; please leave existing lines as they are.
+
 ## What review looks like
 
 - CI runs the tests and the build on every PR. On your first PR, GitHub waits for a maintainer to approve the run; that is a GitHub safety default, not a judgement on you.
