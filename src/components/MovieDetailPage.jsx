@@ -84,11 +84,13 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    window.history.pushState(
-      { movieDetail: true, identifier: movie.identifier },
-      '',
-      `#${movie.identifier}`
-    );
+    if (!window.history.state?.movieDetail) {
+      window.history.pushState(
+        { movieDetail: true, identifier: movie.identifier },
+        '',
+        `#${encodeURIComponent(movie.identifier)}`
+      );
+    }
 
     return () => {
       document.body.style.overflow = previousOverflow;
@@ -105,7 +107,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
     window.history.replaceState(
       { movieDetail: true, identifier: movie.identifier },
       '',
-      `#${movie.identifier}`
+      `#${encodeURIComponent(movie.identifier)}`
     );
   }, [movie.identifier]);
 

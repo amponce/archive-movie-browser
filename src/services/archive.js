@@ -416,10 +416,16 @@ class ArchiveService {
   // Fetch and normalize one item's metadata for direct, hash-based links.
   async getMovieByIdentifier(identifier) {
     const data = await this.getMetadata(identifier);
-    return this.normalizeMovie({
-      ...data.metadata,
-      identifier: data.metadata?.identifier || identifier
-    });
+    if (!data?.metadata || !data.metadata.identifier) {
+      throw new Error(`Archive.org item not found: ${identifier}`);
+    }
+
+    const movie = this.normalizeMovie(data.metadata);
+    if (isBlockedContent(movie)) {
+      throw new Error(`Archive.org item is blocked: ${identifier}`);
+    }
+
+    return movie;
   }
 
   // Format runtime for display
