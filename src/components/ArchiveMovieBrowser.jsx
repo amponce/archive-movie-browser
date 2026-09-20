@@ -217,6 +217,8 @@ export default function ArchiveMovieBrowser() {
                       : 'text-gray-400 hover:text-white'
                   }`}
                   title="Grid view"
+                  aria-label="Grid view"
+                  aria-pressed={viewMode === 'grid'}
                 >
                   <Grid className="w-4 h-4" />
                 </button>
@@ -228,6 +230,8 @@ export default function ArchiveMovieBrowser() {
                       : 'text-gray-400 hover:text-white'
                   }`}
                   title="List view"
+                  aria-label="List view"
+                  aria-pressed={viewMode === 'list'}
                 >
                   <List className="w-4 h-4" />
                 </button>
@@ -242,6 +246,7 @@ export default function ArchiveMovieBrowser() {
                     : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
                 }`}
                 title={tmdbApiKey ? 'TMDB enabled - Click to configure' : 'Configure TMDB API'}
+                aria-label="Configure TMDB API"
               >
                 <Settings className="w-5 h-5" />
               </button>
@@ -257,6 +262,7 @@ export default function ArchiveMovieBrowser() {
                 <input
                   type="text"
                   placeholder="Search movies..."
+                  aria-label="Search movies"
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -288,6 +294,7 @@ export default function ArchiveMovieBrowser() {
                 <Library className="w-4 h-4 text-yellow-400 hidden sm:block" />
                 <select
                   value={category}
+                  aria-label="Collection"
                   onChange={(e) => handleCategoryChange(e.target.value)}
                   className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer max-w-[140px] sm:max-w-none"
                 >
@@ -306,6 +313,7 @@ export default function ArchiveMovieBrowser() {
                     setContentType('features');
                     setMinRuntime(defaultMinRuntime(category));
                   }}
+                  aria-pressed={contentType === 'features'}
                   className={`px-2 sm:px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition-colors ${
                     contentType === 'features'
                       ? 'bg-yellow-500 text-gray-900'
@@ -319,6 +327,7 @@ export default function ArchiveMovieBrowser() {
                     setContentType('trailers');
                     setMinRuntime(0);
                   }}
+                  aria-pressed={contentType === 'trailers'}
                   className={`px-2 sm:px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition-colors ${
                     contentType === 'trailers'
                       ? 'bg-yellow-500 text-gray-900'
@@ -343,6 +352,7 @@ export default function ArchiveMovieBrowser() {
                 ) : (
                   <select
                     value={minRuntime}
+                    aria-label="Minimum runtime"
                     onChange={(e) => setMinRuntime(Number(e.target.value))}
                     className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
                   >
@@ -361,6 +371,7 @@ export default function ArchiveMovieBrowser() {
                 <SlidersHorizontal className="w-4 h-4 text-gray-400 hidden sm:block" />
                 <select
                   value={sortBy}
+                  aria-label="Sort movies"
                   onChange={(e) => handleSortChange(e.target.value)}
                   className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
                 >
@@ -389,6 +400,7 @@ export default function ArchiveMovieBrowser() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleGenreChange('all')}
+                aria-pressed={genreFilter === 'all'}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   genreFilter === 'all'
                     ? 'bg-yellow-500 text-gray-900'
@@ -401,6 +413,7 @@ export default function ArchiveMovieBrowser() {
                 <button
                   key={genre}
                   onClick={() => handleGenreChange(genre)}
+                  aria-pressed={genreFilter === genre}
                   className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     genreFilter === genre
                       ? 'bg-yellow-500 text-gray-900'
