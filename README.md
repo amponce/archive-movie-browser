@@ -180,6 +180,7 @@ Thanks to everyone who has had a pull request merged:
 - [@mehul-vi](https://github.com/mehul-vi) - removed 174 lines of dead code ([#18](https://github.com/amponce/archive-movie-browser/pull/18))
 - [@fatihcvs](https://github.com/fatihcvs) - six fixes in one night: shared film links ([#48](https://github.com/amponce/archive-movie-browser/pull/48)), keyboard access to films ([#52](https://github.com/amponce/archive-movie-browser/pull/52)), screen-reader labels for the filters ([#53](https://github.com/amponce/archive-movie-browser/pull/53)), one TMDB service with a lean cache ([#51](https://github.com/amponce/archive-movie-browser/pull/51)), accurate poster matching ([#57](https://github.com/amponce/archive-movie-browser/pull/57)), and evenly spaced TMDB requests ([#56](https://github.com/amponce/archive-movie-browser/pull/56))
 - [@dw-dash-codes](https://github.com/dw-dash-codes) - the `TitleCover` component, so no view shows a raw Archive.org frame grab ([#54](https://github.com/amponce/archive-movie-browser/pull/54))
+- [@nightcityblade](https://github.com/nightcityblade) - detail page posters stay at full brightness, with a labelled, focusable play button ([#71](https://github.com/amponce/archive-movie-browser/pull/71))
 
 Want to be next? Issues labelled [good first issue](https://github.com/amponce/archive-movie-browser/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are scoped, with file and line references.
 
