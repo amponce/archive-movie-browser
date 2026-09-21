@@ -84,12 +84,28 @@ function filtersFromUrl() {
   return restored;
 }
 
+const VIEW_MODE_KEY = 'view-mode';
+
+// Grid or list is a personal preference, so it lives in localStorage rather than the URL
+function readViewMode() {
+  try {
+    return localStorage.getItem(VIEW_MODE_KEY) === 'list' ? 'list' : 'grid';
+  } catch {
+    return 'grid'; // storage can throw in private mode
+  }
+}
+
 export default function ArchiveMovieBrowser() {
   // Settings & UI state
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState(readViewMode);
+
+  const changeViewMode = (mode) => {
+    setViewMode(mode);
+    try { localStorage.setItem(VIEW_MODE_KEY, mode); } catch { /* private mode */ }
+  };
 
   // Allow a shared #identifier URL to open an Archive.org item directly.
   useEffect(() => {
@@ -270,7 +286,7 @@ export default function ArchiveMovieBrowser() {
   useEffect(() => {
     writeFiltersToUrl('replace');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortBy, minRuntime, viewMode, contentType]);
+  }, [sortBy, minRuntime, contentType]);
 
   // Back/Forward between filter views: restore the state from the URL.
   useEffect(() => {
@@ -328,7 +344,7 @@ export default function ArchiveMovieBrowser() {
               {/* View toggle */}
               <div className="flex bg-gray-800 rounded-lg p-1">
                 <button
-                  onClick={() => setViewMode('grid')}
+                  onClick={() => changeViewMode('grid')}
                   className={`p-2 rounded ${
                     viewMode === 'grid'
                       ? 'bg-gray-700 text-yellow-400'
@@ -341,7 +357,7 @@ export default function ArchiveMovieBrowser() {
                   <Grid className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => setViewMode('list')}
+                  onClick={() => changeViewMode('list')}
                   className={`p-2 rounded ${
                     viewMode === 'list'
                       ? 'bg-gray-700 text-yellow-400'
