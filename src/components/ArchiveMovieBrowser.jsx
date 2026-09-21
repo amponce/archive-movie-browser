@@ -9,6 +9,7 @@ import {
   List,
   SlidersHorizontal,
   Library,
+  ChevronDown,
 } from 'lucide-react';
 import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, defaultMinRuntime, runtimeFilter } from '../services/archive';
 import tmdbService from '../services/tmdb';
@@ -293,7 +294,8 @@ export default function ArchiveMovieBrowser() {
               onClick={() => setFiltersOpen(open => !open)}
             >
               <Filter className="w-4 h-4 shrink-0" />
-              <span>Filters: {acrossCollections ? 'All collections' : currentCategory.name} · {contentType === 'trailers' ? 'Shorts, ≤30 min' : `Full Movies, ${minRuntime ? `${minRuntime}+ min` : 'any length'}`} · {SORT_OPTIONS[sortBy]}</span>
+              <span className="flex-1">Filters: {acrossCollections ? 'All collections' : currentCategory.name} · {contentType === 'trailers' ? 'Shorts, ≤30 min' : `Full Movies, ${minRuntime ? `${minRuntime}+ min` : 'any length'}`} · {SORT_OPTIONS[sortBy]}</span>
+              <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Filters row */}
