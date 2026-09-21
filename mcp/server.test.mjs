@@ -42,7 +42,8 @@ test('an indexed upload is described as the real film, with a poster and links',
   assert.match(film.posterUrl, /^https:\/\/image\.tmdb\.org\/t\/p\/w500\//);
   assert.equal(film.watchUrl, 'https://archive-movie-browser.vercel.app/#Cops1922');
   assert.equal(Object.keys(film)[0], 'watchUrl', 'the link to give people comes first');
-  assert.ok(!JSON.stringify(film).includes('archive.org/details'), 'list results carry one link: ours');
+  assert.deepEqual(Object.keys(film).slice(0, 2), ['watchUrl', 'sourceUrl'], 'ours first, then the original Archive.org page');
+  assert.equal(film.sourceUrl, 'https://archive.org/details/Cops1922');
 });
 
 test('live: search finds Night of the Living Dead', { skip: !process.env.LIVE }, async t => {

@@ -13,7 +13,7 @@ It reuses the web app's Archive.org logic (`../src/services`), so it searches ev
 | `get_film` | Details, links and the matched film for one Archive.org identifier |
 | `list_collections` | The collections, genres and sort orders the other tools accept |
 
-Every film comes back with a `watchUrl` that plays on the site and, when the index knows the film, its real `title`, `year`, `posterUrl` and `tmdbId`. `get_film` adds `sourceUrl` (the Archive.org page) and `embedUrl` (for an iframe).
+Every film comes back with a `watchUrl` that plays on the site, a `sourceUrl` (the original Archive.org page) and, when the index knows the film, its real `title`, `year`, `posterUrl` and `tmdbId`. `get_film` adds `embedUrl` (for an iframe).
 
 ## Try it without installing anything
 
