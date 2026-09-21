@@ -84,7 +84,6 @@ function filtersFromUrl() {
   return restored;
 }
 
-
 export default function ArchiveMovieBrowser() {
   // Settings & UI state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -125,7 +124,7 @@ export default function ArchiveMovieBrowser() {
   const [error, setError] = useState(null);
   const [nextPage, setNextPage] = useState(null); // next Archive.org page to load, null when exhausted
 
-   // Filter state, initialised from the URL so shared views reload intact (#43)
+  // Filter state, initialised from the URL so shared views reload intact (#43)
   const [urlFilters] = useState(filtersFromUrl);
   const [searchQuery, setSearchQuery] = useState(urlFilters.q);
   const [activeSearch, setActiveSearch] = useState(urlFilters.q);
@@ -134,7 +133,6 @@ export default function ArchiveMovieBrowser() {
   const [contentType, setContentType] = useState(urlFilters.type); // 'features' or 'trailers'
   const [sortBy, setSortBy] = useState(urlFilters.sort);
   const [category, setCategory] = useState(urlFilters.collection); // Video collection/category
-
 
   // Get current category info
   const currentCategory = VIDEO_CATEGORIES.find(c => c.id === category) || VIDEO_CATEGORIES[0];
@@ -237,15 +235,17 @@ export default function ArchiveMovieBrowser() {
     setGenreFilter('all'); // Reset genre filter when changing category
   };
 
-    // Rebuild the query string from filter state, omitting defaults and keeping the
+  // Rebuild the query string from filter state, omitting defaults and keeping the
   // existing #identifier hash so film links and query filters coexist (#43).
+  const urlSynced = useRef(false); // false until the arrival URL has been tidied
   const writeFiltersToUrl = (mode) => {
     const params = new URLSearchParams();
     if (category !== URL_FILTER_DEFAULTS.collection) params.set('collection', category);
     if (genreFilter !== URL_FILTER_DEFAULTS.genre) params.set('genre', genreFilter);
     if (activeSearch) params.set('q', activeSearch);
     if (sortBy !== URL_FILTER_DEFAULTS.sort) params.set('sort', sortBy);
-    if (minRuntime !== URL_FILTER_DEFAULTS.runtime) params.set('runtime', String(minRuntime));
+    const defaultRuntime = contentType === 'trailers' ? 0 : defaultMinRuntime(category);
+    if (minRuntime !== defaultRuntime) params.set('runtime', String(minRuntime));
     if (contentType !== URL_FILTER_DEFAULTS.type) params.set('type', contentType);
 
     const query = params.toString();
@@ -255,7 +255,7 @@ export default function ArchiveMovieBrowser() {
     if (query === currentSearch) return;
 
     const url = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
-    if (mode === 'push') window.history.pushState({}, '', url);
+    if (mode === 'push' && urlSynced.current) window.history.pushState({}, '', url);
     else window.history.replaceState({}, '', url);
   };
 
@@ -263,6 +263,7 @@ export default function ArchiveMovieBrowser() {
   // returns to the previous view; minor ones only rewrite the current entry.
   useEffect(() => {
     writeFiltersToUrl('push');
+    urlSynced.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, genreFilter, activeSearch]);
 
@@ -286,8 +287,6 @@ export default function ArchiveMovieBrowser() {
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
-
-
 
   // Track TMDB ratings for client-side sorting
   const [tmdbRatings, setTmdbRatings] = useState({});
