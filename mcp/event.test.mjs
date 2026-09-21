@@ -53,7 +53,10 @@ test('a database failure is a 503, never an exception', async t => {
 
 test('stats need the secret, read with the read-only token, and come back shaped for the page', async t => {
   const get = (token) => GET(new Request('https://site.test/api/stats', { headers: token ? { authorization: `Bearer ${token}` } : {} }));
-  const calls = stubRedis(t, commands => commands.map(c => ({ result: c[0] === 'HGETALL' ? ['Play', '3', 'Film opened', '9'] : c[0] === 'PFCOUNT' ? 12 : ['Cops1922', '7', 'Nosferatu', '2'] })));
+  const calls = stubRedis(t, commands => commands.map(c => ({ result: c[0] === 'HGETALL' ? ['Play', '3', 'Film opened', '9'] : c[0] === 'PFCOUNT' ? 12
+    : c[0] === 'HMGET' ? c.slice(2).map(id => ({ Cops1922: 'Cops', Nosferatu: 'Nosferatu' }[id] ?? null))
+    : c[0] === 'LRANGE' ? [JSON.stringify({ at: '2026-09-21T10:00:00.000Z', name: 'Play', data: { film: 'Cops1922' } }), 'not json']
+    : ['Cops1922', '7', 'Nosferatu', '2'] })));
   assert.equal((await get()).status, 404);
   assert.equal((await get('wrong-token-of-same-len!!')).status, 404);
   assert.equal(calls.length, 0, 'no database access without the secret');
@@ -63,13 +66,19 @@ test('stats need the secret, read with the read-only token, and come back shaped
   // may not run it: visitor counts go through the main token, everything else stays read-only
   const readOnly = calls.find(c => c.auth === 'Bearer read-token');
   const counting = calls.find(c => c.auth === 'Bearer write-token');
-  assert.ok(readOnly.commands.every(c => ['HGETALL', 'ZREVRANGE'].includes(c[0])));
+  assert.ok(readOnly.commands.every(c => ['HGETALL', 'ZREVRANGE', 'LRANGE'].includes(c[0])));
   assert.ok(counting.commands.every(c => c[0] === 'PFCOUNT'));
   const body = await response.json();
   assert.equal(body.days.length, 30);
   assert.deepEqual(body.days.at(-1).events, { Play: 3, 'Film opened': 9 });
   assert.equal(body.days.at(-1).visitors, 12);
   assert.deepEqual(body.boards.played[0], ['Cops1922', 7]);
+  // Titles for the films on the boards, and the latest events, newest first
+  const lookups = calls.filter(c => c.commands.some(cmd => cmd[0] === 'HMGET'));
+  assert.equal(lookups.length, 1);
+  assert.ok(lookups[0].commands[0].includes('Cops1922') && lookups[0].commands[0].includes('Nosferatu'));
+  assert.deepEqual(body.titles, { Cops1922: 'Cops', Nosferatu: 'Nosferatu' });
+  assert.deepEqual(body.recent[0], { at: '2026-09-21T10:00:00.000Z', name: 'Play', data: { film: 'Cops1922' } });
 });
 
 test('an error from the database is an error, not a silent zero', async t => {

@@ -49,3 +49,23 @@ test('bots and empty user agents are not counted', () => {
   assert.equal(isBot(''), true);
   assert.equal(isBot('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/604.1'), false);
 });
+
+test('an opened film remembers its title, so the stats page can show names instead of identifiers', () => {
+  const event = validEvent({ name: 'Film opened', data: { film: 'publicmovies212', title: '  A Boy and His Dog\n' + 'x'.repeat(200) } });
+  assert.equal(event.data.title.length, 80);
+  const commands = commandsFor(event, { now: new Date('2026-09-21T10:00:00Z') });
+  assert.deepEqual(commands.find(c => c[0] === 'HSET'), ['HSET', 'stats:titles', 'publicmovies212', event.data.title]);
+  // The leaderboard is still keyed by identifier: titles are not unique
+  assert.ok(commands.some(c => c[0] === 'ZINCRBY' && c[3] === 'publicmovies212'));
+  assert.ok(!commandsFor(validEvent({ name: 'Film opened', data: { film: 'Cops1922' } })).some(c => c[0] === 'HSET'), 'no title, nothing stored');
+});
+
+test('every event lands on a short "latest events" feed: what happened and when, never who', () => {
+  const now = new Date('2026-09-21T10:00:00Z');
+  const commands = commandsFor(validEvent({ name: 'Play', data: { film: 'Cops1922', player: 'own' } }), { now, visitor: 'abc123' });
+  const push = commands.find(c => c[0] === 'LPUSH');
+  assert.equal(push[1], 'stats:recent');
+  assert.deepEqual(JSON.parse(push[2]), { at: '2026-09-21T10:00:00.000Z', name: 'Play', data: { film: 'Cops1922', player: 'own' } });
+  assert.deepEqual(commands.find(c => c[0] === 'LTRIM'), ['LTRIM', 'stats:recent', 0, 49]);
+  assert.ok(!push[2].includes('abc123'));
+});

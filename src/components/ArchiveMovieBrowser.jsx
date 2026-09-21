@@ -82,7 +82,7 @@ export default function ArchiveMovieBrowser() {
 
   // Every way of opening a film (card, link, search, related) ends up here
   useEffect(() => {
-    if (selectedMovie) track('Film opened', { film: selectedMovie.identifier });
+    if (selectedMovie) track('Film opened', { film: selectedMovie.identifier, title: selectedMovie.title });
   }, [selectedMovie?.identifier]);
 
   // A pasted archive.org/details/<identifier> link opens the film here

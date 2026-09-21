@@ -4,12 +4,13 @@
 
 const FILM = /^[A-Za-z0-9._-]{1,200}$/;
 const KEEP_DAYS = 400;
+const RECENT = 50;
 const clean = (value, max = 60) => String(value ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
 
 // name -> (data) => cleaned data, or null to reject the event
 const EVENTS = {
   'Page view': d => ({ path: clean(d.path, 40) || '/', referrer: clean(d.referrer, 60) }),
-  'Film opened': d => (FILM.test(d.film) ? { film: d.film } : null),
+  'Film opened': d => (FILM.test(d.film) ? { film: d.film, ...(clean(d.title, 80) && { title: clean(d.title, 80) }) } : null),
   'Play': d => (FILM.test(d.film) && ['own', 'archive'].includes(d.player) ? { film: d.film, player: d.player } : null),
   'Watched 10 minutes': d => (FILM.test(d.film) ? { film: d.film } : null),
   'Search': d => ({ query: clean(d.query).toLowerCase(), kind: d.kind === 'pasted link' ? 'pasted link' : 'typed' }),
@@ -46,12 +47,20 @@ export function commandsFor({ name, data }, { now = new Date(), visitor } = {}) 
     if (data.referrer) count('referrers', data.referrer);
     if (visitor) commands.push(['PFADD', `stats:visitors:${day}`, visitor], ['PFADD', `stats:visitors:${month}`, visitor]);
   }
-  if (name === 'Film opened') count('opened', data.film);
+  if (name === 'Film opened') {
+    count('opened', data.film);
+    // Boards are keyed by identifier (titles are not unique); the name is kept beside them
+    if (data.title) commands.push(['HSET', 'stats:titles', data.film, data.title]);
+  }
   if (name === 'Play') { count('played', data.film); count('players', data.player); }
   if (name === 'Watched 10 minutes') count('watched', data.film);
   if (name === 'Search' && data.kind === 'typed' && data.query) count('searches', data.query);
   if (name === 'Filter') count('filters', `${data.type}: ${data.value}`);
   if (name === 'MCP banner') count('banner', data.action);
+
+  // The latest events, newest first: what happened and when, never who. It answers "I just
+  // opened a film, did it count?" without waiting for a leaderboard to move.
+  commands.push(['LPUSH', 'stats:recent', JSON.stringify({ at: now.toISOString(), name, data })], ['LTRIM', 'stats:recent', 0, RECENT - 1]);
 
   for (const key of new Set(commands.map(command => command[1]))) commands.push(['EXPIRE', key, KEEP_DAYS * 86400]);
   return commands;

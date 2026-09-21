@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 const KEY = 'stats-key';
 const MARK = '#c08a10'; // single series; passes the dark-surface lightness and contrast checks
 const EVENTS = ['Page view', 'Film opened', 'Play', 'Watched 10 minutes', 'Search', 'Filter', 'Load more'];
+const FILM_BOARDS = ['played', 'watched', 'opened'];
 const BOARDS = [
   ['played', 'Films played'], ['watched', 'Watched 10+ minutes'], ['opened', 'Films opened'], ['searches', 'Searches'], ['filters', 'Filters used'],
   ['referrers', 'Where visitors came from'], ['pages', 'Pages'], ['players', 'Player used'], ['banner', 'MCP banner'],
@@ -45,7 +46,10 @@ function DailyChart({ days }) {
   );
 }
 
-function Board({ rows }) {
+// A film by its name, linking to it; the Archive.org identifier is the fallback and the tooltip
+const Film = ({ id, titles }) => <a href={`/#${encodeURIComponent(id)}`} title={id} className="hover:text-yellow-400 hover:underline">{titles[id] || id}</a>;
+
+function Board({ rows, films, titles }) {
   if (!rows.length) return <p className="text-gray-400">Nothing yet this month.</p>;
   const top = rows[0][1] || 1;
   return (
@@ -53,9 +57,32 @@ function Board({ rows }) {
       <tbody>
         {rows.map(([label, count]) => (
           <tr key={label} className="border-b border-gray-700">
-            <td className="py-1.5 pr-3 max-w-0 w-[60%] truncate" title={label}>{label}</td>
+            <td className="py-1.5 pr-3 max-w-0 w-[60%] truncate" title={label}>{films ? <Film id={label} titles={titles} /> : label}</td>
             <td><div className="h-2 rounded-r min-w-[2px]" style={{ width: `${(count / top) * 100}%`, background: MARK }} /></td>
             <td className="w-14 text-right tabular-nums">{fmt(count)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// What just happened, newest first: the quickest way to see that something was counted
+function Latest({ events, titles }) {
+  if (!events.length) return <p className="text-gray-400">Nothing yet.</p>;
+  const detail = ({ name, data }) => data.film ? <Film id={data.film} titles={titles} />
+    : name === 'Search' ? (data.query ? `“${data.query}”` : 'a pasted link')
+    : name === 'Filter' ? `${data.type}: ${data.value}`
+    : name === 'Page view' ? `${data.path}${data.referrer ? ` from ${data.referrer}` : ''}`
+    : data.action || data.player || '';
+  return (
+    <table className="w-full text-sm">
+      <tbody>
+        {events.map((event, i) => (
+          <tr key={i} className="border-b border-gray-700">
+            <td className="py-1 pr-3 text-gray-400 tabular-nums whitespace-nowrap">{new Date(event.at).toLocaleTimeString()}</td>
+            <td className="py-1 pr-3 whitespace-nowrap">{event.name}{event.data.player ? ` (${event.data.player} player)` : ''}</td>
+            <td className="py-1 max-w-0 w-[55%] truncate">{detail(event)}</td>
           </tr>
         ))}
       </tbody>
@@ -70,13 +97,18 @@ export default function StatsPage() {
   const [error, setError] = useState('');
   const [entered, setEntered] = useState('');
 
+  const [updated, setUpdated] = useState(null);
+
   const load = (key) => fetchStats(key)
-    .then(stats => { try { localStorage.setItem(KEY, key); } catch { /* private mode */ } setData(stats); setError(''); })
+    .then(stats => { try { localStorage.setItem(KEY, key); } catch { /* private mode */ } setData(stats); setUpdated(new Date()); setError(''); })
     .catch(problem => setError(problem.message));
 
   useEffect(() => {
     document.title = 'Stats | Archive Movie Browser';
     if (readKey()) load(readKey());
+    // Keep the numbers current while the page is open and in view
+    const timer = setInterval(() => { if (readKey() && !document.hidden) load(readKey()); }, 30_000);
+    return () => clearInterval(timer);
   }, []);
 
   const forget = () => { try { localStorage.removeItem(KEY); } catch { /* private mode */ } setData(null); setEntered(''); };
@@ -93,6 +125,8 @@ export default function StatsPage() {
           <h1 className="text-2xl font-semibold">Archive Movie Browser: usage</h1>
           <span className="flex items-center gap-3 text-sm">
             <a href="/" className="text-yellow-400 underline">Back to the films</a>
+            {data && <span className="text-gray-400">Updated {updated?.toLocaleTimeString()}</span>}
+            {data && <button onClick={() => load(readKey())} className="border border-gray-700 rounded-md px-3 py-1 text-gray-300 hover:text-white">Refresh</button>}
             {data && <button onClick={forget} className="border border-gray-700 rounded-md px-3 py-1 text-gray-400 hover:text-white">Forget key on this device</button>}
           </span>
         </header>
@@ -142,8 +176,14 @@ export default function StatsPage() {
               </details>
             </Panel>
 
+            <Panel title="Latest events" note="(newest first; refreshes every 30 seconds)">
+              <div className="max-h-72 overflow-y-auto"><Latest events={data.recent || []} titles={data.titles || {}} /></div>
+            </Panel>
+
             <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(19rem,1fr))]">
-              {BOARDS.map(([key, title]) => <Panel key={key} title={title}><Board rows={data.boards[key] || []} /></Panel>)}
+              {BOARDS.map(([key, title]) => (
+                <Panel key={key} title={title}><Board rows={data.boards[key] || []} films={FILM_BOARDS.includes(key)} titles={data.titles || {}} /></Panel>
+              ))}
             </div>
             <p className="text-gray-400 text-sm">Counts only: no cookies, no IP addresses, no visitor identifiers. Bots are not counted. Leaderboards are for the current month.</p>
           </main>

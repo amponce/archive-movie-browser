@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { redis } from './_redis.js';
 
 const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'banner'];
+const FILM_BOARDS = ['opened', 'played', 'watched'];
 const DAYS = 30;
 
 function allowed(request) {
@@ -25,15 +26,26 @@ export async function GET(request) {
     redis([
       ...days.map(day => ['HGETALL', `stats:day:${day}`]),
       ...BOARDS.map(board => ['ZREVRANGE', `stats:${board}:${month}`, 0, 24, 'WITHSCORES']),
+      ['LRANGE', 'stats:recent', 0, 39],
     ], { readOnly: true }),
     redis([...days.map(day => ['PFCOUNT', `stats:visitors:${day}`]), ['PFCOUNT', `stats:visitors:${month}`]]),
   ]);
+
+  const boards = Object.fromEntries(BOARDS.map((board, i) => [board, pairs(reads[DAYS + i])]));
+  const recent = (reads[DAYS + BOARDS.length] || []).flatMap(entry => { try { return [JSON.parse(entry)]; } catch { return []; } });
+
+  // Names for every film the page will mention
+  const films = [...new Set([...FILM_BOARDS.flatMap(board => boards[board].map(([film]) => film)), ...recent.map(event => event.data?.film).filter(Boolean)])];
+  const names = films.length ? (await redis([['HMGET', 'stats:titles', ...films]], { readOnly: true }))[0] : [];
+  const titles = Object.fromEntries(films.map((film, i) => [film, names[i]]).filter(([, title]) => title));
 
   const body = {
     month,
     days: days.map((day, i) => ({ day, visitors: visitors[i] || 0, events: Object.fromEntries(pairs(reads[i])) })),
     visitorsThisMonth: visitors[DAYS] || 0,
-    boards: Object.fromEntries(BOARDS.map((board, i) => [board, pairs(reads[DAYS + i])])),
+    boards,
+    titles,
+    recent,
   };
   return Response.json(body, { headers: { 'Cache-Control': 'no-store' } });
 }
