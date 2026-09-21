@@ -5,6 +5,11 @@ const SUBTITLE_NOISE = /\b(eng(lish)?\s+(hard\s*)?sub(s|titles?)?|hard\s*subs?|l
 const SEPARATOR = /\s+-\s+|:\s+|\s+\|\s+|\s+aka\s+/i;
 // One-word notes that are also film titles on TMDB ("Unrated", "Trailer")
 const GENERIC = /^(unrated|trailer|version|episode|complete|original|classic|movie|film|part|silent)$/i;
+// Upload catalogue IDs, not numeric film titles. A bare number without its
+// own separator only counts before an ALL-CAPS series label and separator.
+// A bare number followed by a colon is left alone: that is how real titles are
+// written ("2001: A Space Odyssey"), while catalogue numbers use " - " or ".".
+const CATALOGUE_PREFIX = /^(?:0\d+\.\s+|[A-Z]\s+\d+\s+|[A-Z]+\d+(?:\s*(?:-|:|\|)\s*|\s+)|\d+\s*(?:-|\|)\s*|\d+\s+(?=[A-Z][A-Z\s]+\s-\s))/;
 
 const releaseYear = movie => Number(movie.release_date?.slice(0, 4)) || null;
 
@@ -29,12 +34,15 @@ export function titleCandidates(title) {
     .replace(/\s+/g, ' ')
     .trim();
 
-  const raw = String(title).replace(/_/g, ' ');
+  const raw = String(title).replace(/_/g, ' ').trim().replace(CATALOGUE_PREFIX, '');
   const alternates = [...raw.matchAll(/[([]([^)\]]*)[)\]]/g)].map(match => match[1]);
   let base = raw.replace(/[([][^)\]]*[)\]]/g, ' ');
   base = base.replace(/^(.*?)\s*,\s*(the|an|a)\s*$/i, '$2 $1'); // "Phantom Ship , The"
 
-  const main = tidy(base) || raw.trim(); // a title that is nothing but a year, e.g. "1984"
+  // "2001: A Space Odyssey": a leading number followed by a colon is part of the title, so it
+  // survives the year-stripping in tidy() (an upload year looks like "Title (1959)" or "Title 1959")
+  const numbered = base.match(/^\s*(\d+):\s+(.*)$/);
+  const main = (numbered ? `${numbered[1]} ${tidy(numbered[2])}`.trim() : tidy(base)) || raw.trim(); // or nothing but a year, e.g. "1984"
   const candidates = [{ query: main, strict: false }];
   const guess = text => {
     const query = tidy(text);

@@ -28,8 +28,8 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay, on
 
   // Report TMDB data once when it arrives (separate effect to avoid loops)
   useEffect(() => {
-    if (tmdbData) onTmdbData?.(tmdbData);
-  }, [tmdbData]);
+    if (tmdbData) onTmdbData?.(movie.identifier, tmdbData);
+  }, [tmdbData, movie.identifier, onTmdbData]);
 
   // Determine which poster to use
   const tmdbPosterUrl = tmdbData?.posterPath
@@ -49,7 +49,7 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay, on
   const handleKeyDown = (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      if (!event.repeat) onPlay?.();
+      if (!event.repeat) onPlay?.(movie);
     }
   };
 
@@ -61,7 +61,7 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay, on
         tabIndex={0}
         aria-label={`Open ${movie.title}`}
         onKeyDown={handleKeyDown}
-        onClick={onPlay}
+        onClick={() => onPlay?.(movie)}
         className="movie-card group block bg-gray-800 rounded-lg overflow-hidden hover:ring-2 hover:ring-yellow-400 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -159,7 +159,7 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay, on
       tabIndex={0}
       aria-label={`Open ${movie.title}`}
       onKeyDown={handleKeyDown}
-      onClick={onPlay}
+      onClick={() => onPlay?.(movie)}
       className="movie-card flex gap-4 p-3 bg-gray-800 rounded-lg hover:bg-gray-750 group transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-yellow-400"
     >
       {/* Thumbnail */}

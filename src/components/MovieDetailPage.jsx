@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useId } from 'react';
 import {
   X,
   ExternalLink,
@@ -81,6 +81,29 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
   const playerRef = React.useRef(null);
   const onCloseRef = useRef(onClose);
   const hasRenderedIdentifierRef = useRef(false);
+  const dialogRef = useRef(null);
+  const backButtonRef = useRef(null);
+  const titleId = useId();
+
+  // A native modal keeps background controls inert, including when focus
+  // enters the embedded player. Keep one focus session across related films.
+  useEffect(() => {
+    const opener = document.activeElement;
+    const dialog = dialogRef.current;
+    dialog.showModal();
+    backButtonRef.current.focus({ preventScroll: true });
+    return () => {
+      dialog.close();
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
+    };
+  }, []);
+
+  // Selecting a related film can remove the focused card from the dialog.
+  useEffect(() => {
+    if (!dialogRef.current.contains(document.activeElement)) {
+      backButtonRef.current.focus({ preventScroll: true });
+    }
+  }, [movie.identifier]);
 
   // Keep the page fixed while the full-screen overlay is displayed, and give
   // this overlay session one history entry that the browser can return from.
@@ -135,7 +158,24 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
 
   useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') window.history.back();
+      if (event.key !== 'Tab') return;
+      const dialog = dialogRef.current;
+      const controls = [...dialog.querySelectorAll(
+        'button, a[href], input, select, textarea, iframe, video[controls], [tabindex]'
+      )].filter((element) => element.tabIndex >= 0
+        && !element.matches(':disabled') && element.getClientRects().length);
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      // Native modality makes the background inert; explicitly wrap the
+      // endpoints as well so Tab does not leave for the browser toolbar.
+      if (event.shiftKey && (document.activeElement === first
+        || document.activeElement === dialog)) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -203,7 +243,17 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
   const genres = tmdbDetails?.genres || movie.genres?.map(g => ({ name: g })) || [];
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-900 overflow-y-auto">
+    <dialog
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      onCancel={(event) => {
+        event.preventDefault();
+        window.history.back();
+      }}
+      className="fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 p-0 bg-gray-900 overflow-y-auto"
+    >
       {/* Backdrop image */}
       {backdropUrl && (
         <div
@@ -218,6 +268,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
       <div className="sticky top-0 z-10 bg-gray-900/90 backdrop-blur border-b border-gray-800">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
+            ref={backButtonRef}
             onClick={() => window.history.back()}
             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
           >
@@ -295,7 +346,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
           {/* Details */}
           <div className="flex-1 min-w-0">
             {/* Title */}
-            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+            <h1 id={titleId} className="text-3xl lg:text-4xl font-bold text-white mb-2">
               {tmdbDetails?.title || movie.title}
             </h1>
 
@@ -447,6 +498,6 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
           </div>
         )}
       </div>
-    </div>
+    </dialog>
   );
 }

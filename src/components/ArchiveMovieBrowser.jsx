@@ -469,8 +469,8 @@ export default function ArchiveMovieBrowser() {
                 key={movie.identifier}
                 movie={movie}
                 viewMode={viewMode}
-                onPlay={() => setSelectedMovie(movie)}
-                onTmdbData={(data) => handleTmdbData(movie.identifier, data)}
+                onPlay={setSelectedMovie}
+                onTmdbData={handleTmdbData}
               />
             ))}
           </div>

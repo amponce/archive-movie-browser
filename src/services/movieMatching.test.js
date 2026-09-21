@@ -131,3 +131,23 @@ test('candidateQueries starts with the normal queries, has no duplicates, and st
   assert.deepEqual(candidateQueries('M'), ['M']);
   assert.ok(!candidateQueries('The House of the Seven Gables').includes('the'), 'no single stop words');
 });
+
+test('catalogue prefixes are removed before query and cover normalization', () => {
+  assert.equal(titleCandidates('H 2 House On Haunted Hill ( 1959) Classic Vincent Price Horror Full Movie')[0].query,
+    'House On Haunted Hill Classic Vincent Price Horror');
+  assert.equal(titleCandidates('000. Bunny Galore House On Haunted Hill')[0].query, 'Bunny Galore House On Haunted Hill');
+  assert.equal(titleCandidates('CTCN0030 - Nosferatu')[0].query, 'Nosferatu');
+  assert.equal(titleCandidates('302 DEAD AND BURIED TREASURES - The House on Haunted Hill')[0].query,
+    'DEAD AND BURIED TREASURES The House on Haunted Hill');
+  assert.equal(titleCandidates('302 - Nosferatu')[0].query, 'Nosferatu');
+});
+
+test('real numeric and single-letter titles keep their existing normalized queries', () => {
+  for (const [title, query] of [
+    ['12 Angry Men', '12 Angry Men'], ['3 Women', '3 Women'], ['M', 'M'],
+    ['20,000 Leagues Under the Sea', '20 000 Leagues Under the Sea'],
+    ['1984', '1984'], ['8 1/2', '8 1 2'], ['THX 1138', 'THX 1138'],
+    ['2001: A Space Odyssey', '2001 A Space Odyssey'], ['2010: The Year We Make Contact', '2010 The Year We Make Contact'],
+    ['1492: Conquest of Paradise', '1492 Conquest of Paradise'], ['300: Rise of an Empire', '300 Rise of an Empire'],
+  ]) assert.equal(titleCandidates(title)[0].query, query);
+});
