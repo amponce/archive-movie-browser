@@ -41,6 +41,8 @@ test('an indexed upload is described as the real film, with a poster and links',
   assert.equal(film.year, 1922);
   assert.match(film.posterUrl, /^https:\/\/image\.tmdb\.org\/t\/p\/w500\//);
   assert.equal(film.watchUrl, 'https://archive-movie-browser.vercel.app/#Cops1922');
+  assert.equal(Object.keys(film)[0], 'watchUrl', 'the link to give people comes first');
+  assert.ok(!JSON.stringify(film).includes('archive.org/details'), 'list results carry one link: ours');
 });
 
 test('live: search finds Night of the Living Dead', { skip: !process.env.LIVE }, async t => {

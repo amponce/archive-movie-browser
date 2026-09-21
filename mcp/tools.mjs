@@ -11,20 +11,20 @@ setPosterIndex(index.films);
 export const SORTS = ['downloads', 'avg_rating', 'date desc', 'date asc', 'publicdate desc', 'title asc'];
 const SITE = 'https://archive-movie-browser.vercel.app';
 
-// What a client gets for a film: enough to describe it, link to it and embed it
+// What a client gets for a film. One link on purpose: given three, assistants tend to hand
+// people the archive.org page, which has none of what this project adds (the player, the real
+// title and poster). get_film still includes the Archive.org page as the source.
 export async function describe(movie) {
   const film = await indexedMatch(movie.identifier); // undefined = not indexed, null = decided "no match"
   return {
-    identifier: movie.identifier,
+    watchUrl: `${SITE}/#${movie.identifier}`,
     title: film?.title || movie.title,
     uploadTitle: movie.title,
     year: (film?.releaseDate && Number(film.releaseDate)) || movie.year || null,
     runtimeMinutes: Math.round(movie.runtimeMinutes) || null,
     genres: movie.genres,
     downloads: Number(movie.downloads) || null, // the single-item endpoint does not report downloads
-    watchUrl: `${SITE}/#${movie.identifier}`,
-    archiveUrl: movie.archiveUrl,
-    embedUrl: movie.embedUrl,
+    identifier: movie.identifier,
     posterUrl: film?.posterPath ? `https://image.tmdb.org/t/p/w500${film.posterPath}` : null,
     tmdbId: film?.id ?? null,
   };
@@ -50,7 +50,7 @@ export const browseFilms = ({ collection = 'feature_films', genre, decade, sort 
 
 export async function getFilm({ identifier }) {
   const movie = await archiveService.getMovieByIdentifier(identifier);
-  return { ...(await describe(movie)), description: String(movie.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1200), creator: movie.creator || null };
+  return { ...(await describe(movie)), sourceUrl: movie.archiveUrl, embedUrl: movie.embedUrl, description: String(movie.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1200), creator: movie.creator || null };
 }
 
 export const listCollections = () => ({
