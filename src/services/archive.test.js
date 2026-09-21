@@ -25,7 +25,7 @@ test('getMovieByIdentifier normalizes Archive.org metadata', async () => {
     assert.deepEqual(movie, {
       id: 'example-film', identifier: 'example-film', title: 'Example Film',
       year: 1954, runtimeMinutes: 90, runtime: '1:30:00', genres: ['Drama', 'Sci-Fi'],
-      downloads: 42, rating: null, description: 'A test movie.', creator: 'Test Director',
+      downloads: 42, sizeMB: null, rating: null, description: 'A test movie.', creator: 'Test Director',
       archiveUrl: 'https://archive.org/details/example-film',
       thumbnailUrl: 'https://archive.org/services/img/example-film',
       embedUrl: 'https://archive.org/embed/example-film', date: '1954-01-01', publicDate: undefined
@@ -552,4 +552,22 @@ test('fetchMovies asks for dated films when sorting by release date, not for oth
   }
   assert.match(urls[0], /date:\[1880-01-01 TO 1999-12-31\]/);
   assert.match(urls[1], /date:\[1950-01-01 TO 1959-12-31\] OR title:\(1950 OR/);
+});
+
+test('Full Movies drops an unknown-length upload that is too small to be a feature', async () => {
+  const { runtimeFilter } = await import('./archive.js');
+  const full = runtimeFilter({ minRuntime: 40 });
+  // Real items from Movies & Films, "Top Rated": a film's name, no runtime, a trailer's file size
+  assert.equal(full({ runtimeMinutes: 0, title: 'Do the Right Thing', sizeMB: 52 }), false);
+  assert.equal(full({ runtimeMinutes: 0, title: 'Attack of the Super Monsters', sizeMB: 17 }), false);
+  assert.equal(full({ runtimeMinutes: 0, title: 'Escape From Sobibor', sizeMB: 1469 }), true);
+  assert.equal(full({ runtimeMinutes: 0, title: 'An old low-bitrate transfer', sizeMB: 140 }), true);
+  assert.equal(full({ runtimeMinutes: 0, title: 'Size not reported' }), true, 'no size is not evidence either');
+  assert.equal(runtimeFilter({ minRuntime: 0 })({ runtimeMinutes: 0, title: 'A cartoon', sizeMB: 20 }), true, 'collections with no minimum keep small files');
+  assert.equal(runtimeFilter({ shorts: true })({ runtimeMinutes: 0, title: 'Do the Right Thing', sizeMB: 52 }), true);
+});
+
+test('normalizeMovie reports the upload size in megabytes', () => {
+  assert.equal(archiveService.normalizeMovie({ identifier: 'a', title: 'A', item_size: 52_400_000 }).sizeMB, 52);
+  assert.equal(archiveService.normalizeMovie({ identifier: 'a', title: 'A' }).sizeMB, null);
 });

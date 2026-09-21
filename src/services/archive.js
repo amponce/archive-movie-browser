@@ -42,13 +42,18 @@ export function defaultMinRuntime(collectionId) {
 // A trailer rarely has a runtime either, so among films of unknown length the title decides:
 // "Psycho trailer" is one, "Wheels On Meals (1984) with Trailers" is a film with extras.
 const TRAILER = /\b(trailers?|teasers?|tv spots?)\b/i;
+const MIN_MB_PER_MINUTE = 2.5;
 const FILM_WITH_TRAILERS = /(\b(with|and|plus)|[&+])\s+(\w+\s+)?trailers?\b/i;
 
 export function runtimeFilter({ shorts = false, minRuntime = 0 } = {}) {
   return (movie) => {
     if (movie.runtimeMinutes === 0) {
+      if (shorts) return true;
+      // Trailers are often titled like the film itself ("Do the Right Thing", 52 MB). Even a
+      // low-bitrate transfer needs about 2.5 MB a minute, and real features run 400 MB and up.
+      if (movie.sizeMB && movie.sizeMB < minRuntime * MIN_MB_PER_MINUTE) return false;
       const title = String(movie.title || '');
-      return shorts || !TRAILER.test(title) || FILM_WITH_TRAILERS.test(title);
+      return !TRAILER.test(title) || FILM_WITH_TRAILERS.test(title);
     }
     return shorts ? movie.runtimeMinutes <= 30 : movie.runtimeMinutes >= minRuntime;
   };
@@ -178,6 +183,7 @@ class ArchiveService {
       runtime: movie.runtime,
       genres: genres.length > 0 ? genres : ['Uncategorized'],
       downloads: movie.downloads || 0,
+      sizeMB: movie.item_size ? Math.round(movie.item_size / 1e6) : null,
       rating: movie.avg_rating || null,
       description: movie.description,
       creator: Array.isArray(movie.creator) ? movie.creator[0] : movie.creator,
@@ -393,7 +399,8 @@ class ArchiveService {
       'creator',
       'avg_rating',
       'date',
-      'publicdate'
+      'publicdate',
+      'item_size'
     ];
 
     const fieldParams = fields.map(f => `fl[]=${f}`).join('&');
