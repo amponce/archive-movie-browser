@@ -6,7 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
-- Cookieless usage analytics (Vercel Web Analytics): page views and a few events such as a film played. See Privacy in the README.
+- Our own cookieless usage counts (`/api/event`, stored as counts in Redis) with a private stats page for the maintainer. See Privacy in the README.
 
 ### Changed
 
