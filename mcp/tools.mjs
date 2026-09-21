@@ -2,7 +2,7 @@
 // All Archive.org logic comes from the web app's services (src/services), which have no browser
 // dependencies: search across collections, de-duplication of re-uploads, runtime parsing, retries.
 import { readFileSync } from 'node:fs';
-import archiveService, { VIDEO_CATEGORIES, STANDARD_GENRES, DECADES, runtimeFilter, defaultMinRuntime } from '../src/services/archive.js';
+import archiveService, { VIDEO_CATEGORIES, STANDARD_GENRES, DECADES, ALL_FILMS, runtimeFilter, defaultMinRuntime } from '../src/services/archive.js';
 import { setPosterIndex, indexedMatch } from '../src/services/posterIndex.js';
 
 const index = JSON.parse(readFileSync(new URL('../public/poster-index.json', import.meta.url)));
@@ -54,11 +54,11 @@ export async function getFilm({ identifier }) {
 }
 
 export const listCollections = () => ({
-  collections: VIDEO_CATEGORIES.map(({ id, name, films }) => ({ id, name, films: Boolean(films) })),
+  collections: [{ id: ALL_FILMS, name: 'All Films', films: true }, ...VIDEO_CATEGORIES.map(({ id, name, films }) => ({ id, name, films: Boolean(films) }))],
   genres: STANDARD_GENRES,
   sorts: SORTS,
   decades: DECADES,
 });
 
 export { DECADES };
-export const COLLECTION_IDS = VIDEO_CATEGORIES.map(c => c.id);
+export const COLLECTION_IDS = [ALL_FILMS, ...VIDEO_CATEGORIES.map(c => c.id)]; // 'all' = every film collection

@@ -21,7 +21,7 @@ test('parseFilters and filtersToQuery round-trip a full set of filters', () => {
 test('filtersToQuery omits defaults so the plain URL stays clean', () => {
   assert.equal(filtersToQuery(URL_FILTER_DEFAULTS), '');
   assert.equal(filtersToQuery({
-    collection: 'SciFi_Horror',
+    collection: 'all',
     genre: 'all',
     q: '',
     sort: 'downloads',
@@ -59,4 +59,12 @@ test('a decade survives the round trip, and a junk one is ignored', () => {
   assert.equal(filtersToQuery(parseFilters('?decade=1980')), 'decade=1980');
   assert.equal(parseFilters('?decade=1985').decade, null);
   assert.equal(parseFilters('?decade=abc').decade, null);
+});
+
+test('All Films is the default, so it stays out of the URL; a named collection is written', () => {
+  assert.equal(parseFilters('').collection, 'all');
+  assert.equal(filtersToQuery({ collection: 'all', genre: 'Horror' }), 'genre=Horror');
+  assert.equal(filtersToQuery({ collection: 'SciFi_Horror' }), 'collection=SciFi_Horror');
+  assert.equal(parseFilters('?collection=SciFi_Horror').collection, 'SciFi_Horror');
+  assert.equal(parseFilters('?collection=nonsense').collection, 'all');
 });

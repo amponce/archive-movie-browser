@@ -12,7 +12,7 @@ import {
   ChevronDown,
   Calendar,
 } from 'lucide-react';
-import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, defaultMinRuntime, runtimeFilter } from '../services/archive';
+import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, ALL_FILMS, defaultMinRuntime, runtimeFilter } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import { postersFirst } from '../services/posterIndex';
 import { parseArchiveUrl } from '../services/archiveUrl';
@@ -115,12 +115,14 @@ export default function ArchiveMovieBrowser() {
   const [category, setCategory] = useState(urlFilters.collection); // Video collection/category
 
   // Get current category info
-  const currentCategory = VIDEO_CATEGORIES.find(c => c.id === category) || VIDEO_CATEGORIES[0];
-  const acrossCollections = Boolean(activeSearch) || genreFilter !== 'all';
+  const currentCategory = VIDEO_CATEGORIES.find(c => c.id === category)
+    || { id: ALL_FILMS, name: 'All Films', description: 'Every film collection on the Internet Archive' };
+  // Only a search looks outside the chosen collection; the genre pills narrow it
+  const acrossCollections = Boolean(activeSearch);
   const collectionDescription = activeSearch
     ? 'Search results across all collections'
     : genreFilter !== 'all'
-      ? `${genreFilter} across all film collections`
+      ? `${genreFilter} in ${currentCategory.name}`
       : currentCategory.description;
 
   // Only the latest request may update state (older responses can arrive last)
@@ -236,7 +238,6 @@ export default function ArchiveMovieBrowser() {
     // Searches span all collections, so picking one means going back to browsing it
     setSearchQuery('');
     setActiveSearch('');
-    setGenreFilter('all'); // Reset genre filter when changing category
   };
 
   // Rebuild the query string from filter state, omitting defaults and keeping the
@@ -347,6 +348,18 @@ export default function ArchiveMovieBrowser() {
   // TMDB poster stay in the list and get a title cover
   const displayedMovies = movies;
 
+  // A single collection can be small (Sci-Fi & Horror has 51 films from the 1980s; all the
+  // film collections together have 5,300), so offer the wider look with the same filters.
+  const canWiden = !activeSearch && category !== ALL_FILMS;
+  const widenButton = (
+    <button
+      onClick={() => { track('Filter', { type: 'collection', value: 'all (widened)' }); setCategory(ALL_FILMS); }}
+      className="mt-3 px-4 py-2 rounded-lg bg-gray-800 text-yellow-400 hover:bg-gray-700 text-sm font-medium"
+    >
+      Look in All Films instead
+    </button>
+  );
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <McpBanner />
@@ -454,11 +467,14 @@ export default function ArchiveMovieBrowser() {
               <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
                 <Library className="w-4 h-4 text-yellow-400 hidden sm:block" />
                 <select
-                  value={category}
+                  value={activeSearch ? 'search' : category}
                   aria-label="Collection"
                   onChange={(e) => handleCategoryChange(e.target.value)}
                   className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer max-w-[140px] sm:max-w-none"
                 >
+                  {/* A search looks everywhere, so say so rather than keep showing a collection */}
+                  {activeSearch && <option value="search" disabled>Everything (searching)</option>}
+                  <option value={ALL_FILMS}>All Films</option>
                   {VIDEO_CATEGORIES.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
@@ -606,7 +622,8 @@ export default function ArchiveMovieBrowser() {
           <span>
             Showing <strong className="text-white">{displayedMovies.length}</strong>
             {' '}{contentType === 'trailers' ? 'shorts' : 'movies'}
-            {genreFilter !== 'all' && ` in ${genreFilter}${activeSearch ? '' : ' across all film collections'}`}
+            {genreFilter !== 'all' && ` in ${genreFilter}`}
+            {!activeSearch && ` from ${currentCategory.name}`}
             {activeSearch && ` for "${activeSearch}" across all collections`}
           </span>
           {contentType !== 'trailers' && minRuntime > 0 && (
@@ -688,6 +705,17 @@ export default function ArchiveMovieBrowser() {
             <Film className="w-16 h-16 mx-auto mb-4 opacity-30" />
             <p className="text-lg">No movies found matching your criteria</p>
             <p className="text-sm mt-2">Try adjusting the filters or search query</p>
+            {canWiden && widenButton}
+          </div>
+        )}
+
+        {/* End of the list: say so, or a short list looks like broken paging */}
+        {!loading && !nextPage && !error && displayedMovies.length > 0 && (
+          <div className="text-center mt-8 pt-8 border-t border-gray-800 text-gray-400">
+            <p>
+              That's all {displayedMovies.length}{!activeSearch && ` in ${currentCategory.name}`} for these filters.
+            </p>
+            {canWiden && widenButton}
           </div>
         )}
 
@@ -712,12 +740,12 @@ export default function ArchiveMovieBrowser() {
           <p>
             Data sourced from{' '}
             <a
-              href={`https://archive.org/details/${acrossCollections ? 'movies' : category}`}
+              href={`https://archive.org/details/${acrossCollections || category === ALL_FILMS ? 'movies' : category}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-yellow-400 hover:underline"
             >
-              Internet Archive's {acrossCollections ? 'Moving Image Archive' : `${currentCategory.name} Collection`}
+              Internet Archive's {acrossCollections || category === ALL_FILMS ? 'Moving Image Archive' : `${currentCategory.name} Collection`}
             </a>
           </p>
           <p className="mt-1">

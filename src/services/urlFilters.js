@@ -1,6 +1,6 @@
 // Filter state that belongs in the URL, so views are shareable and Back works (#43).
 // These helpers are pure: the component passes location.search in and writes the query out.
-import { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, defaultMinRuntime } from './archive.js';
+import { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, ALL_FILMS, defaultMinRuntime } from './archive.js';
 
 export const SORT_OPTIONS = {
   downloads: 'Most Popular',
@@ -15,7 +15,7 @@ export const SORT_OPTIONS = {
 
 // Defaults are omitted from the query string, so the plain URL stays clean.
 export const URL_FILTER_DEFAULTS = {
-  collection: 'SciFi_Horror',
+  collection: ALL_FILMS,
   genre: 'all',
   q: '',
   sort: 'downloads',
@@ -32,7 +32,7 @@ export function parseFilters(search) {
   const filters = {};
 
   const collection = params.get('collection');
-  if (collection && VIDEO_CATEGORIES.some(c => c.id === collection)) {
+  if (collection && (collection === ALL_FILMS || VIDEO_CATEGORIES.some(c => c.id === collection))) {
     filters.collection = collection;
   }
 

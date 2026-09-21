@@ -34,8 +34,12 @@ export const VIDEO_CATEGORIES = [
 ];
 
 // Minimum runtime (minutes) a collection should start with
+// "All Films" in the collection dropdown: every film collection at once. It is the default, so
+// the genre pills have thousands of films to narrow, and the dropdown never has to lie.
+export const ALL_FILMS = 'all';
+
 export function defaultMinRuntime(collectionId) {
-  return VIDEO_CATEGORIES.find(c => c.id === collectionId)?.features ? 40 : 0;
+  return collectionId === ALL_FILMS || VIDEO_CATEGORIES.find(c => c.id === collectionId)?.features ? 40 : 0;
 }
 
 // Predicate for the Full Movies / Shorts toggle. Many Archive.org items have no runtime
@@ -314,7 +318,8 @@ class ArchiveService {
 
     // Just filter by collection - the collection itself defines content type
     // Adding mediatype filter is too restrictive for many collections
-    let query = `collection:"${collection}"`;
+    const filmCollections = `collection:(${VIDEO_CATEGORIES.filter(c => c.films).map(c => c.id).join(' OR ')})`;
+    let query = collection === ALL_FILMS ? filmCollections : `collection:"${collection}"`;
 
     // Match every search word (a phrase match finds nothing for "night living").
     // Only letters and digits survive - Archive.org's backend errors on escaped quotes.
@@ -329,11 +334,8 @@ class ArchiveService {
 
     // Add genre filter to query for better results
     if (genre && genre !== 'all') {
-      // One collection rarely has more than a handful of a genre (Horror in Film Noir: 23),
-      // so a genre browses every film collection (10,000+). A search already covers everything.
-      if (!words) {
-        query = `collection:(${VIDEO_CATEGORIES.filter(c => c.films).map(c => c.id).join(' OR ')})`;
-      }
+      // The genre narrows whatever the collection dropdown says (All Films by default). It used
+      // to switch to every film collection on its own, leaving the dropdown showing the wrong thing.
       // Include aliases so the server matches what normalizeGenre() maps to this genre
       const names = [genre, ...Object.keys(GENRE_ALIASES).filter(alias => GENRE_ALIASES[alias] === genre)];
       query += ` AND subject:(${names.map(n => `"${n}"`).join(' OR ')})`;
