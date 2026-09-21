@@ -18,6 +18,7 @@ import MovieCard from './MovieCard';
 import SearchBox from './SearchBox';
 import SettingsModal from './SettingsModal';
 import MovieDetailPage from './MovieDetailPage';
+import McpBanner from './McpBanner';
 
 const SORT_OPTIONS = {
   downloads: 'Most Popular',
@@ -375,6 +376,8 @@ export default function ArchiveMovieBrowser() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
+      <McpBanner />
+
       {/* Header */}
       <header className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -734,6 +737,9 @@ export default function ArchiveMovieBrowser() {
             >
               Internet Archive's {acrossCollections ? 'Moving Image Archive' : `${currentCategory.name} Collection`}
             </a>
+          </p>
+          <p className="mt-1">
+            <a href="/mcp.html" className="text-yellow-400 hover:underline">MCP server</a>: let an AI assistant search these films
           </p>
           {tmdbApiKey && (
             <p className="mt-1">
