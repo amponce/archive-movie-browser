@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 const DISMISSED_KEY = 'mcp-banner-dismissed';
 
@@ -21,11 +21,10 @@ export default function McpBanner() {
   return (
     <div className="bg-yellow-400 text-gray-900">
       <div className="max-w-7xl mx-auto px-4 py-2 flex items-center gap-3 text-sm">
-        <Sparkles className="w-4 h-4 shrink-0" aria-hidden="true" />
         <p className="flex-1 min-w-0">
-          <strong className="font-semibold">New: ask your AI assistant what to watch.</strong>{' '}
-          <span className="hidden sm:inline">These films now have an MCP server for Claude, Cursor and friends.</span>{' '}
-          <a href="/mcp.html" className="underline underline-offset-2 font-medium whitespace-nowrap hover:no-underline">See how it works</a>
+          <strong className="font-semibold">New: MCP server.</strong>{' '}
+          <span className="hidden sm:inline">Search and browse Archive.org films from Claude, Cursor and other MCP clients.</span>{' '}
+          <a href="/mcp.html" className="underline underline-offset-2 font-medium whitespace-nowrap hover:no-underline">Set it up</a>
         </p>
         <button
           onClick={dismiss}
