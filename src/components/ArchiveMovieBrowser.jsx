@@ -17,9 +17,21 @@ import SearchBox from './SearchBox';
 import SettingsModal from './SettingsModal';
 import MovieDetailPage from './MovieDetailPage';
 
+const SORT_OPTIONS = {
+  downloads: 'Most Popular',
+  avg_rating: 'Top Rated (Archive)',
+  tmdb_rating: 'Top Rated (TMDB)',
+  'date desc': 'Release Date (Newest)',
+  'date asc': 'Release Date (Oldest)',
+  'publicdate desc': 'Recently Added',
+  'publicdate asc': 'Oldest Added',
+  'title asc': 'Title A-Z',
+};
+
 export default function ArchiveMovieBrowser() {
   // Settings & UI state
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [viewMode, setViewMode] = useState('grid');
 
@@ -273,8 +285,19 @@ export default function ArchiveMovieBrowser() {
               />
             </div>
 
+            {/* Mobile disclosure keeps active choices visible without a tall sticky header. */}
+            <button
+              className="md:hidden flex items-center gap-2 w-full text-left text-xs text-gray-300"
+              aria-expanded={filtersOpen}
+              aria-controls="catalogue-filters"
+              onClick={() => setFiltersOpen(open => !open)}
+            >
+              <Filter className="w-4 h-4 shrink-0" />
+              <span>Filters: {acrossCollections ? 'All collections' : currentCategory.name} · {contentType === 'trailers' ? 'Shorts, ≤30 min' : `Full Movies, ${minRuntime ? `${minRuntime}+ min` : 'any length'}`} · {SORT_OPTIONS[sortBy]}</span>
+            </button>
+
             {/* Filters row */}
-            <div className="flex flex-wrap gap-2">
+            <div id="catalogue-filters" className={`${filtersOpen ? 'flex' : 'hidden'} md:flex flex-wrap gap-2`}>
               {/* Category/Collection dropdown */}
               <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
                 <Library className="w-4 h-4 text-yellow-400 hidden sm:block" />
@@ -361,14 +384,9 @@ export default function ArchiveMovieBrowser() {
                   onChange={(e) => handleSortChange(e.target.value)}
                   className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
                 >
-                  <option value="downloads">Most Popular</option>
-                  <option value="avg_rating">Top Rated (Archive)</option>
-                  <option value="tmdb_rating">Top Rated (TMDB)</option>
-                  <option value="date desc">Release Date (Newest)</option>
-                  <option value="date asc">Release Date (Oldest)</option>
-                  <option value="publicdate desc">Recently Added</option>
-                  <option value="publicdate asc">Oldest Added</option>
-                  <option value="title asc">Title A-Z</option>
+                  {Object.entries(SORT_OPTIONS).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -383,11 +401,11 @@ export default function ArchiveMovieBrowser() {
               <Filter className="w-4 h-4 text-gray-400" />
               <span className="text-sm text-gray-400">Filter by genre:</span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible pb-1 md:pb-0 [mask-image:linear-gradient(to_right,black_94%,transparent)] md:[mask-image:none]">
               <button
                 onClick={() => handleGenreChange('all')}
                 aria-pressed={genreFilter === 'all'}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   genreFilter === 'all'
                     ? 'bg-yellow-500 text-gray-900'
                     : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
@@ -400,7 +418,7 @@ export default function ArchiveMovieBrowser() {
                   key={genre}
                   onClick={() => handleGenreChange(genre)}
                   aria-pressed={genreFilter === genre}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                     genreFilter === genre
                       ? 'bg-yellow-500 text-gray-900'
                       : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
