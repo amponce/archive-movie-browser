@@ -21,6 +21,9 @@ function shapeStyle(composition, color) {
     case 'rings': // hypnotic rings, the staple of B-movie title cards
       return { top: '-18%', left: '-22%', width: '130%', aspectRatio: '1', borderRadius: '50%',
         background: `repeating-radial-gradient(circle, ${color} 0 7%, transparent 7% 14%)` };
+    case 'keyhole': // a round aperture opening into a tapered shaft
+      return { top: '8%', left: '24%', width: '52%', height: '54%',
+        background: `radial-gradient(circle at 50% 28%, ${color} 0 28%, transparent 28.5%), conic-gradient(from 162deg at 50% 37%, ${color} 0deg 36deg, transparent 36deg 360deg)` };
     case 'stairs': // a staircase climbing out of frame
       return { inset: 0, background: color,
         clipPath: 'polygon(100% 8%, 100% 100%, 0 100%, 0 80%, 20% 80%, 20% 62%, 40% 62%, 40% 44%, 60% 44%, 60% 26%, 80% 26%, 80% 8%)' };
