@@ -310,8 +310,7 @@ export default function ArchiveMovieBrowser() {
 
   // Scroll the selected pill to the centre of the row. Only acts when the row
   // is in scrollable/mobile mode (scrollWidth > clientWidth); on desktop the
-  // pills wrap so there is nothing to scroll. block:'nearest' prevents the
-  // page from moving vertically — only the row scrolls.
+  // pills wrap so there is nothing to scroll.
   const scrollSelectedPillIntoView = useCallback(() => {
     const row = genreRowRef.current;
     if (!row) return;
@@ -319,7 +318,11 @@ export default function ArchiveMovieBrowser() {
     if (row.scrollWidth <= row.clientWidth) return;
     const pressed = row.querySelector('[aria-pressed="true"]');
     if (pressed) {
-      pressed.scrollIntoView({ inline: 'center', block: 'nearest' });
+      // Move the row itself: scrollIntoView would also scroll the page when the row is
+      // off screen (rotating the phone deep in the list jumped back to the top)
+      const pill = pressed.getBoundingClientRect();
+      const box = row.getBoundingClientRect();
+      row.scrollLeft += pill.left - box.left - (box.width - pill.width) / 2;
     }
   }, []);
 
