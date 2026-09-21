@@ -59,11 +59,21 @@ test('stats need the secret, read with the read-only token, and come back shaped
   assert.equal(calls.length, 0, 'no database access without the secret');
   const response = await get('a-long-enough-stats-token');
   assert.equal(response.status, 200);
-  assert.equal(calls[0].auth, 'Bearer read-token');
-  assert.ok(calls[0].commands.every(c => ['HGETALL', 'PFCOUNT', 'ZREVRANGE'].includes(c[0])), 'read-only commands');
+  // Redis counts PFCOUNT as a write (it caches its answer in the key), so the read-only token
+  // may not run it: visitor counts go through the main token, everything else stays read-only
+  const readOnly = calls.find(c => c.auth === 'Bearer read-token');
+  const counting = calls.find(c => c.auth === 'Bearer write-token');
+  assert.ok(readOnly.commands.every(c => ['HGETALL', 'ZREVRANGE'].includes(c[0])));
+  assert.ok(counting.commands.every(c => c[0] === 'PFCOUNT'));
   const body = await response.json();
   assert.equal(body.days.length, 30);
   assert.deepEqual(body.days.at(-1).events, { Play: 3, 'Film opened': 9 });
   assert.equal(body.days.at(-1).visitors, 12);
   assert.deepEqual(body.boards.played[0], ['Cops1922', 7]);
+});
+
+test('an error from the database is an error, not a silent zero', async t => {
+  t.mock.method(globalThis, 'fetch', async (url, init) => ({ ok: true, json: async () => JSON.parse(init.body).map(() => ({ error: 'NOPERM this user has no permissions' })) }));
+  const { redis } = await import('../api/_redis.js');
+  await assert.rejects(() => redis([['PFCOUNT', 'x']]), /NOPERM/);
 });
