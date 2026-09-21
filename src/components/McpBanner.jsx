@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { track } from '../services/analytics';
 
 const DISMISSED_KEY = 'mcp-banner-dismissed';
 
@@ -14,6 +15,7 @@ export default function McpBanner() {
   if (hidden) return null;
 
   const dismiss = () => {
+    track('MCP banner', { action: 'dismissed' });
     setHidden(true);
     try { localStorage.setItem(DISMISSED_KEY, '1'); } catch { /* private mode */ }
   };
@@ -24,7 +26,7 @@ export default function McpBanner() {
         <p className="flex-1 min-w-0">
           <strong className="font-semibold">New: MCP server.</strong>{' '}
           <span className="hidden sm:inline">Search and browse Archive.org films from Claude, Cursor and other MCP clients.</span>{' '}
-          <a href="/mcp.html" className="underline underline-offset-2 font-medium whitespace-nowrap hover:no-underline">Set it up</a>
+          <a href="/mcp.html" onClick={() => track('MCP banner', { action: 'opened' })} className="underline underline-offset-2 font-medium whitespace-nowrap hover:no-underline">Set it up</a>
         </p>
         <button
           onClick={dismiss}

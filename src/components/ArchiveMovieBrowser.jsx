@@ -16,6 +16,7 @@ import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, defaultMinR
 import tmdbService from '../services/tmdb';
 import { postersFirst } from '../services/posterIndex';
 import { parseArchiveUrl } from '../services/archiveUrl';
+import { track } from '../services/analytics';
 import MovieCard from './MovieCard';
 import SearchBox from './SearchBox';
 import SettingsModal from './SettingsModal';
@@ -148,6 +149,11 @@ export default function ArchiveMovieBrowser() {
     window.history.back();
   };
 
+  // Every way of opening a film (card, link, search, related) ends up here
+  useEffect(() => {
+    if (selectedMovie) track('Film opened', { film: selectedMovie.identifier });
+  }, [selectedMovie?.identifier]);
+
   // A pasted archive.org/details/<identifier> link opens the film here
   const [linkError, setLinkError] = useState(null);
   const openFilmLink = (identifier) => {
@@ -264,11 +270,13 @@ export default function ArchiveMovieBrowser() {
     const link = parseArchiveUrl(text);
     if (link?.type === 'film') {
       setSearchQuery('');
+      track('Search', { kind: 'pasted link' });
       return openFilmLink(link.identifier);
     }
     if (link?.type === 'collection') return handleCategoryChange(link.id);
     if (link?.type === 'search') text = link.query;
     setLinkError(null);
+    if (text.trim()) track('Search', { query: text, kind: link ? 'pasted link' : 'typed' });
     setSearchQuery(text);
     setActiveSearch(text.trim());
     setGenreFilter('all');
@@ -276,16 +284,19 @@ export default function ArchiveMovieBrowser() {
 
   // Handle genre filter change
   const handleGenreChange = (genre) => {
+    track('Filter', { type: 'genre', value: genre });
     setGenreFilter(genre);
   };
 
   // Handle sort change
   const handleSortChange = (newSort) => {
+    track('Filter', { type: 'sort', value: newSort });
     setSortBy(newSort);
   };
 
   // Handle category change
   const handleCategoryChange = (newCategory) => {
+    track('Filter', { type: 'collection', value: newCategory });
     setCategory(newCategory);
     // Cartoons, Prelinger films and most uploads are short or have no runtime, so only
     // feature-film collections start on the 40+ minute filter
@@ -593,7 +604,10 @@ export default function ArchiveMovieBrowser() {
                 <select
                   value={decade ?? ''}
                   aria-label="Decade"
-                  onChange={(e) => setDecade(e.target.value ? Number(e.target.value) : null)}
+                  onChange={(e) => {
+                    track('Filter', { type: 'decade', value: e.target.value || 'any' });
+                    setDecade(e.target.value ? Number(e.target.value) : null);
+                  }}
                   className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
                 >
                   <option value="">Any decade</option>
@@ -752,7 +766,7 @@ export default function ArchiveMovieBrowser() {
         {nextPage && !error && (displayedMovies.length > 0 || !loading) && (
           <div className="flex justify-center mt-8 pt-8 border-t border-gray-800">
             <button
-              onClick={() => fetchMovies(nextPage)}
+              onClick={() => { track('Load more', { page: nextPage }); fetchMovies(nextPage); }}
               disabled={loading}
               className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-gray-900 font-medium rounded-lg hover:bg-yellow-400 disabled:opacity-50"
             >

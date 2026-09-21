@@ -4,6 +4,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added
+
+- Cookieless usage analytics (Vercel Web Analytics): page views and a few events such as a film played. See Privacy in the README.
+
 ## [1.3.0] - 2026-09-21
 
 ### Added

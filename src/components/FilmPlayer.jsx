@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import archiveService from '../services/archive';
 import { pickPlayableFile, videoUrl, shortcutFor, resumeTime, rememberPosition } from '../services/playback';
+import { track } from '../services/analytics';
 
 const POSITIONS_KEY = 'playback-positions';
 
@@ -23,6 +24,12 @@ export default function FilmPlayer({ movie }) {
   const [resumedAt, setResumedAt] = useState(0);
   const videoRef = useRef(null);
   const lastSaved = useRef(0);
+  const watched = useRef({ seconds: 0, lastTick: 0, reported: false });
+
+  // Which player ended up showing the film: ours, or Archive.org's as the fallback
+  useEffect(() => {
+    if (source !== undefined) track('Play', { film: movie.identifier, player: source ? 'own' : 'archive' });
+  }, [source, movie.identifier]);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,6 +65,18 @@ export default function FilmPlayer({ movie }) {
     if (start) {
       videoRef.current.currentTime = start;
       setResumedAt(start);
+    }
+  };
+
+  // Ten minutes of actual playback (not the position, which a resume or a skip can jump past)
+  const countWatching = () => {
+    const now = Date.now();
+    const w = watched.current;
+    if (!videoRef.current.paused && w.lastTick) w.seconds += Math.min((now - w.lastTick) / 1000, 1);
+    w.lastTick = now;
+    if (w.seconds >= 600 && !w.reported) {
+      w.reported = true;
+      track('Watched 10 minutes', { film: movie.identifier });
     }
   };
 
@@ -102,7 +121,7 @@ export default function FilmPlayer({ movie }) {
         className="absolute inset-0 w-full h-full bg-black"
         aria-label={movie.title}
         onLoadedMetadata={resume}
-        onTimeUpdate={savePosition}
+        onTimeUpdate={() => { countWatching(); savePosition(); }}
         onError={() => setSource(null)}
       />
       {resumedAt > 0 && (

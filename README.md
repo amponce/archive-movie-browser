@@ -166,6 +166,10 @@ Fork it and turn it into your own themed archive: only westerns, only Prelinger 
 
 All Archive.org access goes through `src/services/archive.js`, which has no React or DOM dependencies, so it can be reused outside this app.
 
+## Privacy
+
+The live site uses [Vercel Web Analytics](https://vercel.com/docs/analytics): no cookies, no user identifiers, nothing sold or shared. It counts page views and a few events (a film opened or played, ten minutes watched, a search, a filter change) so we can tell whether people find and watch films. Search text is sent in lowercase, cut to 60 characters, with anything that looks like an email address removed. The code is in `src/services/analytics.js`; a fork only collects anything if its owner enables Web Analytics on their own Vercel project.
+
 ## API Credits
 
 - **Internet Archive** - [archive.org](https://archive.org) - Public domain movie collection and streaming
