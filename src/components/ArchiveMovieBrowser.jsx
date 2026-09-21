@@ -139,6 +139,15 @@ export default function ArchiveMovieBrowser() {
     return () => { cancelled = true; };
   }, []);
 
+  // The film page closes through history.back(), and that popstate also restores the filters
+  // from the URL. So a search made from the film page waits until the close has happened;
+  // applied any earlier, the restore would undo it.
+  const afterClose = useRef(null);
+  const closeFilmThen = (action) => {
+    afterClose.current = action;
+    window.history.back();
+  };
+
   // A pasted archive.org/details/<identifier> link opens the film here
   const [linkError, setLinkError] = useState(null);
   const openFilmLink = (identifier) => {
@@ -798,9 +807,18 @@ export default function ArchiveMovieBrowser() {
       {selectedMovie && (
         <MovieDetailPage
           movie={selectedMovie}
-          onClose={() => setSelectedMovie(null)}
+          onClose={() => {
+            setSelectedMovie(null);
+            // A search made from the film page runs once the page has closed (see afterClose)
+            const next = afterClose.current;
+            afterClose.current = null;
+            next?.();
+          }}
           allMovies={displayedMovies}
           onPlayRelated={(movie) => setSelectedMovie(movie)}
+          onSearch={(text) => closeFilmThen(() => handleSearch(text))}
+          onPickGenre={(genre) => closeFilmThen(() => { setSearchQuery(''); setActiveSearch(''); handleGenreChange(genre); })}
+          onPickCollection={(id) => closeFilmThen(() => handleCategoryChange(id))}
         />
       )}
     </div>

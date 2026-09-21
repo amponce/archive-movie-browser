@@ -143,6 +143,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
       else runSearch(value);
     } else if (e.key === 'Escape' && open) {
       e.stopPropagation(); // close the list, not whatever is behind it
+      e.preventDefault();  // ...including a <dialog>, which closes on Escape's default action
       setOpen(false);
     }
   };
@@ -170,7 +171,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
         onFocus={() => setOpen(true)}
         onBlur={() => setOpen(false)}
         onKeyDown={handleKeyDown}
-        className="flex-1 pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:border-yellow-400 min-w-0"
+        className="flex-1 pl-10 pr-4 py-2 bg-gray-800 text-white placeholder-gray-400 border border-gray-700 rounded-l-lg focus:outline-none focus:border-yellow-400 min-w-0"
       />
       <button
         onClick={() => runSearch(value)}
