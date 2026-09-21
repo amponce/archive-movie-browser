@@ -184,3 +184,67 @@ test('searchMovie answers from the poster index without calling TMDB, even with 
   assert.equal(fetchMock.mock.callCount(), 0);
   setPosterIndex({});
 });
+
+test('cache expiry is per entry even when the old envelope timestamp expired', async t => {
+  const now = Date.now();
+  const week = 7 * 24 * 60 * 60 * 1000;
+  const { service, storage } = await makeService(t, JSON.stringify({
+    version: CACHE_VERSION, timestamp: now - 2 * week, data: {
+      'fresh-unknown': { data: { id: 1 }, timestamp: now },
+      'old-unknown': { data: { id: 2 }, timestamp: now - week - 1 },
+      'miss-unknown': { data: null, timestamp: now },
+      genres: { data: { 27: 'Horror' }, timestamp: now - 2 * week }
+    }
+  }));
+  assert.equal(service.getFromCache('fresh').found, true);
+  assert.deepEqual(service.getFromCache('miss'), { found: true, data: null });
+  assert.equal(service.getFromCache('old').found, false);
+  assert.deepEqual(await service.getGenres(), { 27: 'Horror' });
+  service.setCache('new', null, { id: 3 });
+  t.mock.timers.tick(2000);
+  const saved = JSON.parse(storage.get('tmdb-poster-cache'));
+  assert.equal('old-unknown' in saved.data, false);
+  assert.equal('timestamp' in saved, false);
+});
+
+test('cache restores and persists only the newest 2000 entries', async t => {
+  const now = Date.now();
+  const data = Object.fromEntries(Array.from({ length: 2003 }, (_, i) =>
+    [`film${i}-unknown`, { data: { id: i }, timestamp: now - 2003 + i }]));
+  const { service, storage } = await makeService(t, JSON.stringify({
+    version: CACHE_VERSION, timestamp: now, data
+  }));
+  assert.equal(service.getFromCache('film2').found, false);
+  assert.equal(service.getFromCache('film3').found, true);
+  service.setCache('new', null, { id: 3000 });
+  assert.equal(service.getFromCache('film3').found, false);
+  t.mock.timers.tick(2000);
+  assert.equal(Object.keys(JSON.parse(storage.get('tmdb-poster-cache')).data).length, 2000);
+});
+
+test('failed storage writes retain the last persisted cache', async t => {
+  const stored = JSON.stringify({ version: CACHE_VERSION, timestamp: Date.now(), data: {} });
+  const { service, storage } = await makeService(t, stored);
+  t.mock.method(console, 'warn', () => {});
+  t.mock.method(localStorage, 'setItem', () => { throw new Error('quota'); });
+  service.setCache('new', null, null);
+  t.mock.timers.tick(2000);
+  assert.equal(storage.get('tmdb-poster-cache'), stored);
+});
+
+test('failed searches remain retryable while successful empty searches cache a miss', async t => {
+  const { service } = await makeService(t);
+  t.mock.method(console, 'warn', () => {});
+  t.mock.method(console, 'error', () => {});
+  const request = t.mock.method(service, 'throttledFetch', async () => ({ ok: false, status: 503 }));
+  await service.searchMovie('Example');
+  assert.equal(service.getFromCache('Example').found, false);
+  request.mock.mockImplementation(async () => { throw new Error('offline'); });
+  await service.searchMovie('Example');
+  assert.equal(service.getFromCache('Example').found, false);
+  request.mock.mockImplementation(async () => ({ ok: true, json: async () => ({ results: [] }) }));
+  await service.searchMovie('Example');
+  assert.deepEqual(service.getFromCache('Example'), { found: true, data: null });
+  await service.searchMovie('Example');
+  assert.equal(request.mock.callCount(), 3);
+});
