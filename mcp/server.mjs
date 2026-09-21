@@ -29,7 +29,7 @@ tool('browse_films', {
   inputSchema: z.object({
     collection: z.enum(COLLECTION_IDS).default('feature_films'),
     genre: z.enum(STANDARD_GENRES).optional(),
-    decade: z.number().int().refine(d => DECADES.includes(d), 'One of ' + DECADES.join(', ')).optional().describe('A decade by its first year, e.g. 1980. Release dates are only reliable up to 1999'),
+    decade: z.number().int().refine(d => DECADES.includes(d), 'One of ' + DECADES.join(', ')).optional().describe('A decade by its first year, e.g. 1980'),
     sort: z.enum(SORTS).default('downloads'),
     minRuntime: z.number().int().min(0).max(300).optional().describe('Minimum length in minutes. Defaults to 40 for feature collections, 0 for shorts and cartoons'),
     limit,

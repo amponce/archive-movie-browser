@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, defaultMinRuntime, runtimeFilter } from '../services/archive';
 import tmdbService from '../services/tmdb';
+import { postersFirst } from '../services/posterIndex';
 import MovieCard from './MovieCard';
 import SearchBox from './SearchBox';
 import SettingsModal from './SettingsModal';
@@ -216,7 +217,11 @@ export default function ArchiveMovieBrowser() {
 
       // Ratings arrive one film at a time. Ranking the batch before it is shown means no card
       // ever moves once it is on screen, and "Load more" adds its films below the ones already there.
-      const batch = sortBy === 'tmdb_rating' ? await tmdbService.sortByRating(result.movies) : result.movies;
+      // Most Popular leads with films that have a real poster; sorts with a visible order
+      // (title, date, rating) are left exactly as Archive.org returned them.
+      const batch = sortBy === 'tmdb_rating' ? await tmdbService.sortByRating(result.movies)
+        : sortBy === 'downloads' ? await postersFirst(result.movies)
+        : result.movies;
       if (requestId !== latestRequest.current) return;
 
       setMovies(prev => (append ? [...prev, ...batch] : batch));
@@ -645,10 +650,10 @@ export default function ArchiveMovieBrowser() {
               <span>{decade}s</span>
             </>
           )}
-          {sortBy.startsWith('date') && !decade && (
+          {sortBy.startsWith('date') && (
             <>
               <span className="text-gray-600">|</span>
-              <span>Films with a known release date, up to 1999. Archive.org dates after that are mostly upload dates.</span>
+              <span>Films with a known release date. Uploads dated the year they were uploaded are left out: that date is usually not the film's.</span>
             </>
           )}
           {tmdbApiKey && (
@@ -739,7 +744,7 @@ export default function ArchiveMovieBrowser() {
             </a>
           </p>
           <p className="mt-1">
-            <a href="/mcp.html" className="text-yellow-400 hover:underline">MCP server</a>: let an AI assistant search these films
+            <a href="/mcp.html" className="text-yellow-400 hover:underline">MCP server</a>: search these films from Claude, Cursor and other MCP clients
           </p>
           {tmdbApiKey && (
             <p className="mt-1">

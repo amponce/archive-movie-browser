@@ -59,9 +59,20 @@ export function runtimeFilter({ shorts = false, minRuntime = 0 } = {}) {
   };
 }
 
-// Decades offered as a filter. Release dates are only trustworthy before 2000: uploaders often
-// leave "date" at the upload date, and nothing was uploaded to Archive.org before then.
-export const DECADES = [1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990];
+// Decades offered as a filter
+export const DECADES = [1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
+
+// Uploaders often leave "date" at the upload date, or the year before it (Drunken Master, 1978,
+// was dated 2026), so such a date says nothing about the film. Nothing was uploaded to
+// Archive.org before 2000, which makes every earlier date trustworthy. Lucene cannot compare two
+// fields, hence one clause per year; this short form is about as long as Archive.org accepts.
+function uploadDates(from, to) {
+  const clauses = [];
+  for (let year = Math.max(from, 2000); year <= Math.min(to, new Date().getFullYear()); year++) {
+    clauses.push(`(year:${year} AND publicdate:[${year}-01-01 TO ${year + 1}-12-31])`);
+  }
+  return clauses.length ? ` AND NOT (${clauses.join(' OR ')})` : '';
+}
 
 // Content filter - block inappropriate content
 function isBlockedContent(movie) {
@@ -331,13 +342,13 @@ class ArchiveService {
 
     if (DECADES.includes(Number(decade))) {
       const from = Number(decade);
-      const range = `date:[${from}-01-01 TO ${from + 9}-12-31]`;
+      const range = `date:[${from}-01-01 TO ${from + 9}-12-31]${uploadDates(from, from + 9)}`;
       // A year in the title ("Hellhole (1985)") counts too, except when sorting by date:
       // those uploads carry an upload date and would sort ahead of everything
       const years = Array.from({ length: 10 }, (_, i) => from + i).join(' OR ');
-      query += dated ? ` AND ${range}` : ` AND (${range} OR title:(${years}))`;
+      query += dated ? ` AND ${range}` : ` AND ((${range}) OR title:(${years}))`;
     } else if (dated) {
-      query += ' AND date:[1880-01-01 TO 1999-12-31]';
+      query += ` AND date:[1880-01-01 TO ${new Date().getFullYear()}-12-31]${uploadDates(2000, 9999)}`;
     }
 
     // Collections contain sub-collections ("Silent Films", "Vintage Cartoons"), which are

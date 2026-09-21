@@ -525,19 +525,29 @@ test('Full Movies drops trailers that have no runtime, but not films that come w
 
 test('buildQuery: a decade matches a release date in it, or a year from it in the title', () => {
   const query = archiveService.buildQuery({ collection: 'feature_films', decade: 1980 });
-  assert.match(query, /AND \(date:\[1980-01-01 TO 1989-12-31\] OR title:\(1980 OR 1981 OR 1982 OR 1983 OR 1984 OR 1985 OR 1986 OR 1987 OR 1988 OR 1989\)\)/);
+  assert.match(query, /AND \(\(date:\[1980-01-01 TO 1989-12-31\]\) OR title:\(1980 OR 1981 OR 1982 OR 1983 OR 1984 OR 1985 OR 1986 OR 1987 OR 1988 OR 1989\)\)/);
   assert.doesNotMatch(archiveService.buildQuery({ collection: 'feature_films' }), /date:/);
   assert.doesNotMatch(archiveService.buildQuery({ collection: 'feature_films', decade: 'abc' }), /date:/, 'junk from a URL is ignored');
 });
 
-test('buildQuery: sorting by release date only includes dates that cannot be upload dates', () => {
-  // Uploaders leave "date" at the upload date (Drunken Master, 1978, dated 2026), and nothing
-  // was uploaded before 2000, so only earlier dates are known to be the film's
-  assert.match(archiveService.buildQuery({ collection: 'feature_films', dated: true }), /AND date:\[1880-01-01 TO 1999-12-31\]/);
+test('buildQuery: sorting by release date leaves out dates that are really upload dates', () => {
+  // Uploaders leave "date" at the upload date (Drunken Master, 1978, was dated 2026), or a year
+  // before it. A date before 2000 cannot be one: nothing was uploaded to Archive.org that early.
+  const query = archiveService.buildQuery({ collection: 'feature_films', dated: true });
+  assert.match(query, /AND date:\[1880-01-01 TO \d{4}-12-31\] AND NOT \(\(year:2000 AND publicdate:\[2000-01-01 TO 2001-12-31\]\) OR /);
+  assert.match(query, new RegExp(`year:${new Date().getFullYear()} AND publicdate`), 'covers the current year');
+  assert.doesNotMatch(query, /year:1999 AND/);
+  assert.ok(encodeURIComponent(query).length < 3000, 'Archive.org rejects much longer queries');
   // Within a decade, a year that is only in the title has an upload date, which would sort first
-  const query = archiveService.buildQuery({ collection: 'feature_films', dated: true, decade: 1990 });
-  assert.match(query, /AND date:\[1990-01-01 TO 1999-12-31\]/);
-  assert.doesNotMatch(query, /title:\(1990/);
+  const nineties = archiveService.buildQuery({ collection: 'feature_films', dated: true, decade: 1990 });
+  assert.match(nineties, /AND date:\[1990-01-01 TO 1999-12-31\]/);
+  assert.doesNotMatch(nineties, /title:\(1990|publicdate/);
+});
+
+test('buildQuery: decades from 2000 on only trust a date that is not the upload date', () => {
+  const query = archiveService.buildQuery({ collection: 'feature_films', decade: 2000 });
+  assert.match(query, /\(\(date:\[2000-01-01 TO 2009-12-31\] AND NOT \(\(year:2000 AND publicdate:\[2000-01-01 TO 2001-12-31\]\) OR .*year:2009 AND publicdate:\[2009-01-01 TO 2010-12-31\]\)\)\) OR title:\(2000 OR /);
+  assert.doesNotMatch(query, /year:2010 AND/);
 });
 
 test('fetchMovies asks for dated films when sorting by release date, not for other sorts', async () => {
@@ -550,8 +560,8 @@ test('fetchMovies asks for dated films when sorting by release date, not for oth
   } finally {
     globalThis.fetch = realFetch;
   }
-  assert.match(urls[0], /date:\[1880-01-01 TO 1999-12-31\]/);
-  assert.match(urls[1], /date:\[1950-01-01 TO 1959-12-31\] OR title:\(1950 OR/);
+  assert.match(urls[0], /date:\[1880-01-01 TO \d{4}-12-31\] AND NOT \(\(year:2000/);
+  assert.match(urls[1], /date:\[1950-01-01 TO 1959-12-31\]\) OR title:\(1950 OR/);
 });
 
 test('Full Movies drops an unknown-length upload that is too small to be a feature', async () => {

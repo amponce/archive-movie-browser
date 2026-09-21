@@ -23,3 +23,12 @@ test('decisionToEntry keeps a poster only above the confidence threshold', () =>
   assert.deepEqual(decisionToEntry({ film: null, confidence: 0.98 }), { n: 1, c: 0.98 });
   assert.deepEqual(decisionToEntry({ film: { ...film, poster_path: null }, confidence: 0.99 }), { n: 1, c: 0.99 }, 'a match without a poster is no use');
 });
+
+test('postersFirst moves films with an indexed poster ahead, keeping each group in its order', async () => {
+  const { postersFirst } = await import('./posterIndex.js');
+  setPosterIndex({ b: { i: 1, t: 'B', y: 1950, p: '/b.jpg', v: 6, c: 0.9 }, d: { i: 2, t: 'D', y: 1951, p: '/d.jpg', v: 7, c: 0.9 }, c: { n: 1, c: 0.9 } });
+  const batch = ['a', 'b', 'c', 'd', 'e'].map(identifier => ({ identifier }));
+  assert.deepEqual((await postersFirst(batch)).map(m => m.identifier), ['b', 'd', 'a', 'c', 'e']);
+  assert.equal(batch[0].identifier, 'a', 'the input is not reordered');
+  setPosterIndex({});
+});

@@ -37,6 +37,15 @@ export async function indexedMatch(identifier) {
   return { id: entry.i, title: entry.t, posterPath: entry.p, releaseDate: entry.y ? String(entry.y) : '', voteAverage: entry.v, fromIndex: true };
 }
 
+// Films the index has a poster for come first; each group keeps the order it arrived in. The
+// index answers from memory, so the batch is ordered before it is shown and no card moves later.
+// ponytail: films matched live by TMDB (not in the index) stay where they are; resolving those
+// first would hold every page back by a second or more.
+export async function postersFirst(movies) {
+  const matches = await Promise.all(movies.map(movie => indexedMatch(movie.identifier)));
+  return [...movies.filter((_, i) => matches[i]), ...movies.filter((_, i) => !matches[i])];
+}
+
 // Used by the build script: turn a model decision into an index entry
 export function decisionToEntry({ film, confidence }) {
   if (!film || !film.poster_path || confidence < CONFIDENCE_THRESHOLD) return { n: 1, c: confidence };
