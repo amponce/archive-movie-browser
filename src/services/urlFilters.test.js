@@ -53,3 +53,10 @@ test('type=trailers defaults runtime to 0', () => {
   assert.equal(filters.runtime, 0);
   assert.equal(filtersToQuery(filters), 'type=trailers');
 });
+
+test('a decade survives the round trip, and a junk one is ignored', () => {
+  assert.equal(parseFilters('?decade=1980').decade, 1980);
+  assert.equal(filtersToQuery(parseFilters('?decade=1980')), 'decade=1980');
+  assert.equal(parseFilters('?decade=1985').decade, null);
+  assert.equal(parseFilters('?decade=abc').decade, null);
+});
