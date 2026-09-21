@@ -149,6 +149,10 @@ Archive.org titles are messy (`H 2 House On Haunted Hill ( 1959) Classic Vincent
 - A scheduled workflow refreshes it weekly and pushes the result to a branch for review.
 - **Found a wrong poster?** Edit that identifier's entry in `public/poster-index.json` and open a PR. Setting it to `{ "n": 1, "c": 1, "m": 1 }` means "show the generated cover"; `"m": 1` marks an entry as corrected by hand, and the build script never overwrites those.
 
+## MCP Server
+
+`mcp/` is a [Model Context Protocol](https://modelcontextprotocol.io) server built on the same Archive.org code as the site, so an AI assistant can search the films, browse collections and hand back links that play. Four tools, no API keys. Setup for Claude Code, Claude Desktop and Cursor is in [mcp/README.md](mcp/README.md).
+
 ## Make It Yours
 
 Fork it and turn it into your own themed archive: only westerns, only Prelinger educational films, only silent comedies.

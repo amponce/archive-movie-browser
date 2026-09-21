@@ -17,4 +17,5 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      - run: npm ci --prefix mcp && npm test --prefix mcp # the MCP server has its own dependencies
       - run: npm run build

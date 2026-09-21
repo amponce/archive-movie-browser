@@ -19,6 +19,14 @@ updates:
       # config format changed), not a version bump. Remove this once someone does that work.
       - dependency-name: tailwindcss
         update-types: ["version-update:semver-major"]
+  - package-ecosystem: npm
+    directory: /mcp
+    schedule:
+      interval: monthly
+    groups:
+      # The MCP SDK's server and client packages are released together
+      mcp:
+        patterns: ["*"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

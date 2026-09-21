@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node --test",
+    "test": "node --test \"src/**/*.test.js\"",
     "index": "node scripts/build-poster-index.mjs"
   },
   "dependencies": {
