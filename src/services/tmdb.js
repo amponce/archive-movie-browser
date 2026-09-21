@@ -6,7 +6,7 @@ import { indexedMatch } from './posterIndex.js';
 const TMDB_API_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 const CACHE_STORAGE_KEY = 'tmdb-poster-cache';
-export const CACHE_VERSION = 2; // bump when matching changes, so cached misses from the old logic are dropped
+export const CACHE_VERSION = 3; // bump when matching changes, so cached misses from the old logic are dropped
 
 // Poster sizes: w92, w154, w185, w342, w500, w780, original
 export const POSTER_SIZES = {
