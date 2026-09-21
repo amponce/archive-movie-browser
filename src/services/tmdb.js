@@ -6,6 +6,7 @@ import { indexedMatch } from './posterIndex.js';
 const TMDB_API_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p';
 const CACHE_STORAGE_KEY = 'tmdb-poster-cache';
+export const MAX_CACHE_ENTRIES = 2000;
 export const CACHE_VERSION = 3; // bump when matching changes, so cached misses from the old logic are dropped
 
 // Poster sizes: w92, w154, w185, w342, w500, w780, original
@@ -20,6 +21,30 @@ export const POSTER_SIZES = {
 let tmdbCache = new Map();
 const CACHE_DURATION = 1000 * 60 * 60 * 24 * 7; // 7 days for persistent cache
 
+// Expire entries independently and retain the newest writes when bounded.
+function pruneCache() {
+  const now = Date.now();
+  for (const [key, entry] of tmdbCache) {
+    const duration = key === 'genres' ? CACHE_DURATION * 24 : CACHE_DURATION;
+    if (!entry || !Number.isFinite(entry.timestamp) || now - entry.timestamp >= duration) {
+      tmdbCache.delete(key);
+    }
+  }
+  if (tmdbCache.size > MAX_CACHE_ENTRIES) {
+    const oldest = [...tmdbCache].sort((a, b) => a[1].timestamp - b[1].timestamp);
+    for (const [key] of oldest.slice(0, tmdbCache.size - MAX_CACHE_ENTRIES)) {
+      tmdbCache.delete(key);
+    }
+  }
+}
+
+function cacheEntry(key, data) {
+  tmdbCache.delete(key);
+  tmdbCache.set(key, { data, timestamp: Date.now() });
+  pruneCache();
+  debouncedSave();
+}
+
 // Pending requests tracker to prevent duplicate in-flight requests
 const pendingRequests = new Map();
 
@@ -32,11 +57,11 @@ function loadCacheFromStorage() {
   try {
     const stored = localStorage.getItem(CACHE_STORAGE_KEY);
     if (stored) {
-      const { version, data, timestamp } = JSON.parse(stored);
-      // Check version and if cache is still valid (7 days)
-      if (version === CACHE_VERSION && Date.now() - timestamp < CACHE_DURATION) {
+      const { version, data } = JSON.parse(stored);
+      // Matching changes invalidate old versions; freshness belongs to each entry.
+      if (version === CACHE_VERSION && data && typeof data === 'object') {
         tmdbCache = new Map(Object.entries(data));
-        console.log(`Loaded ${tmdbCache.size} cached TMDB entries`);
+        pruneCache();
       } else {
         localStorage.removeItem(CACHE_STORAGE_KEY);
       }
@@ -49,18 +74,15 @@ function loadCacheFromStorage() {
 // Save cache to localStorage
 function saveCacheToStorage() {
   try {
+    pruneCache();
     const data = Object.fromEntries(tmdbCache);
     localStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify({
       version: CACHE_VERSION,
-      timestamp: Date.now(),
       data
     }));
   } catch (e) {
-    // localStorage might be full, clear old entries
+    // Keep the previous persisted cache if storage is unavailable or full.
     console.warn('Failed to save TMDB cache:', e);
-    try {
-      localStorage.removeItem(CACHE_STORAGE_KEY);
-    } catch {}
   }
 }
 
@@ -119,12 +141,7 @@ class TMDBService {
 
   setCache(title, year, data) {
     const key = this.getCacheKey(title, year);
-    tmdbCache.set(key, {
-      data,
-      timestamp: Date.now()
-    });
-    // Save to localStorage (debounced)
-    debouncedSave();
+    cacheEntry(key, data);
   }
 
   // Clean movie title for better matching
@@ -268,8 +285,7 @@ class TMDBService {
         cast: details.credits?.cast?.slice(0, 6) || [],
         crew: director ? [director] : [],
       };
-      tmdbCache.set(cacheKey, { data, timestamp: Date.now() });
-      debouncedSave();
+      cacheEntry(cacheKey, data);
       return data;
     } catch (error) {
       console.error('Failed to fetch TMDB details:', error);
@@ -318,10 +334,7 @@ class TMDBService {
         genreMap[genre.id] = genre.name;
       });
 
-      tmdbCache.set('genres', {
-        data: genreMap,
-        timestamp: Date.now()
-      });
+      cacheEntry('genres', genreMap);
 
       return genreMap;
     } catch (error) {
