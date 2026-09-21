@@ -4,6 +4,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-09-21
+
 ### Added
 
 - Our own film player: arrow keys skip 10 s (Shift: a minute), Space pauses, F is full screen, M mutes, Escape closes, and a film resumes where you left it. Archive.org's player remains the fallback ([#137](https://github.com/amponce/archive-movie-browser/pull/137)).
