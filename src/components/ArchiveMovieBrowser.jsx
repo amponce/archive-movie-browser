@@ -506,12 +506,12 @@ export default function ArchiveMovieBrowser() {
           <p>
             Data sourced from{' '}
             <a
-                href={`https://archive.org/details/${acrossCollections ? 'movies' : category}`}
+              href={`https://archive.org/details/${acrossCollections ? 'movies' : category}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-yellow-400 hover:underline"
             >
-                Internet Archive's {acrossCollections ? 'Moving Image Archive' : `${currentCategory.name} Collection`}
+              Internet Archive's {acrossCollections ? 'Moving Image Archive' : `${currentCategory.name} Collection`}
             </a>
           </p>
           {tmdbApiKey && (
