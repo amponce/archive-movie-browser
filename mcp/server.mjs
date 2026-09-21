@@ -4,7 +4,7 @@
 import { McpServer } from '@modelcontextprotocol/server';
 import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
 import * as z from 'zod/v4';
-import { searchFilms, browseFilms, getFilm, listCollections, SORTS, COLLECTION_IDS } from './tools.mjs';
+import { searchFilms, browseFilms, getFilm, listCollections, SORTS, COLLECTION_IDS, DECADES } from './tools.mjs';
 import { STANDARD_GENRES } from '../src/services/archive.js';
 
 const server = new McpServer({ name: 'archive-movie-browser', version: '0.1.0' });
@@ -29,6 +29,7 @@ tool('browse_films', {
   inputSchema: z.object({
     collection: z.enum(COLLECTION_IDS).default('feature_films'),
     genre: z.enum(STANDARD_GENRES).optional(),
+    decade: z.number().int().refine(d => DECADES.includes(d), 'One of ' + DECADES.join(', ')).optional().describe('A decade by its first year, e.g. 1980. Release dates are only reliable up to 1999'),
     sort: z.enum(SORTS).default('downloads'),
     minRuntime: z.number().int().min(0).max(300).optional().describe('Minimum length in minutes. Defaults to 40 for feature collections, 0 for shorts and cartoons'),
     limit,

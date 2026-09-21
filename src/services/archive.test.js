@@ -508,3 +508,48 @@ test('suggestTitles returns a few distinct films and can be cancelled without re
     globalThis.fetch = realFetch;
   }
 });
+
+test('Full Movies drops trailers that have no runtime, but not films that come with trailers', async () => {
+  const { runtimeFilter } = await import('./archive.js');
+  const full = runtimeFilter({ minRuntime: 40 });
+  // Real titles from Movies & Films; none of them has a runtime recorded
+  assert.equal(full({ runtimeMinutes: 0, title: 'Night of the living dead Trailer' }), false);
+  assert.equal(full({ runtimeMinutes: 0, title: 'Sita Sings the Blues Trailer 2008 - 640x360' }), false);
+  assert.equal(full({ runtimeMinutes: 0, title: 'Psycho (1960) teaser' }), false);
+  assert.equal(full({ runtimeMinutes: 0, title: 'Wheels On Meals aka Spartan X (1984) with Trailers' }), true);
+  assert.equal(full({ runtimeMinutes: 0, title: 'Armour Of God & Operation Condor (& Trailers)' }), true);
+  assert.equal(full({ runtimeMinutes: 0, title: 'Escape From Sobibor' }), true);
+  assert.equal(full({ runtimeMinutes: 95, title: 'Trailer Park of Terror' }), true, 'a known runtime decides on its own');
+  assert.equal(runtimeFilter({ shorts: true })({ runtimeMinutes: 0, title: 'Night of the living dead Trailer' }), true, 'Shorts is where trailers belong');
+});
+
+test('buildQuery: a decade matches a release date in it, or a year from it in the title', () => {
+  const query = archiveService.buildQuery({ collection: 'feature_films', decade: 1980 });
+  assert.match(query, /AND \(date:\[1980-01-01 TO 1989-12-31\] OR title:\(1980 OR 1981 OR 1982 OR 1983 OR 1984 OR 1985 OR 1986 OR 1987 OR 1988 OR 1989\)\)/);
+  assert.doesNotMatch(archiveService.buildQuery({ collection: 'feature_films' }), /date:/);
+  assert.doesNotMatch(archiveService.buildQuery({ collection: 'feature_films', decade: 'abc' }), /date:/, 'junk from a URL is ignored');
+});
+
+test('buildQuery: sorting by release date only includes dates that cannot be upload dates', () => {
+  // Uploaders leave "date" at the upload date (Drunken Master, 1978, dated 2026), and nothing
+  // was uploaded before 2000, so only earlier dates are known to be the film's
+  assert.match(archiveService.buildQuery({ collection: 'feature_films', dated: true }), /AND date:\[1880-01-01 TO 1999-12-31\]/);
+  // Within a decade, a year that is only in the title has an upload date, which would sort first
+  const query = archiveService.buildQuery({ collection: 'feature_films', dated: true, decade: 1990 });
+  assert.match(query, /AND date:\[1990-01-01 TO 1999-12-31\]/);
+  assert.doesNotMatch(query, /title:\(1990/);
+});
+
+test('fetchMovies asks for dated films when sorting by release date, not for other sorts', async () => {
+  const realFetch = globalThis.fetch;
+  const urls = [];
+  globalThis.fetch = async (url) => { urls.push(decodeURIComponent(String(url))); return { ok: true, json: async () => ({ response: { docs: [], numFound: 0 } }) }; };
+  try {
+    await archiveService.fetchMovies({ collection: 'feature_films', sortBy: 'date', sortOrder: 'desc' });
+    await archiveService.fetchMovies({ collection: 'feature_films', sortBy: 'downloads', decade: 1950 });
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  assert.match(urls[0], /date:\[1880-01-01 TO 1999-12-31\]/);
+  assert.match(urls[1], /date:\[1950-01-01 TO 1959-12-31\] OR title:\(1950 OR/);
+});

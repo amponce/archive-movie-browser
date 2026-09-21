@@ -39,11 +39,24 @@ export function defaultMinRuntime(collectionId) {
 
 // Predicate for the Full Movies / Shorts toggle. Many Archive.org items have no runtime
 // recorded, which is not evidence of a short, so only a known runtime can exclude a film.
+// A trailer rarely has a runtime either, so among films of unknown length the title decides:
+// "Psycho trailer" is one, "Wheels On Meals (1984) with Trailers" is a film with extras.
+const TRAILER = /\b(trailers?|teasers?|tv spots?)\b/i;
+const FILM_WITH_TRAILERS = /(\b(with|and|plus)|[&+])\s+(\w+\s+)?trailers?\b/i;
+
 export function runtimeFilter({ shorts = false, minRuntime = 0 } = {}) {
-  return (movie) =>
-    movie.runtimeMinutes === 0 ||
-    (shorts ? movie.runtimeMinutes <= 30 : movie.runtimeMinutes >= minRuntime);
+  return (movie) => {
+    if (movie.runtimeMinutes === 0) {
+      const title = String(movie.title || '');
+      return shorts || !TRAILER.test(title) || FILM_WITH_TRAILERS.test(title);
+    }
+    return shorts ? movie.runtimeMinutes <= 30 : movie.runtimeMinutes >= minRuntime;
+  };
 }
+
+// Decades offered as a filter. Release dates are only trustworthy before 2000: uploaders often
+// leave "date" at the upload date, and nothing was uploaded to Archive.org before then.
+export const DECADES = [1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990];
 
 // Content filter - block inappropriate content
 function isBlockedContent(movie) {
@@ -274,7 +287,9 @@ class ArchiveService {
       collection = 'moviesandfilms',
       minRuntime = null,
       year = null,
-      genre = null
+      genre = null,
+      decade = null, // one of DECADES
+      dated = false  // only films whose release date can be trusted (for sorting by it)
     } = options;
 
     // Just filter by collection - the collection itself defines content type
@@ -306,6 +321,17 @@ class ArchiveService {
 
     if (year) {
       query += ` AND year:${year}`;
+    }
+
+    if (DECADES.includes(Number(decade))) {
+      const from = Number(decade);
+      const range = `date:[${from}-01-01 TO ${from + 9}-12-31]`;
+      // A year in the title ("Hellhole (1985)") counts too, except when sorting by date:
+      // those uploads carry an upload date and would sort ahead of everything
+      const years = Array.from({ length: 10 }, (_, i) => from + i).join(' OR ');
+      query += dated ? ` AND ${range}` : ` AND (${range} OR title:(${years}))`;
+    } else if (dated) {
+      query += ' AND date:[1880-01-01 TO 1999-12-31]';
     }
 
     // Collections contain sub-collections ("Silent Films", "Vintage Cartoons"), which are
@@ -348,12 +374,13 @@ class ArchiveService {
       minRuntime = 0,
       genre = null,
       collection = 'moviesandfilms',
+      decade = null,
       retryDelayMs = 600,
       signal,
       query: queryOverride = null
     } = options;
 
-    const query = queryOverride || this.buildQuery({ searchQuery, genre, collection });
+    const query = queryOverride || this.buildQuery({ searchQuery, genre, collection, decade, dated: sortBy === 'date' });
 
     const fields = [
       'identifier',

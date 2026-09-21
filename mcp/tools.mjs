@@ -2,7 +2,7 @@
 // All Archive.org logic comes from the web app's services (src/services), which have no browser
 // dependencies: search across collections, de-duplication of re-uploads, runtime parsing, retries.
 import { readFileSync } from 'node:fs';
-import archiveService, { VIDEO_CATEGORIES, STANDARD_GENRES, runtimeFilter, defaultMinRuntime } from '../src/services/archive.js';
+import archiveService, { VIDEO_CATEGORIES, STANDARD_GENRES, DECADES, runtimeFilter, defaultMinRuntime } from '../src/services/archive.js';
 import { setPosterIndex, indexedMatch } from '../src/services/posterIndex.js';
 
 const index = JSON.parse(readFileSync(new URL('../public/poster-index.json', import.meta.url)));
@@ -38,11 +38,13 @@ async function list(options, limit) {
 export const searchFilms = ({ query, limit = 10 }) =>
   list({ searchQuery: query, filter: runtimeFilter({ minRuntime: 0 }) }, limit);
 
-export const browseFilms = ({ collection = 'feature_films', genre, sort = 'downloads', minRuntime, limit = 10 }) =>
+export const browseFilms = ({ collection = 'feature_films', genre, decade, sort = 'downloads', minRuntime, limit = 10 }) =>
   list({
     collection,
+    decade,
     genre: genre || null,
-    sortBy: sort,
+    sortBy: sort.split(' ')[0],
+    sortOrder: sort.split(' ')[1] || 'desc',
     filter: runtimeFilter({ minRuntime: minRuntime ?? defaultMinRuntime(collection) }),
   }, limit);
 
@@ -55,6 +57,8 @@ export const listCollections = () => ({
   collections: VIDEO_CATEGORIES.map(({ id, name, films }) => ({ id, name, films: Boolean(films) })),
   genres: STANDARD_GENRES,
   sorts: SORTS,
+  decades: DECADES,
 });
 
+export { DECADES };
 export const COLLECTION_IDS = VIDEO_CATEGORIES.map(c => c.id);

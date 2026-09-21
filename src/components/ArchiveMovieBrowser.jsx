@@ -10,8 +10,9 @@ import {
   SlidersHorizontal,
   Library,
   ChevronDown,
+  Calendar,
 } from 'lucide-react';
-import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, defaultMinRuntime, runtimeFilter } from '../services/archive';
+import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, defaultMinRuntime, runtimeFilter } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import MovieCard from './MovieCard';
 import SearchBox from './SearchBox';
@@ -36,6 +37,7 @@ const URL_FILTER_DEFAULTS = {
   genre: 'all',
   q: '',
   sort: 'downloads',
+  decade: null,
   runtime: 40,
   type: 'features',
 };
@@ -59,6 +61,9 @@ function filtersFromUrl() {
 
   const q = params.get('q');
   if (q) filters.q = q;
+
+  const decade = Number(params.get('decade'));
+  if (DECADES.includes(decade)) filters.decade = decade;
 
   const sort = params.get('sort');
   if (sort && Object.prototype.hasOwnProperty.call(SORT_OPTIONS, sort)) {
@@ -148,6 +153,7 @@ export default function ArchiveMovieBrowser() {
   const [minRuntime, setMinRuntime] = useState(urlFilters.runtime);
   const [contentType, setContentType] = useState(urlFilters.type); // 'features' or 'trailers'
   const [sortBy, setSortBy] = useState(urlFilters.sort);
+  const [decade, setDecade] = useState(urlFilters.decade);
   const [category, setCategory] = useState(urlFilters.collection); // Video collection/category
 
   // Get current category info
@@ -200,6 +206,7 @@ export default function ArchiveMovieBrowser() {
         startPage,
         genre: genreFilter !== 'all' ? genreFilter : null,
         collection: category,
+        decade,
         seenTitles: seen,
         // The server query already applied the genre, so only runtime is checked here
         filter: runtimeFilter({ shorts: contentType === 'trailers', minRuntime })
@@ -219,7 +226,7 @@ export default function ArchiveMovieBrowser() {
     } finally {
       if (requestId === latestRequest.current) setLoading(false);
     }
-  }, [activeSearch, sortBy, genreFilter, category, contentType, minRuntime]);
+  }, [activeSearch, sortBy, genreFilter, category, contentType, minRuntime, decade]);
 
   // Fetch from the start whenever filters change
   useEffect(() => {
@@ -264,6 +271,7 @@ export default function ArchiveMovieBrowser() {
     if (category !== URL_FILTER_DEFAULTS.collection) params.set('collection', category);
     if (genreFilter !== URL_FILTER_DEFAULTS.genre) params.set('genre', genreFilter);
     if (activeSearch) params.set('q', activeSearch);
+    if (decade) params.set('decade', String(decade));
     if (sortBy !== URL_FILTER_DEFAULTS.sort) params.set('sort', sortBy);
     const defaultRuntime = contentType === 'trailers' ? 0 : defaultMinRuntime(category);
     if (minRuntime !== defaultRuntime) params.set('runtime', String(minRuntime));
@@ -286,7 +294,7 @@ export default function ArchiveMovieBrowser() {
     writeFiltersToUrl('push');
     urlSynced.current = true;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category, genreFilter, activeSearch]);
+  }, [category, genreFilter, activeSearch, decade]);
 
   useEffect(() => {
     writeFiltersToUrl('replace');
@@ -302,6 +310,7 @@ export default function ArchiveMovieBrowser() {
       setActiveSearch(restored.q);
       setSearchQuery(restored.q);
       setSortBy(restored.sort);
+      setDecade(restored.decade);
       setMinRuntime(restored.runtime);
       setContentType(restored.type);
     };
@@ -459,7 +468,7 @@ export default function ArchiveMovieBrowser() {
               onClick={() => setFiltersOpen(open => !open)}
             >
               <Filter className="w-4 h-4 shrink-0" />
-              <span className="flex-1">Filters: {acrossCollections ? 'All collections' : currentCategory.name} · {contentType === 'trailers' ? 'Shorts, ≤30 min' : `Full Movies, ${minRuntime ? `${minRuntime}+ min` : 'any length'}`} · {SORT_OPTIONS[sortBy]}</span>
+              <span className="flex-1">Filters: {acrossCollections ? 'All collections' : currentCategory.name} · {contentType === 'trailers' ? 'Shorts, ≤30 min' : `Full Movies, ${minRuntime ? `${minRuntime}+ min` : 'any length'}`} · {decade ? `${decade}s · ` : ''}{SORT_OPTIONS[sortBy]}</span>
               <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${filtersOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -542,6 +551,22 @@ export default function ArchiveMovieBrowser() {
                 )}
               </div>
 
+              {/* Decade */}
+              <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
+                <Calendar className="w-4 h-4 text-gray-400 hidden sm:block" />
+                <select
+                  value={decade ?? ''}
+                  aria-label="Decade"
+                  onChange={(e) => setDecade(e.target.value ? Number(e.target.value) : null)}
+                  className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
+                >
+                  <option value="">Any decade</option>
+                  {[...DECADES].reverse().map(d => (
+                    <option key={d} value={d}>{d}s</option>
+                  ))}
+                </select>
+              </div>
+
               {/* Sort */}
               <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
                 <SlidersHorizontal className="w-4 h-4 text-gray-400 hidden sm:block" />
@@ -609,6 +634,18 @@ export default function ArchiveMovieBrowser() {
             <>
               <span className="text-gray-600">|</span>
               <span>{minRuntime}+ min runtime</span>
+            </>
+          )}
+          {decade && (
+            <>
+              <span className="text-gray-600">|</span>
+              <span>{decade}s</span>
+            </>
+          )}
+          {sortBy.startsWith('date') && !decade && (
+            <>
+              <span className="text-gray-600">|</span>
+              <span>Films with a known release date, up to 1999. Archive.org dates after that are mostly upload dates.</span>
             </>
           )}
           {tmdbApiKey && (
