@@ -5,6 +5,9 @@ const SUBTITLE_NOISE = /\b(eng(lish)?\s+(hard\s*)?sub(s|titles?)?|hard\s*subs?|l
 const SEPARATOR = /\s+-\s+|:\s+|\s+\|\s+|\s+aka\s+/i;
 // One-word notes that are also film titles on TMDB ("Unrated", "Trailer")
 const GENERIC = /^(unrated|trailer|version|episode|complete|original|classic|movie|film|part|silent)$/i;
+// Upload catalogue IDs, not numeric film titles. A bare number without its
+// own separator only counts before an ALL-CAPS series label and separator.
+const CATALOGUE_PREFIX = /^(?:0\d+\.\s+|[A-Z]\s+\d+\s+|[A-Z]+\d+(?:\s*(?:-|:|\|)\s*|\s+)|\d+\s*(?:-|:|\|)\s*|\d+\s+(?=[A-Z][A-Z\s]+\s-\s))/;
 
 const releaseYear = movie => Number(movie.release_date?.slice(0, 4)) || null;
 
@@ -29,7 +32,7 @@ export function titleCandidates(title) {
     .replace(/\s+/g, ' ')
     .trim();
 
-  const raw = String(title).replace(/_/g, ' ');
+  const raw = String(title).replace(/_/g, ' ').trim().replace(CATALOGUE_PREFIX, '');
   const alternates = [...raw.matchAll(/[([]([^)\]]*)[)\]]/g)].map(match => match[1]);
   let base = raw.replace(/[([][^)\]]*[)\]]/g, ' ');
   base = base.replace(/^(.*?)\s*,\s*(the|an|a)\s*$/i, '$2 $1'); // "Phantom Ship , The"
