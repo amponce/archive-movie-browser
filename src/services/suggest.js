@@ -43,7 +43,6 @@ export function localSuggestions(query, { genres = [], collections = [], movies 
   return out.slice(0, limit);
 }
 
-// Newest first, no duplicates (case-insensitive), at most eight
 // Tags uploaders have put on the films in a search response, for the type-ahead. Counted from
 // that sample, so the order is a good guess rather than a census.
 export function suggestTags(movies, query, { exclude = [], limit = 4 } = {}) {
@@ -67,6 +66,7 @@ export function suggestTags(movies, query, { exclude = [], limit = 4 } = {}) {
     .map(({ label, count }) => ({ label, count, ranges: matchRanges(label, query) }));
 }
 
+// Newest first, no duplicates (case-insensitive), at most eight
 export function rememberSearch(recent, query) {
   const text = String(query || '').trim();
   if (!text) return recent;

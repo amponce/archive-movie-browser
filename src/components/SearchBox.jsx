@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useId } from 'react';
-import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock, Link2, Tag } from 'lucide-react';
+import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock, Link2, Tag, Trash2 } from 'lucide-react';
 import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES } from '../services/archive';
 import { matchRanges, localSuggestions, rememberSearch } from '../services/suggest';
 import { parseArchiveUrl } from '../services/archiveUrl';
 
 const RECENT_KEY = 'recent-searches';
-const ICONS = { search: Search, link: Link2, film: Film, genre: Filter, collection: Library, tag: Tag, recent: Clock };
+const ICONS = { search: Search, link: Link2, film: Film, genre: Filter, collection: Library, tag: Tag, recent: Clock, clear: Trash2 };
 const HINTS = { genre: 'Genre', collection: 'Collection', tag: 'Tag', recent: 'Recent search' };
 
 // Archive.org answers in 1.5-4 s, so remember what it said for the rest of the visit
@@ -107,6 +107,8 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
     });
     const startsWithQuery = film => Number(film.ranges[0]?.[0] === 0);
     list.push(...films.sort((a, b) => startsWithQuery(b) - startsWithQuery(a)).slice(0, 8));
+    // Recent searches are kept in this browser only; whenever some are shown, offer to forget them
+    if (list.some(item => item.type === 'recent')) list.push({ type: 'clear', label: 'Clear recent searches', ranges: [] });
     return list;
   }, [value, local, remote]);
 
@@ -127,6 +129,11 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
     if (item.type === 'genre') return onPickGenre(item.genre);
     if (item.type === 'collection') return onPickCollection(item.collectionId);
     if (item.type === 'link') return runSearch(item.label);
+    if (item.type === 'clear') {
+      setRecent([]);
+      try { localStorage.removeItem(RECENT_KEY); } catch { /* private mode */ }
+      return;
+    }
     onChange(item.label); // 'search' and 'recent' both run a full search
     runSearch(item.label);
   };
@@ -168,7 +175,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
           onChange(e.target.value);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => { setRecent(readRecent()); setOpen(true); }}
         onBlur={() => setOpen(false)}
         onKeyDown={handleKeyDown}
         className="flex-1 pl-10 pr-4 py-2 bg-gray-800 text-white placeholder-gray-400 border border-gray-700 rounded-l-lg focus:outline-none focus:border-yellow-400 min-w-0"
@@ -200,10 +207,10 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
                 aria-selected={index === active}
                 onMouseEnter={() => setActive(index)}
                 onClick={() => pick(item)}
-                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer text-sm ${index === active ? 'bg-gray-700' : ''}`}
+                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer text-sm ${index === active ? 'bg-gray-700' : ''} ${item.type === 'clear' ? 'border-t border-gray-700 mt-1' : ''}`}
               >
                 <Icon className={`w-4 h-4 flex-shrink-0 ${item.type === 'film' ? 'text-yellow-400' : 'text-gray-400'}`} />
-                <span className="flex-1 min-w-0 truncate text-gray-100">
+                <span className={`flex-1 min-w-0 truncate ${item.type === 'clear' ? 'text-gray-400' : 'text-gray-100'}`}>
                   {item.type === 'search' ? <>Search for “{item.label}”</>
                     : item.type === 'link' ? <>Open this Archive.org link</>
                     : <Highlighted text={item.label} ranges={item.ranges} />}
