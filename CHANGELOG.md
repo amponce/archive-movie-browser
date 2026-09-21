@@ -8,6 +8,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 - Cookieless usage analytics (Vercel Web Analytics): page views and a few events such as a film played. See Privacy in the README.
 
+### Changed
+
+- The rules for filters in the URL moved into `src/services/urlFilters.js`, with tests ([#145](https://github.com/amponce/archive-movie-browser/pull/145)).
+
 ## [1.3.0] - 2026-09-21
 
 ### Added
