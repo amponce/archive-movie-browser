@@ -76,7 +76,22 @@
       </table>
       <p class="aside prose">Every film comes back with a link that plays on this site, the Archive.org page, and an embed URL. No API keys, no account.</p>
 
-      <h2>Set it up</h2>
+      <h2>Try it now</h2>
+      <div class="prose">
+        <p>Nothing to install. The server is hosted here, free and read-only:</p>
+        <pre><code>https://archive-movie-browser.vercel.app/api/mcp</code></pre>
+        <p>In Claude, open Settings, then Connectors, choose <em>Add custom connector</em> and paste that address. In Claude Code:</p>
+        <pre><code>claude mcp add --transport http archive-movies https://archive-movie-browser.vercel.app/api/mcp</code></pre>
+        <p>In Cursor and most other clients, add it to the MCP settings file:</p>
+        <pre><code>{
+  "mcpServers": {
+    "archive-movies": { "url": "https://archive-movie-browser.vercel.app/api/mcp" }
+  }
+}</code></pre>
+        <p class="aside">It is a shared endpoint: 40 requests a minute per address, and answers are cached for 15 minutes. For heavier use, run your own copy.</p>
+      </div>
+
+      <h2>Run your own copy</h2>
       <div class="prose">
         <ol>
           <li>You need <a href="https://nodejs.org">Node.js</a> 22 or newer.</li>

@@ -1,5 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm ci && npm ci --prefix mcp",
+  "functions": {
+    "api/mcp.js": { "includeFiles": "public/poster-index.json", "maxDuration": 30 }
+  },
   "headers": [
     {
       "source": "/(.*)",

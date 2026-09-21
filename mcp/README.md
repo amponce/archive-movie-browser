@@ -15,7 +15,18 @@ It reuses the web app's Archive.org logic (`../src/services`), so it searches ev
 
 Every film comes back with `watchUrl` (plays on the site), `archiveUrl`, `embedUrl` (drop into an iframe) and, when the index knows the film, its real `title`, `year`, `posterUrl` and `tmdbId`.
 
-## Run it
+## Try it without installing anything
+
+The same tools are hosted at **`https://archive-movie-browser.vercel.app/api/mcp`** (Streamable HTTP, no key, read-only).
+
+- **Claude Code:** `claude mcp add --transport http archive-movies https://archive-movie-browser.vercel.app/api/mcp`
+- **Claude (web and desktop):** Settings > Connectors > Add custom connector, and paste the URL.
+- **Cursor and others:** add `{ "mcpServers": { "archive-movies": { "url": "https://archive-movie-browser.vercel.app/api/mcp" } } }` to the MCP settings.
+- **By hand:** `npx @modelcontextprotocol/inspector`, choose Streamable HTTP, paste the URL.
+
+It is shared and rate limited (40 requests a minute per address, results cached for 15 minutes). For heavy use, run your own copy:
+
+## Run it locally
 
 Needs Node 22+.
 
@@ -49,6 +60,6 @@ npm test          # starts the real server over stdio; no network needed
 LIVE=1 npm test   # also runs one search against Archive.org
 ```
 
-`tools.mjs` holds the tools as plain functions; `server.mjs` only registers them. Archive.org is slow (2-4 s) and throttles busy clients, so keep tools to a few requests per call.
+`tools.mjs` holds the tools as plain functions, `register.mjs` registers them, `server.mjs` serves them over stdio and `../api/mcp.js` over HTTP on Vercel. Archive.org is slow (2-4 s) and throttles busy clients, so keep tools to a few requests per call.
 
 Ideas and open work are tracked in the issues labelled [`mcp`](https://github.com/amponce/archive-movie-browser/issues?q=is%3Aissue+is%3Aopen+label%3Amcp).
