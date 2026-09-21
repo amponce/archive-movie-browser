@@ -67,6 +67,12 @@ export default function ArchiveMovieBrowser() {
 
   // Get current category info
   const currentCategory = VIDEO_CATEGORIES.find(c => c.id === category) || VIDEO_CATEGORIES[0];
+  const acrossCollections = Boolean(activeSearch) || genreFilter !== 'all';
+  const collectionDescription = activeSearch
+    ? 'Search results across all collections'
+    : genreFilter !== 'all'
+      ? `${genreFilter} across all film collections`
+      : currentCategory.description;
 
   // Only the latest request may update state (older responses can arrive last)
   const latestRequest = useRef(0);
@@ -191,7 +197,7 @@ export default function ArchiveMovieBrowser() {
               <div>
                 <h1 className="text-xl font-bold">Archive.org Videos</h1>
                 <p className="text-xs text-gray-500">
-                  {currentCategory.description}
+                  {collectionDescription}
                 </p>
               </div>
             </div>
@@ -500,12 +506,12 @@ export default function ArchiveMovieBrowser() {
           <p>
             Data sourced from{' '}
             <a
-              href={`https://archive.org/details/${category}`}
+                href={`https://archive.org/details/${acrossCollections ? 'movies' : category}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-yellow-400 hover:underline"
             >
-              Internet Archive's {currentCategory.name} Collection
+                Internet Archive's {acrossCollections ? 'Moving Image Archive' : `${currentCategory.name} Collection`}
             </a>
           </p>
           {tmdbApiKey && (
