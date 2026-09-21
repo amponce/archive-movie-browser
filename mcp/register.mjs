@@ -20,12 +20,12 @@ export function createServer({ wrap = (name, run) => run } = {}) {
   });
 
   tool('search_films', {
-    description: 'Search the Internet Archive for films by title, subject or creator. Every word must match. Re-uploads of the same film are collapsed. Each result has two links: lead with watchUrl, which plays the film on this project's site, and also give sourceUrl, the original Archive.org page. When known, results carry the real film title, year and poster.',
+    description: 'Search the Internet Archive for films by title, subject or creator. Every word must match. Re-uploads of the same film are collapsed. Each result has two links: lead with watchUrl, which plays the film on this site, and also give sourceUrl, the original Archive.org page. When known, results carry the real film title, year and poster.',
     inputSchema: z.object({ query: z.string().min(1).max(200).describe('Words to search for, e.g. "night living dead" or "buster keaton"'), limit }),
   }, searchFilms);
 
   tool('browse_films', {
-    description: 'List films from a collection, optionally narrowed to a genre and a decade, sorted by popularity, rating, date or title. Call list_collections first for the valid ids. For each film lead with watchUrl (plays it on this project\'s site) and also give sourceUrl (the original Archive.org page).',
+    description: 'List films from a collection, optionally narrowed to a genre and a decade, sorted by popularity, rating, date or title. Call list_collections first for the valid ids. For each film lead with watchUrl (plays it on this site) and also give sourceUrl (the original Archive.org page).',
     inputSchema: z.object({
       collection: z.enum(COLLECTION_IDS).default('feature_films'),
       genre: z.enum(STANDARD_GENRES).optional(),
@@ -37,7 +37,7 @@ export function createServer({ wrap = (name, run) => run } = {}) {
   }, browseFilms);
 
   tool('get_film', {
-    description: 'Details for one Archive.org item by its identifier (the last part of archive.org/details/<identifier>): description, runtime, genres and the matched film if known. Lead with watchUrl (plays it on this project's site) and also give sourceUrl (the original Archive.org page); embedUrl is for an iframe.',
+    description: 'Details for one Archive.org item by its identifier (the last part of archive.org/details/<identifier>): description, runtime, genres and the matched film if known. Lead with watchUrl (plays it on this site) and also give sourceUrl (the original Archive.org page); embedUrl is for an iframe.',
     inputSchema: z.object({ identifier: z.string().regex(/^[A-Za-z0-9._-]{1,200}$/, 'An Archive.org identifier: letters, digits, dot, dash, underscore') }),
   }, getFilm);
 
