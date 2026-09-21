@@ -293,6 +293,18 @@ class TMDBService {
     }
   }
 
+  // Rank one batch of films by TMDB rating, highest first. Every lookup finishes before the
+  // batch is ranked, so the order is final when it reaches the screen. Films with no rating
+  // (no match, or a failed lookup) follow in the order they came in.
+  async sortByRating(movies) {
+    const ratings = await Promise.all(movies.map(movie =>
+      this.searchMovie(movie.title, movie.year, movie.identifier).then(match => match?.voteAverage || 0, () => 0)));
+    return movies
+      .map((movie, index) => ({ movie, rating: ratings[index] }))
+      .sort((a, b) => b.rating - a.rating)
+      .map(entry => entry.movie);
+  }
+
   // Get poster URL
   getPosterUrl(posterPath, size = 'medium') {
     if (!posterPath) return null;

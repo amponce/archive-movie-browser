@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Film,
   Clock,
@@ -206,7 +206,12 @@ export default function ArchiveMovieBrowser() {
       });
       if (requestId !== latestRequest.current) return;
 
-      setMovies(prev => (append ? [...prev, ...result.movies] : result.movies));
+      // Ratings arrive one film at a time. Ranking the batch before it is shown means no card
+      // ever moves once it is on screen, and "Load more" adds its films below the ones already there.
+      const batch = sortBy === 'tmdb_rating' ? await tmdbService.sortByRating(result.movies) : result.movies;
+      if (requestId !== latestRequest.current) return;
+
+      setMovies(prev => (append ? [...prev, ...batch] : batch));
       setNextPage(result.nextPage);
     } catch (err) {
       if (requestId !== latestRequest.current) return;
@@ -355,25 +360,9 @@ export default function ArchiveMovieBrowser() {
     return () => row.removeEventListener('scroll', update);
   }, []);
 
-  // Track TMDB ratings for client-side sorting
-  const [tmdbRatings, setTmdbRatings] = useState({});
-
-  // Stable callback for MovieCard
-  const handleTmdbData = useCallback((id, data) => {
-    if (data?.voteAverage) {
-      setTmdbRatings(prev => ({ ...prev, [id]: data.voteAverage }));
-    }
-  }, []);
-
-  // Runtime and genre filtering already happened in fetchMovies; films with no
+  // Runtime, genre and rating order were all settled in fetchMovies; films with no
   // TMDB poster stay in the list and get a title cover
-  const displayedMovies = useMemo(() => {
-    // Client-side sort by TMDB rating
-    if (sortBy === 'tmdb_rating') {
-      return [...movies].sort((a, b) => (tmdbRatings[b.identifier] || 0) - (tmdbRatings[a.identifier] || 0));
-    }
-    return movies;
-  }, [movies, sortBy, tmdbRatings]);
+  const displayedMovies = movies;
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -666,7 +655,6 @@ export default function ArchiveMovieBrowser() {
                 movie={movie}
                 viewMode={viewMode}
                 onPlay={setSelectedMovie}
-                onTmdbData={handleTmdbData}
               />
             ))}
           </div>

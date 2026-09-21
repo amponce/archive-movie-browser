@@ -248,3 +248,17 @@ test('failed searches remain retryable while successful empty searches cache a m
   await service.searchMovie('Example');
   assert.equal(request.mock.callCount(), 3);
 });
+
+test('sortByRating waits for every rating, ranks the batch once, and leaves unrated films in their order', async t => {
+  const { service } = await makeService(t);
+  const ratings = { slow: 8.1, fast: 6.4, failed: new Error('TMDB down') };
+  t.mock.method(service, 'searchMovie', async (title, year, identifier) => {
+    const rating = ratings[identifier];
+    if (rating instanceof Error) throw rating;
+    return rating ? { voteAverage: rating } : null;
+  });
+  const batch = ['unrated-a', 'fast', 'failed', 'slow', 'unrated-b'].map(identifier => ({ identifier, title: identifier, year: 1950 }));
+  const sorted = await service.sortByRating(batch);
+  assert.deepEqual(sorted.map(m => m.identifier), ['slow', 'fast', 'unrated-a', 'failed', 'unrated-b']);
+  assert.equal(batch[0].identifier, 'unrated-a', 'the input is not reordered');
+});

@@ -4,7 +4,7 @@ import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
 import TitleCover from './TitleCover';
 
-const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay, onTmdbData }) {
+const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) {
   const [tmdbData, setTmdbData] = useState(null);
   const [tmdbChecked, setTmdbChecked] = useState(false);
   const [posterLoaded, setPosterLoaded] = useState(false);
@@ -25,11 +25,6 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay, on
 
     return () => { cancelled = true; };
   }, [movie.title, movie.year, movie.identifier, tmdbChecked]);
-
-  // Report TMDB data once when it arrives (separate effect to avoid loops)
-  useEffect(() => {
-    if (tmdbData) onTmdbData?.(movie.identifier, tmdbData);
-  }, [tmdbData, movie.identifier, onTmdbData]);
 
   // Determine which poster to use
   const tmdbPosterUrl = tmdbData?.posterPath
