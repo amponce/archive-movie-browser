@@ -29,6 +29,62 @@ const SORT_OPTIONS = {
   'title asc': 'Title A-Z',
 };
 
+// Filter state that belongs in the URL, so views are shareable and Back works (#43).
+// Defaults are omitted from the query string, so the plain URL stays clean.
+const URL_FILTER_DEFAULTS = {
+  collection: 'SciFi_Horror',
+  genre: 'all',
+  q: '',
+  sort: 'downloads',
+  runtime: 40,
+  type: 'features',
+};
+
+// Read the query string once and validate everything: unknown sort values,
+// non-numeric runtimes and genres/collections outside the known lists all fall
+// back to their defaults, so a hand-edited URL can't crash or blank the page.
+function filtersFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const filters = {};
+
+  const collection = params.get('collection');
+  if (collection && VIDEO_CATEGORIES.some(c => c.id === collection)) {
+    filters.collection = collection;
+  }
+
+  const genre = params.get('genre');
+  if (genre && (genre === 'all' || STANDARD_GENRES.includes(genre))) {
+    filters.genre = genre;
+  }
+
+  const q = params.get('q');
+  if (q) filters.q = q;
+
+  const sort = params.get('sort');
+  if (sort && Object.prototype.hasOwnProperty.call(SORT_OPTIONS, sort)) {
+    filters.sort = sort;
+  }
+
+  const runtime = params.get('runtime');
+  if (runtime && Number.isFinite(Number(runtime))) {
+    const minutes = Number(runtime);
+    if (minutes >= 0 && minutes <= 300) filters.runtime = minutes;
+  }
+
+  if (params.get('type') === 'trailers') filters.type = 'trailers';
+
+  const restored = { ...URL_FILTER_DEFAULTS, ...filters };
+  // Runtime defaults follow the collection, like the category handler does:
+  // shorts-oriented collections start unfiltered, trailers at 0.
+  if (!('runtime' in filters)) {
+    restored.runtime = restored.type === 'trailers'
+      ? 0
+      : defaultMinRuntime(restored.collection);
+  }
+  return restored;
+}
+
+
 export default function ArchiveMovieBrowser() {
   // Settings & UI state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -69,14 +125,16 @@ export default function ArchiveMovieBrowser() {
   const [error, setError] = useState(null);
   const [nextPage, setNextPage] = useState(null); // next Archive.org page to load, null when exhausted
 
-  // Filter state
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeSearch, setActiveSearch] = useState('');
-  const [genreFilter, setGenreFilter] = useState('all');
-  const [minRuntime, setMinRuntime] = useState(40);
-  const [contentType, setContentType] = useState('features'); // 'features' or 'trailers'
-  const [sortBy, setSortBy] = useState('downloads');
-  const [category, setCategory] = useState('SciFi_Horror'); // Video collection/category
+   // Filter state, initialised from the URL so shared views reload intact (#43)
+  const [urlFilters] = useState(filtersFromUrl);
+  const [searchQuery, setSearchQuery] = useState(urlFilters.q);
+  const [activeSearch, setActiveSearch] = useState(urlFilters.q);
+  const [genreFilter, setGenreFilter] = useState(urlFilters.genre);
+  const [minRuntime, setMinRuntime] = useState(urlFilters.runtime);
+  const [contentType, setContentType] = useState(urlFilters.type); // 'features' or 'trailers'
+  const [sortBy, setSortBy] = useState(urlFilters.sort);
+  const [category, setCategory] = useState(urlFilters.collection); // Video collection/category
+
 
   // Get current category info
   const currentCategory = VIDEO_CATEGORIES.find(c => c.id === category) || VIDEO_CATEGORIES[0];
@@ -178,6 +236,58 @@ export default function ArchiveMovieBrowser() {
     setActiveSearch('');
     setGenreFilter('all'); // Reset genre filter when changing category
   };
+
+    // Rebuild the query string from filter state, omitting defaults and keeping the
+  // existing #identifier hash so film links and query filters coexist (#43).
+  const writeFiltersToUrl = (mode) => {
+    const params = new URLSearchParams();
+    if (category !== URL_FILTER_DEFAULTS.collection) params.set('collection', category);
+    if (genreFilter !== URL_FILTER_DEFAULTS.genre) params.set('genre', genreFilter);
+    if (activeSearch) params.set('q', activeSearch);
+    if (sortBy !== URL_FILTER_DEFAULTS.sort) params.set('sort', sortBy);
+    if (minRuntime !== URL_FILTER_DEFAULTS.runtime) params.set('runtime', String(minRuntime));
+    if (contentType !== URL_FILTER_DEFAULTS.type) params.set('type', contentType);
+
+    const query = params.toString();
+    const currentSearch = window.location.search.replace(/^\?/, '');
+    // Already in sync: nothing to write. This also makes the sync effects safe on
+    // mount and when popstate has just restored the state (no history spam).
+    if (query === currentSearch) return;
+
+    const url = `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+    if (mode === 'push') window.history.pushState({}, '', url);
+    else window.history.replaceState({}, '', url);
+  };
+
+  // Deliberate changes (collection, genre, search) add a history entry so Back
+  // returns to the previous view; minor ones only rewrite the current entry.
+  useEffect(() => {
+    writeFiltersToUrl('push');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, genreFilter, activeSearch]);
+
+  useEffect(() => {
+    writeFiltersToUrl('replace');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortBy, minRuntime, viewMode, contentType]);
+
+  // Back/Forward between filter views: restore the state from the URL.
+  useEffect(() => {
+    const onPopState = () => {
+      const restored = filtersFromUrl();
+      setCategory(restored.collection);
+      setGenreFilter(restored.genre);
+      setActiveSearch(restored.q);
+      setSearchQuery(restored.q);
+      setSortBy(restored.sort);
+      setMinRuntime(restored.runtime);
+      setContentType(restored.type);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+
 
   // Track TMDB ratings for client-side sorting
   const [tmdbRatings, setTmdbRatings] = useState({});
