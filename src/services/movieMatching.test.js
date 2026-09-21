@@ -147,5 +147,7 @@ test('real numeric and single-letter titles keep their existing normalized queri
     ['12 Angry Men', '12 Angry Men'], ['3 Women', '3 Women'], ['M', 'M'],
     ['20,000 Leagues Under the Sea', '20 000 Leagues Under the Sea'],
     ['1984', '1984'], ['8 1/2', '8 1 2'], ['THX 1138', 'THX 1138'],
+    ['2001: A Space Odyssey', '2001 A Space Odyssey'], ['2010: The Year We Make Contact', '2010 The Year We Make Contact'],
+    ['1492: Conquest of Paradise', '1492 Conquest of Paradise'], ['300: Rise of an Empire', '300 Rise of an Empire'],
   ]) assert.equal(titleCandidates(title)[0].query, query);
 });
