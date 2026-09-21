@@ -4,6 +4,14 @@
   "functions": {
     "api/mcp.js": { "includeFiles": "public/poster-index.json", "maxDuration": 30 }
   },
+  "rewrites": [
+    { "source": "/mcp", "destination": "/index.html" },
+    { "source": "/stats", "destination": "/index.html" }
+  ],
+  "redirects": [
+    { "source": "/mcp.html", "destination": "/mcp", "permanent": true },
+    { "source": "/stats.html", "destination": "/stats", "permanent": true }
+  ],
   "headers": [
     {
       "source": "/(.*)",

@@ -11,6 +11,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ### Changed
 
 - The collection dropdown and the genre pills always both apply. A genre used to switch to every film collection while the dropdown kept showing the old one. **All Films** is a new choice and the default; a search shows "Everything (searching)".
+- The MCP page and the stats page are part of the React app now (`/mcp`, `/stats`); the old `.html` addresses redirect.
 - A list that has reached its end says so, and offers to look in All Films with the same filters.
 - The rules for filters in the URL moved into `src/services/urlFilters.js`, with tests ([#145](https://github.com/amponce/archive-movie-browser/pull/145)).
 

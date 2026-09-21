@@ -26,7 +26,7 @@ export default function McpBanner() {
         <p className="flex-1 min-w-0">
           <strong className="font-semibold">New: MCP server.</strong>{' '}
           <span className="hidden sm:inline">Search and browse Archive.org films from Claude, Cursor and other MCP clients.</span>{' '}
-          <a href="/mcp.html" onClick={() => track('MCP banner', { action: 'opened' })} className="underline underline-offset-2 font-medium whitespace-nowrap hover:no-underline">Set it up</a>
+          <a href="/mcp" onClick={() => track('MCP banner', { action: 'opened' })} className="underline underline-offset-2 font-medium whitespace-nowrap hover:no-underline">Set it up</a>
         </p>
         <button
           onClick={dismiss}

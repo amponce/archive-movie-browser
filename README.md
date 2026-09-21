@@ -170,7 +170,7 @@ All Archive.org access goes through `src/services/archive.js`, which has no Reac
 
 The live site counts usage with its own small endpoint (`api/event.js`): no cookies, no third party, no visitor identifiers, nothing sold or shared. It stores **counts only** in a Redis database: events per day, and monthly leaderboards of films opened and played, searches, filters and referring sites. IP addresses are never stored; distinct visitors are estimated with a HyperLogLog fed by a hash that changes every day, so days cannot be linked. Search text is lowercased, cut to 60 characters, and anything shaped like an email address is removed before it leaves the browser. Bots are not counted, and everything expires after 400 days. The rulebook is `api/_stats.js` and it is tested.
 
-A fork collects nothing unless its owner connects an Upstash Redis database (`vercel integration add upstash/upstash-kv`) and sets a `STATS_TOKEN` for the private `/stats.html` page.
+A fork collects nothing unless its owner connects an Upstash Redis database (`vercel integration add upstash/upstash-kv`) and sets a `STATS_TOKEN` for the private `/stats` page.
 
 ## API Credits
 

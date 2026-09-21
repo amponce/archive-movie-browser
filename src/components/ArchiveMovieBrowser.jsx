@@ -749,7 +749,7 @@ export default function ArchiveMovieBrowser() {
             </a>
           </p>
           <p className="mt-1">
-            <a href="/mcp.html" className="text-yellow-400 hover:underline">MCP server</a>: search these films from Claude, Cursor and other MCP clients
+            <a href="/mcp" className="text-yellow-400 hover:underline">MCP server</a>: search these films from Claude, Cursor and other MCP clients
           </p>
           <p className="mt-4 max-w-3xl mx-auto text-xs leading-relaxed text-gray-500">
             This is an independent, open-source viewer. It hosts no video: every film is stored and streamed by the{' '}

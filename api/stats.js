@@ -1,4 +1,4 @@
-// GET /api/stats  (Authorization: Bearer <STATS_TOKEN>): the numbers behind /stats.html.
+// GET /api/stats  (Authorization: Bearer <STATS_TOKEN>): the numbers behind the /stats page.
 import { timingSafeEqual } from 'node:crypto';
 import { redis } from './_redis.js';
 
