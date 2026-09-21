@@ -98,6 +98,13 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
     };
   }, []);
 
+  // Selecting a related film can remove the focused card from the dialog.
+  useEffect(() => {
+    if (!dialogRef.current.contains(document.activeElement)) {
+      backButtonRef.current.focus({ preventScroll: true });
+    }
+  }, [movie.identifier]);
+
   // Keep the page fixed while the full-screen overlay is displayed, and give
   // this overlay session one history entry that the browser can return from.
   useEffect(() => {
