@@ -14,18 +14,20 @@ It runs without any configuration. For movie posters, add `VITE_TMDB_API_KEY` in
 ## Features
 
 - **Browse the Internet Archive's films** - A front end to Archive.org's video collections: it shows what Archive.org hosts, with better search, filtering and posters
-- **High-Quality Posters** - Automatically matches movies with TMDB for professional movie posters
+- **Real posters, no key needed** - A poster index maps messy Archive.org uploads to the real film, so most films show their TMDB poster with no API key; the rest get a designed cover
 - **Genre Filtering** - Filter by Horror, Sci-Fi, Comedy, Drama, and more
-- **Smart Search** - Search titles, subjects, and creators across every collection in the app at once
+- **Smart Search** - Suggestions as you type, matching titles, subjects, and creators across every collection at once
+- **Shareable views** - Filters, searches and films all live in the URL, so any view can be bookmarked or sent to a friend
 - **Embedded Player** - Watch movies directly in the browser without leaving the site
 - **Movie Details** - View cast, director, ratings, runtime, and plot synopsis
 - **Related Movies** - Discover similar films based on genre
-- **Responsive Design** - Works great on desktop and mobile devices
+- **Responsive Design** - Works great on desktop and mobile devices, keyboard and screen-reader accessible
+- **MCP server** - Let an AI assistant search and recommend the films ([mcp/](mcp/README.md))
 - **Persistent Cache** - TMDB data is cached locally for faster subsequent loads
 
 ## Tech Stack
 
-- **React 18** - Modern React with hooks
+- **React 19** - Modern React with hooks
 - **Vite** - Fast build tool and dev server
 - **Tailwind CSS** - Utility-first CSS framework
 - **Lucide React** - Beautiful icons
@@ -84,7 +86,7 @@ The built files will be in the `dist` directory.
 
 
 ### Browsing Movies
-- Use the genre pills to filter by category (default: Horror)
+- Use the genre pills to filter by genre across all the film collections
 - Toggle between "Full Movies" and "Shorts" for different content types
 - Adjust minimum runtime with the duration filter
 - Sort by popularity, rating, newest, or alphabetically
@@ -110,10 +112,10 @@ The built files will be in the `dist` directory.
 
 ### Without TMDB API Key
 
-The app works without a TMDB API key, but:
-- Movie posters will use Archive.org thumbnails (lower quality)
-- No TMDB ratings or additional metadata
-- No poster-based filtering
+The app works without a TMDB API key:
+- Films in the [poster index](#poster-index) still show their real poster; the rest get a generated cover
+- Films outside the index are not matched live, so fewer of them have posters
+- No cast, director or TMDB ratings on the detail page
 
 ## Project Structure
 
@@ -121,22 +123,23 @@ The app works without a TMDB API key, but:
 archive-movie-browser/
 ├── src/
 │   ├── components/
-│   │   ├── ArchiveMovieBrowser.jsx  # Main app component
+│   │   ├── ArchiveMovieBrowser.jsx  # Main app: filters, URL state, grid
+│   │   ├── SearchBox.jsx            # Search input with suggestions
 │   │   ├── MovieCard.jsx            # Movie card (grid/list)
-│   │   ├── MovieDetailPage.jsx      # Full movie detail view
-│   │   ├── VideoPlayerModal.jsx     # Video player modal
+│   │   ├── MovieDetailPage.jsx      # Film dialog with the player
+│   │   ├── TitleCover.jsx           # Generated poster for films without one
 │   │   └── SettingsModal.jsx        # Settings dialog
-│   ├── services/
-│   │   ├── archive.js               # Archive.org API service
-│   │   └── tmdb.js                  # TMDB API service with caching
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── index.css
-├── .env.example
-├── .gitignore
-├── index.html
-├── package.json
-├── tailwind.config.js
+│   └── services/                    # No React or DOM: reusable, each with a *.test.js
+│       ├── archive.js               # Archive.org search, filtering, de-duplication
+│       ├── tmdb.js                  # TMDB lookups with a bounded cache
+│       ├── movieMatching.js         # Upload title -> film title candidates and matching
+│       ├── posterIndex.js           # Reads public/poster-index.json
+│       ├── suggest.js               # Search suggestions
+│       └── coverDesign.js           # Palette and shape for generated posters
+├── public/poster-index.json         # Which upload is which film, decided offline
+├── scripts/build-poster-index.mjs   # Builds the index (npm run index)
+├── mcp/                             # MCP server on top of src/services
+├── vercel.json                      # Security headers, including the CSP
 └── vite.config.js
 ```
 
