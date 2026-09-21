@@ -55,3 +55,19 @@ test('rememberSearch keeps the newest eight, without duplicates or blanks', () =
   assert.deepEqual(rememberSearch(recent, 'E5').slice(0, 2), ['E5', 'i9'], 'searching again moves it to the top, case-insensitively');
   assert.deepEqual(rememberSearch(['x'], '   '), ['x']);
 });
+
+test('suggestTags offers the tags uploaders actually use, most common first', async () => {
+  const { suggestTags } = await import('./suggest.js');
+  const film = (...tags) => ({ tags });
+  const movies = [
+    film('zombies', 'horror', 'George Romero'), film('Zombie', 'Horror'), film('zombies'), film('white zombie', 'bela lugosi'),
+    film('White Zombie'), film('first zombie movie'), film('zombie'), film('horror'),
+  ];
+  const tags = suggestTags(movies, 'zomb', { exclude: ['Horror'] });
+  assert.deepEqual(tags.map(t => t.label), ['zombies', 'white zombie'], 'plural and singular are one tag; a tag used once is noise');
+  assert.deepEqual(tags[0].ranges, [[0, 4]]);
+  assert.deepEqual(suggestTags(movies, 'hor', { exclude: ['Horror'] }), [], 'a tag that is already a genre pill is not repeated');
+  assert.deepEqual(suggestTags(movies, 'bela lug').map(t => t.label), [], 'used once');
+  assert.deepEqual(suggestTags([film('a'.repeat(60) + ' zombie'), film('a'.repeat(60) + ' zombie')], 'zomb'), [], 'a sentence is not a tag');
+  assert.deepEqual(suggestTags(movies, ''), []);
+});

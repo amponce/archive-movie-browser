@@ -44,6 +44,29 @@ export function localSuggestions(query, { genres = [], collections = [], movies 
 }
 
 // Newest first, no duplicates (case-insensitive), at most eight
+// Tags uploaders have put on the films in a search response, for the type-ahead. Counted from
+// that sample, so the order is a good guess rather than a census.
+export function suggestTags(movies, query, { exclude = [], limit = 4 } = {}) {
+  const skip = new Set(exclude.map(name => name.toLowerCase()));
+  const found = new Map(); // "zombie" -> { label, count }: singular and plural are one tag
+  for (const movie of movies) {
+    for (const tag of new Set((movie.tags || []).map(t => t.toLowerCase()))) {
+      if (tag.length > 40 || skip.has(tag) || !matchRanges(tag, query)) continue;
+      const key = tag.replace(/s$/, '');
+      const entry = found.get(key) || { label: tag, count: 0, uses: {} };
+      entry.count++;
+      entry.uses[tag] = (entry.uses[tag] || 0) + 1;
+      if (entry.uses[tag] > (entry.uses[entry.label] || 0) || (entry.uses[tag] === entry.uses[entry.label] && tag.length > entry.label.length)) entry.label = tag;
+      found.set(key, entry);
+    }
+  }
+  return [...found.values()]
+    .filter(entry => entry.count >= 2) // used once is usually a sentence or a typo
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit)
+    .map(({ label, count }) => ({ label, count, ranges: matchRanges(label, query) }));
+}
+
 export function rememberSearch(recent, query) {
   const text = String(query || '').trim();
   if (!text) return recent;

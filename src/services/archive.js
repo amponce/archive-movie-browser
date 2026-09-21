@@ -1,3 +1,4 @@
+import { matchRanges, suggestTags } from './suggest.js';
 // Archive.org API Service
 
 const ARCHIVE_API = 'https://archive.org/advancedsearch.php';
@@ -193,6 +194,8 @@ class ArchiveService {
       runtimeMinutes,
       runtime: movie.runtime,
       genres: genres.length > 0 ? genres : ['Uncategorized'],
+      // The uploader's own words, as written: one field, a list, or "a; b, c" in a string
+      tags: [].concat(movie.subject || []).flatMap(subject => String(subject).split(/[;,]/)).map(tag => tag.trim()).filter(Boolean),
       downloads: movie.downloads || 0,
       sizeMB: movie.item_size ? Math.round(movie.item_size / 1e6) : null,
       rating: movie.avg_rating || null,
@@ -364,20 +367,32 @@ class ArchiveService {
     const words = (this.searchWords(text) || []).filter(word => word.length >= 2);
     if (!words.length || words.join('').length < 3) return null;
     const films = VIDEO_CATEGORIES.filter(c => c.films).map(c => c.id).join(' OR ');
-    return `collection:(${films}) AND title:(${words.map(w => `${w}*`).join(' AND ')}) AND NOT mediatype:collection`;
+    const prefixes = `(${words.map(w => `${w}*`).join(' AND ')})`;
+    // Subjects ride along in the same request, so tag suggestions cost Archive.org nothing extra
+    return `collection:(${films}) AND (title:${prefixes} OR subject:${prefixes}) AND NOT mediatype:collection`;
   }
 
-  // A few distinct, most-downloaded films whose titles match what is being typed.
-  // Archive.org takes 1.5-4 s, so callers debounce, pass an AbortSignal, and show local matches first.
-  async suggestTitles(text, { signal, limit = 6 } = {}) {
+  // What to offer while someone types: a few distinct, most-downloaded films whose titles match,
+  // and the tags uploaders use that match. Archive.org takes 1.5-4 s, so callers debounce, pass
+  // an AbortSignal, and show local matches first.
+  async suggest(text, { signal, limit = 6 } = {}) {
     const query = this.buildSuggestQuery(text);
-    if (!query) return [];
-    const { movies } = await this.fetchMovies({ query, rowsPerPage: 30, signal });
+    if (!query) return { films: [], tags: [] };
+    const { movies } = await this.fetchMovies({ query, rowsPerPage: 60, signal });
     const seen = new Set();
-    return movies.filter(movie => {
+    const films = movies.filter(movie => {
+      if (!matchRanges(movie.title, text)) return false; // matched by a tag only
       const key = this.dedupeKey(movie.title);
       return seen.has(key) ? false : seen.add(key);
     }).slice(0, limit);
+    // A film's own title used as a tag ("white zombie", on its re-uploads) is already offered as
+    // a film. A theme that happens to be someone's title ("kung fu") is used far more widely.
+    const titled = new Map();
+    for (const movie of movies) titled.set(this.dedupeKey(movie.title), (titled.get(this.dedupeKey(movie.title)) || 0) + 1);
+    const tags = suggestTags(movies, text, { exclude: STANDARD_GENRES, limit: 8 })
+      .filter(tag => tag.count > 2 * (titled.get(this.dedupeKey(tag.label)) || 0))
+      .slice(0, 4);
+    return { films, tags };
   }
 
   // Fetch movies from Archive.org

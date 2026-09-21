@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useMemo, useId } from 'react';
-import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock, Link2 } from 'lucide-react';
+import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock, Link2, Tag } from 'lucide-react';
 import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES } from '../services/archive';
 import { matchRanges, localSuggestions, rememberSearch } from '../services/suggest';
 import { parseArchiveUrl } from '../services/archiveUrl';
 
 const RECENT_KEY = 'recent-searches';
-const ICONS = { search: Search, link: Link2, film: Film, genre: Filter, collection: Library, recent: Clock };
-const HINTS = { genre: 'Genre', collection: 'Collection', recent: 'Recent search' };
+const ICONS = { search: Search, link: Link2, film: Film, genre: Filter, collection: Library, tag: Tag, recent: Clock };
+const HINTS = { genre: 'Genre', collection: 'Collection', tag: 'Tag', recent: 'Recent search' };
 
 // Archive.org answers in 1.5-4 s, so remember what it said for the rest of the visit
 const remoteCache = new Map();
+const NOTHING = { films: [], tags: [] };
 
 function readRecent() {
   try {
@@ -39,7 +40,7 @@ function Highlighted({ text, ranges }) {
 export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPickGenre, onPickCollection, movies, loading }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
-  const [remote, setRemote] = useState([]);
+  const [remote, setRemote] = useState(NOTHING);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const [recent, setRecent] = useState(readRecent);
   const listId = useId();
@@ -49,11 +50,11 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
     [value, movies, recent]
   );
 
-  // Titles from Archive.org: wait for a pause in typing, cancel the previous request
+  // Titles and tags from Archive.org: wait for a pause in typing, cancel the previous request
   useEffect(() => {
     const text = value.trim().toLowerCase();
     if (!open || parseArchiveUrl(text) || !archiveService.buildSuggestQuery(text)) {
-      setRemote([]);
+      setRemote(NOTHING);
       setRemoteLoading(false);
       return;
     }
@@ -66,10 +67,10 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
     const controller = new AbortController();
     setRemoteLoading(true);
     const timer = setTimeout(() => {
-      archiveService.suggestTitles(text, { signal: controller.signal })
-        .then(films => {
-          remoteCache.set(text, films);
-          setRemote(films);
+      archiveService.suggest(text, { signal: controller.signal })
+        .then(found => {
+          remoteCache.set(text, found);
+          setRemote(found);
           setRemoteLoading(false);
         })
         .catch(err => {
@@ -90,10 +91,13 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
     if (parseArchiveUrl(text)) return [{ type: 'link', label: text, ranges: [] }];
     const list = text ? [{ type: 'search', label: text, ranges: [] }] : [];
     list.push(...local.filter(s => s.type !== 'film'));
+    // Tags uploaders use, unless the same words are already offered as a genre or collection
+    const offered = new Set(list.map(item => item.label.toLowerCase()));
+    list.push(...remote.tags.filter(tag => !offered.has(tag.label)).map(tag => ({ type: 'tag', ...tag })));
 
     const films = local.filter(s => s.type === 'film');
     const listed = new Set(films.map(s => archiveService.dedupeKey(s.label)));
-    remote.forEach(movie => {
+    remote.films.forEach(movie => {
       const key = archiveService.dedupeKey(movie.title);
       const ranges = matchRanges(movie.title, text);
       if (ranges && !listed.has(key)) {
