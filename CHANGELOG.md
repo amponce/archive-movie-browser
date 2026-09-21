@@ -13,6 +13,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - The collection dropdown and the genre pills always both apply. A genre used to switch to every film collection while the dropdown kept showing the old one. **All Films** is a new choice and the default; a search shows "Everything (searching)".
 - The MCP page and the stats page are part of the React app now (`/mcp`, `/stats`); the old `.html` addresses redirect.
 - Genre lives in the pills only: the collection dropdown no longer lists Film Noir or Sci-Fi & Horror (links to them open All Films with the matching pill), and the Film Noir pill includes the curated Film Noir collection.
+- The site opens on Horror in All Films, where the most striking posters are. All Genres is one click away and is kept in the URL (`?genre=all`); picking another library shows all of it.
 - A list that has reached its end says so, and offers to look in All Films with the same filters.
 - The rules for filters in the URL moved into `src/services/urlFilters.js`, with tests ([#145](https://github.com/amponce/archive-movie-browser/pull/145)).
 

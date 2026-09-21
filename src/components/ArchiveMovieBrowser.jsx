@@ -231,7 +231,9 @@ export default function ArchiveMovieBrowser() {
   const handleCategoryChange = (chosen) => {
     // A genre-named collection (from a pasted Archive.org link) means All Films and its pill
     const { collection: newCategory, genre } = collectionChoice(chosen);
-    if (genre) setGenreFilter(genre);
+    // The site lands on the Horror pill; picking another library shows all of it (the pill
+    // visibly moves to All Genres) rather than a near-empty "horror cartoons"
+    setGenreFilter(genre || 'all');
     track('Filter', { type: 'collection', value: newCategory });
     setCategory(newCategory);
     // Cartoons, Prelinger films and most uploads are short or have no runtime, so only

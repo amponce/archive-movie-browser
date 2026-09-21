@@ -22,7 +22,7 @@ test('filtersToQuery omits defaults so the plain URL stays clean', () => {
   assert.equal(filtersToQuery(URL_FILTER_DEFAULTS), '');
   assert.equal(filtersToQuery({
     collection: 'all',
-    genre: 'all',
+    genre: 'Horror',
     q: '',
     sort: 'downloads',
     decade: null,
@@ -63,7 +63,7 @@ test('a decade survives the round trip, and a junk one is ignored', () => {
 
 test('All Films is the default, so it stays out of the URL; a named collection is written', () => {
   assert.equal(parseFilters('').collection, 'all');
-  assert.equal(filtersToQuery({ collection: 'all', genre: 'Horror' }), 'genre=Horror');
+  assert.equal(filtersToQuery({ collection: 'all', genre: 'Comedy' }), 'genre=Comedy');
   assert.equal(filtersToQuery({ collection: 'feature_films' }), 'collection=feature_films');
   assert.equal(parseFilters('?collection=feature_films').collection, 'feature_films');
   assert.equal(parseFilters('?collection=nonsense').collection, 'all');
@@ -73,5 +73,18 @@ test('an old link to a genre-named collection opens All Films with that genre se
   assert.deepEqual([parseFilters('?collection=SciFi_Horror').collection, parseFilters('?collection=SciFi_Horror').genre], ['all', 'Horror']);
   assert.deepEqual([parseFilters('?collection=Film_Noir&decade=1940').collection, parseFilters('?collection=Film_Noir&decade=1940').genre], ['all', 'Film Noir']);
   assert.equal(parseFilters('?collection=SciFi_Horror&genre=Comedy').genre, 'Comedy', 'an explicit genre wins');
-  assert.equal(filtersToQuery(parseFilters('?collection=SciFi_Horror')), 'genre=Horror');
+  assert.equal(filtersToQuery(parseFilters('?collection=SciFi_Horror')), '', 'Horror in All Films is now the landing view');
+  assert.equal(filtersToQuery(parseFilters('?collection=Film_Noir')), 'genre=Film+Noir');
+});
+
+test('the site lands on Horror in All Films (the best covers), and All Genres is one explicit click away', () => {
+  assert.equal(parseFilters('').genre, 'Horror');
+  assert.equal(filtersToQuery({ genre: 'Horror' }), '', 'the landing view keeps a clean URL');
+  // All Genres has to be written down, or a reload would land back on Horror
+  assert.equal(filtersToQuery({ genre: 'all' }), 'genre=all');
+  assert.equal(parseFilters('?genre=all').genre, 'all');
+  // A search looks across every genre unless one is chosen, and its URL stays short
+  assert.equal(parseFilters('?q=keaton').genre, 'all');
+  assert.equal(filtersToQuery({ q: 'keaton', genre: 'all' }), 'q=keaton');
+  assert.equal(filtersToQuery({ q: 'keaton', genre: 'Horror' }), 'genre=Horror&q=keaton');
 });

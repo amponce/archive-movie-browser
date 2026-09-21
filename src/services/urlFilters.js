@@ -13,10 +13,15 @@ export const SORT_OPTIONS = {
   'title asc': 'Title A-Z',
 };
 
+// The site opens on Horror in All Films: that is where the most striking posters are. A search
+// looks across every genre unless one is chosen, so its default is All Genres.
+export const LANDING_GENRE = 'Horror';
+const defaultGenre = (q) => (q ? 'all' : LANDING_GENRE);
+
 // Defaults are omitted from the query string, so the plain URL stays clean.
 export const URL_FILTER_DEFAULTS = {
   collection: ALL_FILMS,
-  genre: 'all',
+  genre: LANDING_GENRE,
   q: '',
   sort: 'downloads',
   decade: null,
@@ -63,7 +68,7 @@ export function parseFilters(search) {
 
   if (params.get('type') === 'trailers') filters.type = 'trailers';
 
-  const restored = { ...URL_FILTER_DEFAULTS, ...filters };
+  const restored = { ...URL_FILTER_DEFAULTS, genre: defaultGenre(filters.q), ...filters };
   // Runtime defaults follow the collection, like the category handler does:
   // shorts-oriented collections start unfiltered, trailers at 0.
   if (!('runtime' in filters)) {
@@ -78,7 +83,7 @@ export function parseFilters(search) {
 // defaults for this collection and content type.
 export function filtersToQuery(filters = {}) {
   const collection = filters.collection ?? URL_FILTER_DEFAULTS.collection;
-  const genre = filters.genre ?? URL_FILTER_DEFAULTS.genre;
+  const genre = filters.genre ?? defaultGenre(filters.q);
   const q = filters.q ?? URL_FILTER_DEFAULTS.q;
   const decade = filters.decade ?? URL_FILTER_DEFAULTS.decade;
   const sort = filters.sort ?? URL_FILTER_DEFAULTS.sort;
@@ -87,7 +92,7 @@ export function filtersToQuery(filters = {}) {
 
   const params = new URLSearchParams();
   if (collection !== URL_FILTER_DEFAULTS.collection) params.set('collection', collection);
-  if (genre !== URL_FILTER_DEFAULTS.genre) params.set('genre', genre);
+  if (genre !== defaultGenre(q)) params.set('genre', genre);
   if (q) params.set('q', q);
   if (decade) params.set('decade', String(decade));
   if (sort !== URL_FILTER_DEFAULTS.sort) params.set('sort', sort);
