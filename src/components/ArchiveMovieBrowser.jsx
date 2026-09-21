@@ -751,19 +751,16 @@ export default function ArchiveMovieBrowser() {
           <p className="mt-1">
             <a href="/mcp.html" className="text-yellow-400 hover:underline">MCP server</a>: search these films from Claude, Cursor and other MCP clients
           </p>
-          {tmdbApiKey && (
-            <p className="mt-1">
-              Movie posters powered by{' '}
-              <a
-                href="https://www.themoviedb.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-yellow-400 hover:underline"
-              >
-                TMDB
-              </a>
-            </p>
-          )}
+          <p className="mt-4 max-w-3xl mx-auto text-xs leading-relaxed text-gray-500">
+            This is an independent, open-source viewer. It hosts no video: every film is stored and streamed by the{' '}
+            <a href="https://archive.org" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300">Internet Archive</a>{' '}
+            and appears here as its uploader published it there. We are not affiliated with or endorsed by the Internet Archive.
+            For rights questions or to have a film removed, contact the Internet Archive under its{' '}
+            <a href="https://archive.org/about/terms.php" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300">terms of use and copyright policy</a>;
+            once it is gone there, it is gone here. Posters and film details come from{' '}
+            <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300">TMDB</a>.
+            This product uses the TMDB API but is not endorsed or certified by TMDB.
+          </p>
         </div>
       </footer>
 
