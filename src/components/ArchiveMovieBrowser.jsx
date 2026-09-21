@@ -16,82 +16,13 @@ import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, defaultMinR
 import tmdbService from '../services/tmdb';
 import { postersFirst } from '../services/posterIndex';
 import { parseArchiveUrl } from '../services/archiveUrl';
+import { parseFilters, filtersToQuery, SORT_OPTIONS } from '../services/urlFilters';
 import { track } from '../services/analytics';
 import MovieCard from './MovieCard';
 import SearchBox from './SearchBox';
 import SettingsModal from './SettingsModal';
 import MovieDetailPage from './MovieDetailPage';
 import McpBanner from './McpBanner';
-
-const SORT_OPTIONS = {
-  downloads: 'Most Popular',
-  avg_rating: 'Top Rated (Archive)',
-  tmdb_rating: 'Top Rated (TMDB)',
-  'date desc': 'Release Date (Newest)',
-  'date asc': 'Release Date (Oldest)',
-  'publicdate desc': 'Recently Added',
-  'publicdate asc': 'Oldest Added',
-  'title asc': 'Title A-Z',
-};
-
-// Filter state that belongs in the URL, so views are shareable and Back works (#43).
-// Defaults are omitted from the query string, so the plain URL stays clean.
-const URL_FILTER_DEFAULTS = {
-  collection: 'SciFi_Horror',
-  genre: 'all',
-  q: '',
-  sort: 'downloads',
-  decade: null,
-  runtime: 40,
-  type: 'features',
-};
-
-// Read the query string once and validate everything: unknown sort values,
-// non-numeric runtimes and genres/collections outside the known lists all fall
-// back to their defaults, so a hand-edited URL can't crash or blank the page.
-function filtersFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const filters = {};
-
-  const collection = params.get('collection');
-  if (collection && VIDEO_CATEGORIES.some(c => c.id === collection)) {
-    filters.collection = collection;
-  }
-
-  const genre = params.get('genre');
-  if (genre && (genre === 'all' || STANDARD_GENRES.includes(genre))) {
-    filters.genre = genre;
-  }
-
-  const q = params.get('q');
-  if (q) filters.q = q;
-
-  const decade = Number(params.get('decade'));
-  if (DECADES.includes(decade)) filters.decade = decade;
-
-  const sort = params.get('sort');
-  if (sort && Object.prototype.hasOwnProperty.call(SORT_OPTIONS, sort)) {
-    filters.sort = sort;
-  }
-
-  const runtime = params.get('runtime');
-  if (runtime && Number.isFinite(Number(runtime))) {
-    const minutes = Number(runtime);
-    if (minutes >= 0 && minutes <= 300) filters.runtime = minutes;
-  }
-
-  if (params.get('type') === 'trailers') filters.type = 'trailers';
-
-  const restored = { ...URL_FILTER_DEFAULTS, ...filters };
-  // Runtime defaults follow the collection, like the category handler does:
-  // shorts-oriented collections start unfiltered, trailers at 0.
-  if (!('runtime' in filters)) {
-    restored.runtime = restored.type === 'trailers'
-      ? 0
-      : defaultMinRuntime(restored.collection);
-  }
-  return restored;
-}
 
 const VIEW_MODE_KEY = 'view-mode';
 
@@ -173,7 +104,7 @@ export default function ArchiveMovieBrowser() {
   const [nextPage, setNextPage] = useState(null); // next Archive.org page to load, null when exhausted
 
   // Filter state, initialised from the URL so shared views reload intact (#43)
-  const [urlFilters] = useState(filtersFromUrl);
+  const [urlFilters] = useState(() => parseFilters(window.location.search));
   const [searchQuery, setSearchQuery] = useState(urlFilters.q);
   const [activeSearch, setActiveSearch] = useState(urlFilters.q);
   const [genreFilter, setGenreFilter] = useState(urlFilters.genre);
@@ -312,17 +243,15 @@ export default function ArchiveMovieBrowser() {
   // existing #identifier hash so film links and query filters coexist (#43).
   const urlSynced = useRef(false); // false until the arrival URL has been tidied
   const writeFiltersToUrl = (mode) => {
-    const params = new URLSearchParams();
-    if (category !== URL_FILTER_DEFAULTS.collection) params.set('collection', category);
-    if (genreFilter !== URL_FILTER_DEFAULTS.genre) params.set('genre', genreFilter);
-    if (activeSearch) params.set('q', activeSearch);
-    if (decade) params.set('decade', String(decade));
-    if (sortBy !== URL_FILTER_DEFAULTS.sort) params.set('sort', sortBy);
-    const defaultRuntime = contentType === 'trailers' ? 0 : defaultMinRuntime(category);
-    if (minRuntime !== defaultRuntime) params.set('runtime', String(minRuntime));
-    if (contentType !== URL_FILTER_DEFAULTS.type) params.set('type', contentType);
-
-    const query = params.toString();
+    const query = filtersToQuery({
+      collection: category,
+      genre: genreFilter,
+      q: activeSearch,
+      decade,
+      sort: sortBy,
+      runtime: minRuntime,
+      type: contentType,
+    });
     const currentSearch = window.location.search.replace(/^\?/, '');
     // Already in sync: nothing to write. This also makes the sync effects safe on
     // mount and when popstate has just restored the state (no history spam).
@@ -349,7 +278,7 @@ export default function ArchiveMovieBrowser() {
   // Back/Forward between filter views: restore the state from the URL.
   useEffect(() => {
     const onPopState = () => {
-      const restored = filtersFromUrl();
+      const restored = parseFilters(window.location.search);
       setCategory(restored.collection);
       setGenreFilter(restored.genre);
       setActiveSearch(restored.q);

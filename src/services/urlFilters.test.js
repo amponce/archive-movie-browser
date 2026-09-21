@@ -1,0 +1,55 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { parseFilters, filtersToQuery, URL_FILTER_DEFAULTS } from './urlFilters.js';
+
+test('parseFilters and filtersToQuery round-trip a full set of filters', () => {
+  const filters = {
+    collection: 'Film_Noir',
+    genre: 'Horror',
+    q: 'nosferatu',
+    sort: 'date desc',
+    decade: 1920,
+    runtime: 60,
+    type: 'features',
+  };
+  const query = filtersToQuery(filters);
+  assert.equal(query, 'collection=Film_Noir&genre=Horror&q=nosferatu&decade=1920&sort=date+desc&runtime=60');
+  assert.deepEqual(parseFilters(`?${query}`), filters);
+  assert.equal(filtersToQuery(parseFilters(`?${query}`)), query);
+});
+
+test('filtersToQuery omits defaults so the plain URL stays clean', () => {
+  assert.equal(filtersToQuery(URL_FILTER_DEFAULTS), '');
+  assert.equal(filtersToQuery({
+    collection: 'SciFi_Horror',
+    genre: 'all',
+    q: '',
+    sort: 'downloads',
+    decade: null,
+    runtime: 40,
+    type: 'features',
+  }), '');
+  assert.deepEqual(parseFilters(''), URL_FILTER_DEFAULTS);
+  assert.deepEqual(parseFilters('?'), URL_FILTER_DEFAULTS);
+});
+
+test('bogus query values fall back to defaults', () => {
+  assert.deepEqual(parseFilters('?sort=bogus&genre=Nope&runtime=abc'), URL_FILTER_DEFAULTS);
+});
+
+test('Silent Films plus a 40 minute runtime survives the round trip', () => {
+  const filters = parseFilters('?collection=silent_films&runtime=40');
+  assert.equal(filters.collection, 'silent_films');
+  assert.equal(filters.runtime, 40);
+  const query = filtersToQuery(filters);
+  assert.match(query, /collection=silent_films/);
+  assert.match(query, /runtime=40/);
+  assert.deepEqual(parseFilters(`?${query}`), filters);
+});
+
+test('type=trailers defaults runtime to 0', () => {
+  const filters = parseFilters('?type=trailers');
+  assert.equal(filters.type, 'trailers');
+  assert.equal(filters.runtime, 0);
+  assert.equal(filtersToQuery(filters), 'type=trailers');
+});
