@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useId } from 'react';
 import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock, Link2, Tag, Trash2 } from 'lucide-react';
-import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES } from '../services/archive';
+import archiveService, { STANDARD_GENRES, BROWSABLE_COLLECTIONS } from '../services/archive';
 import { matchRanges, localSuggestions, rememberSearch } from '../services/suggest';
 import { parseArchiveUrl } from '../services/archiveUrl';
 
@@ -46,7 +46,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
   const listId = useId();
 
   const local = useMemo(
-    () => localSuggestions(value, { genres: STANDARD_GENRES, collections: VIDEO_CATEGORIES, movies, recent }),
+    () => localSuggestions(value, { genres: STANDARD_GENRES, collections: BROWSABLE_COLLECTIONS, movies, recent }),
     [value, movies, recent]
   );
 

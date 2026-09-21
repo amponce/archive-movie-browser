@@ -4,7 +4,7 @@ import { parseFilters, filtersToQuery, URL_FILTER_DEFAULTS } from './urlFilters.
 
 test('parseFilters and filtersToQuery round-trip a full set of filters', () => {
   const filters = {
-    collection: 'Film_Noir',
+    collection: 'silent_films',
     genre: 'Horror',
     q: 'nosferatu',
     sort: 'date desc',
@@ -13,7 +13,7 @@ test('parseFilters and filtersToQuery round-trip a full set of filters', () => {
     type: 'features',
   };
   const query = filtersToQuery(filters);
-  assert.equal(query, 'collection=Film_Noir&genre=Horror&q=nosferatu&decade=1920&sort=date+desc&runtime=60');
+  assert.equal(query, 'collection=silent_films&genre=Horror&q=nosferatu&decade=1920&sort=date+desc&runtime=60');
   assert.deepEqual(parseFilters(`?${query}`), filters);
   assert.equal(filtersToQuery(parseFilters(`?${query}`)), query);
 });
@@ -64,7 +64,14 @@ test('a decade survives the round trip, and a junk one is ignored', () => {
 test('All Films is the default, so it stays out of the URL; a named collection is written', () => {
   assert.equal(parseFilters('').collection, 'all');
   assert.equal(filtersToQuery({ collection: 'all', genre: 'Horror' }), 'genre=Horror');
-  assert.equal(filtersToQuery({ collection: 'SciFi_Horror' }), 'collection=SciFi_Horror');
-  assert.equal(parseFilters('?collection=SciFi_Horror').collection, 'SciFi_Horror');
+  assert.equal(filtersToQuery({ collection: 'feature_films' }), 'collection=feature_films');
+  assert.equal(parseFilters('?collection=feature_films').collection, 'feature_films');
   assert.equal(parseFilters('?collection=nonsense').collection, 'all');
+});
+
+test('an old link to a genre-named collection opens All Films with that genre selected', () => {
+  assert.deepEqual([parseFilters('?collection=SciFi_Horror').collection, parseFilters('?collection=SciFi_Horror').genre], ['all', 'Horror']);
+  assert.deepEqual([parseFilters('?collection=Film_Noir&decade=1940').collection, parseFilters('?collection=Film_Noir&decade=1940').genre], ['all', 'Film Noir']);
+  assert.equal(parseFilters('?collection=SciFi_Horror&genre=Comedy').genre, 'Comedy', 'an explicit genre wins');
+  assert.equal(filtersToQuery(parseFilters('?collection=SciFi_Horror')), 'genre=Horror');
 });

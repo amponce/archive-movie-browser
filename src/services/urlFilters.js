@@ -1,6 +1,6 @@
 // Filter state that belongs in the URL, so views are shareable and Back works (#43).
 // These helpers are pure: the component passes location.search in and writes the query out.
-import { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, ALL_FILMS, defaultMinRuntime } from './archive.js';
+import { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, ALL_FILMS, defaultMinRuntime, collectionChoice } from './archive.js';
 
 export const SORT_OPTIONS = {
   downloads: 'Most Popular',
@@ -33,7 +33,10 @@ export function parseFilters(search) {
 
   const collection = params.get('collection');
   if (collection && (collection === ALL_FILMS || VIDEO_CATEGORIES.some(c => c.id === collection))) {
-    filters.collection = collection;
+    // A genre-named collection (links from before genres moved to the pills) becomes its pill
+    const choice = collectionChoice(collection);
+    filters.collection = choice.collection;
+    if (choice.genre) filters.genre = choice.genre;
   }
 
   const genre = params.get('genre');

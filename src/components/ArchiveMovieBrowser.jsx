@@ -12,7 +12,7 @@ import {
   ChevronDown,
   Calendar,
 } from 'lucide-react';
-import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, ALL_FILMS, defaultMinRuntime, runtimeFilter } from '../services/archive';
+import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, BROWSABLE_COLLECTIONS, DECADES, ALL_FILMS, defaultMinRuntime, runtimeFilter, collectionChoice } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import { postersFirst } from '../services/posterIndex';
 import { parseArchiveUrl } from '../services/archiveUrl';
@@ -228,7 +228,10 @@ export default function ArchiveMovieBrowser() {
   };
 
   // Handle category change
-  const handleCategoryChange = (newCategory) => {
+  const handleCategoryChange = (chosen) => {
+    // A genre-named collection (from a pasted Archive.org link) means All Films and its pill
+    const { collection: newCategory, genre } = collectionChoice(chosen);
+    if (genre) setGenreFilter(genre);
     track('Filter', { type: 'collection', value: newCategory });
     setCategory(newCategory);
     // Cartoons, Prelinger films and most uploads are short or have no runtime, so only
@@ -475,7 +478,7 @@ export default function ArchiveMovieBrowser() {
                   {/* A search looks everywhere, so say so rather than keep showing a collection */}
                   {activeSearch && <option value="search" disabled>Everything (searching)</option>}
                   <option value={ALL_FILMS}>All Films</option>
-                  {VIDEO_CATEGORIES.map((cat) => (
+                  {BROWSABLE_COLLECTIONS.map((cat) => (
                     <option key={cat.id} value={cat.id}>
                       {cat.name}
                     </option>

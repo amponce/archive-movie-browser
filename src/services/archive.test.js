@@ -624,3 +624,24 @@ test('suggest finds films by title and tags by subject with a single request', a
     globalThis.fetch = realFetch;
   }
 });
+
+test('genre lives in the pills only: genre-named collections are not offered in the dropdown', async () => {
+  const { BROWSABLE_COLLECTIONS, VIDEO_CATEGORIES, collectionChoice, ALL_FILMS } = await import('./archive.js');
+  const offered = BROWSABLE_COLLECTIONS.map(c => c.id);
+  assert.ok(!offered.includes('Film_Noir') && !offered.includes('SciFi_Horror'), 'a "Sci-Fi & Horror" dropdown beside an "All Genres" pill contradicts itself');
+  assert.ok(offered.includes('feature_films') && offered.includes('silent_films') && offered.includes('animationandcartoons'));
+  assert.ok(VIDEO_CATEGORIES.some(c => c.id === 'Film_Noir'), 'still a real collection: searches and the MCP tools use it');
+  // Old links, pasted Archive.org links and suggestions for those collections become All Films + the pill
+  assert.deepEqual(collectionChoice('Film_Noir'), { collection: ALL_FILMS, genre: 'Film Noir' });
+  assert.deepEqual(collectionChoice('SciFi_Horror'), { collection: ALL_FILMS, genre: 'Horror' });
+  assert.deepEqual(collectionChoice('silent_films'), { collection: 'silent_films', genre: null });
+  assert.deepEqual(collectionChoice(ALL_FILMS), { collection: ALL_FILMS, genre: null });
+});
+
+test('buildQuery: the Film Noir pill includes the curated Film Noir collection, tagged or not', async () => {
+  const { ALL_FILMS } = await import('./archive.js');
+  const noir = archiveService.buildQuery({ collection: ALL_FILMS, genre: 'Film Noir' });
+  assert.match(noir, /AND \(subject:\("Film Noir"[^)]*\) OR collection:\(Film_Noir\)\)/);
+  // Sci-Fi & Horror mixes two genres, so it is not poured into either pill
+  assert.doesNotMatch(archiveService.buildQuery({ collection: ALL_FILMS, genre: 'Horror' }), /OR collection:\(/);
+});

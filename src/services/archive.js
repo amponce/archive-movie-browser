@@ -16,8 +16,10 @@ const BLOCKED_IDENTIFIER_PATTERNS = [/(^|[^a-z])thechild([^a-z]|$)/i];
 export const VIDEO_CATEGORIES = [
   { id: 'feature_films', films: true, features: true, name: 'Feature Films', description: 'Classic feature-length movies' },
   { id: 'moviesandfilms', films: true, features: true, name: 'Movies & Films', description: 'Full-length films from the Archive' },
-  { id: 'Film_Noir', films: true, features: true, name: 'Film Noir', description: 'Dark crime dramas and thrillers' },
-  { id: 'SciFi_Horror', films: true, features: true, name: 'Sci-Fi & Horror', description: 'Science fiction and horror films' },
+  // Genre-named collections are not offered in the dropdown: genre lives in the pills only
+  // (asGenre). wholly: every film in the collection belongs to that genre, tagged or not.
+  { id: 'Film_Noir', films: true, features: true, name: 'Film Noir', description: 'Dark crime dramas and thrillers', asGenre: 'Film Noir', wholly: true },
+  { id: 'SciFi_Horror', films: true, features: true, name: 'Sci-Fi & Horror', description: 'Science fiction and horror films', asGenre: 'Horror' },
   { id: 'silent_films', films: true, name: 'Silent Films', description: 'Silent era classics' },
   { id: 'animationandcartoons', name: 'Animation & Cartoons', description: 'Animated films and shorts' },
   { id: 'television', name: 'Television', description: 'TV shows and broadcasts' },
@@ -37,6 +39,16 @@ export const VIDEO_CATEGORIES = [
 // "All Films" in the collection dropdown: every film collection at once. It is the default, so
 // the genre pills have thousands of films to narrow, and the dropdown never has to lie.
 export const ALL_FILMS = 'all';
+
+// What the collection dropdown offers
+export const BROWSABLE_COLLECTIONS = VIDEO_CATEGORIES.filter(c => !c.asGenre);
+
+// Where a collection id leads: itself, or for a genre-named collection (an old link, a pasted
+// Archive.org link) All Films with that genre's pill selected
+export function collectionChoice(id) {
+  const genre = VIDEO_CATEGORIES.find(c => c.id === id)?.asGenre;
+  return genre ? { collection: ALL_FILMS, genre } : { collection: id, genre: null };
+}
 
 export function defaultMinRuntime(collectionId) {
   return collectionId === ALL_FILMS || VIDEO_CATEGORIES.find(c => c.id === collectionId)?.features ? 40 : 0;
@@ -338,7 +350,9 @@ class ArchiveService {
       // to switch to every film collection on its own, leaving the dropdown showing the wrong thing.
       // Include aliases so the server matches what normalizeGenre() maps to this genre
       const names = [genre, ...Object.keys(GENRE_ALIASES).filter(alias => GENRE_ALIASES[alias] === genre)];
-      query += ` AND subject:(${names.map(n => `"${n}"`).join(' OR ')})`;
+      const subjects = `subject:(${names.map(n => `"${n}"`).join(' OR ')})`;
+      const curated = VIDEO_CATEGORIES.filter(c => c.wholly && c.asGenre === genre).map(c => c.id);
+      query += curated.length ? ` AND (${subjects} OR collection:(${curated.join(' OR ')}))` : ` AND ${subjects}`;
     }
 
     if (year) {
