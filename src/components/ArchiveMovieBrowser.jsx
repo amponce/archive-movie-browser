@@ -15,6 +15,7 @@ import {
 import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, DECADES, defaultMinRuntime, runtimeFilter } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import { postersFirst } from '../services/posterIndex';
+import { parseArchiveUrl } from '../services/archiveUrl';
 import MovieCard from './MovieCard';
 import SearchBox from './SearchBox';
 import SettingsModal from './SettingsModal';
@@ -138,6 +139,15 @@ export default function ArchiveMovieBrowser() {
     return () => { cancelled = true; };
   }, []);
 
+  // A pasted archive.org/details/<identifier> link opens the film here
+  const [linkError, setLinkError] = useState(null);
+  const openFilmLink = (identifier) => {
+    setLinkError(null);
+    archiveService.getMovieByIdentifier(identifier)
+      .then(setSelectedMovie)
+      .catch(() => setLinkError(`Couldn't open that Archive.org link. Check the address: nothing was found at "${identifier}".`));
+  };
+
   // TMDB API key from environment variable only
   const tmdbApiKey = tmdbService.apiKey;
 
@@ -241,6 +251,15 @@ export default function ArchiveMovieBrowser() {
 
   // Handle search submit
   const handleSearch = (text = searchQuery) => {
+    // An Archive.org link opens what it points at instead of being searched for as words
+    const link = parseArchiveUrl(text);
+    if (link?.type === 'film') {
+      setSearchQuery('');
+      return openFilmLink(link.identifier);
+    }
+    if (link?.type === 'collection') return handleCategoryChange(link.id);
+    if (link?.type === 'search') text = link.query;
+    setLinkError(null);
     setSearchQuery(text);
     setActiveSearch(text.trim());
     setGenreFilter('all');
@@ -663,6 +682,12 @@ export default function ArchiveMovieBrowser() {
             </>
           )}
         </div>
+
+        {linkError && (
+          <div role="alert" className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-6 text-red-300">
+            {linkError}
+          </div>
+        )}
 
         {/* Error state */}
         {error && (

@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo, useId } from 'react';
-import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock } from 'lucide-react';
+import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock, Link2 } from 'lucide-react';
 import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES } from '../services/archive';
 import { matchRanges, localSuggestions, rememberSearch } from '../services/suggest';
+import { parseArchiveUrl } from '../services/archiveUrl';
 
 const RECENT_KEY = 'recent-searches';
-const ICONS = { search: Search, film: Film, genre: Filter, collection: Library, recent: Clock };
+const ICONS = { search: Search, link: Link2, film: Film, genre: Filter, collection: Library, recent: Clock };
 const HINTS = { genre: 'Genre', collection: 'Collection', recent: 'Recent search' };
 
 // Archive.org answers in 1.5-4 s, so remember what it said for the rest of the visit
@@ -51,7 +52,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
   // Titles from Archive.org: wait for a pause in typing, cancel the previous request
   useEffect(() => {
     const text = value.trim().toLowerCase();
-    if (!open || !archiveService.buildSuggestQuery(text)) {
+    if (!open || parseArchiveUrl(text) || !archiveService.buildSuggestQuery(text)) {
       setRemote([]);
       setRemoteLoading(false);
       return;
@@ -86,6 +87,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
   // what was typed comes before one that only contains it.
   const items = useMemo(() => {
     const text = value.trim();
+    if (parseArchiveUrl(text)) return [{ type: 'link', label: text, ranges: [] }];
     const list = text ? [{ type: 'search', label: text, ranges: [] }] : [];
     list.push(...local.filter(s => s.type !== 'film'));
 
@@ -107,10 +109,11 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
   useEffect(() => setActive(-1), [value]);
 
   const runSearch = (text) => {
+    setOpen(false);
+    if (parseArchiveUrl(text)) return onSearch(text); // a pasted link is not a search to remember
     const next = rememberSearch(recent, text);
     setRecent(next);
     try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* private mode */ }
-    setOpen(false);
     onSearch(text);
   };
 
@@ -119,6 +122,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
     if (item.type === 'film') return onOpenFilm(item.movie);
     if (item.type === 'genre') return onPickGenre(item.genre);
     if (item.type === 'collection') return onPickCollection(item.collectionId);
+    if (item.type === 'link') return runSearch(item.label);
     onChange(item.label); // 'search' and 'recent' both run a full search
     runSearch(item.label);
   };
@@ -153,7 +157,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
         aria-controls={listId}
         aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
         autoComplete="off"
-        placeholder="Search movies..."
+        placeholder="Search movies, or paste an Archive.org link"
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
@@ -195,7 +199,9 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
               >
                 <Icon className={`w-4 h-4 flex-shrink-0 ${item.type === 'film' ? 'text-yellow-400' : 'text-gray-400'}`} />
                 <span className="flex-1 min-w-0 truncate text-gray-100">
-                  {item.type === 'search' ? <>Search for “{item.label}”</> : <Highlighted text={item.label} ranges={item.ranges} />}
+                  {item.type === 'search' ? <>Search for “{item.label}”</>
+                    : item.type === 'link' ? <>Open this Archive.org link</>
+                    : <Highlighted text={item.label} ranges={item.ranges} />}
                 </span>
                 <span className="flex-shrink-0 text-xs text-gray-500 tabular-nums">
                   {item.type === 'film' ? item.movie.year : HINTS[item.type]}
