@@ -3,7 +3,7 @@
 // Everything is derived from the film itself, so a film always gets the same cover.
 import { titleCandidates } from './movieMatching.js';
 
-export const COMPOSITIONS = ['disc', 'beam', 'rings', 'stairs', 'horizon'];
+export const COMPOSITIONS = ['disc', 'beam', 'rings', 'stairs', 'horizon', 'keyhole'];
 
 // field = background, shape = the cut-paper form, ink = title, note = year
 const PALETTES = {
