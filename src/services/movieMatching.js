@@ -136,3 +136,19 @@ export function selectMovieMatch(results, title, year = null, { strict = false }
   const [shorter, longer] = [searchTitle, titled[0].title].sort((a, b) => a.length - b.length);
   return shorter.length >= 4 && wholeWords(shorter, longer) ? results[0] : null;
 }
+
+// One query for a strict title search (OMDb): the quoted phrase if there is one, else the first
+// title candidate, with noise words removed, and the year when the title states it.
+export function omdbQuery(title) {
+  const raw = String(title || '');
+  const year = Number((raw.match(/\((18|19|20)\d{2}\)/) || [])[0]?.slice(1, 5)) || null;
+  const quoted = raw.match(/["\u201c]([^"\u201d]{2,})["\u201d]/);
+  const clean = (text) => text
+    .replace(/\((18|19|20)\d{2}\)/g, ' ')
+    .replace(/\b(movie|film|trailer|teaser|hq|hd|upgrade|full|version|remastered|restored)\b/gi, ' ')
+    .replace(/\s+/g, ' ').trim();
+  // "Baran - Hamsay-e khoda": the part before a separator is the title, the rest an alternate
+  const beforeSeparator = raw.split(/\s+[-|:]\s+/)[0];
+  const guess = quoted ? clean(quoted[1]) : clean(titleCandidates(beforeSeparator)[0]?.query || '');
+  return guess ? { title: guess, year } : null;
+}

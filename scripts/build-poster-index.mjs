@@ -9,6 +9,10 @@
 //   npm run index -- --fresh            ignore the existing file and decide everything again
 //   npm run index -- --views             also the top uploads of every genre pill and every decade
 //   npm run index -- --views --limit 300 (what the app actually shows: the index should follow it)
+//   npm run index -- --retry-none        decide again the uploads marked 'none', with OMDb as a
+//   npm run index -- --retry-none --only a,b  (just those identifiers: a dry run)
+//                                        second candidate source (needs OMDB_API_KEY); a
+//                                        confident poster replaces 'none', anything else is kept
 //
 // Keys come from the environment, or from .env.local / .env / ../.env (never from the bundle):
 //   TMDB_API_KEY (or VITE_TMDB_API_KEY)   candidate films
@@ -21,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { archiveService, VIDEO_CATEGORIES, STANDARD_GENRES, DECADES, ALL_FILMS } = await import(path.join(root, 'src/services/archive.js'));
-const { candidateQueries } = await import(path.join(root, 'src/services/movieMatching.js'));
+const { candidateQueries, omdbQuery } = await import(path.join(root, 'src/services/movieMatching.js'));
 const { decisionToEntry, CONFIDENCE_THRESHOLD } = await import(path.join(root, 'src/services/posterIndex.js'));
 
 const args = Object.fromEntries(process.argv.slice(2).join(' ').split('--').filter(Boolean).map(a => { const [k, ...v] = a.trim().split(/\s+/); return [k, v.join(' ') || true]; }));
@@ -52,6 +56,8 @@ function readKey(...names) {
 }
 const TMDB_KEY = readKey('TMDB_API_KEY', 'VITE_TMDB_API_KEY');
 const OPENROUTER_KEY = readKey('OPEN_ROUTER_API_KEY', 'OPENROUTER_API_KEY');
+const OMDB_KEY = readKey('OMDB_API_KEY');
+if (args['retry-none'] && !OMDB_KEY) { console.error('--retry-none needs OMDB_API_KEY.'); process.exit(1); }
 if (!TMDB_KEY || !OPENROUTER_KEY) {
   console.error('Missing keys. Set TMDB_API_KEY and OPEN_ROUTER_API_KEY in the environment or in .env.local (see the header of this file).');
   process.exit(1);
@@ -74,20 +80,41 @@ async function getJson(url, options, attempts = 3) {
   }
 }
 
+// OMDb searches IMDb's catalogue with looser title matching than TMDB, so it finds films our
+// TMDB queries miss ("Curtis Harrington's NIGHT TIDE (1961) HQ" -> Night Tide). Each hit is then
+// looked up on TMDB by its IMDb id, so the index still stores TMDB posters. One OMDb search per
+// upload, with the cleanest title guess: the free tier is 1,000 requests a day.
+async function omdbCandidates(title) {
+  if (!OMDB_KEY) return [];
+  const found = [];
+  const query = omdbQuery(title);
+  if (!query) return found;
+  const data = await getJson(`https://www.omdbapi.com/?apikey=${OMDB_KEY}&type=movie&s=${encodeURIComponent(query.title)}${query.year ? `&y=${query.year}` : ''}`);
+  if (data.Error === 'Request limit reached!') throw new Error('OMDb daily limit reached');
+  for (const hit of (data.Search || []).slice(0, 4)) {
+    const byImdb = await getJson(`https://api.themoviedb.org/3/find/${hit.imdbID}?api_key=${TMDB_KEY}&external_source=imdb_id`);
+    const film = (byImdb.movie_results || [])[0];
+    if (film && !found.some(f => f.id === film.id)) found.push(film);
+    await sleep(30);
+  }
+  return found;
+}
+
 // Every TMDB film any of the queries returns, so the right one is among the options
-async function candidatesFor(title) {
+async function candidatesFor(title, { withOmdb = false } = {}) {
   const found = new Map();
   for (const query of candidateQueries(title)) {
     const data = await getJson(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_KEY}&include_adult=false&query=${encodeURIComponent(query)}`);
     for (const film of (data.results || []).slice(0, 6)) if (found.size < 20 && !found.has(film.id)) found.set(film.id, film);
     await sleep(30);
   }
+  if (withOmdb) for (const film of await omdbCandidates(title)) if (found.size < 24 && !found.has(film.id)) found.set(film.id, film);
   return [...found.values()];
 }
 
 const totals = { cost: 0, tokens: 0, decided: 0 };
-async function decide(movie) {
-  const candidates = await candidatesFor(movie.title);
+async function decide(movie, options) {
+  const candidates = await candidatesFor(movie.title, options);
   if (!candidates.length) return { n: 1, c: 1 }; // TMDB knows nothing like it
   const criteria = Object.fromEntries(candidates.map((film, i) => [`c${i + 1}`, `${label(film)}. ${(film.overview || '').slice(0, 110)}`]));
   criteria.none = 'None of these: a different film, a game recording, a music video, a fan edit of something else, or not a film at all';
@@ -124,6 +151,37 @@ async function decide(movie) {
 const previous = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')).films || {} : {};
 const existing = args.fresh ? Object.fromEntries(Object.entries(previous).filter(([, entry]) => entry.m)) : previous;
 const films = { ...existing };
+if (args['retry-none']) {
+  // A 'none' decided without OMDb candidates may have never been shown the right film. Decide
+  // again with OMDb in the mix; only a confident poster replaces the old answer, and hand
+  // corrections are never touched. Uploads are re-read from Archive.org for their titles.
+  const only = args.only ? new Set(String(args.only).split(',')) : null;
+  const ids = Object.keys(films).filter(id => films[id].n && !films[id].m && !films[id].r && (!only || only.has(id)));
+  console.log(`Retrying ${ids.length} 'none' decisions with OMDb candidates.`);
+  let replaced = 0;
+  for (let i = 0; i < ids.length; i += 3) {
+    await Promise.all(ids.slice(i, i + 3).map(async id => {
+      try {
+        const movie = await archiveService.getMovieByIdentifier(id);
+        const entry = await decide(movie, { withOmdb: true });
+        if (entry.i) { films[id] = entry; replaced++; console.log(`  ${id} -> ${entry.t} (${entry.y}) ${entry.c}`); }
+        else films[id] = { ...films[id], r: 1 }; // retried: not worth a third look
+      } catch (error) {
+        if (/daily limit/.test(error.message)) { console.warn('  OMDb daily limit reached; saving and stopping. Run again tomorrow.'); i = ids.length; return; }
+        console.warn(`  skipped ${id}: ${error.message}`);
+      }
+    }));
+    if ((i / 3) % 10 === 9) {
+      const sorted = Object.fromEntries(Object.keys(films).sort().map(k => [k, films[k]]));
+      fs.writeFileSync(OUT, JSON.stringify({ version: 1, model: MODEL, threshold: CONFIDENCE_THRESHOLD, generatedAt: new Date().toISOString().slice(0, 10), films: sorted }) + '\n');
+    }
+  }
+  const sorted = Object.fromEntries(Object.keys(films).sort().map(k => [k, films[k]]));
+  fs.writeFileSync(OUT, JSON.stringify({ version: 1, model: MODEL, threshold: CONFIDENCE_THRESHOLD, generatedAt: new Date().toISOString().slice(0, 10), films: sorted }) + '\n');
+  console.log(`Retry done: ${replaced} of ${ids.length} now have a poster. $${totals.cost.toFixed(4)}.`);
+  process.exit(0);
+}
+
 console.log(`Poster index: up to ${LIMIT} uploads from each of ${walks.length} walks; ${Object.keys(existing).length} already decided.`);
 
 for (const { name, options } of walks) {

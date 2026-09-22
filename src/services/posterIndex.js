@@ -7,6 +7,7 @@
 //   { i: tmdbId, t: title, y: year, p: posterPath, v: voteAverage, c: confidence }
 //   { n: 1, c: confidence }   decided: show the generated cover
 // Add m: 1 to an entry corrected by hand; the build script never overwrites those.
+// r: 1 marks a 'none' that was decided again with extra candidates (--retry-none) and stayed none.
 
 // Every wrong poster seen so far was at 0.66 or below (80-upload pilot, then a read-through of the
 // first 471 indexed posters), so 0.7 keeps unattended refreshes from adding wrong ones.

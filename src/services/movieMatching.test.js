@@ -151,3 +151,13 @@ test('real numeric and single-letter titles keep their existing normalized queri
     ['1492: Conquest of Paradise', '1492 Conquest of Paradise'], ['300: Rise of an Empire', '300 Rise of an Empire'],
   ]) assert.equal(titleCandidates(title)[0].query, query);
 });
+
+test('omdbQuery picks the one title guess a strict search can find, plus the year if the title states it', async () => {
+  const { omdbQuery } = await import('./movieMatching.js');
+  assert.deepEqual(omdbQuery('Curtis Harrington\'s "NIGHT TIDE" (1961) HQ 16/9 + movie trailer'), { title: 'NIGHT TIDE', year: 1961 }, 'a quoted phrase is the film');
+  assert.deepEqual(omdbQuery('ATHENA (1954) movie trailer'), { title: 'ATHENA', year: 1954 }, 'noise words go');
+  assert.deepEqual(omdbQuery('Baran - Hamsay-e khoda (2001) '), { title: 'Baran', year: 2001 }, 'the part before a separator is the title, the rest an alternate');
+  assert.deepEqual(omdbQuery('Brain That Wouldn\'t Die Upgrade'), { title: 'Brain That Wouldn\'t Die', year: null });
+  assert.deepEqual(omdbQuery('House On Haunted Hill-hd'), { title: 'House On Haunted Hill', year: null });
+  assert.deepEqual(omdbQuery(''), null);
+});
