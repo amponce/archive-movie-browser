@@ -17,6 +17,7 @@ import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
 import { Sprockets, TitleArt, fieldFor } from '../ui/FilmCard';
 import Button from '../ui/Button';
+import useRelated from '../hooks/useRelated';
 import FilmPlayer from './FilmPlayer';
 import { identifiedAs } from '../services/posterIndex';
 import SearchBox from './SearchBox';
@@ -231,17 +232,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
     return () => { cancelled = true; };
   }, [movie]);
 
-  // Find related movies from our collection based on genre
-  const relatedMovies = useMemo(() => {
-    if (!allMovies.length || !movie?.genres) return [];
-
-    return allMovies
-      .filter(m =>
-        m.identifier !== movie.identifier &&
-        m.genres?.some(g => movie.genres.includes(g))
-      )
-      .slice(0, 12);
-  }, [allMovies, movie]);
+  const { films: relatedMovies, genre: relatedGenre } = useRelated(movie, allMovies, (tmdbDetails?.genres || []).map(g => g.name));
 
   if (!movie) return null;
 
@@ -420,14 +411,14 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
             {/* Genres */}
             {genres.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-6">
-                {genres.map((genre, i) => (
-                  <span
-                    key={i}
-                    className="pill inline-flex items-center"
-                  >
-                    {genre.name || genre}
-                  </span>
-                ))}
+                {genres.map((genre, i) => {
+                  // TMDB says "Science Fiction", our pills say "Sci-Fi": link only when it maps
+                  const name = genre.name || genre;
+                  const ours = archiveService.normalizeGenre(name);
+                  return ours
+                    ? <a key={i} href={`/browse?genre=${encodeURIComponent(ours)}`} className="pill inline-flex items-center">{name}</a>
+                    : <span key={i} className="pill inline-flex items-center cursor-default">{name}</span>;
+                })}
               </div>
             )}
 
@@ -516,10 +507,17 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
         {/* Related from our collection */}
         {relatedMovies.length > 0 && (
           <div className="mt-12">
-            <p className="eyebrow">Same shelf</p>
-            <h3 className="display text-3xl mt-1.5 mb-6">More like this</h3>
+            <div className="flex items-end justify-between gap-6 mb-6">
+              <div>
+                <p className="eyebrow">Same shelf</p>
+                <h3 className="display text-3xl mt-1.5">More like this</h3>
+              </div>
+              {relatedGenre && (
+                <a href={`/browse?genre=${encodeURIComponent(relatedGenre)}`} className="nav-link shrink-0 flex items-center gap-2 hover:text-signal">All {relatedGenre} <span aria-hidden="true">→</span></a>
+              )}
+            </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
-              {relatedMovies.slice(0, 6).map((related) => (
+              {relatedMovies.slice(0, 12).map((related) => (
                 <RelatedMovieCard
                   key={related.identifier}
                   movie={related}
