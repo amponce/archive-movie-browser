@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import archiveService, { runtimeFilter } from '../services/archive';
+import archiveService, { runtimeFilter, betterCopy } from '../services/archive';
 import tmdbService from '../services/tmdb';
-import { postersFirst } from '../services/posterIndex';
+import { postersFirst, oneCopyPerFilm } from '../services/posterIndex';
 import { apiSort, orderBatch } from '../services/sorting';
 
 // The list of films for a set of filters, and "Load more". Fetching from the start whenever the
@@ -16,6 +16,8 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
   const latestRequest = useRef(0);
   // Titles already shown, so the same film isn't repeated across batches
   const seenTitles = useRef(new Set());
+  // Films (index ids) already shown: two uploads of one film get one card
+  const seenFilms = useRef(new Set());
 
   // startPage 1 replaces the list, later pages append
   const fetchPage = useCallback(async (startPage = 1) => {
@@ -23,6 +25,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
     const append = startPage > 1;
     if (!append) {
       seenTitles.current = new Set();
+      seenFilms.current = new Set();
       setMovies([]);
     }
     setLoading(true);
@@ -43,7 +46,10 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
       });
       if (requestId !== latestRequest.current) return;
 
-      const batch = await orderBatch(result.movies, sort, {
+      const unique = await oneCopyPerFilm(result.movies, seenFilms.current, betterCopy);
+      if (requestId !== latestRequest.current) return;
+
+      const batch = await orderBatch(unique, sort, {
         byRating: (films) => tmdbService.sortByRating(films),
         withPosters: postersFirst,
       });

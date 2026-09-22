@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { setPosterIndex, indexedMatch, decisionToEntry } from './posterIndex.js';
+import { setPosterIndex, indexedMatch, decisionToEntry, oneCopyPerFilm } from './posterIndex.js';
 
 test('indexedMatch: a poster entry, a deliberate "no poster" entry, and an unknown identifier are three different answers', async () => {
   setPosterIndex({
@@ -47,4 +47,19 @@ test('identifiedAs says when the index found a different film than the upload ti
   assert.equal(identifiedAs({ title: 'Dead People' }, { title: 'Messiah of Evil', fromIndex: false }), null, 'a live TMDB guess is not an index decision');
   assert.equal(identifiedAs({ title: 'Dead People' }, null), null);
   assert.equal(identifiedAs({ title: 'Dead People' }, { title: 'Messiah of Evil', fromIndex: true, confidence: 0.74 }), null, 'a shaky decision is used quietly, not announced');
+});
+
+test('oneCopyPerFilm keeps one card per index film, the better copy, and remembers across batches', async () => {
+  setPosterIndex({
+    a: { i: 1, t: 'Same Film', y: 1960, p: '/p.jpg', v: 6, c: 1 },
+    b: { i: 1, t: 'Same Film', y: 1960, p: '/p.jpg', v: 6, c: 1 },
+    c: { i: 2, t: 'Other', y: 1961, p: '/q.jpg', v: 6, c: 1 },
+  });
+  const movies = [{ identifier: 'a', sizeMB: 300 }, { identifier: 'x' }, { identifier: 'b', sizeMB: 900 }, { identifier: 'c' }];
+  const seen = new Set();
+  const bigger = (p, q) => ((q.sizeMB || 0) > (p.sizeMB || 0) ? q : p);
+  const first = await oneCopyPerFilm(movies, seen, bigger);
+  assert.deepEqual(first.map(m => m.identifier), ['b', 'x', 'c'], 'the bigger upload takes the first slot, unindexed films pass through');
+  const second = await oneCopyPerFilm([{ identifier: 'a' }, { identifier: 'c' }, { identifier: 'y' }], seen, bigger);
+  assert.deepEqual(second.map(m => m.identifier), ['y'], 'films already shown do not come back on the next batch');
 });

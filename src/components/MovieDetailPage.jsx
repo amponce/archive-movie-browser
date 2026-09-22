@@ -200,7 +200,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
   // Scroll to player when it opens
   useEffect(() => {
     if (isPlaying && playerRef.current) {
-      playerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      playerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [isPlaying]);
 
@@ -311,10 +311,26 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
       </div>
 
       <div className="relative gutter max-w-7xl mx-auto py-8 lg:py-10">
+        {/* The player takes the top of the page while a film plays; the details stay below it */}
+        {isPlaying && (
+          <div className="mb-8" ref={playerRef}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="eyebrow">Now playing</h3>
+              <button onClick={() => setIsPlaying(false)} className="nav-link">Close player</button>
+            </div>
+            <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
+              <FilmPlayer movie={movie} />
+            </div>
+            <p className="mt-2 font-mono text-[11px] text-dim">
+              Keyboard: ← → skip 10 seconds (hold Shift for a minute), Space pauses, F is full screen, M mutes, Esc closes.
+            </p>
+          </div>
+        )}
+
         {/* Main content */}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           {/* Poster */}
-          <div className="flex-shrink-0 w-full max-w-sm mx-auto lg:mx-0 lg:w-[360px]">
+          <div className={`flex-shrink-0 mx-auto lg:mx-0 ${isPlaying ? 'hidden lg:block lg:w-[200px]' : 'w-full max-w-sm lg:w-[360px]'}`}>
             <div className="film-frame shadow-2xl" style={{ background: fieldFor(movie.genres?.[0], movie.identifier), containerType: 'inline-size' }}>
               {posterUrl ? (
                 <img
@@ -482,27 +498,6 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
             )}
           </div>
         </div>
-
-        {/* Video Player */}
-        {isPlaying && (
-          <div className="mt-8" ref={playerRef}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="eyebrow">Now playing</h3>
-              <button
-                onClick={() => setIsPlaying(false)}
-                className="nav-link"
-              >
-                Close player
-              </button>
-            </div>
-            <div className="relative aspect-video bg-black rounded-lg overflow-hidden shadow-2xl">
-              <FilmPlayer movie={movie} />
-            </div>
-            <p className="mt-2 font-mono text-[11px] text-dim">
-              Keyboard: ← → skip 10 seconds (hold Shift for a minute), Space pauses, F is full screen, M mutes, Esc closes.
-            </p>
-          </div>
-        )}
 
         {/* Related from our collection */}
         {relatedMovies.length > 0 && (
