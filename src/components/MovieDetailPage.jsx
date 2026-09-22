@@ -43,13 +43,21 @@ function RelatedMovieCard({ movie, onClick }) {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!e.repeat) handleClick(e);
+    }
+  };
+
   return (
     <div
       onClick={handleClick}
       className="group text-left cursor-pointer"
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && handleClick(e)}
+      aria-label={`${movie.title}, ${movie.year}`}
+      onKeyDown={handleKeyDown}
     >
       <div className="relative aspect-[2/3] bg-gray-800 rounded-lg overflow-hidden mb-2">
         {posterUrl && !posterFailed ? (
