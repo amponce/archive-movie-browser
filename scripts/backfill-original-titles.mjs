@@ -30,7 +30,7 @@ let added = 0, done = 0;
 const byId = new Map(); // one request per TMDB film, however many uploads it has
 for (let i = 0; i < todo.length; i += 40) {
   const batch = todo.slice(i, i + 40);
-  await Promise.all(batch.map(async ([id, e]) => {
+  await Promise.all(batch.map(async ([, e]) => {
     if (!byId.has(e.i)) byId.set(e.i, fetch(`https://api.themoviedb.org/3/movie/${e.i}?api_key=${key}`).then(r => (r.ok ? r.json() : null)).catch(() => null));
     const film = await byId.get(e.i);
     if (!film) return;
