@@ -16,6 +16,7 @@ jobs:
           node-version: lts/*
           cache: npm
       - run: npm ci
+      - run: npm run lint
       - run: npm test
       - run: npm ci --prefix mcp && npm test --prefix mcp # the MCP server has its own dependencies
       - run: npm run build

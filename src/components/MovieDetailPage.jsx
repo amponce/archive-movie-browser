@@ -1,13 +1,11 @@
-import React, { useState, useEffect, useMemo, useRef, useId } from 'react';
+import React, { useState, useEffect, useRef, useId } from 'react';
 import {
-  X,
   ExternalLink,
   Clock,
   Star,
   Play,
   Calendar,
   Users,
-  Film,
   Globe,
   DollarSign,
   TrendingUp,

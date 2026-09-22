@@ -519,7 +519,7 @@ test('suggest returns a few distinct films and can be cancelled without retrying
     assert.deepEqual(films.map(f => f.identifier), ['n1', 'n3'], 're-uploads of one film collapse into one suggestion');
 
     let calls = 0;
-    globalThis.fetch = async (url, { signal } = {}) => { calls++; const e = new Error('aborted'); e.name = 'AbortError'; throw e; };
+    globalThis.fetch = async (url, { signal: _signal } = {}) => { calls++; const e = new Error('aborted'); e.name = 'AbortError'; throw e; };
     await assert.rejects(() => archiveService.suggest('dracula', { signal: new AbortController().signal }), { name: 'AbortError' });
     assert.equal(calls, 1, 'a cancelled request is not retried');
   } finally {

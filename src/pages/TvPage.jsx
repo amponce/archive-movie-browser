@@ -3,7 +3,7 @@ import { onAirAt, tuneIn } from '../services/schedule';
 import { shortcutFor } from '../services/playback';
 import { track } from '../services/analytics';
 import useMyChannel from '../hooks/useMyChannel';
-import { shareUrl, MY_CHANNEL_ID } from '../services/myChannel';
+import { shareUrl } from '../services/myChannel';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 

@@ -6,7 +6,7 @@ export const MY_CHANNEL_KEY = 'tv-my-channel';
 export const MY_CHANNEL_ID = 'mine';
 const MAX = 40;
 
-const clean = ids => [...new Set((ids || []).map(id => String(id).trim()).filter(id => /^[\w.\-]+$/.test(id)))].slice(0, MAX);
+const clean = ids => [...new Set((ids || []).map(id => String(id).trim()).filter(id => /^[\w.-]+$/.test(id)))].slice(0, MAX);
 
 export function readMyChannel() {
   try { return clean(JSON.parse(localStorage.getItem(MY_CHANNEL_KEY) || '[]')); } catch { return []; }

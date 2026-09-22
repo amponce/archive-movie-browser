@@ -23,7 +23,7 @@ Node 22 or newer. A TMDB key is optional: without one the app works and shows ti
 
 ## Before you open a pull request
 
-1. `npm test` passes.
+1. `npm run lint` and `npm test` passes.
 2. `npm run build` passes.
 3. **Click through the change in a browser.** A passing build does not catch a page that crashes when you open it, and there are no component tests yet. Open a film, close it, change a filter.
 4. Logic in `src/services/` has tests in `src/services/archive.test.js` (`node:test`, no extra dependencies). Add or update tests when you change behaviour there.

@@ -327,7 +327,7 @@ class ArchiveService {
 
     subjects.forEach(s => {
       // Split by common delimiters
-      String(s).split(/[;,\/]/).forEach(part => {
+      String(s).split(/[;,/]/).forEach(part => {
         const normalized = this.normalizeGenre(part.trim());
         if (normalized) {
           genres.add(normalized);
@@ -349,7 +349,7 @@ class ArchiveService {
     const {
       searchQuery = '',
       collection = 'moviesandfilms',
-      minRuntime = null,
+      minRuntime: _minRuntime = null, // applied by the caller's filter, not here
       year = null,
       genre = null,
       decade = null, // one of DECADES

@@ -184,7 +184,7 @@ class TMDBService {
   }
 
   // Internal method to fetch from TMDB API
-  async _fetchFromTMDB(title, year, cacheKey) {
+  async _fetchFromTMDB(title, year, _cacheKey) {
     try {
       // Try the tidied title, then guesses at the real title hidden in it (at most four
       // requests, and only on a miss). The year is not sent: Archive.org years are often

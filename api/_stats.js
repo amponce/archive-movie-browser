@@ -5,6 +5,7 @@
 const FILM = /^[A-Za-z0-9._-]{1,200}$/;
 const KEEP_DAYS = 400;
 const RECENT = 50;
+// eslint-disable-next-line no-control-regex -- stripping control characters is the point
 const clean = (value, max = 60) => String(value ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
 
 // name -> (data) => cleaned data, or null to reject the event

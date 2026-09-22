@@ -217,12 +217,10 @@ export default function ArchiveMovieBrowser() {
   useEffect(() => {
     writeFiltersToUrl('push');
     urlSynced.current = true;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, genreFilter, activeSearch, decade]);
 
   useEffect(() => {
     writeFiltersToUrl('replace');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy, minRuntime, contentType]);
 
   // Back/Forward between filter views: restore the state from the URL. Forward can also land on
