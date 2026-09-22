@@ -9,10 +9,8 @@ import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import McpBanner from '../components/McpBanner';
 import Hero from '../components/home/Hero';
-import Stats from '../components/home/Stats';
 import FilmRow from '../components/home/FilmRow';
 import Lists from '../components/home/Lists';
-import Wanted from '../components/home/Wanted';
 import ContinueWatching from '../components/home/ContinueWatching';
 import OnNow from '../components/home/OnNow';
 
@@ -45,12 +43,6 @@ export default function HomePage() {
       <SiteHeader current="/" />
       {featured && <Hero featured={featured} fileNumber={fileNumber} wall={wall} />}
       <div className="pb-12 rule"><OnNow /></div>
-      <Stats cells={[
-        [counts.identified, 'films identified'],
-        [counts.posters, 'with a poster on file'],
-        [counts.wanted, 'still without a poster', true],
-        [LISTS.length, 'curated lists'],
-      ]} />
       <ContinueWatching index={index} />
       <FilmRow id="horror" cards={horror} eyebrow="The house genre" title="Horror, mostly unclaimed" blurb="The most-watched horror in the collections. Nobody renewed the rights, so they're yours." more="All horror" href="/browse?genre=Horror" />
       <FilmRow id="tonight-short" cards={short.map(cardFromIndex)} eyebrow="The tonight question" title="Under 90 minutes" blurb="Feature films you can finish in an evening, well regarded, a different dozen every day." more="All under 90" href="/browse?genre=all&runtime=40&sort=tmdb_rating" />
@@ -59,8 +51,7 @@ export default function HomePage() {
       {shelf && (
         <FilmRow cards={shelf.films.map(cardFromIndex)} eyebrow="Today's shelf" title={`Pulled from the ${shelf.decade}s`} blurb="Six from one decade, a different decade every day." more={`All ${shelf.decade}s`} href={`/browse?genre=all&decade=${shelf.decade}`} />
       )}
-      <Wanted count={counts.wanted} />
-      <SiteFooter />
+      <SiteFooter counts={counts} />
     </div>
   );
 }
