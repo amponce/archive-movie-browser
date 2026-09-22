@@ -46,4 +46,5 @@ test('identifiedAs says when the index found a different film than the upload ti
   assert.equal(identifiedAs({ title: 'night_of_the_living_dead (1968) 1080p' }, { title: 'Night of the Living Dead', fromIndex: true, confidence: 0.99 }), null, 'noise around the same title is not a different film');
   assert.equal(identifiedAs({ title: 'Dead People' }, { title: 'Messiah of Evil', fromIndex: false }), null, 'a live TMDB guess is not an index decision');
   assert.equal(identifiedAs({ title: 'Dead People' }, null), null);
+  assert.equal(identifiedAs({ title: 'Dead People' }, { title: 'Messiah of Evil', fromIndex: true, confidence: 0.74 }), null, 'a shaky decision is used quietly, not announced');
 });

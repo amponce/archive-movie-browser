@@ -49,7 +49,8 @@ export async function postersFirst(movies) {
 // The moment worth showing: the index decided this upload is a film whose name is not the
 // upload's name ("Dead People" is Messiah of Evil). Null when there is nothing to reveal.
 export function identifiedAs(movie, match) {
-  if (!match?.fromIndex || !match.title) return null;
+  // Only a confident decision is worth announcing: the 0.7-0.8 band holds most of the rare misses
+  if (!match?.fromIndex || !match.title || !(match.confidence >= 0.8)) return null;
   const words = (text) => String(text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   if (words(movie.title).includes(words(match.title))) return null;
   return { uploadTitle: movie.title, confidence: match.confidence };

@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- The poster index grew from 643 to 6,698 uploads and now follows what the app shows (the top of every genre pill and decade, not just each collection): the popular views went from 51% to 100% indexed, so almost every card gets its poster with no TMDB request. The film page says when the index identified an upload as a different film.
 - Our own cookieless usage counts (`/api/event`, stored as counts in Redis) with a private stats page for the maintainer. See Privacy in the README.
 
 ### Changed
