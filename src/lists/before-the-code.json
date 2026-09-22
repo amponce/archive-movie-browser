@@ -1,0 +1,18 @@
+{
+  "slug": "before-the-code",
+  "title": "Before the Code",
+  "blurb": "Hollywood from 1930 to 1934, before the Production Code was enforced and the studios had to behave. Faster, stranger and more grown-up than the decade that followed.",
+  "curator": "amponce",
+  "films": [
+    { "id": "TheMostDangerousGame", "note": "A big-game hunter who hunts people, shot at night on the King Kong sets with the same cast. Sixty-three minutes." },
+    { "id": "white_zombie", "note": "The first zombie film. Lugosi, a Haitian sugar mill, a bride who will not stay dead." },
+    { "id": "SvengaliJohnBarrymoreBKCap1931", "note": "John Barrymore as the hypnotist, with sets that lean like Caligari's." },
+    { "id": "TheGhoul", "note": "Boris Karloff comes home to England to rise from the tomb. Thought lost for decades." },
+    { "id": "TheScarletPimpernel", "note": "Leslie Howard saves aristocrats from the guillotine while pretending to be a fop." },
+    { "id": "Bird_of_Paradise_1932", "note": "Dolores del Río, a South Seas island, and a swim the Code would have cut." },
+    { "id": "Indiscreet", "note": "Gloria Swanson with a past, in a comedy that would not have been made two years later." },
+    { "id": "PhiloVanceTheKennelMurderCase1933", "note": "William Powell as Philo Vance in a locked-room mystery, directed by Michael Curtiz." },
+    { "id": "farewell_to_arms_ipod", "note": "Hemingway, Gary Cooper and Helen Hayes. The ending the studio dared to keep." },
+    { "id": "mr_robinson_crusoe", "note": "Douglas Fairbanks, past forty, bets he can live on a desert island. He built the tree house himself." }
+  ]
+}

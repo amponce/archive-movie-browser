@@ -1,0 +1,20 @@
+{
+  "slug": "chaplin-two-reelers",
+  "title": "Chaplin, two reels at a time",
+  "blurb": "The shorts Chaplin made between 1914 and 1917, when he went from a Keystone bit player to the most famous face on earth. Twenty minutes each. Start with The Immigrant if you only watch one.",
+  "curator": "amponce",
+  "films": [
+    { "id": "CC_1917_06_17_TheImmigrant", "note": "The boat, the coin, the restaurant. Chaplin said it touched him more than anything else he made." },
+    { "id": "CC_1916_10_02_ThePawnshop", "note": "The alarm clock scene. He takes it apart like a surgeon and pronounces it dead." },
+    { "id": "CC_1916_08_07_One_A_M", "note": "One man, one house, one drink too many. Chaplin alone on screen for twenty minutes." },
+    { "id": "CC_1916_12_04_TheRink", "note": "Chaplin on roller skates. He really could." },
+    { "id": "CC_1917_10_22_TheAdventurer", "note": "An escaped convict crashes a society party. The ice-cream-down-the-dress gag." },
+    { "id": "CC_1916_05_15_TheFloorwalker", "note": "The first Mutual short, and the first escalator chase in film." },
+    { "id": "CC_1916_09_04_TheCount", "note": "A tailor's assistant impersonates a count at a dinner. The spaghetti." },
+    { "id": "HisNewJobCharlesChaplin-1915", "note": "His first film for Essanay, set in a film studio. Gloria Swanson is an extra." },
+    { "id": "ANightintheShow", "note": "Chaplin plays two drunks in the same theatre, one in the stalls and one in the gallery." },
+    { "id": "CC_1915_10_04_CharlieShanghaied", "note": "Press-ganged onto a ship. The rolling-deck gags were done with a real tilting set." },
+    { "id": "CC_1914_02_07_KidsAutoRaceAtVenice", "note": "Six minutes. The first time anyone saw the Tramp. He is ruining a newsreel." },
+    { "id": "CC_1914_11_14_TilliesPuncturedRomance", "note": "The first feature-length comedy ever made, with Marie Dressler. Chaplin is the villain." }
+  ]
+}
