@@ -4,7 +4,7 @@
 // real posters without a TMDB key and without a burst of TMDB lookups per page.
 //
 // Entry shapes (kept short because the file is downloaded by every visitor):
-//   { i: tmdbId, t: title, y: year, p: posterPath, v: voteAverage, k: voteCount, c: confidence }
+//   { i: tmdbId, t: title, y: year, p: posterPath, v: voteAverage, k: voteCount, c: confidence, d: uploadMinutes }
 //   { n: 1, c: confidence }   decided: show the generated cover
 // Add m: 1 to an entry corrected by hand; the build script never overwrites those.
 // r: 1 marks a 'none' that was decided again with extra candidates (--retry-none) and stayed none.
@@ -31,6 +31,13 @@ function load() {
     .then(index => { films = index.films || {}; return films; })
     .catch(() => { films = {}; return films; }); // the index is an optimisation; the app works without it
   return loading;
+}
+
+// Archive.org's search often has no runtime for an upload; the index measured it from the file
+// list. Synchronous, so it can sit inside a filter: the caller loads the index first.
+export function withIndexedLength(movie) {
+  const d = films?.[movie.identifier]?.d;
+  return movie.runtimeMinutes || !d ? movie : { ...movie, runtimeMinutes: d };
 }
 
 // undefined = not indexed (fall back to live matching), null = decided there is no poster

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import archiveService, { runtimeFilter, betterCopy } from '../services/archive';
 import tmdbService from '../services/tmdb';
-import { postersFirst, oneCopyPerFilm, loadPosterIndex } from '../services/posterIndex';
+import { postersFirst, oneCopyPerFilm, loadPosterIndex, withIndexedLength } from '../services/posterIndex';
 import { apiSort, orderBatch } from '../services/sorting';
 import { browsesIndex, indexFilms, pageOf } from '../services/indexBrowse';
 
@@ -54,6 +54,9 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
         from = 'archive'; startPage = 1;
       }
 
+      await loadPosterIndex(); // its measured lengths stand in where Archive.org's search has none
+      if (requestId !== latestRequest.current) return;
+      const runtime = runtimeFilter({ shorts: contentType === 'trailers', minRuntime });
       // Filters run inside the service so every batch comes back full
       const result = await archiveService.fetchFiltered({
         searchQuery: search,
@@ -64,7 +67,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
         decade,
         seenTitles: seenTitles.current,
         // The server query already applied the genre, so only runtime is checked here
-        filter: runtimeFilter({ shorts: contentType === 'trailers', minRuntime }),
+        filter: movie => runtime(withIndexedLength(movie)),
       });
       if (requestId !== latestRequest.current) return;
 

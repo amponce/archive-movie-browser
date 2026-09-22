@@ -1,15 +1,18 @@
 // The landing page as a programme: what to feature and which films fill each row, decided
 // from the poster index alone so the page needs no request before someone opens a film.
-// Takes the index's `films` map: identifier -> { i, t, y, p, v, k, c } or { n: 1, c }.
+// Takes the index's `films` map: identifier -> { i, t, y, p, v, k, c, d } or { n: 1, c }.
 
-const usable = ([, entry]) => entry.i && entry.p && entry.c >= 0.8;
+// Identified, with a poster, and not a known trailer or clip (d is the upload's length in minutes)
+import { betterUpload } from './indexBrowse.js';
+
+const usable = ([, entry]) => entry.i && entry.p && entry.c >= 0.8 && !(entry.d > 0 && entry.d < 40);
 // The index is keyed by upload and Archive.org often has several of one film. One per film
-// for the rows, keeping the upload Jev was surest about.
+// for the rows, keeping the full-length upload Jev was surest about.
 function oneCopyPerFilm(index) {
   const best = new Map();
   for (const pair of Object.entries(index).filter(usable)) {
     const kept = best.get(pair[1].i);
-    if (!kept || pair[1].c > kept[1].c) best.set(pair[1].i, pair);
+    if (!kept || betterUpload(pair, kept) < 0) best.set(pair[1].i, pair);
   }
   return [...best.values()];
 }

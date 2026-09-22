@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Changed
 
+- The index records how long each upload actually runs (`d`), measured from its Archive.org file list, alongside the film's length from TMDB. Browse, the length filter and the front page use it, so a one-minute upload of The Shining no longer shows as a 144-minute feature, and of two uploads of a film the full-length one is shown. Uploads not yet measured are taken at their name (trailer, teaser, turner_video, tv spot).
 - The player moves to the next file when the first one plays sound over a black picture. Archive.org labels every uploaded mp4 "MPEG4" whatever its codec, and some originals are DivX-era video browsers cannot decode; the 512kb derivative always plays.
 - Reuse successful Archive.org search responses for five minutes, keeping at most 100 in memory, so returning to a filter avoids another network request ([#217](https://github.com/amponce/archive-movie-browser/pull/217)).
 - The front page's shelf, Under 90 minutes row and hero fallback now need a film's TMDB rating to come from at least 50 people. The index stores the vote count as `k`.
