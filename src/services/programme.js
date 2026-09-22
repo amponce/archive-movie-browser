@@ -64,6 +64,11 @@ export function shelfFor(index, now = new Date(), limit = 6, lastDecade = 1970) 
   return { decade, films: seededShuffle(byDecade.get(decade), dayOf(now) + decade).slice(0, limit) };
 }
 
+// Posters to tile faintly behind the hero: a different set each day, all real
+export function wallFor(index, limit = 40, now = new Date()) {
+  return seededShuffle(Object.entries(index).filter(usable).map(film), dayOf(now) + 3).slice(0, limit);
+}
+
 // Films the index decided have no poster anywhere: a different handful each day
 export function wantedFrom(index, limit = 5, now = new Date()) {
   const none = Object.keys(index).filter(id => index[id].n);

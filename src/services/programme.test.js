@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { featuredFor, rowFor, wantedFrom, countsOf, changesIn, shelfFor } from './programme.js';
+import { featuredFor, rowFor, wantedFrom, countsOf, changesIn, shelfFor, wallFor } from './programme.js';
 
 const index = {
   loved_unseen: { i: 1, t: 'Messiah of Evil', y: 1975, p: '/a.jpg', v: 7.9, c: 0.95 },
@@ -68,4 +68,10 @@ test('shelfFor picks a decade with enough films and rotates it by day', () => {
   const b = shelfFor(big, new Date('2026-09-23T12:00:00Z'));
   assert.notEqual(a.decade, b.decade);
   assert.equal(shelfFor(index), null, 'no decade in the small index has six films');
+});
+
+test('wallFor tiles only films with a poster, a stable set per day', () => {
+  const wall = wallFor(index, 10, new Date('2026-09-22T12:00:00Z'));
+  assert.ok(wall.length > 0 && wall.every(f => f.entry.p && f.entry.c >= 0.8));
+  assert.deepEqual(wall.map(f => f.id), wallFor(index, 10, new Date('2026-09-22T23:00:00Z')).map(f => f.id));
 });

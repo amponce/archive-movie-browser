@@ -20,6 +20,10 @@ export function setPosterIndex(entries) {
   films = entries || {};
 }
 
+// The whole index, loaded once per page. Pages that read it directly (the front page, the reel)
+// share this so it is fetched once.
+export function loadPosterIndex() { return load(); }
+
 function load() {
   if (films) return Promise.resolve(films);
   loading = loading || fetch(`${import.meta.env?.BASE_URL || '/'}poster-index.json`)
