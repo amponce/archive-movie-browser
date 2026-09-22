@@ -14,6 +14,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- `/mcp/`, `/stats/`, `/tv/`, `/browse/` and `/lists/` with a trailing slash reach the app instead of a hosting 404 ([#215](https://github.com/amponce/archive-movie-browser/pull/215), closes #166).
 - Show a recovery message after a render error instead of a blank page; a broken film page closes without taking down the catalogue ([#219](https://github.com/amponce/archive-movie-browser/pull/219), closes #32).
 - Search text is capped at 200 characters and twelve words, so a pasted paragraph no longer breaks the Archive.org query ([#216](https://github.com/amponce/archive-movie-browser/pull/216), closes #165).
 
