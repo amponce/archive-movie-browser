@@ -24,8 +24,8 @@ export function Logo() {
 }
 
 // The same header on every page: name, nav, search, spin.
-// ponytail: under md the nav is simply hidden (phones get search and spin only); a menu is
-// needed once there are more than five destinations or anyone asks. `search` replaces the plain search
+// On phones the same links sit in a scrollable row under the search box: no drawer to open,
+// nothing to get stuck. It stops scaling past eight or so destinations. `search` replaces the plain search
 // box when a page has a richer one (the browser passes its type-ahead). `current` is the nav
 // path to mark.
 export default function SiteHeader({ current = '/', search, children }) {
@@ -46,6 +46,11 @@ export default function SiteHeader({ current = '/', search, children }) {
           </Button>
         </div>
       </div>
+      <nav className="md:hidden gutter flex gap-5 overflow-x-auto pb-3 -mt-1" aria-label="Site">
+        {NAV.map(([href, name]) => (
+          <a key={href} href={href} className={`nav-link shrink-0 ${href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{name}</a>
+        ))}
+      </nav>
       {children}
     </header>
   );

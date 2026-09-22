@@ -19,11 +19,11 @@ const TOOLS = [
 ];
 
 const Code = ({ children }) => (
-  <pre className="bg-gray-950 border border-gray-700 rounded-lg p-4 overflow-x-auto my-3 text-sm"><code>{children}</code></pre>
+  <pre tabIndex={0} className="bg-black border border-line rounded-lg p-4 overflow-x-auto my-3 text-sm"><code>{children}</code></pre>
 );
-const Heading = ({ children }) => <h2 className="display-type text-3xl tracking-wide mt-14 mb-4">{children}</h2>;
-const Aside = ({ children }) => <p className="text-gray-400 text-[0.95rem] max-w-2xl">{children}</p>;
-const link = 'text-yellow-400 underline underline-offset-4 hover:no-underline';
+const Heading = ({ children }) => <h2 className="display text-3xl tracking-wide mt-14 mb-4">{children}</h2>;
+const Aside = ({ children }) => <p className="text-muted text-[0.95rem] max-w-2xl">{children}</p>;
+const link = 'text-signal underline underline-offset-4 hover:no-underline';
 
 export default function McpPage() {
   useEffect(() => { document.title = 'MCP server: ask your assistant what to watch | Archive Movie Browser'; }, []);
@@ -33,10 +33,10 @@ export default function McpPage() {
       <SiteHeader current="/mcp" />
       <div className="max-w-5xl mx-auto px-5">
         <main>
-          <h1 className="display-type text-[clamp(2.75rem,9vw,5.5rem)] leading-[0.95] mt-10 mb-5 max-w-[12ch] text-gray-100">
+          <h1 className="display text-[clamp(2.75rem,9vw,5.5rem)] leading-[0.95] mt-10 mb-5 max-w-[12ch] text-bone">
             Ask your assistant what to watch.
           </h1>
-          <p className="text-xl text-gray-300 max-w-2xl mb-10">
+          <p className="text-xl text-muted max-w-2xl mb-10">
             The film catalogue behind this site now speaks <a className={link} href="https://modelcontextprotocol.io">MCP</a>. Connect it to Claude,
             Cursor or any MCP client, and it can search tens of thousands of public-domain films on the Internet Archive and hand back links that play.
           </p>
@@ -61,12 +61,12 @@ export default function McpPage() {
           <Heading>What it can do</Heading>
           <table className="w-full border-collapse">
             <thead>
-              <tr className="text-left text-sm text-gray-400"><th scope="col" className="py-2 pr-3 font-semibold">Tool</th><th scope="col" className="py-2 font-semibold">What it does</th></tr>
+              <tr className="text-left text-sm text-muted"><th scope="col" className="py-2 pr-3 font-semibold">Tool</th><th scope="col" className="py-2 font-semibold">What it does</th></tr>
             </thead>
             <tbody>
               {TOOLS.map(([name, what]) => (
-                <tr key={name} className="border-t border-gray-700 align-top">
-                  <td className="py-3 pr-3 md:whitespace-nowrap"><code className="bg-gray-800 px-1.5 py-0.5 rounded text-sm">{name}</code></td>
+                <tr key={name} className="border-t border-line align-top">
+                  <td className="py-3 pr-3 md:whitespace-nowrap"><code className="bg-panel px-1.5 py-0.5 rounded text-sm">{name}</code></td>
                   <td className="py-3">{what}</td>
                 </tr>
               ))}
@@ -100,7 +100,7 @@ export default function McpPage() {
 
           <Heading>Help build it</Heading>
           <p className="max-w-2xl">
-            The server is new and small on purpose. A one-line <code className="bg-gray-800 px-1.5 py-0.5 rounded text-sm">npx</code> install, a recommendation
+            The server is new and small on purpose. A one-line <code className="bg-panel px-1.5 py-0.5 rounded text-sm">npx</code> install, a recommendation
             tool and a “movie night” prompt are all <a className={link} href={`${REPO}/issues?q=is%3Aissue+is%3Aopen+label%3Amcp`}>open issues</a>,
             written up and ready for someone to take. It is MIT licensed, like the rest of the project.
           </p>

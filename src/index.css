@@ -125,12 +125,6 @@ select {
 }
 
 /* Generated poster titles: heavy condensed display type, tightly leaded like a lobby card */
-/* The poster typeface, for page headings (no clamping, unlike .cover-title) */
-.display-type {
-  font-family: 'Big Shoulders Display', 'Avenir Next Condensed', 'HelveticaNeue-CondensedBlack', Impact, 'Arial Narrow', sans-serif;
-  font-weight: 800;
-}
-
 .cover-title {
   font-family: 'Big Shoulders Display', 'Avenir Next Condensed', 'HelveticaNeue-CondensedBlack', Impact, 'Arial Narrow', sans-serif;
   font-weight: 800;
