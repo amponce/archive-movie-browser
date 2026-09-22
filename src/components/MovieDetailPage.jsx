@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
-import { Sprockets, TitleArt, fieldFor } from '../ui/FilmCard';
+import { Sprockets, fieldFor } from '../ui/FilmCard';
+import TitleCover from './TitleCover';
 import Button from '../ui/Button';
 import useRelated from '../hooks/useRelated';
 import FilmPlayer from './FilmPlayer';
@@ -70,7 +71,7 @@ function RelatedMovieCard({ movie, onClick }) {
             onError={() => setPosterFailed(true)}
           />
         ) : tmdbChecked ? (
-          <TitleArt title={movie.title} year={movie.year} genre={movie.genres?.[0] !== 'Uncategorized' ? movie.genres?.[0] : null} />
+          <TitleCover movie={movie} size="small" />
         ) : null}
         <div className="absolute inset-0 bg-ink/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
           <span className="w-12 h-12 rounded-full bg-signal flex items-center justify-center"><Play className="w-5 h-5 text-ink fill-ink ml-0.5" /></span>
@@ -339,7 +340,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : !loading ? (
-                <TitleArt title={movie.title} year={movie.year} genre={movie.genres?.[0] !== 'Uncategorized' ? movie.genres?.[0] : null} />
+                <TitleCover movie={movie} />
               ) : null}
               <Sprockets />
 

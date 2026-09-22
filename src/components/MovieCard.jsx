@@ -2,7 +2,8 @@ import React, { useState, useEffect, memo } from 'react';
 import { Clock, Download, Star, ExternalLink, Play } from 'lucide-react';
 import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
-import { Sprockets, TitleArt, fieldFor } from '../ui/FilmCard';
+import { Sprockets, fieldFor } from '../ui/FilmCard';
+import TitleCover from './TitleCover';
 
 const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) {
   const [tmdbData, setTmdbData] = useState(null);
@@ -79,7 +80,7 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
             />
           ) : tmdbChecked ? (
             // No poster anywhere: the card is the poster
-            <TitleArt title={movie.title} year={movie.year} genre={genre} />
+            <TitleCover movie={movie} />
           ) : null}
 
           {/* Hover: one play mark */}

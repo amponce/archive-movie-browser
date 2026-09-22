@@ -1,7 +1,8 @@
 import React from 'react';
+import TitleCover from '../components/TitleCover';
 
 // A film in the file: a portrait card with sprocket edges. With a poster the poster fills the
-// frame; without one the card is the poster, the title set large in the genre's colour.
+// frame; without one the generated cover (TitleCover, by the community) is the poster.
 // Same frame either way, so a row of mixed films reads as one row.
 
 const FIELDS = {
@@ -32,19 +33,6 @@ export function Sprockets() {
   );
 }
 
-// The card as the poster: meta line and the title set large. Used when there is no poster.
-export function TitleArt({ title, year, genre }) {
-  const meta = [year, genre].filter(Boolean).join(' · ');
-  return (
-    <span className="absolute inset-x-6 bottom-5 top-5 flex flex-col justify-end gap-2">
-      {meta && <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted">{meta}</span>}
-      <span className="font-display font-black uppercase text-bone leading-[0.86] line-clamp-6" lang="en" style={{ hyphens: 'auto', fontSize: String(title).length > 40 ? 'clamp(16px, 10cqw, 30px)' : 'clamp(20px, 13cqw, 40px)' }}>
-        {title}
-      </span>
-    </span>
-  );
-}
-
 export { fieldFor };
 
 // film: { id, title, year, genre, poster }   poster is a full image URL or null
@@ -61,7 +49,7 @@ export default function FilmCard({ film, href, label, children }) {
         {film.poster ? (
           <img src={film.poster} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
-          <TitleArt title={film.title} year={film.year} genre={genre} />
+          <TitleCover movie={{ title: film.title, year: film.year, identifier: film.id, genres: genre ? [genre] : [] }} size="small" />
         )}
         {label && (
           <span className="absolute top-3 left-4 font-mono text-[10px] tracking-[0.12em] uppercase bg-signal text-ink px-2 py-1 rounded-sm">
