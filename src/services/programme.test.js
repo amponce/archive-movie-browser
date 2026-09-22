@@ -57,10 +57,10 @@ test('changesIn counts down to UTC midnight', () => {
 
 test('shelfFor picks a decade with enough films and rotates it by day', () => {
   const big = {};
-  for (let i = 0; i < 8; i++) big[`t${i}`] = { i, t: `Twenties ${i}`, y: 1920 + i, p: '/p.jpg', v: 7, k: 200, c: 1 };
-  for (let i = 0; i < 8; i++) big[`f${i}`] = { i, t: `Forties ${i}`, y: 1940 + i, p: '/p.jpg', v: 7, k: 200, c: 1 };
+  for (let i = 0; i < 8; i++) big[`t${i}`] = { i: 100 + i, t: `Twenties ${i}`, y: 1920 + i, p: '/p.jpg', v: 7, k: 200, c: 1 };
+  for (let i = 0; i < 8; i++) big[`f${i}`] = { i: 200 + i, t: `Forties ${i}`, y: 1940 + i, p: '/p.jpg', v: 7, k: 200, c: 1 };
   big.lone = { i: 99, t: 'Only Sixties film', y: 1965, p: '/p.jpg', v: 9, k: 200, c: 1 };
-  for (let i = 0; i < 8; i++) big[`n${i}`] = { i, t: `Nineties ${i}`, y: 1990 + i, p: '/p.jpg', v: 9, k: 200, c: 1 };
+  for (let i = 0; i < 8; i++) big[`n${i}`] = { i: 300 + i, t: `Nineties ${i}`, y: 1990 + i, p: '/p.jpg', v: 9, k: 200, c: 1 };
   const a = shelfFor(big, new Date('2026-09-22T12:00:00Z'));
   assert.equal(a.films.length, 6);
   assert.ok([1920, 1940].includes(a.decade), 'the lone 1960s film cannot fill a shelf, and the 1990s are too recent');
@@ -88,6 +88,17 @@ test('shortRow offers well-regarded films you can finish in an evening', () => {
     three_votes: { i: 6, t: 'Rated 9 by three people', y: 1960, p: '/f.jpg', v: 9, k: 3, c: 1, l: 70 },
   };
   assert.deepEqual(shortRow(idx).map(f => f.id), ['short']);
+});
+
+test('rows show one card per film when Archive.org has several uploads of it, the surest one', () => {
+  const idx = {
+    carnival_dvd: { i: 7, t: 'Carnival of Souls', y: 1962, p: '/a.jpg', v: 6.9, k: 550, c: 0.9, l: 78 },
+    carnival_rip: { i: 7, t: 'Carnival of Souls', y: 1962, p: '/a.jpg', v: 6.9, k: 550, c: 0.97, l: 78 },
+    detour: { i: 8, t: 'Detour', y: 1945, p: '/b.jpg', v: 7.2, k: 426, c: 1, l: 68 },
+  };
+  assert.deepEqual(shortRow(idx).map(f => f.id).sort(), ['carnival_rip', 'detour']);
+  assert.equal(wallFor(idx).length, 2);
+  assert.equal(rowFor(idx).length, 2);
 });
 
 test('sameShelf finds films that share a genre, same decade first, one card per film', () => {
