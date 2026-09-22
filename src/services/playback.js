@@ -21,6 +21,23 @@ export function videoUrl(identifier, fileName) {
   return `https://archive.org/download/${encodeURIComponent(identifier)}/${fileName.split('/').map(encodeURIComponent).join('/')}`;
 }
 
+// Archive.org keeps a frame every minute or so for most items, named <base>_000060.jpg where
+// the number is the second. As a sorted list they make a scrub preview with no work of ours.
+export function previewFrames(identifier, files) {
+  return (files || [])
+    .map(file => ({ file, match: /\.thumbs\/.*_(\d{6})\.jpg$/i.exec(file.name || '') }))
+    .filter(({ match }) => match)
+    .map(({ file, match }) => ({ seconds: Number(match[1]), url: videoUrl(identifier, file.name) }))
+    .sort((a, b) => a.seconds - b.seconds);
+}
+
+// The frame to show for a moment in the film: the last one at or before it
+export function frameAt(frames, seconds) {
+  let best = null;
+  for (const frame of frames) { if (frame.seconds <= seconds) best = frame; else break; }
+  return best || frames[0] || null;
+}
+
 // Keyboard shortcuts while a film plays. Null means "not ours": typing, buttons, browser shortcuts.
 export function shortcutFor(event) {
   if (event.metaKey || event.ctrlKey || event.altKey) return null;

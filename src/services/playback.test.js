@@ -77,3 +77,18 @@ test('forgetPosition drops one film and leaves the rest', async () => {
   const { forgetPosition } = await import('./playback.js');
   assert.deepEqual(forgetPosition({ a: { time: 1 }, b: { time: 2 } }, 'a'), { b: { time: 2 } });
 });
+
+test('previewFrames finds the per-minute frames Archive.org keeps and frameAt picks the right one', async () => {
+  const { previewFrames, frameAt } = await import('./playback.js');
+  const files = [
+    { name: 'Detour.mp4' }, { name: '__ia_thumb.jpg' },
+    { name: 'Detour.thumbs/Detour_000120.jpg' }, { name: 'Detour.thumbs/Detour_000001.jpg' }, { name: 'Detour.thumbs/Detour_000060.jpg' },
+  ];
+  const frames = previewFrames('Detour', files);
+  assert.deepEqual(frames.map(f => f.seconds), [1, 60, 120]);
+  assert.equal(frames[1].url, 'https://archive.org/download/Detour/Detour.thumbs/Detour_000060.jpg');
+  assert.equal(frameAt(frames, 90).seconds, 60);
+  assert.equal(frameAt(frames, 0).seconds, 1, 'before the first frame, the first frame');
+  assert.equal(frameAt(frames, 999).seconds, 120);
+  assert.equal(frameAt([], 10), null);
+});
