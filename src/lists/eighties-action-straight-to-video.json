@@ -1,18 +1,48 @@
 {
   "slug": "eighties-action-straight-to-video",
   "title": "80s action, straight to video",
-  "blurb": "Ninjas, a Turkish Star Wars, and Cannon Films at full tilt. Nobody involved was trying to make art, which is why every one of them is a good time.",
+  "blurb": "Ninjas, Cannon Films at full tilt, and a trucker with a monster truck. Nobody involved was trying to make art, which is why every one of them is a good time.",
   "curator": "amponce",
   "films": [
-    { "id": "revenge.of.the.-ninja.-1983.1080p.-blu-ray.-h-264.-aac-rarbg", "note": "Sho Kosugi, Salt Lake City, and a rooftop fight that the whole decade of ninja films was chasing." },
-    { "id": "ninja.-iii.-the.-domination.-1984.1080p.-blu-ray.-h-264.-aac-rarbg", "note": "A ninja's ghost possesses an aerobics instructor. Cannon Films, 1984. That sentence is the whole review." },
-    { "id": "enter.-the.-ninja.-1981.1080p.-blu-ray.-h-264.-aac-rarbg", "note": "Franco Nero in a white ninja suit. The one that started the craze." },
-    { "id": "TheManWhoSavedTheWorldturkishStarWars1982", "note": "The Turkish Star Wars. Footage lifted straight from the real one, projected behind men in cardboard armour." },
-    { "id": "BlackCobra_133", "note": "Fred Williamson does Cobra, in Italy, for less. Better sunglasses." },
-    { "id": "HighRisk", "note": "James Brolin, Anthony Quinn and James Coburn rob a Colombian drug lord. Cheap, fast and not stupid." },
-    { "id": "rolling.-vengeance.-1987.1080p.-blu-ray.-h-264.-aac-rarbg", "note": "A trucker builds a monster truck to avenge his family. Ned Beatty as the villain. It delivers exactly what the poster says." },
-    { "id": "hellhole.-1985.1080p.-blu-ray.-h-264.-aac-rarbg", "note": "Women-in-prison meets mad science. Ray Sharkey and Marjoe Gortner, both unhinged." },
-    { "id": "final.-justice.-1984.1080p.-blu-ray.x-265-rarbg_202206", "note": "Joe Don Baker as a Texas sheriff loose in Malta. Beloved by Mystery Science Theater for good reason." },
-    { "id": "narco-terror-1985-hd-1080p", "note": "Mexican action cinema at its most direct. Cartels, helicopters, no subtext." }
+    {
+      "id": "revenge.of.the.-ninja.-1983.1080p.-blu-ray.-h-264.-aac-rarbg",
+      "note": "Sho Kosugi, Salt Lake City, and a rooftop fight that the whole decade of ninja films was chasing."
+    },
+    {
+      "id": "ninja.-iii.-the.-domination.-1984.1080p.-blu-ray.-h-264.-aac-rarbg",
+      "note": "A ninja's ghost possesses an aerobics instructor. Cannon Films, 1984. That sentence is the whole review."
+    },
+    {
+      "id": "enter.-the.-ninja.-1981.1080p.-blu-ray.-h-264.-aac-rarbg",
+      "note": "Franco Nero in a white ninja suit. The one that started the craze."
+    },
+    {
+      "id": "BlackCobra_133",
+      "note": "Fred Williamson does Cobra, in Italy, for less. Better sunglasses."
+    },
+    {
+      "id": "HighRisk",
+      "note": "James Brolin, Anthony Quinn and James Coburn rob a Colombian drug lord. Cheap, fast and not stupid."
+    },
+    {
+      "id": "rolling.-vengeance.-1987.1080p.-blu-ray.-h-264.-aac-rarbg",
+      "note": "A trucker builds a monster truck to avenge his family. Ned Beatty as the villain. It delivers exactly what the poster says."
+    },
+    {
+      "id": "hellhole.-1985.1080p.-blu-ray.-h-264.-aac-rarbg",
+      "note": "Women-in-prison meets mad science. Ray Sharkey and Marjoe Gortner, both unhinged."
+    },
+    {
+      "id": "final.-justice.-1984.1080p.-blu-ray.x-265-rarbg_202206",
+      "note": "Joe Don Baker as a Texas sheriff loose in Malta. Beloved by Mystery Science Theater for good reason."
+    },
+    {
+      "id": "manhunter.-1986-255910939230",
+      "note": "Michael Mann's first Hannibal Lecter film, three years before Silence of the Lambs. William Petersen as the profiler who thinks like the killer."
+    },
+    {
+      "id": "new-years-evil-1980_202408",
+      "note": "A punk-rock New Year's countdown show, with a killer phoning in a murder every hour. Cannon Films, of course."
+    }
   ]
 }
