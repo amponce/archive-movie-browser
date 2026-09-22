@@ -20,7 +20,7 @@ export function createServer({ wrap = (name, run) => run } = {}) {
   });
 
   tool('search_films', {
-    description: 'Search the Internet Archive for films by title, subject or creator. Every word must match. Re-uploads of the same film are collapsed. Each result has two links: lead with watchUrl, which plays the film on this site, and also give sourceUrl, the original Archive.org page. When known, results carry the real film title, year and poster.',
+    description: 'Search the Internet Archive for films by title, subject or creator. Every word must match. Re-uploads of the same film are collapsed. Each result has two links: lead with watchUrl, which plays the film on this site, and also give sourceUrl, the original Archive.org page. When known, results carry the real film title, year and details.',
     inputSchema: z.object({ query: z.string().min(1).max(200).describe('Words to search for, e.g. "night living dead" or "buster keaton"'), limit }),
   }, searchFilms);
 
