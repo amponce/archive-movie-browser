@@ -22,10 +22,20 @@ const BY = {
   'title asc': (a, b) => a.t.localeCompare(b.t),
 };
 
-const toMovie = ([identifier, e]) => ({ identifier, title: e.t, year: e.y, runtimeMinutes: e.l || 0, genres: e.g || [], fromIndex: true });
+// `d` is how long the upload runs; `l` is how long the film runs. A trailer of The Shining has
+// d = 1 and l = 144, so the card and the length filter use d, and 0 (unmeasured) passes as an
+// unknown length does on Archive.org.
+const toMovie = ([identifier, e]) => ({ identifier, title: e.t, year: e.y, runtimeMinutes: e.d || 0, genres: e.g || [], fromIndex: true });
 
-// Every film of a genre the index knows, one upload per film (the one Jev was surest about),
-// filtered like the Archive.org list is and sorted the way the menu says.
+// Uploads that say what they are in their name, for the ones not measured yet
+const CLIP = /trailer|teaser|turner_video|tv[-_]?spot/i;
+// A feature-length upload: measured at 40 minutes or more, or unmeasured and not named as a clip
+export const isFeature = ([id, e]) => (e.d > 0 ? e.d >= 40 : !CLIP.test(id));
+// Of two uploads of one film, the full-length one, then the one Jev was surest about
+export const betterUpload = (a, b) => (isFeature(b) - isFeature(a)) || (b[1].c - a[1].c);
+
+// Every film of a genre the index knows, one upload per film, filtered like the Archive.org
+// list is and sorted the way the menu says.
 // ponytail: filters and sorts the whole index on every page; a few ms for 11k entries. Cache
 // per filter set if the index grows past ~50k.
 export function indexFilms(index, { genre, decade, shorts = false, minRuntime = 0, sort = 'downloads' }) {
@@ -34,9 +44,9 @@ export function indexFilms(index, { genre, decade, shorts = false, minRuntime = 
     const e = pair[1];
     if (!e.i || !e.g?.includes(genre)) continue;
     if (decade && !(e.y >= Number(decade) && e.y < Number(decade) + 10)) continue;
-    if (shorts ? !(e.l > 0 && e.l <= 30) : e.l > 0 && e.l < minRuntime) continue; // unknown length passes, as on Archive.org
+    if (shorts ? isFeature(pair) || e.d > 30 : (e.d > 0 ? e.d < minRuntime : !isFeature(pair))) continue;
     const kept = best.get(e.i);
-    if (!kept || e.c > kept[1].c) best.set(e.i, pair);
+    if (!kept || betterUpload(pair, kept) < 0) best.set(e.i, pair);
   }
   return [...best.values()].sort((a, b) => (BY[sort] || BY.downloads)(a[1], b[1])).map(toMovie);
 }

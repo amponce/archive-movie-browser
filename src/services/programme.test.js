@@ -10,6 +10,7 @@ const index = {
   no_poster_2: { n: 1, c: 0.4 },
   western: { i: 4, t: 'The Bat', y: 1926, p: '/d.jpg', v: 6.1, k: 200, c: 0.9 },
   renamed: { i: 5, t: 'Sherlock Jr.', y: 1924, p: '/e.jpg', v: 8.0, k: 200, c: 1 },
+  trailer: { i: 6, t: 'The Shining', y: 1980, p: '/f.jpg', v: 8.2, k: 17000, c: 1, d: 1 },
 };
 
 test('featuredFor picks a confident, well-rated film with a poster, and changes with the day', () => {
@@ -47,7 +48,7 @@ test('wantedFrom lists only films decided to have no poster, a stable pick per d
 });
 
 test('countsOf gives the real numbers', () => {
-  assert.deepEqual(countsOf(index), { identified: 5, posters: 5, wanted: 2 });
+  assert.deepEqual(countsOf(index), { identified: 6, posters: 6, wanted: 2 });
 });
 
 test('changesIn counts down to UTC midnight', () => {
@@ -90,15 +91,21 @@ test('shortRow offers well-regarded films you can finish in an evening', () => {
   assert.deepEqual(shortRow(idx).map(f => f.id), ['short']);
 });
 
-test('rows show one card per film when Archive.org has several uploads of it, the surest one', () => {
+test('rows show one card per film when Archive.org has several uploads of it: full length first, then the surest', () => {
   const idx = {
-    carnival_dvd: { i: 7, t: 'Carnival of Souls', y: 1962, p: '/a.jpg', v: 6.9, k: 550, c: 0.9, l: 78 },
-    carnival_rip: { i: 7, t: 'Carnival of Souls', y: 1962, p: '/a.jpg', v: 6.9, k: 550, c: 0.97, l: 78 },
-    detour: { i: 8, t: 'Detour', y: 1945, p: '/b.jpg', v: 7.2, k: 426, c: 1, l: 68 },
+    carnival_dvd: { i: 7, t: 'Carnival of Souls', y: 1962, p: '/a.jpg', v: 6.9, k: 550, c: 0.9, l: 78, d: 78 },
+    carnival_rip: { i: 7, t: 'Carnival of Souls', y: 1962, p: '/a.jpg', v: 6.9, k: 550, c: 0.97, l: 78, d: 78 },
+    detour: { i: 8, t: 'Detour', y: 1945, p: '/b.jpg', v: 7.2, k: 426, c: 1, l: 68, d: 68 },
+    detour_trailer: { i: 8, t: 'Detour', y: 1945, p: '/b.jpg', v: 7.2, k: 426, c: 1, l: 68, d: 2 },
   };
   assert.deepEqual(shortRow(idx).map(f => f.id).sort(), ['carnival_rip', 'detour']);
   assert.equal(wallFor(idx).length, 2);
   assert.equal(rowFor(idx).length, 2);
+});
+
+test('a trailer or clip never reaches the front page, however famous the film', () => {
+  assert.ok(!wallFor(index, 50).some(f => f.id === 'trailer'));
+  assert.notEqual(featuredFor(index).id, 'trailer');
 });
 
 test('sameShelf finds films that share a genre, same decade first, one card per film', () => {
