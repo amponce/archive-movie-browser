@@ -66,6 +66,35 @@ export function shelfFor(index, now = new Date(), limit = 6, lastDecade = 1970) 
   return { decade, films: seededShuffle(byDecade.get(decade), dayOf(now) + decade).slice(0, limit) };
 }
 
+// The tonight question: feature films you can finish in an evening, 40 to 90 minutes, well
+// regarded, a different dozen each day. Needs `l` (length) from the backfill.
+export function shortRow(index, now = new Date(), limit = 12) {
+  const fits = Object.entries(index).filter(usable).filter(([, e]) => e.l >= 40 && e.l <= 90 && (e.v || 0) >= 6.5).map(film);
+  return seededShuffle(fits, dayOf(now) + 11).slice(0, limit);
+}
+
+// Films on the same shelf as one film, from the index alone: share a genre, prefer the same
+// decade, then the nearest ones, well regarded first. Null when the film is not in the index
+// or has no genre there, so the caller can ask Archive.org instead.
+export function sameShelf(index, identifier, limit = 12) {
+  const me = index[identifier];
+  if (!me?.g?.length) return null;
+  const decade = Math.floor((me.y || 0) / 10) * 10;
+  const score = e => {
+    const shared = e.g.filter(g => me.g.includes(g)).length;
+    const gap = Math.abs(Math.floor((e.y || 0) / 10) * 10 - decade) / 10;
+    return shared * 10 - gap * 2 + Math.min(e.v || 0, 8);
+  };
+  const seen = new Set([me.i]);
+  return Object.entries(index)
+    .filter(usable)
+    .filter(([id, e]) => id !== identifier && e.g?.some(g => me.g.includes(g)) && (e.v || 0) >= 5.5)
+    .filter(([, e]) => !seen.has(e.i) && seen.add(e.i)) // one card per film
+    .sort((a, b) => score(b[1]) - score(a[1]))
+    .slice(0, limit)
+    .map(film);
+}
+
 // Posters to tile faintly behind the hero: a different set each day, all real
 export function wallFor(index, limit = 40, now = new Date()) {
   return seededShuffle(Object.entries(index).filter(usable).map(film), dayOf(now) + 3).slice(0, limit);

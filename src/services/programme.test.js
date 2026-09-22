@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { featuredFor, rowFor, wantedFrom, countsOf, changesIn, shelfFor, wallFor } from './programme.js';
+import { featuredFor, rowFor, wantedFrom, countsOf, changesIn, shelfFor, wallFor, shortRow, sameShelf } from './programme.js';
 
 const index = {
   loved_unseen: { i: 1, t: 'Messiah of Evil', y: 1975, p: '/a.jpg', v: 7.9, c: 0.95 },
@@ -74,4 +74,30 @@ test('wallFor tiles only films with a poster, a stable set per day', () => {
   const wall = wallFor(index, 10, new Date('2026-09-22T12:00:00Z'));
   assert.ok(wall.length > 0 && wall.every(f => f.entry.p && f.entry.c >= 0.8));
   assert.deepEqual(wall.map(f => f.id), wallFor(index, 10, new Date('2026-09-22T23:00:00Z')).map(f => f.id));
+});
+
+test('shortRow offers well-regarded films you can finish in an evening', () => {
+  const idx = {
+    short: { i: 1, t: 'Detour', y: 1945, p: '/a.jpg', v: 7.2, c: 1, l: 68 },
+    long: { i: 2, t: 'Epic', y: 1959, p: '/b.jpg', v: 8, c: 1, l: 212 },
+    clip: { i: 3, t: 'Clip', y: 1960, p: '/c.jpg', v: 9, c: 1, l: 12 },
+    meh: { i: 4, t: 'Meh', y: 1960, p: '/d.jpg', v: 5, c: 1, l: 80 },
+    unknown: { i: 5, t: 'No length', y: 1960, p: '/e.jpg', v: 8, c: 1 },
+  };
+  assert.deepEqual(shortRow(idx).map(f => f.id), ['short']);
+});
+
+test('sameShelf finds films that share a genre, same decade first, one card per film', () => {
+  const idx = {
+    me: { i: 1, t: 'House on Haunted Hill', y: 1959, p: '/a.jpg', v: 6.7, c: 1, g: ['Horror', 'Thriller'] },
+    same: { i: 2, t: 'The Bat', y: 1959, p: '/b.jpg', v: 6.1, c: 1, g: ['Horror', 'Mystery'] },
+    same_dupe: { i: 2, t: 'The Bat', y: 1959, p: '/b.jpg', v: 6.1, c: 1, g: ['Horror', 'Mystery'] },
+    later: { i: 3, t: 'Scanners', y: 1981, p: '/c.jpg', v: 6.7, c: 1, g: ['Horror', 'Sci-Fi'] },
+    other: { i: 4, t: 'His Girl Friday', y: 1940, p: '/d.jpg', v: 7.8, c: 1, g: ['Comedy'] },
+    weak: { i: 5, t: 'Weak', y: 1959, p: '/e.jpg', v: 3, c: 1, g: ['Horror'] },
+    nogenre: { i: 6, t: 'Untagged', y: 1959, p: '/f.jpg', v: 7, c: 1 },
+  };
+  assert.deepEqual(sameShelf(idx, 'me').map(f => f.id), ['same', 'later']);
+  assert.equal(sameShelf(idx, 'nogenre'), null, 'no genre in the index means ask Archive.org');
+  assert.equal(sameShelf(idx, 'missing'), null);
 });
