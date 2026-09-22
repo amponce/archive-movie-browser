@@ -14,6 +14,7 @@ import SiteFooter from '../layout/SiteFooter';
 import FilterBar from './browse/FilterBar';
 import GenrePills from './browse/GenrePills';
 import FilmGrid from './browse/FilmGrid';
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
 
 // The browse page. The filters live in useBrowseFilters (and the URL), the films in useFilms,
 // the pieces of the page in components/browse. What is left here is opening and closing a
@@ -33,8 +34,14 @@ export default function ArchiveMovieBrowser() {
       .then(setSelectedMovie)
       .catch(() => setLinkError(`Couldn't open that Archive.org link. Check the address: nothing was found at "${identifier}".`));
   };
+
   // A pick from the type-ahead can be a full film or just an identifier from the index
   const openPick = (film) => (film.fromIndex ? openFilmLink(film.identifier) : setSelectedMovie(film));
+
+  // TMDB API key from localStorage or environment variable
+  const [tmdbApiKey, setTmdbApiKey] = useState(
+    () => localStorage.getItem('tmdb-api-key') || TMDB_API_KEY
+  );
 
   const browse = useBrowseFilters({
     onOpenFilmLink: openFilmLink,
@@ -46,21 +53,25 @@ export default function ArchiveMovieBrowser() {
   // A #identifier in the URL opens that film: on load (a shared link), and whenever the hash
   // changes while the page is open (Spin the reel, a link from the header's search).
   useEffect(() => {
-    let cancelled = false;
-    const openFromHash = () => {
-      const identifier = window.location.hash.slice(1);
-      if (!identifier) return;
-      let decoded;
-      try { decoded = decodeURIComponent(identifier); } catch { decoded = identifier; }
-      if (selectedRef.current?.identifier === decoded) return;
-      archiveService.getMovieByIdentifier(decoded)
-        .then((movie) => { if (!cancelled) setSelectedMovie(movie); })
-        .catch((err) => { if (!cancelled) console.error('Failed to open movie from URL hash:', err); });
-    };
-    openFromHash();
-    window.addEventListener('hashchange', openFromHash);
-    return () => { cancelled = true; window.removeEventListener('hashchange', openFromHash); };
-  }, []);
+  let cancelled = false;
+  const openFromHash = () => {
+    const identifier = window.location.hash.slice(1);
+    if (!identifier) return;
+    let decoded;
+    try { decoded = decodeURIComponent(identifier); } catch { decoded = identifier; }
+    if (selectedRef.current?.identifier === decoded) return;
+    archiveService.getMovieByIdentifier(decoded)
+      .then((movie) => { if (!cancelled) setSelectedMovie(movie); })
+      .catch((err) => { if (!cancelled) console.error('Failed to open movie from URL hash:', err); });
+  };
+  openFromHash();
+  window.addEventListener('hashchange', openFromHash);
+  return () => { cancelled = true; window.removeEventListener('hashchange', openFromHash); };
+}, []);
+
+useEffect(() => {
+  tmdbService.setApiKey(tmdbApiKey);
+}, [tmdbApiKey]);
 
   // Every way of opening a film (card, link, search, related) ends up here
   useEffect(() => {
@@ -98,11 +109,16 @@ export default function ArchiveMovieBrowser() {
         <GenrePills genre={filters.genre} onChange={browse.changeGenre} />
         <FilmGrid films={films} browse={browse} viewMode={viewMode} onOpen={setSelectedMovie} linkError={linkError} />
       </main>
-      <SiteFooter />
+     <SiteFooter />
 
-      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} currentApiKey={tmdbService.apiKey} />
+<SettingsModal
+  isOpen={settingsOpen}
+  onClose={() => setSettingsOpen(false)}
+  currentApiKey={tmdbApiKey}
+  onApiKeyChange={setTmdbApiKey}
+/>
 
-      {selectedMovie && (
+{selectedMovie && (
         <MovieDetailPage
           movie={selectedMovie}
           onClose={() => {
