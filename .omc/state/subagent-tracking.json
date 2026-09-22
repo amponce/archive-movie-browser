@@ -1,0 +1,80 @@
+{
+  "agents": [
+    {
+      "agent_id": "af8a6e025f3aa8a97",
+      "agent_type": "prod-audit-inventory",
+      "started_at": "2026-09-22T01:02:26.093Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-09-22T01:03:56.968Z",
+      "duration_ms": 90875
+    },
+    {
+      "agent_id": "a09fda9957da24ab2",
+      "agent_type": "prod-audit-tester",
+      "started_at": "2026-09-22T01:04:13.704Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-09-22T01:15:59.665Z",
+      "duration_ms": 705961
+    },
+    {
+      "agent_id": "a11dc8abd497183fe",
+      "agent_type": "prod-audit-tester",
+      "started_at": "2026-09-22T01:04:18.209Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-09-22T01:14:28.589Z",
+      "duration_ms": 610380
+    },
+    {
+      "agent_id": "a1df3001ecb3a5595",
+      "agent_type": "prod-audit-tester",
+      "started_at": "2026-09-22T01:04:22.910Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-09-22T01:20:25.792Z",
+      "duration_ms": 962882
+    },
+    {
+      "agent_id": "acbc8e194ee1a9841",
+      "agent_type": "prod-audit-tester",
+      "started_at": "2026-09-22T01:04:30.175Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-09-22T01:12:26.954Z",
+      "duration_ms": 476779
+    },
+    {
+      "agent_id": "a3214d11c103903c8",
+      "agent_type": "prod-audit-tester",
+      "started_at": "2026-09-22T01:13:08.665Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-09-22T01:20:28.931Z",
+      "duration_ms": 440266
+    },
+    {
+      "agent_id": "a3e6863b90e843456",
+      "agent_type": "prod-audit-tester",
+      "started_at": "2026-09-22T04:15:25.692Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-09-22T04:15:58.021Z",
+      "duration_ms": 32329
+    },
+    {
+      "agent_id": "aa559fa7d4c674443",
+      "agent_type": "prod-audit-triage",
+      "started_at": "2026-09-22T01:24:15.139Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-09-22T01:27:20.769Z",
+      "duration_ms": 185630
+    }
+  ],
+  "total_spawned": 9,
+  "total_completed": 81,
+  "total_failed": 0,
+  "last_updated": "2026-09-22T04:46:03.157Z"
+}

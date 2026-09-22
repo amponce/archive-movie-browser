@@ -1,0 +1,336 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1790052363579,
+  "projectRoot": "/Users/voidbox/code/personal/archive-movie-browser",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "19.3.0",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.3.0",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "8.3.0",
+        "category": "build"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": "npm test",
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "vite build",
+      "preview": "vite preview",
+      "test": "node --test \"src/**/*.test.js\"",
+      "index": "node scripts/build-poster-index.mjs"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "public",
+      "scripts",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "api": {
+      "path": "api",
+      "purpose": "API routes",
+      "fileCount": 5,
+      "lastAccessed": 1790052363562,
+      "keyFiles": [
+        "_redis.js",
+        "_stats.js",
+        "event.js",
+        "mcp.js",
+        "stats.js"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 3,
+      "lastAccessed": 1790052363564,
+      "keyFiles": [
+        "index.html",
+        "og.jpg",
+        "poster-index.json"
+      ]
+    },
+    "mcp": {
+      "path": "mcp",
+      "purpose": null,
+      "fileCount": 10,
+      "lastAccessed": 1790052363564,
+      "keyFiles": [
+        "README.md",
+        "event.test.mjs",
+        "http.test.mjs",
+        "package-lock.json",
+        "package.json"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 2,
+      "lastAccessed": 1790052363565,
+      "keyFiles": [
+        "og.jpg",
+        "poster-index.json"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 1,
+      "lastAccessed": 1790052363565,
+      "keyFiles": [
+        "build-poster-index.mjs"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1790052363565,
+      "keyFiles": [
+        "App.jsx",
+        "index.css",
+        "main.jsx"
+      ]
+    },
+    "dist/assets": {
+      "path": "dist/assets",
+      "purpose": "Static assets",
+      "fileCount": 5,
+      "lastAccessed": 1790052363565,
+      "keyFiles": [
+        "ListsPage-C6k2vyMf.js",
+        "McpPage-oK8A_xjM.js",
+        "StatsPage-CmUjh2mJ.js"
+      ]
+    },
+    "mcp/node_modules": {
+      "path": "mcp/node_modules",
+      "purpose": "Dependencies",
+      "fileCount": 1,
+      "lastAccessed": 1790052363566,
+      "keyFiles": []
+    },
+    "src/components": {
+      "path": "src/components",
+      "purpose": "UI components",
+      "fileCount": 8,
+      "lastAccessed": 1790052363566,
+      "keyFiles": [
+        "ArchiveMovieBrowser.jsx",
+        "FilmPlayer.jsx",
+        "McpBanner.jsx"
+      ]
+    },
+    "src/pages": {
+      "path": "src/pages",
+      "purpose": "Page components",
+      "fileCount": 3,
+      "lastAccessed": 1790052363566,
+      "keyFiles": [
+        "ListsPage.jsx",
+        "McpPage.jsx",
+        "StatsPage.jsx"
+      ]
+    },
+    "src/services": {
+      "path": "src/services",
+      "purpose": "Business logic services",
+      "fileCount": 24,
+      "lastAccessed": 1790052363566,
+      "keyFiles": [
+        "analytics.js",
+        "analytics.test.js",
+        "archive.js"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/components/ArchiveMovieBrowser.jsx",
+      "accessCount": 15,
+      "lastAccessed": 1790040282789,
+      "type": "file"
+    },
+    {
+      "path": "src/services/archive.js",
+      "accessCount": 9,
+      "lastAccessed": 1790040276860,
+      "type": "file"
+    },
+    {
+      "path": ".claude/skills/prod-audit/SKILL.md",
+      "accessCount": 7,
+      "lastAccessed": 1790040258193,
+      "type": "file"
+    },
+    {
+      "path": "src/components/MovieDetailPage.jsx",
+      "accessCount": 6,
+      "lastAccessed": 1790040263695,
+      "type": "file"
+    },
+    {
+      "path": ".claude/PROD_AUDIT_STATE.md",
+      "accessCount": 3,
+      "lastAccessed": 1790040258245,
+      "type": "file"
+    },
+    {
+      "path": "src/components/SearchBox.jsx",
+      "accessCount": 3,
+      "lastAccessed": 1790040275908,
+      "type": "file"
+    },
+    {
+      "path": "src/components/MovieCard.jsx",
+      "accessCount": 2,
+      "lastAccessed": 1789888351088,
+      "type": "file"
+    },
+    {
+      "path": "public/og.png",
+      "accessCount": 2,
+      "lastAccessed": 1789922917816,
+      "type": "file"
+    },
+    {
+      "path": "public/mcp.html",
+      "accessCount": 2,
+      "lastAccessed": 1790032665903,
+      "type": "file"
+    },
+    {
+      "path": "src/services/urlFilters.js",
+      "accessCount": 2,
+      "lastAccessed": 1790039086849,
+      "type": "file"
+    },
+    {
+      "path": "api/event.js",
+      "accessCount": 2,
+      "lastAccessed": 1790040262511,
+      "type": "file"
+    },
+    {
+      "path": "src/hooks/useFilms.js",
+      "accessCount": 2,
+      "lastAccessed": 1790040283469,
+      "type": "file"
+    },
+    {
+      "path": "src/services/tmdb.js",
+      "accessCount": 1,
+      "lastAccessed": 1789798953588,
+      "type": "file"
+    },
+    {
+      "path": "src/services/archive.test.js",
+      "accessCount": 1,
+      "lastAccessed": 1789799122628,
+      "type": "file"
+    },
+    {
+      "path": "docs/images/keyhole-cover.jpg",
+      "accessCount": 1,
+      "lastAccessed": 1789962842648,
+      "type": "file"
+    },
+    {
+      "path": "api/mcp.js",
+      "accessCount": 1,
+      "lastAccessed": 1790039076934,
+      "type": "file"
+    },
+    {
+      "path": "api/stats.js",
+      "accessCount": 1,
+      "lastAccessed": 1790039077677,
+      "type": "file"
+    },
+    {
+      "path": "api/_stats.js",
+      "accessCount": 1,
+      "lastAccessed": 1790039078178,
+      "type": "file"
+    },
+    {
+      "path": "mcp/register.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1790039081066,
+      "type": "file"
+    },
+    {
+      "path": "mcp/tools.mjs",
+      "accessCount": 1,
+      "lastAccessed": 1790039081221,
+      "type": "file"
+    },
+    {
+      "path": "src/components/FilmPlayer.jsx",
+      "accessCount": 1,
+      "lastAccessed": 1790039082535,
+      "type": "file"
+    },
+    {
+      "path": "src/services/playback.js",
+      "accessCount": 1,
+      "lastAccessed": 1790039086319,
+      "type": "file"
+    },
+    {
+      "path": "vercel.json",
+      "accessCount": 1,
+      "lastAccessed": 1790040263076,
+      "type": "file"
+    },
+    {
+      "path": "src/components/SettingsModal.jsx",
+      "accessCount": 1,
+      "lastAccessed": 1790040264255,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

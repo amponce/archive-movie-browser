@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"D=$(gh api graphql -f query='{repository(owner:\\\"amponce\\\",name:\\\"archive-movie-browser\\\"){discussion(number:195){id body}}}' -q .data.repository.discussion) && ID=$(echo \\\"$D\\\" | python3 ...",
+  "error": "Exit code 1\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/Users/voidbox/.pyenv/versions/3.12.10/lib/python3.12/json/__init__.py\", line 293, in load\n    return loads(fp.read(),\n           ^^^^^^^^^^^^^^^^\n  File \"/Users/voidbox/.pyenv/versions/3.12.10/lib/python3.12/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/voidbox/.pyenv/versions/3.12.10/lib/python3.12/json/decoder.py\", lin...",
+  "timestamp": "2026-09-22T07:32:17.390Z",
+  "retry_count": 1
+}

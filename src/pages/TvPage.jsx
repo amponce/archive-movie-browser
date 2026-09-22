@@ -4,7 +4,6 @@ import { shortcutFor } from '../services/playback';
 import { track } from '../services/analytics';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
-import Button from '../ui/Button';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
 // the same for everyone. The page keeps its own clock: /api/tv gives the lineups once, and the
@@ -26,15 +25,14 @@ function useSchedule() {
   return { channels: data?.channels || [], error };
 }
 
-// The set: plays whatever the channel is showing, from the live offset, and moves to the next
-// film on its own. "From the start" restarts the current film; a channel change re-tunes.
-function Set({ channel, onNext }) {
+// What the set is doing: which film, from where, and the video element playing it. Re-tunes when
+// the channel changes, moves to the next film on its own, and takes the player shortcuts.
+function useTuning(channel, onNext) {
   const videoRef = useRef(null);
   const [slot, setSlot] = useState(() => onAirAt(channel.lineup));
   const [fromStart, setFromStart] = useState(false);
   const [needsClick, setNeedsClick] = useState(false);
 
-  // Re-tune when the channel changes
   useEffect(() => { setSlot(onAirAt(channel.lineup)); setFromStart(false); }, [channel.id]);
 
   const start = fromStart ? { film: slot?.film, offset: 0 } : tuneIn(slot);
@@ -70,28 +68,39 @@ function Set({ channel, onNext }) {
     return () => window.removeEventListener('keydown', onKeyDown, true);
   }, []);
 
-  if (!film) return <div className="aspect-video bg-black flex items-center justify-center text-muted">Nothing on this channel yet.</div>;
+  const play = () => videoRef.current?.play().then(() => setNeedsClick(false));
+  return { film, slot, start, fromStart, restart: () => setFromStart(true), needsClick, play, videoRef, next };
+}
 
+function Screen({ tuning }) {
+  const { film, needsClick, play, videoRef, next } = tuning;
   return (
-    <div className="flex flex-col gap-3">
-      <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-        <video ref={videoRef} key={film.id} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} />
-        {needsClick && (
-          <button type="button" onClick={() => videoRef.current?.play().then(() => setNeedsClick(false))} className="absolute inset-0 flex items-center justify-center bg-ink/60">
-            <span className="btn-primary btn-lg">Tune in</span>
-          </button>
-        )}
+    <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+      {film ? <video ref={videoRef} key={film.id} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} />
+        : <div className="absolute inset-0 flex items-center justify-center text-muted">Nothing on this channel yet.</div>}
+      {film && needsClick && (
+        <button type="button" onClick={play} className="absolute inset-0 flex items-center justify-center bg-ink/60">
+          <span className="btn-primary btn-lg">Tune in</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+// One line under the screen: what this is, and the two things you can do about it
+function NowPlaying({ channel, tuning }) {
+  const { film, slot, start, fromStart, restart } = tuning;
+  if (!film) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3 border-b border-line">
+      <div className="min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="eyebrow shrink-0">{channel.number}</span>
+        <span className="font-medium text-bone truncate">{film.title}{film.year ? <span className="text-dim font-normal"> {film.year}</span> : null}</span>
+        {slot && <span className="label">{clock(slot.startedAt)} – {clock(slot.endsAt)}{!fromStart && start?.offset ? ` · joined ${mins(start.offset)} in` : ''}</span>}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="eyebrow">Now on {channel.number} · {channel.name}</p>
-          <p className="display text-2xl sm:text-3xl mt-1 truncate">{film.title}{film.year ? <span className="text-muted font-sans font-normal normal-case text-lg"> {film.year}</span> : null}</p>
-          {slot && <p className="label mt-1">Started {clock(slot.startedAt)} · ends {clock(slot.endsAt)}{!fromStart && start?.offset ? ` · joined ${mins(start.offset)} in` : ''}</p>}
-        </div>
-        <div className="flex items-center gap-2">
-          {!fromStart && start?.offset > 0 && <Button variant="ghost" onClick={() => { track('TV', { action: 'from start', channel: channel.id }); setFromStart(true); }}>From the start</Button>}
-          <a href={`/browse#${encodeURIComponent(film.id)}`} className="nav-link">Film page</a>
-        </div>
+      <div className="flex items-center gap-4">
+        {!fromStart && start?.offset > 0 && <button type="button" onClick={() => { track('TV', { action: 'from start', channel: channel.id }); restart(); }} className="nav-link hover:text-signal">From the start</button>}
+        <a href={`/browse#${encodeURIComponent(film.id)}`} className="nav-link">Film page</a>
       </div>
     </div>
   );
@@ -99,9 +108,25 @@ function Set({ channel, onNext }) {
 
 // Beside the set: every channel and what it is showing, so nobody has to scroll to learn there
 // are more. Tap to tune.
+// The stage: the screen with the channels beside it (ending where the screen ends), and the
+// now-playing line under the screen
+function Stage({ channel, channels, onTune, onNext }) {
+  const tuning = useTuning(channel, onNext);
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-4">
+      <div className="lg:col-span-8"><Screen tuning={tuning} /></div>
+      <aside className="lg:col-span-4 relative flex flex-col gap-3" aria-label="Channels">
+        <span className="label lg:hidden">Channels</span>
+        <Rail channels={channels} current={channel} onTune={onTune} />
+      </aside>
+      <div className="lg:col-span-8"><NowPlaying channel={channel} tuning={tuning} /></div>
+    </div>
+  );
+}
+
 function Rail({ channels, current, onTune }) {
   return (
-    <ol className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:max-h-[calc(56.25vw*0.66)] pb-1 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0">
+    <ol className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:absolute lg:inset-0 pb-1 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pr-1">
       {channels.map(channel => {
         const on = channel.now?.film;
         const isCurrent = channel.id === current?.id;
@@ -197,24 +222,15 @@ export default function TvPage() {
   return (
     <div className="min-h-screen">
       <SiteHeader current="/tv" />
-      <main className="gutter py-8 flex flex-col gap-10">
+      <main className="gutter py-8 flex flex-col gap-8">
         {error && <p className="text-muted">The guide didn't load ({error}). <a href="/browse" className="text-bone underline">Browse instead.</a></p>}
-        {current && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-            <div className="lg:col-span-8"><Set channel={current} onNext={() => setNow(Date.now())} /></div>
-            <aside className="lg:col-span-4 flex flex-col gap-3" aria-label="Channels">
-              <span className="label">Channels · ↑ ↓ to surf</span>
-              <Rail channels={channels} current={current} onTune={tune} />
-            </aside>
-          </div>
-        )}
+        {current && <Stage channel={current} channels={channels} onTune={tune} onNext={() => setNow(Date.now())} />}
         {channels.length > 0 && (
-          <section className="flex flex-col gap-4">
+          <section className="flex flex-col gap-5 pt-4 border-t border-line">
             <div className="flex items-end justify-between gap-6">
               <div>
                 <span className="eyebrow">Guide</span>
-                <h2 className="display text-3xl mt-1">What's on</h2>
-                <p className="text-[15px] text-muted mt-1">Every channel runs its list in order, round the clock, the same for everyone.</p>
+                <h2 className="display text-2xl mt-1">The next three hours</h2>
               </div>
               <a href="/api/tv/playlist.m3u" className="nav-link shrink-0 hover:text-signal">M3U for your player →</a>
             </div>
