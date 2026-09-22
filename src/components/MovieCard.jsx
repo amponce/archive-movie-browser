@@ -125,6 +125,9 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
             onError={handlePosterError}
             loading="lazy"
           />
+        ) : tmdbChecked ? (
+          // No poster anywhere: the generated cover, art only at this size
+          <TitleCover movie={movie} size="thumb" />
         ) : null}
         <Sprockets />
       </div>
