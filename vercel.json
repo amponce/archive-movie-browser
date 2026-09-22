@@ -13,7 +13,7 @@
   },
   "rewrites": [
     {
-      "source": "/tv",
+      "source": "/tv(/)?",
       "destination": "/index.html"
     },
     {
@@ -25,7 +25,7 @@
       "destination": "/api/tv?format=xml"
     },
     {
-      "source": "/browse",
+      "source": "/browse(/)?",
       "destination": "/index.html"
     },
     {
@@ -37,7 +37,7 @@
       "destination": "/index.html"
     },
     {
-      "source": "/lists",
+      "source": "/lists(/)?",
       "destination": "/index.html"
     },
     {
