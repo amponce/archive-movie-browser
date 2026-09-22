@@ -4,6 +4,9 @@ import { shortcutFor } from '../services/playback';
 import { track } from '../services/analytics';
 import useMyChannel from '../hooks/useMyChannel';
 import { shareUrl } from '../services/myChannel';
+import { watchUrl } from '../services/reel';
+import Section, { CardGrid } from '../ui/Section';
+import FilmCard from '../ui/FilmCard';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 
@@ -236,6 +239,15 @@ export default function TvPage() {
             {mine.mine && mine.lineup.length > 0 && <button type="button" className="nav-link hover:text-signal" onClick={() => { navigator.clipboard?.writeText(shareUrl(mine.ids, window.location.origin)); track('TV', { action: 'share my channel' }); }}>Copy a link to it</button>}
             {mine.lineup.length > 0 && <a href={`/api/tv?format=m3u&mine=${mine.ids.map(encodeURIComponent).join(',')}`} className="nav-link hover:text-signal">M3U for your player</a>}
           </p>
+        )}
+        {mine?.mine && mine.lineup.length > 0 && (
+          <Section id="my-lineup" eyebrow="Your channel" title="The lineup" blurb="Plays in this order, round the clock. Take a film off here, add more from any film page.">
+            <CardGrid>
+              {mine.lineup.map(film => (
+                <FilmCard key={film.id} film={{ id: film.id, title: film.title, year: film.year, poster: film.poster }} href={watchUrl(film.id)} onRemove={mine.remove} />
+              ))}
+            </CardGrid>
+          </Section>
         )}
         {channels.length > 0 && (
           <section className="flex flex-col gap-5 pt-4 border-t border-line">
