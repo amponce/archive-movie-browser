@@ -121,7 +121,7 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
             {movie.year && <span>{movie.year}</span>}
             {movie.runtimeMinutes > 0 && (
               <>
-                <span>•</span>
+                {movie.year && <span>•</span>}
                 <span className="flex items-center gap-0.5">
                   <Clock className="w-3 h-3" />
                   {archiveService.formatRuntime(movie.runtimeMinutes)}
