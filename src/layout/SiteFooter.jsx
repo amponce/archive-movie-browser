@@ -22,7 +22,7 @@ export default function SiteFooter({ children, counts }) {
       {counts && (
         <p className="font-mono text-[11px] tracking-[0.06em] text-dim">
           {counts.identified.toLocaleString('en-US')} films identified so far, {counts.wanted.toLocaleString('en-US')} still without a poster.{' '}
-          <a href={`${REPO}#poster-index`} className="underline hover:text-bone">Know one? Help fix it.</a>
+          <a href={`${REPO}#how-films-get-identified`} className="underline hover:text-bone">Know one? Help fix it.</a>
         </p>
       )}
       <p className="max-w-3xl text-xs leading-relaxed text-dim">
