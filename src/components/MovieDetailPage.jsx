@@ -20,6 +20,8 @@ import TitleCover from './TitleCover';
 import Button from '../ui/Button';
 import useRelated from '../hooks/useRelated';
 import { pickPlayableFile } from '../services/playback';
+import { track } from '../services/analytics';
+import { readMyChannel, writeMyChannel, toggleFilm, hasFilm } from '../services/myChannel';
 import FilmPlayer from './FilmPlayer';
 import { identifiedAs } from '../services/posterIndex';
 import SearchBox from './SearchBox';
@@ -250,6 +252,15 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
     return () => { cancelled = true; };
   }, [movie?.identifier]);
   const filmMinutes = tmdbDetails?.runtime || null;
+
+  // On this browser's own television channel, or not
+  const [myChannel, setMyChannel] = useState(readMyChannel);
+  const onMyChannel = movie ? hasFilm(myChannel, movie.identifier) : false;
+  const toggleMyChannel = () => {
+    const next = toggleFilm(myChannel, movie.identifier);
+    writeMyChannel(next); setMyChannel(next);
+    track('TV', { action: onMyChannel ? 'remove from my channel' : 'add to my channel', film: movie.identifier });
+  };
   const isExcerpt = uploadMinutes && filmMinutes && uploadMinutes < filmMinutes * 0.5;
 
   if (!movie) return null;
@@ -510,10 +521,15 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
 
             {/* Play button */}
             {!isPlaying && (
-              <Button size="lg" onClick={() => setIsPlaying(true)} className="w-full mb-6">
-                <Play className="w-5 h-5 fill-current" />
-                Watch now
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                <Button size="lg" onClick={() => setIsPlaying(true)} className="flex-1">
+                  <Play className="w-5 h-5 fill-current" />
+                  Watch now
+                </Button>
+                <Button size="lg" variant="ghost" onClick={toggleMyChannel} aria-pressed={onMyChannel} title="Your own TV channel, kept in this browser">
+                  {onMyChannel ? 'On my channel' : 'Add to my channel'}
+                </Button>
+              </div>
             )}
           </div>
         </div>

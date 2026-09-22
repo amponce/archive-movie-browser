@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { onAirAt, tuneIn } from '../services/schedule';
 import { shortcutFor } from '../services/playback';
 import { track } from '../services/analytics';
+import useMyChannel from '../hooks/useMyChannel';
+import { shareUrl, MY_CHANNEL_ID } from '../services/myChannel';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 
@@ -192,14 +194,17 @@ function Guide({ channels, current, now, onTune }) {
 }
 
 export default function TvPage() {
-  const { channels, error } = useSchedule();
+  const { channels: stations, error } = useSchedule();
+  const mine = useMyChannel();
+  // The personal channel goes first, as channel 0, when it has anything on it
+  const channels = useMemo(() => (mine && mine.lineup.length ? [mine, ...stations] : stations), [mine, stations]);
   // The channel in the link, else the one this browser watched last, else channel 1
   const [currentId, setCurrentId] = useState(() => decodeURIComponent(window.location.hash.slice(1)) || readLast());
   const [now, setNow] = useState(Date.now);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(t); }, []);
   useEffect(() => { document.title = 'TV | Orphaned Films'; }, []);
 
-  const current = useMemo(() => channels.find(c => c.id === currentId) || channels[0] || null, [channels, currentId]);
+  const current = useMemo(() => channels.find(c => c.id === currentId) || (mine?.lineup.length && window.location.search.includes('mine=') ? mine : null) || channels[0] || null, [channels, currentId, mine]);
   const tune = useCallback((channel) => {
     setCurrentId(channel.id);
     rememberLast(channel.id);
@@ -225,6 +230,12 @@ export default function TvPage() {
       <main className="gutter py-8 flex flex-col gap-8">
         {error && <p className="text-muted">The guide didn't load ({error}). <a href="/browse" className="text-bone underline">Browse instead.</a></p>}
         {current && <Stage channel={current} channels={channels} onTune={tune} onNext={() => setNow(Date.now())} />}
+        {mine && (mine.lineup.length > 0 || mine.pending > 0) && (
+          <p className="label flex flex-wrap items-center gap-x-4 gap-y-1 -mt-4">
+            <span>{mine.mine ? 'Your channel' : 'This shared channel'} has {mine.ids.length} film{mine.ids.length === 1 ? '' : 's'}{mine.pending ? `, measuring ${mine.pending}` : ''}. {mine.mine ? 'Add more from any film page.' : ''}</span>
+            {mine.mine && mine.lineup.length > 0 && <button type="button" className="nav-link hover:text-signal" onClick={() => { navigator.clipboard?.writeText(shareUrl(mine.ids, window.location.origin)); track('TV', { action: 'share my channel' }); }}>Copy a link to it</button>}
+          </p>
+        )}
         {channels.length > 0 && (
           <section className="flex flex-col gap-5 pt-4 border-t border-line">
             <div className="flex items-end justify-between gap-6">
