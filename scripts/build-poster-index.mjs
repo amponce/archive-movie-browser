@@ -7,6 +7,8 @@
 //   npm run index -- --limit 500        more per collection
 //   npm run index -- --collections Film_Noir,silent_films
 //   npm run index -- --fresh            ignore the existing file and decide everything again
+//   npm run index -- --views             also the top uploads of every genre pill and every decade
+//   npm run index -- --views --limit 300 (what the app actually shows: the index should follow it)
 //
 // Keys come from the environment, or from .env.local / .env / ../.env (never from the bundle):
 //   TMDB_API_KEY (or VITE_TMDB_API_KEY)   candidate films
@@ -18,7 +20,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { archiveService, VIDEO_CATEGORIES } = await import(path.join(root, 'src/services/archive.js'));
+const { archiveService, VIDEO_CATEGORIES, STANDARD_GENRES, DECADES, ALL_FILMS } = await import(path.join(root, 'src/services/archive.js'));
 const { candidateQueries } = await import(path.join(root, 'src/services/movieMatching.js'));
 const { decisionToEntry, CONFIDENCE_THRESHOLD } = await import(path.join(root, 'src/services/posterIndex.js'));
 
@@ -27,6 +29,14 @@ const LIMIT = Number(args.limit) || 150;
 const OUT = path.resolve(root, args.out || 'public/poster-index.json');
 const MODEL = 'typesafe/jev-1.13';
 const collections = args.collections ? String(args.collections).split(',') : VIDEO_CATEGORIES.filter(c => c.films).map(c => c.id);
+
+// What to walk: each collection on its own, and with --views every genre pill and every decade
+// across All Films, since those are the lists visitors see first. Each walk takes its top LIMIT.
+const walks = collections.map(collection => ({ name: collection, options: { collection } }));
+if (args.views) {
+  for (const genre of STANDARD_GENRES) walks.push({ name: `genre ${genre}`, options: { collection: ALL_FILMS, genre } });
+  for (const decade of DECADES) walks.push({ name: `${decade}s`, options: { collection: ALL_FILMS, decade } });
+}
 
 function readKey(...names) {
   for (const name of names) if (process.env[name]) return process.env[name];
@@ -114,17 +124,17 @@ async function decide(movie) {
 const previous = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')).films || {} : {};
 const existing = args.fresh ? Object.fromEntries(Object.entries(previous).filter(([, entry]) => entry.m)) : previous;
 const films = { ...existing };
-console.log(`Poster index: up to ${LIMIT} uploads from each of ${collections.length} collections; ${Object.keys(existing).length} already decided.`);
+console.log(`Poster index: up to ${LIMIT} uploads from each of ${walks.length} walks; ${Object.keys(existing).length} already decided.`);
 
-for (const collection of collections) {
+for (const { name, options } of walks) {
   const uploads = [];
   for (let page = 1; uploads.length < LIMIT; page++) {
-    const { movies, total } = await archiveService.fetchMovies({ collection, page, rowsPerPage: 100 });
+    const { movies, total } = await archiveService.fetchMovies({ ...options, page, rowsPerPage: 100 });
     uploads.push(...movies);
     if (!movies.length || page * 100 >= total) break;
   }
   const todo = uploads.slice(0, LIMIT).filter(movie => !films[movie.identifier]);
-  console.log(`\n${collection}: ${todo.length} new of ${Math.min(uploads.length, LIMIT)}`);
+  console.log(`\n${name}: ${todo.length} new of ${Math.min(uploads.length, LIMIT)}`);
 
   // Three at a time: polite to both APIs and still a few hundred uploads per minute
   for (let i = 0; i < todo.length; i += 3) {

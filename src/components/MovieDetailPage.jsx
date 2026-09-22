@@ -17,6 +17,7 @@ import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
 import TitleCover from './TitleCover';
 import FilmPlayer from './FilmPlayer';
+import { identifiedAs } from '../services/posterIndex';
 import SearchBox from './SearchBox';
 
 // Sub-component for related movies with TMDB poster support
@@ -87,6 +88,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
   const dialogRef = useRef(null);
   const backButtonRef = useRef(null);
   const titleId = useId();
+  const identified = identifiedAs(movie, tmdbData);
 
   // A native modal keeps background controls inert, including when focus
   // enters the embedded player. Keep one focus session across related films.
@@ -368,6 +370,15 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
             <h1 id={titleId} className="text-3xl lg:text-4xl font-bold text-white mb-2">
               {tmdbDetails?.title || movie.title}
             </h1>
+
+            {/* The upload was called something else; the poster index worked out which film it is */}
+            {identified && (
+              <p className="text-sm text-gray-400 mb-3">
+                Uploaded to Archive.org as <span className="line-through decoration-gray-500">{identified.uploadTitle}</span>.
+                Identified by the <a href="/mcp" className="text-yellow-400 hover:underline">poster index</a>
+                {identified.confidence ? ` (${Math.round(identified.confidence * 100)}% sure)` : ''}.
+              </p>
+            )}
 
             {/* Tagline */}
             {tmdbDetails?.tagline && (

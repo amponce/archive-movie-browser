@@ -8,7 +8,7 @@ test('indexedMatch: a poster entry, a deliberate "no poster" entry, and an unkno
     snes_longplay_nosferatu: { n: 1, c: 0.97 },
   });
   assert.deepEqual(await indexedMatch('house_on_haunted_hill'), {
-    id: 15856, title: 'House on Haunted Hill', posterPath: '/poster.jpg', releaseDate: '1959', voteAverage: 6.7, fromIndex: true,
+    id: 15856, title: 'House on Haunted Hill', posterPath: '/poster.jpg', releaseDate: '1959', voteAverage: 6.7, fromIndex: true, confidence: 0.99,
   });
   assert.equal(await indexedMatch('snes_longplay_nosferatu'), null, 'decided offline: not a film we have a poster for');
   assert.equal(await indexedMatch('never_indexed'), undefined, 'not decided yet: the caller falls back to live matching');
@@ -31,4 +31,19 @@ test('postersFirst moves films with an indexed poster ahead, keeping each group 
   assert.deepEqual((await postersFirst(batch)).map(m => m.identifier), ['b', 'd', 'a', 'c', 'e']);
   assert.equal(batch[0].identifier, 'a', 'the input is not reordered');
   setPosterIndex({});
+});
+
+test('an indexed match carries its confidence, so the film page can say how it was identified', async () => {
+  setPosterIndex({ dead_people_ipod: { i: 24923, t: 'Messiah of Evil', y: 1975, p: '/m.jpg', v: 6.1, c: 0.93 } });
+  assert.equal((await indexedMatch('dead_people_ipod')).confidence, 0.93);
+  setPosterIndex({});
+});
+
+test('identifiedAs says when the index found a different film than the upload title suggests', async () => {
+  const { identifiedAs } = await import('./posterIndex.js');
+  assert.deepEqual(identifiedAs({ title: 'Dead People' }, { title: 'Messiah of Evil', fromIndex: true, confidence: 0.93 }), { uploadTitle: 'Dead People', confidence: 0.93 });
+  assert.equal(identifiedAs({ title: 'Night of the Living Dead' }, { title: 'Night of the Living Dead', fromIndex: true, confidence: 0.99 }), null, 'same title: nothing to reveal');
+  assert.equal(identifiedAs({ title: 'night_of_the_living_dead (1968) 1080p' }, { title: 'Night of the Living Dead', fromIndex: true, confidence: 0.99 }), null, 'noise around the same title is not a different film');
+  assert.equal(identifiedAs({ title: 'Dead People' }, { title: 'Messiah of Evil', fromIndex: false }), null, 'a live TMDB guess is not an index decision');
+  assert.equal(identifiedAs({ title: 'Dead People' }, null), null);
 });

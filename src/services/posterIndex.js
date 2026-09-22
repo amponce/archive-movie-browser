@@ -34,7 +34,7 @@ export async function indexedMatch(identifier) {
   const entry = (await load())[identifier];
   if (!entry) return undefined;
   if (entry.n) return null;
-  return { id: entry.i, title: entry.t, posterPath: entry.p, releaseDate: entry.y ? String(entry.y) : '', voteAverage: entry.v, fromIndex: true };
+  return { id: entry.i, title: entry.t, posterPath: entry.p, releaseDate: entry.y ? String(entry.y) : '', voteAverage: entry.v, fromIndex: true, confidence: entry.c };
 }
 
 // Films the index has a poster for come first; each group keeps the order it arrived in. The
@@ -44,6 +44,15 @@ export async function indexedMatch(identifier) {
 export async function postersFirst(movies) {
   const matches = await Promise.all(movies.map(movie => indexedMatch(movie.identifier)));
   return [...movies.filter((_, i) => matches[i]), ...movies.filter((_, i) => !matches[i])];
+}
+
+// The moment worth showing: the index decided this upload is a film whose name is not the
+// upload's name ("Dead People" is Messiah of Evil). Null when there is nothing to reveal.
+export function identifiedAs(movie, match) {
+  if (!match?.fromIndex || !match.title) return null;
+  const words = (text) => String(text || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  if (words(movie.title).includes(words(match.title))) return null;
+  return { uploadTitle: movie.title, confidence: match.confidence };
 }
 
 // Used by the build script: turn a model decision into an index entry
