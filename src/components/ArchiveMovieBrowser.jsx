@@ -12,12 +12,12 @@ import {
   ChevronDown,
   Calendar,
 } from 'lucide-react';
-import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, BROWSABLE_COLLECTIONS, DECADES, ALL_FILMS, defaultMinRuntime, runtimeFilter, collectionChoice } from '../services/archive';
+import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, BROWSABLE_COLLECTIONS, DECADES, ALL_FILMS, defaultMinRuntime, collectionChoice } from '../services/archive';
 import tmdbService from '../services/tmdb';
-import { postersFirst } from '../services/posterIndex';
 import { parseArchiveUrl } from '../services/archiveUrl';
 import { parseFilters, filtersToQuery, SORT_OPTIONS } from '../services/urlFilters';
 import { track } from '../services/analytics';
+import useFilms from '../hooks/useFilms';
 import MovieCard from './MovieCard';
 import SearchBox from './SearchBox';
 import SettingsModal from './SettingsModal';
@@ -98,10 +98,6 @@ export default function ArchiveMovieBrowser() {
   const tmdbApiKey = tmdbService.apiKey;
 
   // Data state
-  const [movies, setMovies] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [nextPage, setNextPage] = useState(null); // next Archive.org page to load, null when exhausted
 
   // Filter state, initialised from the URL so shared views reload intact (#43)
   const [urlFilters] = useState(() => parseFilters(window.location.search));
@@ -125,77 +121,9 @@ export default function ArchiveMovieBrowser() {
       ? `${genreFilter} in ${currentCategory.name}`
       : currentCategory.description;
 
-  // Only the latest request may update state (older responses can arrive last)
-  const latestRequest = useRef(0);
-
-  // Titles already shown, so the same film isn't repeated across batches
-  const seenTitles = useRef(new Set());
-
-  // Fetch a batch of movies. startPage 1 replaces the list, later pages append.
-  const fetchMovies = useCallback(async (startPage = 1) => {
-    const requestId = ++latestRequest.current;
-    const append = startPage > 1;
-    if (!append) {
-      seenTitles.current = new Set();
-      setMovies([]);
-    }
-    const seen = seenTitles.current;
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Parse sort value (may include direction like "date desc" or "date asc")
-      let apiSortBy = sortBy;
-      let sortOrder = 'desc';
-
-      // tmdb_rating is client-side only, use downloads for API sorting
-      if (sortBy === 'tmdb_rating') {
-        apiSortBy = 'downloads';
-      } else if (sortBy.includes(' ')) {
-        // Parse "field direction" format
-        const [field, direction] = sortBy.split(' ');
-        apiSortBy = field;
-        sortOrder = direction;
-      }
-
-      // Filters run inside the service so every batch comes back full
-      const result = await archiveService.fetchFiltered({
-        searchQuery: activeSearch,
-        sortBy: apiSortBy,
-        sortOrder,
-        startPage,
-        genre: genreFilter !== 'all' ? genreFilter : null,
-        collection: category,
-        decade,
-        seenTitles: seen,
-        // The server query already applied the genre, so only runtime is checked here
-        filter: runtimeFilter({ shorts: contentType === 'trailers', minRuntime })
-      });
-      if (requestId !== latestRequest.current) return;
-
-      // Ratings arrive one film at a time. Ranking the batch before it is shown means no card
-      // ever moves once it is on screen, and "Load more" adds its films below the ones already there.
-      // Most Popular leads with films that have a real poster; sorts with a visible order
-      // (title, date, rating) are left exactly as Archive.org returned them.
-      const batch = sortBy === 'tmdb_rating' ? await tmdbService.sortByRating(result.movies)
-        : sortBy === 'downloads' ? await postersFirst(result.movies)
-        : result.movies;
-      if (requestId !== latestRequest.current) return;
-
-      setMovies(prev => (append ? [...prev, ...batch] : batch));
-      setNextPage(result.nextPage);
-    } catch (err) {
-      if (requestId !== latestRequest.current) return;
-      setError(err.message);
-    } finally {
-      if (requestId === latestRequest.current) setLoading(false);
-    }
-  }, [activeSearch, sortBy, genreFilter, category, contentType, minRuntime, decade]);
-
-  // Fetch from the start whenever filters change
-  useEffect(() => {
-    fetchMovies(1);
-  }, [fetchMovies]);
+  const { movies, loading, error, nextPage, loadMore, retry } = useFilms({
+    search: activeSearch, sort: sortBy, genre: genreFilter, collection: category, decade, contentType, minRuntime,
+  });
 
   // Handle search submit
   const handleSearch = (text = searchQuery) => {
@@ -349,9 +277,6 @@ export default function ArchiveMovieBrowser() {
     return () => row.removeEventListener('scroll', update);
   }, []);
 
-  // Runtime, genre and rating order were all settled in fetchMovies; films with no
-  // TMDB poster stay in the list and get a title cover
-  const displayedMovies = movies;
 
   // A single collection can be small (Sci-Fi & Horror has 51 films from the 1980s; all the
   // film collections together have 5,300), so offer the wider look with the same filters.
@@ -625,7 +550,7 @@ export default function ArchiveMovieBrowser() {
         {/* Stats bar */}
         <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-gray-400">
           <span>
-            Showing <strong className="text-white">{displayedMovies.length}</strong>
+            Showing <strong className="text-white">{movies.length}</strong>
             {' '}{contentType === 'trailers' ? 'shorts' : 'movies'}
             {genreFilter !== 'all' && ` in ${genreFilter}`}
             {!activeSearch && ` from ${currentCategory.name}`}
@@ -668,7 +593,7 @@ export default function ArchiveMovieBrowser() {
           <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-6">
             <p className="text-red-300">Error: {error}</p>
             <button
-              onClick={() => fetchMovies(movies.length > 0 && nextPage ? nextPage : 1)}
+              onClick={retry}
               className="mt-2 text-sm text-red-400 hover:text-red-300 underline"
             >
               Try again
@@ -685,7 +610,7 @@ export default function ArchiveMovieBrowser() {
         )}
 
         {/* Movie grid/list */}
-        {displayedMovies.length > 0 && (
+        {movies.length > 0 && (
           <div
             className={
               viewMode === 'grid'
@@ -693,7 +618,7 @@ export default function ArchiveMovieBrowser() {
                 : 'space-y-3'
             }
           >
-            {displayedMovies.map((movie) => (
+            {movies.map((movie) => (
               <MovieCard
                 key={movie.identifier}
                 movie={movie}
@@ -705,7 +630,7 @@ export default function ArchiveMovieBrowser() {
         )}
 
         {/* Empty state */}
-        {!loading && displayedMovies.length === 0 && !error && (
+        {!loading && movies.length === 0 && !error && (
           <div className="text-center py-16 text-gray-400">
             <Film className="w-16 h-16 mx-auto mb-4 opacity-30" />
             <p className="text-lg">No movies found matching your criteria</p>
@@ -715,20 +640,20 @@ export default function ArchiveMovieBrowser() {
         )}
 
         {/* End of the list: say so, or a short list looks like broken paging */}
-        {!loading && !nextPage && !error && displayedMovies.length > 0 && (
+        {!loading && !nextPage && !error && movies.length > 0 && (
           <div className="text-center mt-8 pt-8 border-t border-gray-800 text-gray-400">
             <p>
-              That's all {displayedMovies.length}{!activeSearch && ` in ${currentCategory.name}`} for these filters.
+              That's all {movies.length}{!activeSearch && ` in ${currentCategory.name}`} for these filters.
             </p>
             {canWiden && widenButton}
           </div>
         )}
 
         {/* Load more */}
-        {nextPage && !error && (displayedMovies.length > 0 || !loading) && (
+        {nextPage && !error && (movies.length > 0 || !loading) && (
           <div className="flex justify-center mt-8 pt-8 border-t border-gray-800">
             <button
-              onClick={() => { track('Load more', { page: nextPage }); fetchMovies(nextPage); }}
+              onClick={() => { track('Load more', { page: nextPage }); loadMore(); }}
               disabled={loading}
               className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-gray-900 font-medium rounded-lg hover:bg-yellow-400 disabled:opacity-50"
             >
@@ -787,7 +712,7 @@ export default function ArchiveMovieBrowser() {
             afterClose.current = null;
             next?.();
           }}
-          allMovies={displayedMovies}
+          allMovies={movies}
           onPlayRelated={(movie) => setSelectedMovie(movie)}
           onSearch={(text) => closeFilmThen(() => handleSearch(text))}
           onPickGenre={(genre) => closeFilmThen(() => { setSearchQuery(''); setActiveSearch(''); handleGenreChange(genre); })}
