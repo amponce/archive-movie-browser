@@ -29,11 +29,11 @@
       "destination": "/index.html"
     },
     {
-      "source": "/mcp",
+      "source": "/mcp(/)?",
       "destination": "/index.html"
     },
     {
-      "source": "/stats",
+      "source": "/stats(/)?",
       "destination": "/index.html"
     },
     {
