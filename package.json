@@ -10,7 +10,8 @@
     "test": "node --test \"src/**/*.test.js\"",
     "index": "node scripts/build-poster-index.mjs",
     "tv": "node scripts/build-tv-lineups.mjs",
-    "contributors": "node scripts/contributors.mjs"
+    "contributors": "node scripts/contributors.mjs",
+    "stations": "node scripts/build-stations.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.47.0",

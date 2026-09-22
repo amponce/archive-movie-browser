@@ -1,0 +1,48 @@
+{
+  "slug": "war-stories",
+  "title": "War stories",
+  "blurb": "Combat, home front, and the films made while it was happening.",
+  "curator": "the station",
+  "generated": {
+    "rule": "War 1930s–1970s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "angels.one.five.1952"
+    },
+    {
+      "id": "sahara-colorized"
+    },
+    {
+      "id": "the-human-condition-parts-1-2"
+    },
+    {
+      "id": "love.-camp.-7.1969.1080p.-blu-ray.-h-264.-aac-rarbg"
+    },
+    {
+      "id": "all.-quiet.-on.-the.-western.-front.-1930"
+    },
+    {
+      "id": "AbrahamLincoln1930FullMovie"
+    },
+    {
+      "id": "JungleSiren"
+    },
+    {
+      "id": "In_Which_We_Serve"
+    },
+    {
+      "id": "SmallBackRoom_4980"
+    },
+    {
+      "id": "TheGentleSex1943"
+    },
+    {
+      "id": "GuerrillaGirl"
+    },
+    {
+      "id": "far-from-vietnam-1967"
+    }
+  ]
+}

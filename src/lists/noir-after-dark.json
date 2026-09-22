@@ -1,0 +1,48 @@
+{
+  "slug": "noir-after-dark",
+  "title": "Noir after dark",
+  "blurb": "Shadows, cigarettes and bad decisions. Film noir from the 40s and 50s.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Film Noir 1940s–1950s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "TheLimpingMan"
+    },
+    {
+      "id": "C-Man"
+    },
+    {
+      "id": "the-grapes-of-wrath-1940"
+    },
+    {
+      "id": "amazing_mr_x"
+    },
+    {
+      "id": "Hitch_Hiker"
+    },
+    {
+      "id": "killerskiss1955_201908"
+    },
+    {
+      "id": "the_green_glove"
+    },
+    {
+      "id": "Port_of_New_York"
+    },
+    {
+      "id": "WhisperingCity"
+    },
+    {
+      "id": "Jigsaw_"
+    },
+    {
+      "id": "naked-alibi-1954"
+    },
+    {
+      "id": "TooLateForTears1949"
+    }
+  ]
+}

@@ -67,7 +67,13 @@ test('unfinished lists films to go back to, most recent first, skipping finished
     done: { time: 4980, duration: 5000, at: 3 },
     barely: { time: 10, duration: 5000, at: 4 },
     older: { time: 900, duration: 5000, at: 1 },
+    trailer: { time: 60, duration: 150, at: 5 },
   };
-  assert.deepEqual(unfinished(saved).map(f => f.identifier), ['half', 'older']);
+  assert.deepEqual(unfinished(saved).map(f => f.identifier), ['half', 'older'], 'a trailer is never a film to go back to');
   assert.deepEqual(unfinished(saved, 1).map(f => f.identifier), ['half']);
+});
+
+test('forgetPosition drops one film and leaves the rest', async () => {
+  const { forgetPosition } = await import('./playback.js');
+  assert.deepEqual(forgetPosition({ a: { time: 1 }, b: { time: 2 } }, 'a'), { b: { time: 2 } });
 });

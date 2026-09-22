@@ -1,0 +1,48 @@
+{
+  "slug": "atomic-age",
+  "title": "Atomic age",
+  "blurb": "Science fiction from the 1950s. Saucers, mutations, and a lot of desert.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Sci-Fi 1950s–1950s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "teenagers_from_outerspace"
+    },
+    {
+      "id": "the.-fly.-1958"
+    },
+    {
+      "id": "when-worlds-collide"
+    },
+    {
+      "id": "UnknownWorld"
+    },
+    {
+      "id": "the.-blob.-1958"
+    },
+    {
+      "id": "Indestructible_Man_movie"
+    },
+    {
+      "id": "MesaOfLostWomen"
+    },
+    {
+      "id": "MenacefromOuterSpace"
+    },
+    {
+      "id": "BelaLugosiMeetsaBrooklynGorilla"
+    },
+    {
+      "id": "CrashoftheMoons"
+    },
+    {
+      "id": "day-the-earth-stood-still-1951"
+    },
+    {
+      "id": "curse-of-the-demon"
+    }
+  ]
+}

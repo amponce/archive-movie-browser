@@ -41,10 +41,12 @@ export function readPositions() {
   try { return JSON.parse(localStorage.getItem(POSITIONS_KEY) || '{}') || {}; } catch { return {}; }
 }
 
-// Films worth going back to: started, not finished, most recent first
+// Films worth going back to: started, not finished, long enough to be a film (a trailer or a
+// clip is never worth a card), most recent first
+const FILM_LENGTH = 20 * 60;
 export function unfinished(saved, limit = 6) {
   return Object.entries(saved)
-    .filter(([, p]) => resumeTime(p) > 0)
+    .filter(([, p]) => resumeTime(p) > 0 && p.duration >= FILM_LENGTH)
     .sort((a, b) => b[1].at - a[1].at)
     .slice(0, limit)
     .map(([identifier, p]) => ({ identifier, time: p.time, duration: p.duration }));
@@ -54,6 +56,12 @@ export function unfinished(saved, limit = 6) {
 export function resumeTime(saved) {
   if (!saved || saved.time < 30 || saved.time > saved.duration - 60) return 0;
   return saved.time;
+}
+
+export function forgetPosition(saved, identifier) {
+  const next = { ...saved };
+  delete next[identifier];
+  return next;
 }
 
 export function rememberPosition(saved, identifier, { time, duration }, now = Date.now()) {

@@ -94,8 +94,8 @@ function NowPlaying({ channel, tuning }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3 border-b border-line">
       <div className="min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="eyebrow shrink-0">{channel.number}</span>
-        <span className="font-medium text-bone truncate">{film.title}{film.year ? <span className="text-dim font-normal"> {film.year}</span> : null}</span>
+        <span className="font-display font-black text-xl text-signal tabular-nums shrink-0">{channel.number}</span>
+        <span className="display text-lg text-bone truncate">{film.title}{film.year ? <span className="text-dim font-sans font-normal normal-case text-sm"> {film.year}</span> : null}</span>
         {slot && <span className="label">{clock(slot.startedAt)} – {clock(slot.endsAt)}{!fromStart && start?.offset ? ` · joined ${mins(start.offset)} in` : ''}</span>}
       </div>
       <div className="flex items-center gap-4">

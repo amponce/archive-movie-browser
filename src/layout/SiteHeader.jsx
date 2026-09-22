@@ -6,7 +6,6 @@ import { spin } from '../services/reel';
 const NAV = [
   ['/', 'Tonight'],
   ['/tv', 'TV'],
-  ['/browse?genre=Horror', 'Horror'],
   ['/browse', 'Browse'],
   ['/lists', 'Lists'],
   ['/mcp', 'MCP'],

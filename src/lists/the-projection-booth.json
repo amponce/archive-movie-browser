@@ -1,0 +1,48 @@
+{
+  "slug": "the-projection-booth",
+  "title": "The projection booth",
+  "blurb": "Documentaries and the real world on film.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Documentary 1920s–1990s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "my-metier"
+    },
+    {
+      "id": "the-great-white-silence-1924-colorized-movie-720p-hd"
+    },
+    {
+      "id": "DeBrug"
+    },
+    {
+      "id": "chang-a-drama-of-the-wilderness_1927"
+    },
+    {
+      "id": "nanookOfTheNorth1922"
+    },
+    {
+      "id": "the_quiet_one"
+    },
+    {
+      "id": "f-for-fake"
+    },
+    {
+      "id": "ToSeeSuchFun190"
+    },
+    {
+      "id": "the-persian-wars-1997"
+    },
+    {
+      "id": "the-great-chase_202108"
+    },
+    {
+      "id": "Attack-TheBattleforNewBritain"
+    },
+    {
+      "id": "he-walked-by-night-1948_202405"
+    }
+  ]
+}

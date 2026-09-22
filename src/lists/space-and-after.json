@@ -1,0 +1,48 @@
+{
+  "slug": "space-and-after",
+  "title": "Space and after",
+  "blurb": "Science fiction from the 60s onward. Cheaper, weirder, occasionally brilliant.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Sci-Fi 1960s–1990s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "ROBOCOPCC"
+    },
+    {
+      "id": "astralfactorrr"
+    },
+    {
+      "id": "KingdomOfSpiders"
+    },
+    {
+      "id": "The_Wasp_Women"
+    },
+    {
+      "id": "CozzillaRestoredGenoCuddy"
+    },
+    {
+      "id": "village-of-the-damned-1960-colorized-movie-576p-sd"
+    },
+    {
+      "id": "y-2-mate.is-felix-the-cat-the-movie-1988-x-bgwf-av-gqky-1080p-1640523499322"
+    },
+    {
+      "id": "the-leech-woman"
+    },
+    {
+      "id": "EvilBrainFromOuterSpace"
+    },
+    {
+      "id": "LuciferComplex"
+    },
+    {
+      "id": "gammera"
+    },
+    {
+      "id": "angel-cop-episode-6-1080p-eng-sub-best-quality"
+    }
+  ]
+}

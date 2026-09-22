@@ -1,0 +1,54 @@
+{
+  "slug": "horror-all-night",
+  "title": "Horror all night",
+  "blurb": "Whatever the collections have that goes bump. Different every week.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Horror 1920s–1990s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "the.-red.-house.-1947"
+    },
+    {
+      "id": "cry-of-the-banshee-1970"
+    },
+    {
+      "id": "PhantomKiller_201808"
+    },
+    {
+      "id": "a.-page.-of.-madness.-1926"
+    },
+    {
+      "id": "videoplayback_20180203"
+    },
+    {
+      "id": "theManster1959OriginaltonMitDeutschenUntertiteln2.Versuch"
+    },
+    {
+      "id": "TheDevilsHand1962"
+    },
+    {
+      "id": "CurseOfTheAztecMummylaMaldicionDeLaMomiaAzteca1957-English"
+    },
+    {
+      "id": "my-movie_20200626"
+    },
+    {
+      "id": "bad-taste-1987-full-movie"
+    },
+    {
+      "id": "flatliners-1990"
+    },
+    {
+      "id": "TheGolem_893"
+    },
+    {
+      "id": "the.-man.-with.-nine.-lives.-1940"
+    },
+    {
+      "id": "note57"
+    }
+  ]
+}

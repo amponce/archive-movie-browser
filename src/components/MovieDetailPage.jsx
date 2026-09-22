@@ -19,6 +19,7 @@ import { Sprockets, fieldFor } from '../ui/FilmCard';
 import TitleCover from './TitleCover';
 import Button from '../ui/Button';
 import useRelated from '../hooks/useRelated';
+import { pickPlayableFile } from '../services/playback';
 import FilmPlayer from './FilmPlayer';
 import { identifiedAs } from '../services/posterIndex';
 import SearchBox from './SearchBox';
@@ -235,6 +236,22 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
 
   const { films: relatedMovies, genre: relatedGenre } = useRelated(movie, allMovies, (tmdbDetails?.genres || []).map(g => g.name));
 
+  // How long the upload itself runs, from its file: the honest number. TMDB's runtime is the
+  // film's, and an upload can be a trailer or a clip of it.
+  const [uploadMinutes, setUploadMinutes] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    setUploadMinutes(null);
+    if (!movie) return undefined;
+    if (movie.runtimeMinutes > 0) { setUploadMinutes(movie.runtimeMinutes); return undefined; }
+    archiveService.getMetadata(movie.identifier)
+      .then(data => { const file = pickPlayableFile(data.files); if (!cancelled && file?.length) setUploadMinutes(Number(file.length) / 60); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [movie?.identifier]);
+  const filmMinutes = tmdbDetails?.runtime || null;
+  const isExcerpt = uploadMinutes && filmMinutes && uploadMinutes < filmMinutes * 0.5;
+
   if (!movie) return null;
 
   const posterUrl = tmdbData?.posterPath
@@ -366,10 +383,11 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
                   <p className="font-display font-extrabold text-2xl mt-1 tabular-nums flex items-center gap-1.5"><Star className="w-4 h-4 fill-signal text-signal" />{tmdbDetails.vote_average.toFixed(1)}</p>
                 </div>
               )}
-              {(movie.runtimeMinutes > 0 || tmdbDetails?.runtime > 0) && (
-                <div className="panel p-3">
-                  <p className="label">Runtime</p>
-                  <p className="font-display font-extrabold text-2xl mt-1 tabular-nums flex items-center gap-1.5"><Clock className="w-4 h-4 text-dim" />{tmdbDetails?.runtime || Math.round(movie.runtimeMinutes)} min</p>
+              {(uploadMinutes || filmMinutes) && (
+                <div className={`panel p-3 ${isExcerpt ? 'border-signal' : ''}`}>
+                  <p className="label">{isExcerpt ? 'This upload' : 'Runtime'}</p>
+                  <p className="font-display font-extrabold text-2xl mt-1 tabular-nums flex items-center gap-1.5"><Clock className="w-4 h-4 text-dim" />{Math.round(uploadMinutes || filmMinutes)} min</p>
+                  {isExcerpt && <p className="text-xs text-muted mt-1">A trailer or a clip. The film runs {filmMinutes} min.</p>}
                 </div>
               )}
             </div>

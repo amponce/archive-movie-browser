@@ -1,0 +1,48 @@
+{
+  "slug": "universal-years",
+  "title": "The Universal years",
+  "blurb": "Horror and mystery from the 1930s and 40s, when the monsters wore suits.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Horror 1930s–1940s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "Scared_to_Death"
+    },
+    {
+      "id": "la-mascara-de-fuego-1941-vose-sellada"
+    },
+    {
+      "id": "awn44788521"
+    },
+    {
+      "id": "dracula-colorized"
+    },
+    {
+      "id": "shock"
+    },
+    {
+      "id": "the_woman_in_green_1945"
+    },
+    {
+      "id": "hangover-square-1945-restored-movie-720p-hd"
+    },
+    {
+      "id": "fear-in-the-night-deforest-kelley"
+    },
+    {
+      "id": "bride-of-frankenstein-1935-restored-movie-720p-hd"
+    },
+    {
+      "id": "back_dragons_ipod"
+    },
+    {
+      "id": "WorldGoneMad"
+    },
+    {
+      "id": "the.-frozen.-ghost.-1945"
+    }
+  ]
+}

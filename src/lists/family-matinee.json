@@ -1,0 +1,48 @@
+{
+  "slug": "family-matinee",
+  "title": "Family matinee",
+  "blurb": "Animation and family films the whole room can watch.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Animation 1920s–1990s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "dtv-monster-hits-2018-hd-rebuild"
+    },
+    {
+      "id": "KingofJazz1930"
+    },
+    {
+      "id": "fiddlesticks_1930"
+    },
+    {
+      "id": "cuckoo-murder-case_1930"
+    },
+    {
+      "id": "dingdogdaddy1942looneytunesclassiccartoon"
+    },
+    {
+      "id": "1948ScreenSongBaseBrawl"
+    },
+    {
+      "id": "SantaAndTheThreeBears1970"
+    },
+    {
+      "id": "glass-harmonica-russian-animation"
+    },
+    {
+      "id": "haveyougotanycastles1938merriemelodieshdcc"
+    },
+    {
+      "id": "viking-women-and-the-sea-serpent-1957-full-movie-public-domain"
+    },
+    {
+      "id": "the.-mighty.-kong.-1998.720p"
+    },
+    {
+      "id": "Tarzoon1975"
+    }
+  ]
+}

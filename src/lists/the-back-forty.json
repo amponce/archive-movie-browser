@@ -1,0 +1,54 @@
+{
+  "slug": "the-back-forty",
+  "title": "The back forty",
+  "blurb": "Westerns, round the clock. Republic, Monogram and the occasional major.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Western 1930s–1970s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "bells_of_san_angelo"
+    },
+    {
+      "id": "GunJustice"
+    },
+    {
+      "id": "BuckskinFrontier1943"
+    },
+    {
+      "id": "GonewiththeWest"
+    },
+    {
+      "id": "saddle_mountain_roundup_mp4"
+    },
+    {
+      "id": "loaded_pistols"
+    },
+    {
+      "id": "texas_to_bataan"
+    },
+    {
+      "id": "the_silver_trail"
+    },
+    {
+      "id": "cavalcade_of_the_west"
+    },
+    {
+      "id": "a-colt-is-my-passport"
+    },
+    {
+      "id": "six_gun_trail"
+    },
+    {
+      "id": "UtahTrail"
+    },
+    {
+      "id": "ZaneGreysToTheLastMan1933-RandolphScott"
+    },
+    {
+      "id": "BuckJonesInBorderLaw1931"
+    }
+  ]
+}

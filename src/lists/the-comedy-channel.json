@@ -1,0 +1,48 @@
+{
+  "slug": "the-comedy-channel",
+  "title": "The comedy channel",
+  "blurb": "Screwball, slapstick and everything that still gets a laugh.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Comedy 1930s–1960s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "Teaserama"
+    },
+    {
+      "id": "JesseJamesMeetsFrankensteinsDaughter1966"
+    },
+    {
+      "id": "SomethingtoSingAbout"
+    },
+    {
+      "id": "TheTerrorOfTinyTown1938_802"
+    },
+    {
+      "id": "royal_wedding"
+    },
+    {
+      "id": "The.Ghost.Walks"
+    },
+    {
+      "id": "daisies_202103"
+    },
+    {
+      "id": "candy1968hdchristianmarquandmoviehdmpgun.com"
+    },
+    {
+      "id": "bride_for_henry_ipod"
+    },
+    {
+      "id": "my_love_for_yours_ipod"
+    },
+    {
+      "id": "Pygmalion"
+    },
+    {
+      "id": "TheregoestheBride"
+    }
+  ]
+}

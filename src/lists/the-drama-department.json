@@ -1,0 +1,48 @@
+{
+  "slug": "the-drama-department",
+  "title": "The drama department",
+  "blurb": "The serious ones. Courtrooms, families, second acts.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Drama 1930s–1970s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "harrietcraig1950usafeaturingjoancrawfordwendellcoreyfilmnoirfullmovie."
+    },
+    {
+      "id": "transatlantic_tunnel"
+    },
+    {
+      "id": "housebytheriver1950_202002"
+    },
+    {
+      "id": "convicts_code"
+    },
+    {
+      "id": "little_men"
+    },
+    {
+      "id": "GamblingwithSouls"
+    },
+    {
+      "id": "Animal_Kingdom"
+    },
+    {
+      "id": "the.-curse.-of.-the.-mummys.-tomb.-1964"
+    },
+    {
+      "id": "Rembrandt"
+    },
+    {
+      "id": "scenes.-from.-a.-marriage.-1974"
+    },
+    {
+      "id": "midnight_phantom_1935"
+    },
+    {
+      "id": "HillNumberOne"
+    }
+  ]
+}

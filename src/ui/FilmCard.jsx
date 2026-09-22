@@ -38,10 +38,16 @@ export { fieldFor };
 // film: { id, title, year, genre, poster, progress? }   poster is a full image URL or null;
 // progress (0..1) draws a line for how far along a film is
 // href: where the card goes. children: an optional line under the year (adopters, note)
-export default function FilmCard({ film, href, label, children }) {
+export default function FilmCard({ film, href, label, onRemove, children }) {
   const genre = film.genre && film.genre !== 'Uncategorized' ? film.genre : null;
 
   return (
+    <div className="relative min-w-0">
+    {onRemove && (
+      <button type="button" onClick={() => onRemove(film.id)} aria-label={`Remove ${film.title}`} className="absolute top-2 right-3 z-10 w-8 h-8 rounded-full bg-ink/80 text-bone flex items-center justify-center hover:bg-signal hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
+    )}
     <a href={href} className="group block min-w-0 focus-visible:outline-none">
       <span
         className="film-frame group-hover:border-signal group-focus-visible:border-signal"
@@ -66,5 +72,6 @@ export default function FilmCard({ film, href, label, children }) {
       {film.year && <span className="block mt-0.5 font-mono text-[11px] text-dim tabular-nums">{film.year}</span>}
       {children}
     </a>
+    </div>
   );
 }

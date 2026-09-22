@@ -35,6 +35,20 @@ Every contributor's behaviour survived the redesign: `aria-pressed` on the toggl
 
 ### Added
 
+- Sixteen generated stations, for twenty-five channels. Each is a rule (a genre, a span of decades) picked from the index by `npm run stations`, posters and English only, re-picked every Monday.
+- The film page shows how long the upload itself runs, and says when it is a trailer or a clip of the film.
+- Continue watching: each film can be removed, trailers never qualify, and one or two films show as a line instead of a grid.
+
+### Fixed
+
+- Spin the reel on the browse page opens the film (the page now watches the hash).
+- The header's search on every page is the type-ahead again.
+- The TV page: channels beside the screen, ending where it ends; one now-playing line; the guide under a rule.
+- Browse is one link in the nav; it already opens on Horror.
+- New Year's Evil is off the 80s action channel.
+
+### Added
+
 - Curated lists at `/lists`: hand-picked films with a line on each, as pages anyone can link to. A list is one JSON file in `src/lists/`, so adding one is a pull request with no code (see the README there). Three to start: noir under ninety minutes, Buster Keaton in an evening, drive-in double features.
 - The poster index grew from 643 to 6,698 uploads and now follows what the app shows (the top of every genre pill and decade, not just each collection): the popular views went from 51% to 100% indexed, so almost every card gets its poster with no TMDB request. The film page says when the index identified an upload as a different film.
 - Our own cookieless usage counts (`/api/event`, stored as counts in Redis) with a private stats page for the maintainer. See Privacy in the README.

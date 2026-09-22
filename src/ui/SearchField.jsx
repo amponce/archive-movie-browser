@@ -1,13 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
+import SearchBox from '../components/SearchBox';
 
-// The plain search box for pages that are not the browser: submits to /browse?q=
-export default function SearchField({ placeholder = 'Search films', className = '' }) {
+// The header's search on pages that are not the browser: the same type-ahead (genres,
+// collections, recent searches, tags, live suggestions from Archive.org), with every pick
+// taking you to the browse page or straight to the film.
+const go = (query) => { window.location.href = `/browse?${query}`; };
+
+export default function SearchField() {
+  const [value, setValue] = useState('');
   return (
-    <form action="/browse" method="get" className={className}>
-      <label className="field">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" className="text-dim shrink-0"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
-        <input name="q" type="search" placeholder={placeholder} aria-label="Search films" />
-      </label>
-    </form>
+    <SearchBox
+      value={value}
+      onChange={setValue}
+      onSearch={(text) => text.trim() && go(`q=${encodeURIComponent(text.trim())}`)}
+      onOpenFilm={(film) => { window.location.href = `/browse#${encodeURIComponent(film.identifier)}`; }}
+      onPickGenre={(genre) => go(`genre=${encodeURIComponent(genre)}`)}
+      onPickCollection={(id) => go(`collection=${encodeURIComponent(id)}`)}
+      movies={[]}
+    />
   );
 }

@@ -49,28 +49,23 @@ export default function ArchiveMovieBrowser() {
     try { localStorage.setItem(VIEW_MODE_KEY, mode); } catch { /* private mode */ }
   };
 
-  // Allow a shared #identifier URL to open an Archive.org item directly.
+  // A #identifier in the URL opens that film: on load (a shared link), and whenever the hash
+  // changes while the page is open (Spin the reel, a link from the header's search).
   useEffect(() => {
-    const identifier = window.location.hash.slice(1);
-    if (!identifier) return;
-
     let cancelled = false;
-    let decodedIdentifier;
-    try {
-      decodedIdentifier = decodeURIComponent(identifier);
-    } catch {
-      decodedIdentifier = identifier;
-    }
-
-    archiveService.getMovieByIdentifier(decodedIdentifier)
-      .then((movie) => {
-        if (!cancelled) setSelectedMovie(movie);
-      })
-      .catch((err) => {
-        if (!cancelled) console.error('Failed to open movie from URL hash:', err);
-      });
-
-    return () => { cancelled = true; };
+    const openFromHash = () => {
+      const identifier = window.location.hash.slice(1);
+      if (!identifier) return;
+      let decoded;
+      try { decoded = decodeURIComponent(identifier); } catch { decoded = identifier; }
+      if (selectedRef.current?.identifier === decoded) return;
+      archiveService.getMovieByIdentifier(decoded)
+        .then((movie) => { if (!cancelled) setSelectedMovie(movie); })
+        .catch((err) => { if (!cancelled) console.error('Failed to open movie from URL hash:', err); });
+    };
+    openFromHash();
+    window.addEventListener('hashchange', openFromHash);
+    return () => { cancelled = true; window.removeEventListener('hashchange', openFromHash); };
   }, []);
 
   // The film page closes through history.back(), and that popstate also restores the filters
