@@ -1,8 +1,10 @@
 // The landing page as a programme: what to feature and which films fill each row, decided
 // from the poster index alone so the page needs no request before someone opens a film.
-// Takes the index's `films` map: identifier -> { i, t, y, p, v, c } or { n: 1, c }.
+// Takes the index's `films` map: identifier -> { i, t, y, p, v, k, c } or { n: 1, c }.
 
 const usable = ([, entry]) => entry.i && entry.p && entry.c >= 0.8;
+// Well regarded: TMDB's average, and at least 50 people behind it, so three votes cannot rate a film 9
+const rated = (entry, min) => (entry.v || 0) >= min && (entry.k || 0) >= 50;
 const film = ([id, entry]) => ({ id, entry });
 
 function seededShuffle(items, seed) {
@@ -27,7 +29,7 @@ export function featuredFor(index, now = new Date(), picks = []) {
     const pick = showable[dayOf(now) % showable.length];
     return { id: pick.id, entry: index[pick.id], why: pick.why };
   }
-  const candidates = Object.entries(index).filter(usable).filter(([, e]) => (e.v || 0) >= 7).map(film);
+  const candidates = Object.entries(index).filter(usable).filter(([, e]) => rated(e, 7)).map(film);
   if (!candidates.length) return null;
   return seededShuffle(candidates, dayOf(now))[0];
 }
@@ -49,12 +51,10 @@ export function rowFor(index, { decade, limit = 12 } = {}) {
 }
 
 // Today's shelf: one decade a day, six well-regarded films from it in a fixed daily order.
-// ponytail: 'well-regarded' is TMDB's average with no vote-count floor, so a film with three
-// votes can rate 9; store vote counts in the index and require, say, 50.
 // A decade with too few films to fill a shelf never comes up, and nothing after the 1970s: the
 // front desk is for films old enough to have been forgotten.
 export function shelfFor(index, now = new Date(), limit = 6, lastDecade = 1970) {
-  const usableFilms = Object.entries(index).filter(usable).filter(([, e]) => (e.v || 0) >= 6.5).map(film);
+  const usableFilms = Object.entries(index).filter(usable).filter(([, e]) => rated(e, 6.5)).map(film);
   const byDecade = new Map();
   for (const f of usableFilms) {
     const decade = Math.floor((f.entry.y || 0) / 10) * 10;
@@ -69,7 +69,7 @@ export function shelfFor(index, now = new Date(), limit = 6, lastDecade = 1970) 
 // The tonight question: feature films you can finish in an evening, 40 to 90 minutes, well
 // regarded, a different dozen each day. Needs `l` (length) from the backfill.
 export function shortRow(index, now = new Date(), limit = 12) {
-  const fits = Object.entries(index).filter(usable).filter(([, e]) => e.l >= 40 && e.l <= 90 && (e.v || 0) >= 6.5).map(film);
+  const fits = Object.entries(index).filter(usable).filter(([, e]) => e.l >= 40 && e.l <= 90 && rated(e, 6.5)).map(film);
   return seededShuffle(fits, dayOf(now) + 11).slice(0, limit);
 }
 

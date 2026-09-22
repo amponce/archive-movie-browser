@@ -7,6 +7,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ### Changed
 
 - Reuse successful Archive.org search responses for five minutes, keeping at most 100 in memory, so returning to a filter avoids another network request ([#217](https://github.com/amponce/archive-movie-browser/pull/217)).
+- The front page's shelf, Under 90 minutes row and hero fallback now need a film's TMDB rating to come from at least 50 people. The index stores the vote count as `k`.
 
 ### Added
 
