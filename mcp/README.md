@@ -17,11 +17,11 @@ Every film comes back with a `watchUrl` that plays on the site, a `sourceUrl` (t
 
 ## Try it without installing anything
 
-The same tools are hosted at **`https://archive-movie-browser.vercel.app/api/mcp`** (Streamable HTTP, no key, read-only).
+The same tools are hosted at **`https://www.orphanedfilms.com/api/mcp`** (Streamable HTTP, no key, read-only).
 
-- **Claude Code:** `claude mcp add --transport http archive-movies https://archive-movie-browser.vercel.app/api/mcp`
+- **Claude Code:** `claude mcp add --transport http archive-movies https://www.orphanedfilms.com/api/mcp`
 - **Claude (web and desktop):** Settings > Connectors > Add custom connector, and paste the URL.
-- **Cursor and others:** add `{ "mcpServers": { "archive-movies": { "url": "https://archive-movie-browser.vercel.app/api/mcp" } } }` to the MCP settings.
+- **Cursor and others:** add `{ "mcpServers": { "archive-movies": { "url": "https://www.orphanedfilms.com/api/mcp" } } }` to the MCP settings.
 - **By hand:** `npx @modelcontextprotocol/inspector`, choose Streamable HTTP, paste the URL.
 
 It is shared and rate limited (40 requests a minute per address, results cached for 15 minutes). For heavy use, run your own copy:

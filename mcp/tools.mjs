@@ -9,14 +9,14 @@ const index = JSON.parse(readFileSync(new URL('../public/poster-index.json', imp
 setPosterIndex(index.films);
 
 export const SORTS = ['downloads', 'avg_rating', 'date desc', 'date asc', 'publicdate desc', 'title asc'];
-const SITE = 'https://archive-movie-browser.vercel.app';
+const SITE = 'https://www.orphanedfilms.com';
 
 // What a client gets for a film. Two links, ours first: watchUrl plays the film with this
 // project's player, real title and poster; sourceUrl is the original Archive.org page.
 export async function describe(movie) {
   const film = await indexedMatch(movie.identifier); // undefined = not indexed, null = decided "no match"
   return {
-    watchUrl: `${SITE}/#${movie.identifier}`,
+    watchUrl: `${SITE}/browse#${movie.identifier}`,
     sourceUrl: movie.archiveUrl,
     title: film?.title || movie.title,
     uploadTitle: movie.title,
@@ -59,6 +59,26 @@ export const listCollections = () => ({
   sorts: SORTS,
   decades: DECADES,
 });
+
+// Television: what every channel is showing right now, and what is next. Same schedule the
+// site and the M3U use, from ../api/_tv.js.
+export async function whatsOn({ channel } = {}) {
+  const { schedule } = await import('../api/_tv.js');
+  const { channels } = schedule({ hours: 3 });
+  const wanted = channel ? channels.filter(c => c.number === Number(channel) || c.id === String(channel)) : channels;
+  if (!wanted.length) return { channels: [], note: `No channel ${channel}. Channels are numbered 1 to ${channels.length}.` };
+  return {
+    guideUrl: `${SITE}/tv`,
+    playlistUrl: `${SITE}/api/tv/playlist.m3u`,
+    channels: wanted.map(c => ({
+      number: c.number,
+      name: c.name,
+      tuneInUrl: `${SITE}/tv#${c.id}`,
+      now: c.now && { title: c.now.film.title, year: c.now.film.year, minutesIn: Math.floor(c.now.offset / 60), endsAt: new Date(c.now.endsAt).toISOString(), watchUrl: `${SITE}/browse#${encodeURIComponent(c.now.film.id)}` },
+      next: c.programmes.slice(1, 3).map(p => ({ title: p.title, year: p.year, startsAt: new Date(p.startsAt).toISOString() })),
+    })),
+  };
+}
 
 export { DECADES };
 export const COLLECTION_IDS = [ALL_FILMS, ...VIDEO_CATEGORIES.map(c => c.id)]; // 'all' = every film collection

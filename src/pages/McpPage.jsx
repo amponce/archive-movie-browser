@@ -3,7 +3,7 @@ import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 
 const REPO = 'https://github.com/amponce/archive-movie-browser';
-const ENDPOINT = 'https://archive-movie-browser.vercel.app/api/mcp';
+const ENDPOINT = 'https://www.orphanedfilms.com/api/mcp';
 
 const QUESTIONS = [
   '“Find me a film noir from the 1940s that runs under ninety minutes.”',

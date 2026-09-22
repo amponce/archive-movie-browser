@@ -16,7 +16,7 @@ async function connect(t) {
 test('the server lists its four tools', async t => {
   const client = await connect(t);
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map(tool => tool.name).sort(), ['browse_films', 'get_film', 'list_collections', 'search_films']);
+  assert.deepEqual(tools.map(tool => tool.name).sort(), ['browse_films', 'get_film', 'list_collections', 'search_films', 'whats_on']);
   assert.ok(tools.every(tool => tool.description && tool.inputSchema));
 });
 
@@ -40,7 +40,7 @@ test('an indexed upload is described as the real film, with a poster and links',
   assert.equal(film.title, 'Cops');
   assert.equal(film.year, 1922);
   assert.match(film.posterUrl, /^https:\/\/image\.tmdb\.org\/t\/p\/w500\//);
-  assert.equal(film.watchUrl, 'https://archive-movie-browser.vercel.app/#Cops1922');
+  assert.equal(film.watchUrl, 'https://www.orphanedfilms.com/browse#Cops1922');
   assert.equal(Object.keys(film)[0], 'watchUrl', 'the link to give people comes first');
   assert.deepEqual(Object.keys(film).slice(0, 2), ['watchUrl', 'sourceUrl'], 'ours first, then the original Archive.org page');
   assert.equal(film.sourceUrl, 'https://archive.org/details/Cops1922');
@@ -51,4 +51,15 @@ test('live: search finds Night of the Living Dead', { skip: !process.env.LIVE },
   const result = await client.callTool({ name: 'search_films', arguments: { query: 'night living dead', limit: 3 } });
   assert.ok(!result.isError, result.content[0].text);
   assert.match(JSON.parse(result.content[0].text).films[0].title, /night of the living dead/i);
+});
+
+test('whats_on answers for every channel and for one, from the committed lineups', async () => {
+  const { whatsOn } = await import('./tools.mjs');
+  const all = await whatsOn();
+  assert.ok(all.channels.length >= 25, `${all.channels.length} channels`);
+  assert.ok(all.channels.every(c => c.now && c.now.title && c.tuneInUrl.includes('/tv#')));
+  const one = await whatsOn({ channel: 1 });
+  assert.equal(one.channels.length, 1);
+  assert.equal(one.channels[0].number, 1);
+  assert.equal((await whatsOn({ channel: 999 })).channels.length, 0);
 });

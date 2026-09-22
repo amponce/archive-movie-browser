@@ -24,7 +24,7 @@ test('an MCP client can list and call the tools over HTTP', async t => {
   await client.connect(new StreamableHTTPClientTransport(new URL(url)));
   t.after(() => client.close());
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map(tool => tool.name).sort(), ['browse_films', 'get_film', 'list_collections', 'search_films']);
+  assert.deepEqual(tools.map(tool => tool.name).sort(), ['browse_films', 'get_film', 'list_collections', 'search_films', 'whats_on']);
   const result = await client.callTool({ name: 'list_collections', arguments: {} });
   assert.ok(JSON.parse(result.content[0].text).decades.includes(1980));
 });

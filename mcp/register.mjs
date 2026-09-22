@@ -2,7 +2,7 @@
 // hosted HTTP endpoint (../api/mcp.js), so both always offer exactly the same thing.
 import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
-import { searchFilms, browseFilms, getFilm, listCollections, SORTS, COLLECTION_IDS, DECADES } from './tools.mjs';
+import { searchFilms, browseFilms, getFilm, listCollections, whatsOn, SORTS, COLLECTION_IDS, DECADES } from './tools.mjs';
 import { STANDARD_GENRES } from '../src/services/archive.js';
 
 // wrap(name, run) lets the hosted endpoint put a cache in front of the tools
@@ -40,6 +40,11 @@ export function createServer({ wrap = (name, run) => run } = {}) {
     description: 'Details for one Archive.org item by its identifier (the last part of archive.org/details/<identifier>): description, runtime, genres and the matched film if known. Lead with watchUrl (plays it on this site) and also give sourceUrl (the original Archive.org page); embedUrl is for an iframe.',
     inputSchema: z.object({ identifier: z.string().regex(/^[A-Za-z0-9._-]{1,200}$/, 'An Archive.org identifier: letters, digits, dot, dash, underscore') }),
   }, getFilm);
+
+  tool('whats_on', {
+    description: 'Television: what every channel on this site is showing right now, how far in it is, and what is next. Channels run their lineups in order from a fixed moment, so this is the same for everyone. Give tuneInUrl to watch the channel live, watchUrl to watch the current film from the start. The site also publishes the schedule as an M3U playlist and an XMLTV guide for IPTV players.',
+    inputSchema: z.object({ channel: z.union([z.number().int().min(1), z.string().max(80)]).optional().describe('One channel, by number or id. Leave out for all of them.') }),
+  }, whatsOn);
 
   tool('list_collections', {
     description: 'The collections, genres and sort orders the other tools accept.',

@@ -3,7 +3,7 @@
   "installCommand": "npm ci && npm ci --prefix mcp",
   "functions": {
     "api/mcp.js": {
-      "includeFiles": "public/poster-index.json",
+      "includeFiles": "{public/poster-index.json,public/tv-lineups.json,src/lists/*.json}",
       "maxDuration": 30
     },
     "api/tv.js": {
