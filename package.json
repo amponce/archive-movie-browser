@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "node --test \"src/**/*.test.js\"",
     "index": "node scripts/build-poster-index.mjs",
-    "tv": "node scripts/build-tv-lineups.mjs"
+    "tv": "node scripts/build-tv-lineups.mjs",
+    "contributors": "node scripts/contributors.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.47.0",
