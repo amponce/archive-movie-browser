@@ -1,98 +1,74 @@
-import React from 'react';
-import { X, Key, Check, AlertCircle } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { X, Image as ImageIcon, Check, AlertCircle } from 'lucide-react';
 
+// "About the posters": where the artwork comes from and whether TMDB is on. A native <dialog>
+// opened with showModal(), so focus moves in, Tab stays inside, Escape closes and the page
+// behind is inert, the same way the film page works.
 export default function SettingsModal({ isOpen, onClose, currentApiKey }) {
-  if (!isOpen) return null;
-
+  const dialogRef = useRef(null);
   const isEnabled = !!currentApiKey;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70"
-        onClick={onClose}
-      />
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (isOpen && !dialog.open) dialog.showModal();
+    if (!isOpen && dialog.open) dialog.close();
+  }, [isOpen]);
 
-      {/* Modal */}
-      <div className="relative bg-gray-800 rounded-xl shadow-2xl w-full max-w-md">
-        {/* Header */}
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="about-posters-title"
+      onClose={onClose}
+      onClick={(event) => { if (event.target === dialogRef.current) onClose(); }} // the backdrop
+      className="bg-transparent p-4 backdrop:bg-black/70 max-w-md w-full"
+    >
+      <div className="bg-gray-800 rounded-xl shadow-2xl text-gray-200">
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <h2 className="text-lg font-semibold text-white">Settings</h2>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-gray-700 rounded-lg transition-colors"
-          >
+          <h2 id="about-posters-title" className="text-lg font-semibold text-white">About the posters</h2>
+          <button onClick={onClose} aria-label="Close" className="p-1 hover:bg-gray-700 rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-4 space-y-4">
-          {/* TMDB API Status */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
-              <Key className="w-4 h-4" />
-              TMDB API Status
-            </label>
+        <div className="p-4 space-y-4 text-sm">
+          <p className="text-gray-300">
+            Archive.org uploads rarely come with artwork, and their titles can be anything. This site works out which
+            film each upload is and shows that film's poster, with TMDB's cast and ratings on the film page.
+          </p>
 
-            <div className={`flex items-center gap-2 p-3 rounded-lg ${
-              isEnabled ? 'bg-green-900/30 border border-green-600/50' : 'bg-red-900/30 border border-red-600/50'
-            }`}>
-              {isEnabled ? (
-                <>
-                  <Check className="w-5 h-5 text-green-400" />
-                  <div>
-                    <p className="text-green-400 font-medium">TMDB Enabled</p>
-                    <p className="text-xs text-gray-400">High-quality posters and metadata are active</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="w-5 h-5 text-red-400" />
-                  <div>
-                    <p className="text-red-400 font-medium">TMDB Disabled</p>
-                    <p className="text-xs text-gray-400">Add VITE_TMDB_API_KEY to your .env file</p>
-                  </div>
-                </>
-              )}
+          <div className={`flex items-start gap-3 p-3 rounded-lg ${isEnabled ? 'bg-green-900/30 border border-green-600/50' : 'bg-gray-700/60 border border-gray-600'}`}>
+            {isEnabled ? <Check className="w-5 h-5 text-green-400 shrink-0" /> : <AlertCircle className="w-5 h-5 text-gray-400 shrink-0" />}
+            <div>
+              <p className={`font-medium ${isEnabled ? 'text-green-400' : 'text-gray-200'}`}>{isEnabled ? 'TMDB is on' : 'TMDB is off'}</p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {isEnabled
+                  ? 'Films the index does not know are matched live, and film pages show cast, ratings and details.'
+                  : 'Posters come from the built-in index only, and film pages show what Archive.org knows. Everything still plays.'}
+              </p>
             </div>
           </div>
 
-          {/* Info box */}
           <div className="bg-gray-750 rounded-lg p-3 text-xs text-gray-400">
-            <p className="font-medium text-gray-300 mb-1">What TMDB provides:</p>
+            <p className="font-medium text-gray-300 mb-1 flex items-center gap-1.5"><ImageIcon className="w-4 h-4" /> Where a poster comes from</p>
             <ul className="list-disc list-inside space-y-0.5">
-              <li>High-resolution movie posters</li>
-              <li>Accurate movie ratings</li>
-              <li>Better genre categorization</li>
-              <li>Movie overview descriptions</li>
+              <li>The poster index: which film an upload is, decided once and shipped with the site</li>
+              <li>A live TMDB match, when TMDB is on and the index has no answer</li>
+              <li>A generated cover when neither knows the film</li>
             </ul>
+            <p className="mt-2">
+              Wrong poster? Every film page links to its Archive.org item; corrections are a one-line change in the{' '}
+              <a href="https://github.com/amponce/archive-movie-browser#poster-index" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:underline">poster index</a>.
+            </p>
           </div>
-
-          {!isEnabled && (
-            <div className="bg-gray-700 rounded-lg p-3 text-xs">
-              <p className="text-gray-300 font-medium mb-2">To enable TMDB:</p>
-              <ol className="list-decimal list-inside space-y-1 text-gray-400">
-                <li>Get a free API key at themoviedb.org/settings/api</li>
-                <li>Create a .env file in the project root</li>
-                <li>Add: VITE_TMDB_API_KEY=your_key_here</li>
-                <li>Restart the dev server</li>
-              </ol>
-            </div>
-          )}
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-end p-4 border-t border-gray-700">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-lg text-sm font-medium"
-          >
+          <button onClick={onClose} className="px-4 py-2 bg-yellow-500 hover:bg-yellow-400 text-gray-900 rounded-lg text-sm font-medium">
             Close
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

@@ -347,8 +347,8 @@ export default function ArchiveMovieBrowser() {
                     ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
                     : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
                 }`}
-                title={tmdbApiKey ? 'TMDB enabled - Click to configure' : 'Configure TMDB API'}
-                aria-label="Configure TMDB API"
+                title="About the posters"
+                aria-label="About the posters"
               >
                 <Settings className="w-5 h-5" />
               </button>
