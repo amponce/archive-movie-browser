@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useId } from 'react';
 import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock, Link2, Tag, Trash2 } from 'lucide-react';
 import archiveService, { STANDARD_GENRES, BROWSABLE_COLLECTIONS } from '../services/archive';
-import { matchRanges, localSuggestions, rememberSearch } from '../services/suggest';
+import { matchRanges, localSuggestions, rememberSearch, indexSuggestions } from '../services/suggest';
+import { loadPosterIndex } from '../services/posterIndex';
 import { parseArchiveUrl } from '../services/archiveUrl';
 
 const RECENT_KEY = 'recent-searches';
@@ -43,7 +44,9 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
   const [remote, setRemote] = useState(NOTHING);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const [recent, setRecent] = useState(readRecent);
+  const [index, setIndex] = useState(null); // the poster index, for films by their real title
   const listId = useId();
+  useEffect(() => { if (open && !index) loadPosterIndex().then(setIndex); }, [open, index]);
 
   const local = useMemo(
     () => localSuggestions(value, { genres: STANDARD_GENRES, collections: BROWSABLE_COLLECTIONS, movies, recent }),
@@ -97,6 +100,13 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
 
     const films = local.filter(s => s.type === 'film');
     const listed = new Set(films.map(s => archiveService.dedupeKey(s.label)));
+    // Films the index knows by their real title: the upload may be called something else entirely
+    indexSuggestions(text, index).forEach(hit => {
+      const key = archiveService.dedupeKey(hit.title);
+      if (listed.has(key)) return;
+      listed.add(key);
+      films.push({ type: 'film', label: hit.title, ranges: hit.ranges, movie: { identifier: hit.identifier, title: hit.title, year: hit.year, fromIndex: true } });
+    });
     remote.films.forEach(movie => {
       const key = archiveService.dedupeKey(movie.title);
       const ranges = matchRanges(movie.title, text);
@@ -110,7 +120,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
     // Recent searches are kept in this browser only; whenever some are shown, offer to forget them
     if (list.some(item => item.type === 'recent')) list.push({ type: 'clear', label: 'Clear recent searches', ranges: [] });
     return list;
-  }, [value, local, remote]);
+  }, [value, local, remote, index]);
 
   useEffect(() => setActive(-1), [value]);
 

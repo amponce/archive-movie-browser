@@ -324,7 +324,7 @@ export default function ArchiveMovieBrowser() {
               if (text === '') setActiveSearch('');
             }}
             onSearch={handleSearch}
-            onOpenFilm={setSelectedMovie}
+            onOpenFilm={(film) => (film.fromIndex ? archiveService.getMovieByIdentifier(film.identifier).then(setSelectedMovie).catch(() => {}) : setSelectedMovie(film))}
             onPickGenre={(genre) => {
               setSearchQuery('');
               setActiveSearch('');

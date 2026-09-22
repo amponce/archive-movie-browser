@@ -83,5 +83,8 @@ export function identifiedAs(movie, match) {
 // Used by the build script: turn a model decision into an index entry
 export function decisionToEntry({ film, confidence }) {
   if (!film || !film.poster_path || confidence < CONFIDENCE_THRESHOLD) return { n: 1, c: confidence };
-  return { i: film.id, t: film.title, y: Number((film.release_date || '').slice(0, 4)) || null, p: film.poster_path, v: film.vote_average, c: confidence };
+  const entry = { i: film.id, t: film.title, y: Number((film.release_date || '').slice(0, 4)) || null, p: film.poster_path, v: film.vote_average, c: confidence };
+  // The original title, when it differs: uploads and searches often use it ("Zombi Holocaust")
+  if (film.original_title && film.original_title !== film.title) entry.o = film.original_title;
+  return entry;
 }

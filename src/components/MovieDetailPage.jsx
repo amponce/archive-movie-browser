@@ -307,7 +307,7 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
                 value={searchText}
                 onChange={setSearchText}
                 onSearch={(text) => text.trim() && onSearch(text)}
-                onOpenFilm={(film) => { setSearchText(''); onPlayRelated(film); }}
+                onOpenFilm={(film) => { setSearchText(''); if (film.fromIndex) archiveService.getMovieByIdentifier(film.identifier).then(onPlayRelated).catch(() => {}); else onPlayRelated(film); }}
                 onPickGenre={onPickGenre}
                 onPickCollection={onPickCollection}
                 movies={allMovies}

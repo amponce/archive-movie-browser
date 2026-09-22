@@ -63,3 +63,9 @@ test('oneCopyPerFilm keeps one card per index film, the better copy, and remembe
   const second = await oneCopyPerFilm([{ identifier: 'a' }, { identifier: 'c' }, { identifier: 'y' }], seen, bigger);
   assert.deepEqual(second.map(m => m.identifier), ['y'], 'films already shown do not come back on the next batch');
 });
+
+test('decisionToEntry keeps the original title when it differs from the English one', () => {
+  const film = { id: 7216, title: 'Doctor Butcher M.D.', original_title: 'Zombi Holocaust', release_date: '1980-03-28', poster_path: '/p.jpg', vote_average: 5.5 };
+  assert.equal(decisionToEntry({ film, confidence: 0.9 }).o, 'Zombi Holocaust');
+  assert.equal(decisionToEntry({ film: { ...film, original_title: 'Doctor Butcher M.D.' }, confidence: 0.9 }).o, undefined);
+});

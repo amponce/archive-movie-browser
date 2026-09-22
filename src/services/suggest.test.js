@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { matchRanges, localSuggestions, rememberSearch } from './suggest.js';
+import { matchRanges, localSuggestions, rememberSearch, indexSuggestions } from './suggest.js';
 
 test('matchRanges: every typed word must start some word of the text, in any order', () => {
   assert.deepEqual(matchRanges('House on Haunted Hill', 'haun hou'), [[0, 3], [9, 13]]);
@@ -70,4 +70,20 @@ test('suggestTags offers the tags uploaders actually use, most common first', as
   assert.deepEqual(suggestTags(movies, 'bela lug').map(t => t.label), [], 'used once');
   assert.deepEqual(suggestTags([film('a'.repeat(60) + ' zombie'), film('a'.repeat(60) + ' zombie')], 'zomb'), [], 'a sentence is not a tag');
   assert.deepEqual(suggestTags(movies, ''), []);
+});
+
+test('indexSuggestions finds a film by its real title, not the upload name, titles that start with the query first', () => {
+  const index = {
+    'zombi-holocaust': { i: 7216, t: 'Doctor Butcher M.D.', o: 'Zombi Holocaust', y: 1980, p: '/p.jpg', v: 5.5, c: 0.9 },
+    'ZombieHolocaustDVD': { i: 7216, t: 'Zombie Holocaust', y: 1980, p: '/p.jpg', v: 5.5, c: 0.9 },
+    'dead_people_ipod': { i: 1, t: 'Messiah of Evil', y: 1975, p: '/q.jpg', v: 6.3, c: 1 },
+    'NightZombies': { i: 2, t: 'Night of the Zombies', y: 1981, p: '/r.jpg', v: 4, c: 1 },
+    'noposter': { n: 1, c: 0.4 },
+  };
+  const hits = indexSuggestions('zombie', index);
+  assert.deepEqual(hits.map(h => h.identifier), ['ZombieHolocaustDVD', 'NightZombies']);
+  assert.ok(indexSuggestions('zombi hol', index).some(h => h.title === 'Zombi Holocaust (Doctor Butcher M.D.)'), 'the original title is searched too');
+  assert.equal(hits[0].year, 1980);
+  assert.deepEqual(indexSuggestions('messiah evil', index).map(h => h.title), ['Messiah of Evil']);
+  assert.deepEqual(indexSuggestions('', index), []);
 });

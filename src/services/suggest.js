@@ -43,6 +43,28 @@ export function localSuggestions(query, { genres = [], collections = [], movies 
   return out.slice(0, limit);
 }
 
+// Films the poster index has identified, matched by the film's real title rather than the
+// upload's ("Zombie Holocaust" finds an upload named "Zombi Holocaust 1980"). `index` is the
+// identifier -> entry map. Returns { identifier, title, year } per hit, best first.
+export function indexSuggestions(query, index, limit = 6) {
+  const typed = words(query);
+  if (!typed.length || !index) return [];
+  const first = typed[0];
+  const hits = [];
+  for (const identifier in index) {
+    const entry = index[identifier];
+    if (!entry.t || !entry.p) continue;
+    // Match the English title or the original one; show whichever matched
+    const ranges = matchRanges(entry.t, query);
+    if (ranges) { hits.push({ identifier, title: entry.t, year: entry.y, ranges, rating: entry.v || 0 }); continue; }
+    const original = entry.o && matchRanges(entry.o, query);
+    if (original) hits.push({ identifier, title: `${entry.o} (${entry.t})`, year: entry.y, ranges: original, rating: entry.v || 0 });
+  }
+  return hits
+    .sort((a, b) => Number(words(b.title)[0]?.startsWith(first)) - Number(words(a.title)[0]?.startsWith(first)) || b.rating - a.rating)
+    .slice(0, limit);
+}
+
 // Tags uploaders have put on the films in a search response, for the type-ahead. Counted from
 // that sample, so the order is a good guess rather than a census.
 export function suggestTags(movies, query, { exclude = [], limit = 4 } = {}) {
