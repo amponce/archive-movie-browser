@@ -14,6 +14,7 @@ import FilmRow from '../components/home/FilmRow';
 import Lists from '../components/home/Lists';
 import Wanted from '../components/home/Wanted';
 import ContinueWatching from '../components/home/ContinueWatching';
+import OnNow from '../components/home/OnNow';
 
 // The front desk. Tonight's film, the numbers, and rows with a reason. Everything comes from
 // the poster index except two live rows (horror, newest), and those only show posters.
@@ -42,6 +43,7 @@ export default function HomePage() {
       <McpBanner />
       <SiteHeader current="/" />
       {featured && <Hero featured={featured} fileNumber={fileNumber} wall={wall} />}
+      <div className="pb-12 rule"><OnNow /></div>
       <Stats cells={[
         [counts.identified, 'films identified'],
         [counts.posters, 'with a poster on file'],

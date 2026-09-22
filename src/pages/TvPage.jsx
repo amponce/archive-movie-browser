@@ -97,6 +97,36 @@ function Set({ channel, onNext }) {
   );
 }
 
+// Beside the set: every channel and what it is showing, so nobody has to scroll to learn there
+// are more. Tap to tune.
+function Rail({ channels, current, onTune }) {
+  return (
+    <ol className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:max-h-[calc(56.25vw*0.66)] pb-1 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0">
+      {channels.map(channel => {
+        const on = channel.now?.film;
+        const isCurrent = channel.id === current?.id;
+        return (
+          <li key={channel.id} className="shrink-0 w-[220px] lg:w-auto">
+            <button type="button" onClick={() => onTune(channel)} aria-current={isCurrent ? 'true' : undefined}
+              className={`w-full flex items-center gap-3 p-2 rounded-lg border text-left transition-colors focus-visible:outline-none focus-visible:border-signal ${isCurrent ? 'border-signal bg-panel' : 'border-line hover:border-bone'}`}>
+              <span className="relative w-10 aspect-[2/3] shrink-0 rounded-sm overflow-hidden bg-line">
+                {on?.poster && <img src={on.poster} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="flex items-baseline gap-2">
+                  <span className={`font-display font-black text-lg tabular-nums ${isCurrent ? 'text-signal' : 'text-dim'}`}>{channel.number}</span>
+                  <span className="text-sm font-medium text-bone truncate">{channel.name}</span>
+                </span>
+                <span className="block label truncate">{on ? `Now: ${on.title}` : 'Off air'}</span>
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 // The guide: one row per channel, the next hours across, a line where now is
 function Guide({ channels, current, now, onTune }) {
   const from = now;
@@ -169,14 +199,22 @@ export default function TvPage() {
       <SiteHeader current="/tv" />
       <main className="gutter py-8 flex flex-col gap-10">
         {error && <p className="text-muted">The guide didn't load ({error}). <a href="/browse" className="text-bone underline">Browse instead.</a></p>}
-        {current && <Set channel={current} onNext={() => setNow(Date.now())} />}
+        {current && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+            <div className="lg:col-span-8"><Set channel={current} onNext={() => setNow(Date.now())} /></div>
+            <aside className="lg:col-span-4 flex flex-col gap-3" aria-label="Channels">
+              <span className="label">Channels · ↑ ↓ to surf</span>
+              <Rail channels={channels} current={current} onTune={tune} />
+            </aside>
+          </div>
+        )}
         {channels.length > 0 && (
           <section className="flex flex-col gap-4">
             <div className="flex items-end justify-between gap-6">
               <div>
                 <span className="eyebrow">Guide</span>
                 <h2 className="display text-3xl mt-1">What's on</h2>
-                <p className="text-[15px] text-muted mt-1">Every channel runs its list in order, round the clock, the same for everyone. ↑ ↓ change channel.</p>
+                <p className="text-[15px] text-muted mt-1">Every channel runs its list in order, round the clock, the same for everyone.</p>
               </div>
               <a href="/api/tv/playlist.m3u" className="nav-link shrink-0 hover:text-signal">M3U for your player →</a>
             </div>
