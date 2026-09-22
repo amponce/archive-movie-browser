@@ -1,0 +1,25 @@
+{
+  "_": "Tonight's film on the front page. Hand-picked cult films only: one a day, in this order, round and round. id is the Archive.org upload (it must be in the poster index with a poster), why is the one line under the title. Add to the end; never let it run dry.",
+  "films": [
+    { "id": "CarnivalOfSouls1962", "why": "Shot in three weeks for $33,000 by an industrial-film director from Lawrence, Kansas. Never got a real release. Now it's yours." },
+    { "id": "Night.Of.The.Living.Dead_1080p", "why": "The distributor forgot the copyright notice on the print. So the film that invented the modern zombie belongs to everyone." },
+    { "id": "Nosferatu_DVD_quality", "why": "Stoker's widow won the lawsuit and every print was ordered burned. This one got away." },
+    { "id": "HouseOnHauntedHill1959", "why": "Vincent Price offers five strangers $10,000 to spend a night in the house. William Castle flew a skeleton over the audience." },
+    { "id": "plan.-9.-from.-outer.-space.-1957", "why": "Bela Lugosi died two days into shooting. Ed Wood finished it with his wife's chiropractor holding a cape over his face." },
+    { "id": "Haxan_tinted_and_subtitled", "why": "A 1922 Swedish documentary about witchcraft that turns into the strangest horror film of the silent era. Banned in the US." },
+    { "id": "The.Little.Shop.of.Horrors.60", "why": "Corman shot it in two days on a set left over from another film. Jack Nicholson is the dental patient." },
+    { "id": "dead_people_ipod", "why": "Messiah of Evil. A coastal town where everyone stares, from the writers of American Graffiti. The supermarket scene." },
+    { "id": "lastmanonearth-1964", "why": "Vincent Price alone in a dead city, from the novel that became The Omega Man and I Am Legend. Romero saw this first." },
+    { "id": "Detour", "why": "Sixty-eight minutes, six days of shooting, and the bleakest ending in American film. The definitive poverty-row noir." },
+    { "id": "VictorHalperinsWhiteZombie1932", "why": "The first zombie film. Bela Lugosi, a Haitian sugar mill, and a bride who won't stay dead." },
+    { "id": "HorrorExpress1972", "why": "Christopher Lee and Peter Cushing on a train across Siberia with a thing that boils brains. Telly Savalas turns up as a Cossack." },
+    { "id": "spider.-baby.-or.-the.-maddest.-story.-ever.-told.-1967", "why": "Lon Chaney Jr. minds three siblings with a disease that makes them regress. The maddest story ever told, as the poster says." },
+    { "id": "scanners-1981-1080p", "why": "Cronenberg's telepaths. You know the scene. It was a shotgun and a latex head full of leftovers." },
+    { "id": "ABucketOfBlood1959", "why": "A beatnik busboy becomes a sculptor by accident. Corman's beat-scene satire, five days, $50,000." },
+    { "id": "TheBrainThatWouldntDie-ExtendedVersion1962", "why": "A surgeon keeps his fiancée's head alive in a tray while he shops for a body. She is not grateful." },
+    { "id": "DasKabinettdesDoktorCaligariTheCabinetofDrCaligari", "why": "Painted shadows, a sleepwalking killer, and the twist that every unreliable narrator since owes something to." },
+    { "id": "CEP147", "why": "Lon Chaney did his own makeup for the Phantom and kept it secret until the unmasking. Audiences screamed in 1925." },
+    { "id": "bad-taste-1987-full-movie", "why": "Peter Jackson's first film, shot on weekends over four years with his friends. Aliens harvesting humans for fast food." },
+    { "id": "TeenagersFromOuterSpace", "why": "Lobster monsters, a disintegrator ray, and a budget of $14,000. Beloved precisely because none of it works." }
+  ]
+}

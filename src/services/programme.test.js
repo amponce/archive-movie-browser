@@ -21,6 +21,18 @@ test('featuredFor picks a confident, well-rated film with a poster, and changes 
   assert.equal(featuredFor(index, new Date('2026-09-22T12:00:00Z')).id, a.id, 'the same film all day');
 });
 
+test('featuredFor takes the hand-picked film of the day, skipping picks the index cannot show', () => {
+  const picks = [{ id: 'popular', why: 'A' }, { id: 'no_poster', why: 'B' }, { id: 'loved_unseen', why: 'C' }, { id: 'unknown', why: 'D' }];
+  const seen = new Set();
+  for (let i = 0; i < 4; i++) {
+    const f = featuredFor(index, new Date(Date.UTC(2026, 8, 22 + i)), picks);
+    assert.ok(['popular', 'loved_unseen'].includes(f.id), f.id);
+    assert.ok(f.why);
+    seen.add(f.id);
+  }
+  assert.equal(seen.size, 2, 'rotates through the showable picks');
+});
+
 test('rowFor returns the best films of a decade, poster and confidence required', () => {
   assert.deepEqual(rowFor(index, { decade: 1960 }).map(f => f.id), ['popular']);
   assert.deepEqual(rowFor(index).map(f => f.id), ['renamed', 'loved_unseen', 'popular', 'western'], 'rated order, shaky left out');

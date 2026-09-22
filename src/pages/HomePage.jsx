@@ -3,6 +3,7 @@ import archiveService, { ALL_FILMS, runtimeFilter } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import { LISTS } from '../lists/index';
 import { featuredFor, shelfFor, countsOf, changesIn } from '../services/programme';
+import PICKS from '../programme/featured.json';
 import { indexedMatch } from '../services/posterIndex';
 import { watchUrl as watch } from '../services/reel';
 import FilmCard, { Sprockets } from '../ui/FilmCard';
@@ -65,7 +66,8 @@ function Hero({ featured, fileNumber }) {
           </div>
           <h1 className="font-display font-black uppercase leading-[0.86] tracking-[0.005em] text-[56px] sm:text-[88px] lg:text-[128px]">{entry.t}</h1>
           <p className="text-lg text-muted leading-relaxed max-w-[560px]">
-            {meta}{meta && film?.description ? '. ' : ''}{film?.description ? firstSentences(film.description) : ''}
+            {meta && <span className="text-bone">{meta}. </span>}
+            {featured.why || (film?.description ? firstSentences(film.description) : '')}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -245,7 +247,7 @@ function Wanted({ count }) {
 export default function HomePage() {
   const index = useIndex();
   const counts = useMemo(() => (index ? countsOf(index) : null), [index]);
-  const featured = useMemo(() => (index ? featuredFor(index) : null), [index]);
+  const featured = useMemo(() => (index ? featuredFor(index, new Date(), PICKS.films) : null), [index]);
   const fileNumber = useMemo(() => (featured ? String(Object.keys(index).indexOf(featured.id) + 1).padStart(5, '0') : ''), [index, featured]);
 
   return (

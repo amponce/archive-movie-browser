@@ -18,8 +18,15 @@ function seededShuffle(items, seed) {
 
 const dayOf = now => Math.floor(now.getTime() / 86400000);
 
-// Tonight's film: confident, with a poster, rated 7 or better, and the same for everyone all day
-export function featuredFor(index, now = new Date()) {
+// Tonight's film. Hand-picked (src/programme/featured.json): one a day in order, round and round,
+// skipping any pick the index cannot show. Only if the picks run dry: a confident, well-rated
+// film with a poster, the same for everyone all day.
+export function featuredFor(index, now = new Date(), picks = []) {
+  const showable = picks.filter(pick => index[pick.id]?.p);
+  if (showable.length) {
+    const pick = showable[dayOf(now) % showable.length];
+    return { id: pick.id, entry: index[pick.id], why: pick.why };
+  }
   const candidates = Object.entries(index).filter(usable).filter(([, e]) => (e.v || 0) >= 7).map(film);
   if (!candidates.length) return null;
   return seededShuffle(candidates, dayOf(now))[0];
