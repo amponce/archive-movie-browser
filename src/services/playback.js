@@ -3,9 +3,12 @@
 
 const MAX_STREAM_BYTES = 4e9; // a bigger "original" is a master copy, not something to stream
 
-// Archive.org lists every file of an item; pick the one a browser can stream, or null to fall
-// back to the embedded player. Only H.264 in MP4 plays everywhere (Safari has no Ogg).
-export function pickPlayableFile(files) {
+// Archive.org lists every file of an item; the ones a browser can stream, best first, so the
+// player can move to the next when one loads with no picture. Only H.264 in MP4 plays
+// everywhere (Safari has no Ogg). Archive.org labels every uploaded mp4 "MPEG4" whatever its
+// codec, so an original may turn out to be DivX-era video the browser cannot decode: sound
+// and a black picture. The 512kb derivative is always H.264.
+export function playableFiles(files) {
   const mp4s = (files || []).filter(file => /\.(mp4|m4v)$/i.test(file.name || '') && Number(file.size || 0) < MAX_STREAM_BYTES);
   const rank = (file) => {
     const format = String(file.format || '').toLowerCase();
@@ -14,7 +17,12 @@ export function pickPlayableFile(files) {
     if (format.includes('512kb')) return 3;            // small and soft, but always playable
     return 2;
   };
-  return [...mp4s].sort((a, b) => rank(a) - rank(b))[0] || null;
+  return [...mp4s].sort((a, b) => rank(a) - rank(b));
+}
+
+// The first choice, or null to fall back to the embedded player
+export function pickPlayableFile(files) {
+  return playableFiles(files)[0] || null;
 }
 
 export function videoUrl(identifier, fileName) {
