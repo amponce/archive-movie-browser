@@ -1,15 +1,18 @@
 // GET /api/tv            JSON: channels, what is on, the next hours
 // GET /api/tv?format=m3u the lineups as an M3U playlist for other players
 // GET /api/tv?format=xml the guide as XMLTV
+// Add &mine=a,b,c (the identifiers from a shared channel link) to get just that channel.
 // Same schedule for everyone, so the whole thing is cached at the edge for a minute.
-import { schedule, toM3U, toXMLTV } from './_tv.js';
+import { schedule, personalChannel, toM3U, toXMLTV } from './_tv.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') { res.status(405).end(); return; }
   const format = String(req.query?.format || 'json');
   try {
-    const data = await schedule({ hours: format === 'xml' ? 24 : 6 });
-    res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    const mine = String(req.query?.mine || '');
+    const hours = format === 'xml' ? 24 : 6;
+    const data = mine ? { now: Date.now(), channels: [await personalChannel(mine.split(','), { hours })] } : schedule({ hours });
+    res.setHeader('Cache-Control', mine ? 'public, s-maxage=300' : 'public, s-maxage=60, stale-while-revalidate=300');
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (format === 'm3u') {
       res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');

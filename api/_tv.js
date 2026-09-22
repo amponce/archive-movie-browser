@@ -5,6 +5,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { collectLists } from '../src/services/lists.js';
 import { videoUrl } from '../src/services/playback.js';
 import { onAirAt, programmesBetween, airable } from '../src/services/schedule.js';
+import { pickPlayableFile } from '../src/services/playback.js';
 
 const SITE = 'https://www.orphanedfilms.com';
 const TMDB_IMAGE = 'https://image.tmdb.org/t/p/w342';
@@ -37,6 +38,35 @@ function record(id) {
 }
 
 const lineupOf = channel => airable(channel.films.map(record).filter(Boolean));
+
+// A personal channel from a link's identifiers. Films on a list are already measured; the rest
+// are read from their Archive.org records, in parallel, and remembered for this instance.
+const measured = new Map();
+async function recordLive(id) {
+  if (measured.has(id)) return measured.get(id);
+  let value = null;
+  try {
+    const data = await fetch(`https://archive.org/metadata/${encodeURIComponent(id)}`).then(r => (r.ok ? r.json() : null));
+    const file = data?.files ? pickPlayableFile(data.files) : null;
+    const entry = index[id];
+    if (file?.length) value = { id, title: entry?.t || data.metadata?.title || id, year: entry?.y || null, poster: entry?.p ? `${TMDB_IMAGE}${entry.p}` : null, seconds: Math.round(Number(file.length)), url: videoUrl(id, file.name) };
+  } catch { /* the film just does not air */ }
+  measured.set(id, value);
+  return value;
+}
+
+export async function personalChannel(ids, { now = Date.now(), hours = 6 } = {}) {
+  const clean = [...new Set(ids.map(String).filter(id => /^[\w.-]+$/.test(id)))].slice(0, 40);
+  const films = await Promise.all(clean.map(id => record(id) || recordLive(id)));
+  const lineup = airable(films.filter(Boolean));
+  const slot = onAirAt(lineup, now);
+  const to = now + hours * 3600_000;
+  return {
+    number: 0, id: 'mine', name: 'A shared channel', blurb: 'A channel someone made and shared.', lineup,
+    now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
+    programmes: programmesBetween(lineup, now, to).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, startsAt: p.startsAt, endsAt: p.endsAt })),
+  };
+}
 
 // The whole service in one call: every channel with its lineup, what is on now, and the
 // programmes for the next `hours`

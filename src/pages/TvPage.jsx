@@ -234,6 +234,7 @@ export default function TvPage() {
           <p className="label flex flex-wrap items-center gap-x-4 gap-y-1 -mt-4">
             <span>{mine.mine ? 'Your channel' : 'This shared channel'} has {mine.ids.length} film{mine.ids.length === 1 ? '' : 's'}{mine.pending ? `, measuring ${mine.pending}` : ''}. {mine.mine ? 'Add more from any film page.' : ''}</span>
             {mine.mine && mine.lineup.length > 0 && <button type="button" className="nav-link hover:text-signal" onClick={() => { navigator.clipboard?.writeText(shareUrl(mine.ids, window.location.origin)); track('TV', { action: 'share my channel' }); }}>Copy a link to it</button>}
+            {mine.lineup.length > 0 && <a href={`/api/tv?format=m3u&mine=${mine.ids.map(encodeURIComponent).join(',')}`} className="nav-link hover:text-signal">M3U for your player</a>}
           </p>
         )}
         {channels.length > 0 && (

@@ -15,12 +15,18 @@ function localApi() {
         const name = url.pathname.match(/^\/api\/([a-z_-]+)\/?$/)?.[1];
         const file = name && `${process.cwd()}/api/${name}.js`;
         if (!file || !existsSync(file)) return next();
-        const { default: handler } = await import(`${pathToFileURL(file).href}?t=${Date.now()}`);
         req.query = Object.fromEntries(url.searchParams);
         res.status = code => { res.statusCode = code; return res; };
         res.json = body => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(body)); };
         res.send = body => res.end(body);
-        try { await handler(req, res); } catch (error) { res.status(500).json({ error: error.message }); }
+        try {
+          // Only the handler file is re-imported; a module it imports (api/_*.js) is cached until
+          // the dev server restarts, so an edit there needs a restart.
+          const { default: handler } = await import(`${pathToFileURL(file).href}?t=${Date.now()}`);
+          await handler(req, res);
+        } catch (error) {
+          res.status(500).json({ error: error.message });
+        }
       });
     },
   };
