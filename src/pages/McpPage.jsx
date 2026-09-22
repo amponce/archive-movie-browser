@@ -55,7 +55,7 @@ export default function McpPage() {
           </ul>
           <Aside>
             That last one is <em>Messiah of Evil</em> (1975). Archive.org titles are messy; the server knows which real film hundreds of the
-            most-watched uploads are, with year and poster.
+            most-watched uploads are, with year and details.
           </Aside>
 
           <Heading>What it can do</Heading>
