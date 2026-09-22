@@ -53,7 +53,7 @@ export default function ListsPage({ slug }) {
       <SiteHeader current="/lists" />
       <div className="max-w-3xl mx-auto px-4 py-6">
         <nav className="flex items-center justify-between text-sm mb-8">
-          {list ? <a href="/lists" className="nav-link flex items-center gap-1"><ChevronLeft className="w-4 h-4" />All runs</a> : <span />}
+          {list ? <a href="/lists" className="nav-link flex items-center gap-1"><ChevronLeft className="w-4 h-4" />All lists</a> : <span />}
           <a href={`${REPO}/tree/main/src/lists`} className="nav-link">Add a list</a>
         </nav>
 

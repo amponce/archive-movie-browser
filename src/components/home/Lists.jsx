@@ -25,9 +25,9 @@ function RunTile({ list, index, tint }) {
   );
 }
 
-export default function Runs({ lists, index }) {
+export default function Lists({ lists, index }) {
   return (
-    <Section id="runs" eyebrow="Runs" title="Watch a run of them" blurb="Hand-picked lists with a note on every film. Anyone can write one." more="All runs" href="/lists">
+    <Section id="lists" eyebrow="Lists" title="Watch a run of them" blurb="Hand-picked lists with a note on every film. Anyone can write one." more="All lists" href="/lists">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {lists.map((list, i) => <RunTile key={list.slug} list={list} index={index} tint={TINTS[i % TINTS.length]} />)}
         <a href={`${REPO}/blob/main/src/lists/README.md`} className="flex flex-col justify-end gap-2 min-h-[220px] p-6 sm:p-7 rounded-lg border border-dashed border-line text-muted hover:border-bone hover:text-bone">

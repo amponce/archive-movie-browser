@@ -11,7 +11,7 @@ import McpBanner from '../components/McpBanner';
 import Hero from '../components/home/Hero';
 import Stats from '../components/home/Stats';
 import FilmRow from '../components/home/FilmRow';
-import Runs from '../components/home/Runs';
+import Lists from '../components/home/Lists';
 import Wanted from '../components/home/Wanted';
 
 // The front desk. Tonight's film, the numbers, and rows with a reason. Everything comes from
@@ -45,11 +45,11 @@ export default function HomePage() {
         [counts.identified, 'films identified'],
         [counts.posters, 'with a poster on file'],
         [counts.wanted, 'still without a poster', true],
-        [LISTS.length, 'curated runs'],
+        [LISTS.length, 'curated lists'],
       ]} />
       <FilmRow id="horror" cards={horror} eyebrow="The house genre" title="Horror, mostly unclaimed" blurb="The most-watched horror in the collections. Nobody renewed the rights, so they're yours." more="All horror" href="/browse?genre=Horror" />
       <FilmRow id="surfaced" cards={newest} firstLabel="Newest" eyebrow="Just surfaced" title="New on the Archive" blurb="The latest feature-length uploads to archive.org. Come back tomorrow, there will be more." more="All newest" href="/browse?genre=all&sort=publicdate+desc&runtime=40" />
-      <Runs lists={LISTS} index={index} />
+      <Lists lists={LISTS} index={index} />
       {shelf && (
         <FilmRow cards={shelf.films.map(cardFromIndex)} eyebrow="Today's shelf" title={`Pulled from the ${shelf.decade}s`} blurb="Six from one decade, a different decade every day." more={`All ${shelf.decade}s`} href={`/browse?genre=all&decade=${shelf.decade}`} />
       )}

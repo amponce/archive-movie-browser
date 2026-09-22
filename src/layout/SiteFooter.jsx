@@ -12,7 +12,7 @@ export default function SiteFooter({ children }) {
         <span className="font-mono text-[11px] tracking-[0.06em] text-dim">Every film here is hosted by the Internet Archive. We index, you watch there or here. Nothing is ours.</span>
         <span className="flex flex-wrap gap-6">
           {children}
-          <a href="/lists" className="label hover:text-bone">Runs</a>
+          <a href="/lists" className="label hover:text-bone">Lists</a>
           <a href="/mcp" className="label hover:text-bone">MCP server</a>
           <a href={REPO} className="label hover:text-bone">GitHub</a>
           <a href="https://archive.org/details/movies" className="label hover:text-bone">Archive.org</a>

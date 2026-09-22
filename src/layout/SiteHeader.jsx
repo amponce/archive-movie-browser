@@ -7,7 +7,7 @@ const NAV = [
   ['/', 'Tonight'],
   ['/browse?genre=Horror', 'Horror'],
   ['/browse', 'Browse'],
-  ['/lists', 'Runs'],
+  ['/lists', 'Lists'],
   ['/mcp', 'MCP'],
 ];
 
