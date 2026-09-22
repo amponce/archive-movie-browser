@@ -1,0 +1,20 @@
+{
+  "slug": "silent-but-not-quiet",
+  "title": "Silent, but not quiet",
+  "blurb": "The silent era's loudest films. Stunts nobody would insure today, monsters that still work, and camera tricks that took eighty years to copy.",
+  "curator": "amponce",
+  "films": [
+    { "id": "The_General_Buster_Keaton", "note": "Keaton, a locomotive, and the most expensive single shot of the silent era. Nothing is faked." },
+    { "id": "Nosferatu_most_complete_version_93_mins.", "note": "The most complete cut. Max Schreck rising from the coffin still does it." },
+    { "id": "ThiefOfBagdad1924", "note": "Douglas Fairbanks, a flying carpet, and sets the size of city blocks." },
+    { "id": "ThePhantomoftheOpera", "note": "Lon Chaney's unmasking. Audiences screamed in 1925 and the makeup is still his." },
+    { "id": "lost_world", "note": "Willis O'Brien's dinosaurs, eight years before he did King Kong." },
+    { "id": "BattleshipPotemkin", "note": "The Odessa Steps. Every film school in the world starts here." },
+    { "id": "ChelovekskinoapparatomManWithAMovieCamera", "note": "A day in the Soviet city, cut like nothing before it. No story, no intertitles, no equal." },
+    { "id": "Haxan_tinted_and_subtitled", "note": "A documentary about witchcraft that turns into the strangest horror film of its decade." },
+    { "id": "markofzorro-1920", "note": "Fairbanks invents the swashbuckler. Watch him vault the furniture." },
+    { "id": "TheGolem_893", "note": "A clay giant brought to life in the Prague ghetto. The look Frankenstein borrowed." },
+    { "id": "DrJekyllandMrHyde", "note": "John Barrymore's transformation, done with his face and no cuts." },
+    { "id": "Cops1922", "note": "Keaton versus the entire police force of Los Angeles. Eighteen minutes." }
+  ]
+}

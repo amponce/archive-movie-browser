@@ -7,8 +7,8 @@
       "maxDuration": 30
     },
     "api/tv.js": {
-      "includeFiles": "{public/poster-index.json,src/lists/*.json}",
-      "maxDuration": 30
+      "includeFiles": "{public/poster-index.json,public/tv-lineups.json,src/lists/*.json}",
+      "maxDuration": 10
     }
   },
   "rewrites": [

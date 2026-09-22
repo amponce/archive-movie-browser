@@ -1,0 +1,20 @@
+{
+  "slug": "creature-features",
+  "title": "Creature features",
+  "blurb": "Atomic-age monsters and flying saucers from the drive-in decade. Rubber suits, stock footage of jets, and the odd genuine classic hiding in the lineup.",
+  "curator": "amponce",
+  "films": [
+    { "id": "day-the-earth-stood-still-1951", "note": "The classic. A visitor, a robot, and a warning the world ignores. Klaatu barada nikto." },
+    { "id": "earth-vs-the-flying-saucers-color", "note": "Ray Harryhausen's saucers take Washington apart, one monument at a time." },
+    { "id": "TheMonolithMonsters1957", "note": "Rocks from space grow when wet and topple across the desert. Smarter than it sounds." },
+    { "id": "The_Killer_Shrews_1959", "note": "Dogs in shrew costumes. An island. A hurricane. Legendary for the costumes." },
+    { "id": "cco_attackofthegiantleeches", "note": "Corman-produced swamp horror with leeches the size of men. Sixty-two minutes." },
+    { "id": "teenagers_from_outerspace", "note": "Lobster monsters and a disintegrator ray on a $14,000 budget." },
+    { "id": "Killers_from_space", "note": "Peter Graves versus aliens with ping-pong-ball eyes. Made in a week." },
+    { "id": "Phantom_From_Space", "note": "An invisible alien loose in Los Angeles. The costume is a diving suit." },
+    { "id": "Indestructible_Man_movie", "note": "Lon Chaney Jr. is executed, revived, and very annoyed about it." },
+    { "id": "MesaOfLostWomen", "note": "Giant spiders, a mad scientist, and a flamenco guitar score that never stops. Genuinely strange." },
+    { "id": "BelaLugosiMeetsaBrooklynGorilla", "note": "Lugosi turns a nightclub comic into a gorilla. It is exactly as good as the title." },
+    { "id": "UnknownWorld", "note": "Scientists drill to the centre of the earth to escape the atomic age. Earnest and odd." }
+  ]
+}

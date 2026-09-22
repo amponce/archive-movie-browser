@@ -1,0 +1,18 @@
+{
+  "slug": "saturday-matinee-westerns",
+  "title": "Saturday matinee westerns",
+  "blurb": "John Wayne before he was John Wayne, Errol Flynn on the Santa Fe Trail, and the B-westerns that filled every Saturday afternoon for thirty years.",
+  "curator": "amponce",
+  "films": [
+    { "id": "angel_and_the_badman", "note": "Wayne as a gunfighter nursed by a Quaker girl. He produced it himself and it shows in the best way." },
+    { "id": "mclintok_widescreen", "note": "Wayne and Maureen O'Hara brawl through a whole town. The mud-slide fight." },
+    { "id": "Santa_Fe_Trail_movie", "note": "Errol Flynn and Olivia de Havilland, with Ronald Reagan as George Custer." },
+    { "id": "OnlytheValaint", "note": "Gregory Peck holds a fort with the men who hate him. Tight, mean, underrated." },
+    { "id": "WarOfTheWildcats-JohnWayne1943", "note": "Wayne in the Oklahoma oil rush. Republic Pictures at full budget, for once." },
+    { "id": "AbileneTown", "note": "Randolph Scott keeps the peace between cattlemen and homesteaders. Meat and potatoes, done right." },
+    { "id": "west_of_the_divide", "note": "Wayne at twenty-seven in a Lone Star quickie. Fifty-four minutes, one horse, done." },
+    { "id": "TheOvertheHillGang", "note": "Retired Texas Rangers clean up one more town. Walter Brennan, Pat O'Brien, Chill Wills." },
+    { "id": "Rocky_Mountain_Mystery_1935", "note": "Randolph Scott solves murders at a radium mine. A western with a whodunit inside it." },
+    { "id": "american_empire", "note": "Two cattlemen build a Texas empire and fall out over it. Richard Dix, Preston Foster." }
+  ]
+}

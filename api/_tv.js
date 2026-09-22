@@ -1,14 +1,13 @@
 // The television service behind /api/tv. Channels are the curated lists; each film's length
-// and stream URL come from its Archive.org record (cached here, refreshed hourly). One schedule
-// feeds three outputs: JSON for the site, an M3U playlist and an XMLTV guide for other players.
+// and stream come from public/tv-lineups.json. One schedule feeds three outputs: JSON for the
+// site, an M3U playlist and an XMLTV guide for other players.
 import { readFileSync, readdirSync } from 'node:fs';
 import { collectLists } from '../src/services/lists.js';
-import { pickPlayableFile, videoUrl } from '../src/services/playback.js';
+import { videoUrl } from '../src/services/playback.js';
 import { onAirAt, programmesBetween, airable } from '../src/services/schedule.js';
 
 const SITE = 'https://www.orphanedfilms.com';
 const TMDB_IMAGE = 'https://image.tmdb.org/t/p/w342';
-const RECORD_TTL = 60 * 60_000;
 
 const listsDir = new URL('../src/lists/', import.meta.url);
 const LISTS = collectLists(readdirSync(listsDir).filter(f => f.endsWith('.json')).map(f => JSON.parse(readFileSync(new URL(f, listsDir), 'utf8'))));
@@ -17,42 +16,34 @@ const index = JSON.parse(readFileSync(new URL('../public/poster-index.json', imp
 // Every list is a channel, numbered in file order so a channel keeps its number
 export const CHANNELS = LISTS.map((list, i) => ({ number: i + 1, id: list.slug, name: list.title, blurb: list.blurb, films: list.films.map(f => f.id) }));
 
-// identifier -> { seconds, url, title, year, poster } from Archive.org's record, an hour at a time
-const records = new Map();
-async function record(id) {
-  const hit = records.get(id);
-  if (hit && Date.now() - hit.at < RECORD_TTL) return hit.value;
-  let value = null;
-  try {
-    const data = await fetch(`https://archive.org/metadata/${encodeURIComponent(id)}`).then(r => (r.ok ? r.json() : null));
-    const file = data?.files ? pickPlayableFile(data.files) : null;
-    const entry = index[id];
-    if (file) {
-      value = {
-        id,
-        title: entry?.t || data.metadata?.title || id,
-        year: entry?.y || Number(String(data.metadata?.year || data.metadata?.date || '').slice(0, 4)) || null,
-        poster: entry?.p ? `${TMDB_IMAGE}${entry.p}` : null,
-        seconds: Number(file.length) || 0,
-        url: videoUrl(id, file.name),
-      };
-    }
-  } catch { /* Archive.org is down or the item is gone: the film just does not air */ }
-  records.set(id, { at: Date.now(), value });
-  return value;
+// Film lengths and streams come from public/tv-lineups.json (npm run tv), built ahead of time
+// because asking Archive.org for fifty records at request time takes longer than a request may.
+// ponytail: a list edited without `npm run tv` has films that never air; a test that every list
+// film has a lineup entry, or a CI step that runs the script, closes that.
+const lineups = JSON.parse(readFileSync(new URL('../public/tv-lineups.json', import.meta.url), 'utf8')).films;
+
+function record(id) {
+  const known = lineups[id];
+  const entry = index[id];
+  if (!known?.seconds) return null;
+  return {
+    id,
+    title: entry?.t || id,
+    year: entry?.y || null,
+    poster: entry?.p ? `${TMDB_IMAGE}${entry.p}` : null,
+    seconds: known.seconds,
+    url: videoUrl(id, known.file),
+  };
 }
 
-async function lineupOf(channel) {
-  const films = await Promise.all(channel.films.map(record));
-  return airable(films.filter(Boolean));
-}
+const lineupOf = channel => airable(channel.films.map(record).filter(Boolean));
 
 // The whole service in one call: every channel with its lineup, what is on now, and the
 // programmes for the next `hours`
-export async function schedule({ now = Date.now(), hours = 6 } = {}) {
+export function schedule({ now = Date.now(), hours = 6 } = {}) {
   const to = now + hours * 3600_000;
-  const channels = await Promise.all(CHANNELS.map(async channel => {
-    const lineup = await lineupOf(channel);
+  const channels = CHANNELS.map(channel => {
+    const lineup = lineupOf(channel);
     const slot = onAirAt(lineup, now);
     return {
       number: channel.number,
@@ -63,7 +54,7 @@ export async function schedule({ now = Date.now(), hours = 6 } = {}) {
       now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
       programmes: programmesBetween(lineup, now, to).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, startsAt: p.startsAt, endsAt: p.endsAt })),
     };
-  }));
+  });
   return { now, epochNote: 'Every channel plays its lineup in order from a fixed moment, so this guide is the same for everyone.', channels: channels.filter(c => c.lineup.length) };
 }
 
