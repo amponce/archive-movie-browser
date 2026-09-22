@@ -15,7 +15,7 @@ import {
 import archiveService, { STANDARD_GENRES, VIDEO_CATEGORIES, BROWSABLE_COLLECTIONS, DECADES, ALL_FILMS, defaultMinRuntime, collectionChoice } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import { parseArchiveUrl } from '../services/archiveUrl';
-import { parseFilters, filtersToQuery, SORT_OPTIONS } from '../services/urlFilters';
+import { parseFilters, filtersToQuery, SORT_OPTIONS, RUNTIME_OPTIONS } from '../services/urlFilters';
 import { track } from '../services/analytics';
 import useFilms from '../hooks/useFilms';
 import MovieCard from './MovieCard';
@@ -469,12 +469,11 @@ export default function ArchiveMovieBrowser() {
                     onChange={(e) => setMinRuntime(Number(e.target.value))}
                     className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
                   >
-                    <option value={0}>Any length</option>
-                    <option value={20}>20+ min</option>
-                    <option value={40}>40+ min</option>
-                    <option value={60}>60+ min</option>
-                    <option value={75}>75+ min</option>
-                    <option value={90}>90+ min</option>
+                    {RUNTIME_OPTIONS.map(minutes => (
+                      <option key={minutes} value={minutes}>
+                        {minutes === 0 ? 'Any length' : `${minutes}+ min`}
+                      </option>
+                    ))}
                   </select>
                 )}
               </div>

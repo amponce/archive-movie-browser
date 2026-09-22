@@ -13,6 +13,8 @@ export const SORT_OPTIONS = {
   'title asc': 'Title A-Z',
 };
 
+export const RUNTIME_OPTIONS = [0, 20, 40, 60, 75, 90];
+
 // The site opens on Horror in All Films: that is where the most striking posters are. A search
 // looks across every genre unless one is chosen, so its default is All Genres.
 export const LANDING_GENRE = 'Horror';
@@ -63,7 +65,11 @@ export function parseFilters(search) {
   const runtime = params.get('runtime');
   if (runtime && Number.isFinite(Number(runtime))) {
     const minutes = Number(runtime);
-    if (minutes >= 0 && minutes <= 300) filters.runtime = minutes;
+    if (minutes >= 0 && minutes <= 300) {
+      filters.runtime = RUNTIME_OPTIONS.reduce((nearest, option) =>
+        Math.abs(option - minutes) < Math.abs(nearest - minutes) ? option : nearest
+      );
+    }
   }
 
   if (params.get('type') === 'trailers') filters.type = 'trailers';

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseFilters, filtersToQuery, URL_FILTER_DEFAULTS } from './urlFilters.js';
+import { parseFilters, filtersToQuery, URL_FILTER_DEFAULTS, RUNTIME_OPTIONS } from './urlFilters.js';
 
 test('parseFilters and filtersToQuery round-trip a full set of filters', () => {
   const filters = {
@@ -35,6 +35,11 @@ test('filtersToQuery omits defaults so the plain URL stays clean', () => {
 
 test('bogus query values fall back to defaults', () => {
   assert.deepEqual(parseFilters('?sort=bogus&genre=Nope&runtime=abc'), URL_FILTER_DEFAULTS);
+});
+
+test('runtime values snap to an option the filter can display', () => {
+  assert.equal(parseFilters('?runtime=299').runtime, RUNTIME_OPTIONS.at(-1));
+  assert.equal(parseFilters('?runtime=74').runtime, 75);
 });
 
 test('Silent Films plus a 40 minute runtime survives the round trip', () => {
