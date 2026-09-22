@@ -9,6 +9,9 @@
 //   npm run index -- --fresh            ignore the existing file and decide everything again
 //   npm run index -- --views             also the top uploads of every genre pill and every decade
 //   npm run index -- --views --limit 300 (what the app actually shows: the index should follow it)
+//   npm run index -- --cross Horror       also that genre in every decade (a genre pill plus a
+//                                        decade is a common view, and its tail is never in the
+//                                        genre walk or the decade walk alone)
 //   npm run index -- --retry-none        decide again the uploads marked 'none', with OMDb as a
 //   npm run index -- --retry-none --only a,b  (just those identifiers: a dry run)
 //                                        second candidate source (needs OMDB_API_KEY); a
@@ -41,6 +44,11 @@ if (args.views) {
   for (const genre of STANDARD_GENRES) walks.push({ name: `genre ${genre}`, options: { collection: ALL_FILMS, genre } });
   for (const decade of DECADES) walks.push({ name: `${decade}s`, options: { collection: ALL_FILMS, decade } });
 }
+if (args.cross) {
+  for (const genre of String(args.cross).split(',').map(g => g.trim())) {
+    for (const decade of DECADES) walks.push({ name: `${genre} ${decade}s`, options: { collection: ALL_FILMS, genre, decade } });
+  }
+}
 
 function readKey(...names) {
   for (const name of names) if (process.env[name]) return process.env[name];
@@ -64,7 +72,8 @@ if (!TMDB_KEY || !OPENROUTER_KEY) {
 }
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-const label = film => `${film.title} (${(film.release_date || '').slice(0, 4) || 'year unknown'})`;
+// The original title matters: uploads often carry it ("Zombi Holocaust" is TMDB's "Doctor Butcher M.D.")
+const label = film => `${film.title}${film.original_title && film.original_title !== film.title ? ` / ${film.original_title}` : ''} (${(film.release_date || '').slice(0, 4) || 'year unknown'})`;
 
 async function getJson(url, options, attempts = 3) {
   for (let attempt = 1; ; attempt++) {
