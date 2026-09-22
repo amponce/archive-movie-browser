@@ -13,6 +13,8 @@ const PAGES = {
 // '/lists/noir-you-can-finish-tonight' -> the lists page with that slug.
 // The front page is the programme; '/browse', and '/' with filters or a #film link from before
 // the front page existed, is the film browser (null).
+// ponytail: old '/?genre=' and '/#film' links keep rendering the browser at '/' instead of
+// redirecting; once the MCP and shared links all say /browse, redirect and drop the case.
 export function pageFor(pathname, search = '', hash = '') {
   const path = pathname.replace(/\/+$/, '');
   if (path === '' || path === '/browse') return search || hash.length > 1 || path ? null : { Page: PAGES['/'] };

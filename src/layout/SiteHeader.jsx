@@ -23,7 +23,9 @@ export function Logo() {
   );
 }
 
-// The same header on every page: name, nav, search, spin. `search` replaces the plain search
+// The same header on every page: name, nav, search, spin.
+// ponytail: under md the nav is simply hidden (phones get search and spin only); a menu is
+// needed once there are more than five destinations or anyone asks. `search` replaces the plain search
 // box when a page has a richer one (the browser passes its type-ahead). `current` is the nav
 // path to mark.
 export default function SiteHeader({ current = '/', search, children }) {

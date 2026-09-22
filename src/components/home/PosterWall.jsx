@@ -2,6 +2,8 @@ import React from 'react';
 import tmdbService from '../../services/tmdb';
 
 // Real posters tiled faintly behind the hero, fading into the page. Decoration only.
+// ponytail: forty small image requests on every front-page load; one composite image built
+// with the index would make it one request.
 export default function PosterWall({ films }) {
   return (
     <div aria-hidden="true" className="absolute inset-0 overflow-hidden pointer-events-none">

@@ -37,6 +37,8 @@ export async function popularRow({ genre, limit = 12 }) {
 
 // The newest feature-length uploads. Too new for the index, so posters are matched live
 // (cached in the browser for a week) and only films that get one are shown.
+// ponytail: up to 100 TMDB lookups per new visitor, and a first paint that waits on them;
+// a nightly index run over recent uploads makes this a file read like every other row.
 export async function newestRow({ limit = 6 } = {}) {
   const { movies } = await archiveService.fetchMovies({ collection: ALL_FILMS, sortBy: 'publicdate', sortOrder: 'desc', rowsPerPage: 100 });
   const features = movies.filter(runtimeFilter({ minRuntime: 40 }));

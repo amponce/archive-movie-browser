@@ -7,6 +7,8 @@ import { indexedMatch } from '../services/posterIndex';
 // was opened (browse, a list, a link) and does not depend on what the browser has loaded.
 // `fallback` (the browser's current list) fills in while it loads or if Archive.org is down.
 // `hints` are genre names from elsewhere (TMDB) for uploads Archive.org tagged with nothing.
+// ponytail: one Archive.org query per film page, and only as good as the uploader's genre tag;
+// genres in the poster index make this a lookup with no request.
 export default function useRelated(movie, fallback = [], hints = []) {
   const genre = movie?.genres?.find(g => g !== 'Uncategorized')
     || hints.map(name => archiveService.normalizeGenre(name)).find(Boolean)

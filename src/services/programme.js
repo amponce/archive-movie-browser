@@ -49,6 +49,8 @@ export function rowFor(index, { decade, limit = 12 } = {}) {
 }
 
 // Today's shelf: one decade a day, six well-regarded films from it in a fixed daily order.
+// ponytail: 'well-regarded' is TMDB's average with no vote-count floor, so a film with three
+// votes can rate 9; store vote counts in the index and require, say, 50.
 // A decade with too few films to fill a shelf never comes up, and nothing after the 1970s: the
 // front desk is for films old enough to have been forgotten.
 export function shelfFor(index, now = new Date(), limit = 6, lastDecade = 1970) {

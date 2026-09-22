@@ -45,7 +45,8 @@ export async function indexedMatch(identifier) {
 // Films the index has a poster for come first; each group keeps the order it arrived in. The
 // index answers from memory, so the batch is ordered before it is shown and no card moves later.
 // ponytail: films matched live by TMDB (not in the index) stay where they are; resolving those
-// first would hold every page back by a second or more.
+// first would hold every page back by a second or more. Goes away once the whole catalogue is
+// indexed and nothing is matched live.
 // One card per film: when the index says two uploads are the same film, keep the better copy
 // in the earlier one's place. `seen` carries the films already on screen across "Load more".
 export async function oneCopyPerFilm(movies, seen = new Set(), better = (a) => a) {
