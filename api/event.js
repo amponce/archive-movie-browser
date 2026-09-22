@@ -15,11 +15,15 @@ function overLimit(ip) {
 
 const done = (status) => new Response(null, { status });
 
+// "null" (sandboxed frames, some redirects) and other non-URL values are real Origin headers
+const originHost = (origin) => { try { return new URL(origin).host; } catch { return null; } };
+
 export async function POST(request) {
   // Only our own pages report events: a browser sets these headers and a page cannot fake them
   const site = request.headers.get('sec-fetch-site');
   const origin = request.headers.get('origin');
-  if ((site && site !== 'same-origin') || (origin && new URL(origin).host !== new URL(request.url).host)) return done(403);
+  if (site && site !== 'same-origin') return done(403);
+  if (origin && originHost(origin) !== new URL(request.url).host) return done(403);
 
   const userAgent = request.headers.get('user-agent') || '';
   const ip = (request.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim();

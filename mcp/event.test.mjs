@@ -38,6 +38,14 @@ test('other sites, bots, junk and made-up events are turned away before the data
   assert.equal(calls.length, 0);
 });
 
+test('a malformed Origin (null, or not a URL) is refused with 403, never a 500', async t => {
+  const calls = stubRedis(t);
+  for (const origin of ['null', 'not a url', 'javascript:alert(1)']) {
+    assert.equal((await post({ name: 'Load more', data: {} }, { origin, 'sec-fetch-site': '' })).status, 403, origin);
+  }
+  assert.equal(calls.length, 0);
+});
+
 test('one address cannot flood the counters', async t => {
   stubRedis(t);
   let last;
