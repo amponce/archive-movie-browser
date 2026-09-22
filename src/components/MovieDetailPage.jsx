@@ -1,3 +1,4 @@
+import ErrorBoundary from './ErrorBoundary';
 import React, { useState, useEffect, useRef, useId } from 'react';
 import useFilmDetails from '../hooks/useFilmDetails';
 import useFilmDialog from '../hooks/useFilmDialog';
@@ -11,7 +12,7 @@ import RelatedShelf from './film/RelatedShelf';
 // The film page: a full-screen <dialog> over the browser. What the page knows comes from
 // useFilmDetails, how the dialog behaves from useFilmDialog, and the pieces are in
 // components/film. Escape, Back and the close button all go through history.
-export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlayRelated, onSearch, onPickGenre, onPickCollection }) {
+function MovieDetailContent({ movie, onClose, allMovies = [], onPlayRelated, onSearch, onPickGenre, onPickCollection }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const dialogRef = useRef(null);
   const backButtonRef = useRef(null);
@@ -57,5 +58,22 @@ export default function MovieDetailPage({ movie, onClose, allMovies = [], onPlay
         <RelatedShelf films={related.films} genre={related.genre} onOpen={onPlayRelated} />
       </div>
     </dialog>
+  );
+}
+
+
+// Keep a failed film local to its overlay, including films opened from Lists.
+export default function MovieDetailPage(props) {
+  const recoverHistory = () => {
+    if (window.history.state?.movieDetail) window.history.back();
+    else if (window.location.hash) {
+      window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+    }
+  };
+  return (
+    <ErrorBoundary key={props.movie.identifier} onError={recoverHistory} onDismiss={props.onClose}
+      className="fixed bottom-4 inset-x-4 z-50 max-w-xl mx-auto bg-ink">
+      <MovieDetailContent {...props} />
+    </ErrorBoundary>
   );
 }
