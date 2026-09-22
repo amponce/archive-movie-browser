@@ -32,3 +32,14 @@ test('listBySlug finds a list and ignores anything else', () => {
   assert.equal(listBySlug(lists, 'nope'), null);
   assert.equal(listBySlug(lists, '__proto__'), null);
 });
+
+test('every list film has a measured stream in tv-lineups.json, so it can air (run npm run tv after editing a list)', async () => {
+  const fs = await import('node:fs');
+  const lineups = JSON.parse(fs.readFileSync(new URL('../../public/tv-lineups.json', import.meta.url), 'utf8')).films;
+  const dir = new URL('../lists/', import.meta.url);
+  const missing = [];
+  for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
+    for (const { id } of JSON.parse(fs.readFileSync(new URL(file, dir), 'utf8')).films) if (!lineups[id]) missing.push(`${file}: ${id}`);
+  }
+  assert.deepEqual(missing, [], 'run `npm run tv` to measure these');
+});

@@ -1,0 +1,48 @@
+name: Stations
+
+# Every Monday the generated television channels pick their films for the week, their streams
+# and lengths are measured, and the result goes to a branch as a pull request for a maintainer
+# to merge. Needs no keys: everything comes from Archive.org and the poster index.
+# Never runs on pull requests.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '43 5 * * 1' # Mondays 05:43 UTC, before the poster index run
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    if: github.repository == 'amponce/archive-movie-browser'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - name: Pick this week's films for every generated station
+        run: node scripts/build-stations.mjs
+      - name: Measure every list film's stream and length
+        run: node scripts/build-tv-lineups.mjs
+      - run: npm test
+      - name: Open a pull request with the week's lineups
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- src/lists public/tv-lineups.json; then
+            echo "Nothing changed this week." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C stations-weekly
+          git add src/lists public/tv-lineups.json
+          git commit -m "Stations: this week's lineups"
+          git push --force origin stations-weekly
+          gh pr create --base main --head stations-weekly --title "Stations: this week's lineups" \
+            --body "The generated channels picked their films for the week (\`npm run stations\`) and every list film was measured (\`npm run tv\`). Curated lists are untouched. Merge to put the week on air." \
+            || gh pr edit stations-weekly --title "Stations: this week's lineups"
