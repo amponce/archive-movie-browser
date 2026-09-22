@@ -5,6 +5,7 @@ import ArchiveMovieBrowser from './components/ArchiveMovieBrowser';
 // ordinary links. The side pages load on demand so the film browser stays small.
 const PAGES = {
   '/': lazy(() => import('./pages/HomePage')),
+  '/tv': lazy(() => import('./pages/TvPage')),
   '/mcp': lazy(() => import('./pages/McpPage')),
   '/stats': lazy(() => import('./pages/StatsPage')),
   '/lists': lazy(() => import('./pages/ListsPage')),
@@ -17,7 +18,7 @@ const PAGES = {
 // redirecting; once the MCP and shared links all say /browse, redirect and drop the case.
 export function pageFor(pathname, search = '', hash = '') {
   const path = pathname.replace(/\/+$/, '');
-  if (path === '' || path === '/browse') return search || hash.length > 1 || path ? null : { Page: PAGES['/'] };
+  if (path === '' || path === '/browse') return search || (path === '' && hash.length > 1) || path ? null : { Page: PAGES['/'] };
   const list = path.match(/^\/lists\/([a-z0-9-]+)$/);
   if (list) return { Page: PAGES['/lists'], slug: list[1] };
   return PAGES[path] ? { Page: PAGES[path] } : null;
