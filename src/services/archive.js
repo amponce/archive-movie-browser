@@ -444,6 +444,7 @@ class ArchiveService {
       collection = 'moviesandfilms',
       decade = null,
       retryDelayMs = 600,
+      timeoutMs = 20000, // Archive.org usually answers in 1.5-4 s; a request that never answers must not spin forever
       signal,
       query: queryOverride = null
     } = options;
@@ -473,14 +474,25 @@ class ArchiveService {
     let response;
     for (let attempt = 1; ; attempt++) {
       let failure;
+      const timer = new AbortController();
+      let timedOut = false;
+      const timeout = setTimeout(() => { timedOut = true; timer.abort(); }, timeoutMs);
+      signal?.addEventListener('abort', () => timer.abort(), { once: true });
       try {
-        response = await fetch(url, signal ? { signal } : undefined);
+        response = await fetch(url, { signal: timer.signal });
         if (response.ok) break;
         failure = new Error(`Archive.org API error: ${response.status}`);
         if (response.status < 500) throw failure;
       } catch (err) {
-        if (err === failure || err.name === 'AbortError') throw err; // a cancelled request is not a failure
-        failure = failure || err;
+        if (err === failure) throw err;
+        if (err.name === 'AbortError') {
+          if (!timedOut) throw err; // cancelled by the caller: not a failure, not retried
+          failure = new Error('Archive.org took too long to answer'); // a hung request is
+        } else {
+          failure = failure || err;
+        }
+      } finally {
+        clearTimeout(timeout);
       }
       if (attempt === 3) throw failure;
       await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempt));

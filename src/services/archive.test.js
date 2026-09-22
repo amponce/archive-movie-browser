@@ -653,3 +653,20 @@ test('buildQuery: the Film Noir pill includes the curated Film Noir collection, 
   // Sci-Fi & Horror mixes two genres, so it is not poured into either pill
   assert.doesNotMatch(archiveService.buildQuery({ collection: ALL_FILMS, genre: 'Horror' }), /OR collection:\(/);
 });
+
+test('a hung Archive.org request times out into an error instead of loading forever', async (t) => {
+  const realFetch = globalThis.fetch;
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  // A fetch that only ever ends when its signal aborts, like a request Archive.org never answers
+  globalThis.fetch = (url, { signal } = {}) => new Promise((_, reject) => signal?.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
+  try {
+    // Three attempts (the transient-error retry), each allowed 15 s, with short pauses between
+    const pending = archiveService.fetchMovies({ collection: 'feature_films', timeoutMs: 15000, retryDelayMs: 1 });
+    let settled = false; pending.then(() => { settled = true; }, () => { settled = true; });
+    t.mock.timers.tick(14000); await Promise.resolve(); assert.equal(settled, false, 'still waiting inside the limit');
+    for (let i = 0; i < 6; i++) { t.mock.timers.tick(15000); await new Promise(resolve => setImmediate(resolve)); }
+    await assert.rejects(pending, /took too long/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
