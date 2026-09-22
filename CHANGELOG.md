@@ -10,6 +10,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Changed
 
+- When the same film is uploaded more than once, the list keeps the sharper or larger copy instead of whichever upload was downloaded most ([#118](https://github.com/amponce/archive-movie-browser/issues/118)).
 - The collection dropdown and the genre pills always both apply. A genre used to switch to every film collection while the dropdown kept showing the old one. **All Films** is a new choice and the default; a search shows "Everything (searching)".
 - The MCP page and the stats page are part of the React app now (`/mcp`, `/stats`); the old `.html` addresses redirect.
 - Genre lives in the pills only: the collection dropdown no longer lists Film Noir or Sci-Fi & Horror (links to them open All Films with the matching pill), and the Film Noir pill includes the curated Film Noir collection.

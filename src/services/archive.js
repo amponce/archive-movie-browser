@@ -186,6 +186,22 @@ const GENRE_ALIASES = {
 export const UPLOAD_NOISE = /\b(\d{3,4}p|4k|\d+fps|\d+kb|full hd|hd|uhd|blu ?ray|bdrip|brrip|dvdrip|dvd|mpeg\d?|mp4|avi|mkv|full movie|widescreen|colou?rized|restored|remastered|video quality|quality|upgrade|uncut)\b/g;
 export const FILM_YEAR = /\b(18|19|20)\d{2}\b/g;
 
+const HIGH_QUALITY = /\b(4k|2160p|1080p|full hd|uhd|blu[- ]?ray|restored|remastered)\b/gi;
+const LOW_QUALITY = /\b(\d+kb|ipod|vhs|low quality)\b/gi;
+
+function qualityScore(movie) {
+  const title = String(movie.title || '');
+  return (title.match(HIGH_QUALITY)?.length || 0) - (title.match(LOW_QUALITY)?.length || 0);
+}
+
+export function betterCopy(a, b) {
+  const quality = qualityScore(a) - qualityScore(b);
+  if (quality !== 0) return quality > 0 ? a : b;
+  const size = (a.sizeMB || 0) - (b.sizeMB || 0);
+  if (size !== 0) return size > 0 ? a : b;
+  return a;
+}
+
 class ArchiveService {
   // The film's year: one written in the title wins ("House on Haunted Hill (1999)"), and a
   // metadata year equal to the upload year is the uploader's default, so it counts as unknown.
@@ -223,6 +239,10 @@ class ArchiveService {
       date: movie.date || movie.publicdate,
       publicDate: movie.publicdate
     };
+  }
+
+  betterCopy(a, b) {
+    return betterCopy(a, b);
   }
 
   // Key that is equal for re-uploads of one film:
@@ -516,21 +536,31 @@ class ArchiveService {
       const result = await this.fetchMovies({ ...fetchOptions, page, rowsPerPage });
       total = result.total;
 
+      const selected = [];
       for (const movie of result.movies) {
+        if (!filter(movie)) continue;
         // The same film is uploaded many times. Same title counts as a duplicate
         // unless both copies state a year and the years differ (The Bat 1926 vs 1959).
         const key = this.dedupeKey(movie.title);
         // A year in the title is the film's. A metadata year equal to the upload year is
         // usually the uploader's default, not the film's, so it can't tell two films apart.
         const uploadYear = Number(String(movie.publicDate || '').slice(0, 4));
-        const year = String(movie.title).match(FILM_YEAR)?.[0] ??
+        const rawYear = String(movie.title).match(FILM_YEAR)?.[0] ??
           (movie.year !== uploadYear ? movie.year : null);
+        const year = rawYear == null || rawYear === '' ? null : Number(rawYear);
+        const sameBatch = selected.find(entry =>
+          entry.key === key && (!entry.year || !year || entry.year === year));
+        if (sameBatch) {
+          movies[sameBatch.index] = this.betterCopy(movies[sameBatch.index], movie);
+          continue;
+        }
         const duplicate = year
           ? seenTitles.has(`${key}|${year}`) || seenTitles.has(`${key}|?`)
           : seenTitles.has(key);
-        if (duplicate || !filter(movie)) continue;
+        if (duplicate) continue;
         seenTitles.add(key);
         seenTitles.add(`${key}|${year ?? '?'}`);
+        selected.push({ key, year, index: movies.length });
         movies.push(movie);
       }
 

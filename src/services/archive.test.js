@@ -336,6 +336,14 @@ test('parseRuntime handles the odd separators Archive.org uploaders use', () => 
   assert.equal(minutes('unknown'), 0);
 });
 
+test('betterCopy prefers quality signals, then item size', () => {
+  const plain = { title: 'Night of the Living Dead', sizeMB: 900 };
+  const restored = { title: 'Night of the Living Dead 1080p restored', sizeMB: 500 };
+  assert.equal(archiveService.betterCopy(restored, plain), restored);
+  const larger = { title: plain.title, sizeMB: 1200 };
+  assert.equal(archiveService.betterCopy(larger, plain), larger);
+});
+
 test('fetchFiltered treats re-uploads with quality tags as the same film', async () => {
   const realFetch = globalThis.fetch;
   mockDocs([
@@ -360,7 +368,7 @@ test('fetchFiltered treats re-uploads with quality tags as the same film', async
   try {
     const result = await archiveService.fetchFiltered({});
     assert.deepEqual(result.movies.map(m => m.identifier),
-      ['keep-film', 'keep-trailer', 'keep-hosted', 'keep-sequel', 'keep-article']);
+      ['dupe-bluray', 'keep-trailer', 'keep-hosted', 'keep-sequel', 'keep-article']);
   } finally {
     globalThis.fetch = realFetch;
   }
