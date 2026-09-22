@@ -1,6 +1,8 @@
-import test from 'node:test';
+import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import archiveService from './archive.js';
+
+beforeEach(() => archiveService.movieResponses.clear());
 
 test('getMovieByIdentifier normalizes Archive.org metadata', async () => {
   const realFetch = globalThis.fetch;
@@ -242,6 +244,7 @@ test('fetchFiltered stops at the end of results and at the page cap', async () =
     assert.equal(ended.movies.length, 2);
     assert.equal(ended.nextPage, null);
 
+    archiveService.movieResponses.clear(); // The second scenario uses a different upstream dataset.
     const calls = mockArchive(100);
     const capped = await archiveService.fetchFiltered({ count: 50, rowsPerPage: 4, maxPages: 3, filter: m => m.runtimeMinutes >= 40 });
     assert.deepEqual(calls, [1, 2, 3]);
@@ -445,12 +448,12 @@ test('fetchMovies retries when Archive.org fails transiently', async () => {
 
     calls = 0;
     globalThis.fetch = async () => { calls++; return { ok: false, status: 502 }; };
-    await assert.rejects(() => archiveService.fetchMovies({ retryDelayMs: 0 }), /502/);
+    await assert.rejects(() => archiveService.fetchMovies({ searchQuery: 'failed upstream', retryDelayMs: 0 }), /502/);
     assert.equal(calls, 3, 'gives up after 3 attempts');
 
     calls = 0;
     globalThis.fetch = async () => { calls++; return { ok: false, status: 400 }; };
-    await assert.rejects(() => archiveService.fetchMovies({ retryDelayMs: 0 }), /400/);
+    await assert.rejects(() => archiveService.fetchMovies({ searchQuery: 'bad request', retryDelayMs: 0 }), /400/);
     assert.equal(calls, 1, 'a bad request is not retried');
   } finally {
     globalThis.fetch = realFetch;
@@ -690,4 +693,89 @@ test('the upload-date guard is compact enough that the current year never falls 
     // guard (about 2,300) lost its tail, which let 2026-dated uploads top 'newest'
     assert.ok(encodeURIComponent(query).length < 2200, `${encodeURIComponent(query).length} chars: Archive.org truncates long queries`);
   }
+});
+
+test('fetchMovies caches by URL but applies runtime filters separately', async (t) => {
+  let calls = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    calls++;
+    return { ok: true, json: async () => ({ response: { docs: [
+      { identifier: 'short', title: 'Short Film', runtime: '30' },
+      { identifier: 'long', title: 'Long Film', runtime: '90' }
+    ], numFound: 2 } }) };
+  });
+  const first = await archiveService.fetchMovies();
+  first.movies[0].title = 'Caller modification';
+  const longer = await archiveService.fetchMovies({ minRuntime: 60 });
+  assert.deepEqual(longer.movies.map(m => m.identifier), ['long']);
+  assert.equal((await archiveService.fetchMovies()).movies[0].title, 'Short Film');
+  assert.equal(calls, 1);
+  await archiveService.fetchMovies({ page: 2 });
+  await archiveService.fetchMovies({ genre: 'Comedy' });
+  assert.equal(calls, 3);
+});
+
+test('fetchMovies expires entries after five minutes, not after their last read', async (t) => {
+  let now = 1000, calls = 0;
+  t.mock.method(Date, 'now', () => now);
+  t.mock.method(globalThis, 'fetch', async () => {
+    calls++;
+    return { ok: true, json: async () => ({ response: { docs: [], numFound: 0 } }) };
+  });
+  await archiveService.fetchMovies();
+  now += 299999;
+  await archiveService.fetchMovies();
+  assert.equal(calls, 1, 'empty successful results are cached too');
+  now++;
+  await archiveService.fetchMovies();
+  assert.equal(calls, 2);
+});
+
+test('fetchMovies evicts the oldest response when the cache reaches 100 URLs', async (t) => {
+  let calls = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    calls++;
+    return { ok: true, json: async () => ({ response: { docs: [], numFound: 0 } }) };
+  });
+  for (let page = 1; page <= 101; page++) await archiveService.fetchMovies({ page });
+  await archiveService.fetchMovies({ page: 101 });
+  assert.equal(calls, 101);
+  await archiveService.fetchMovies({ page: 1 });
+  assert.equal(calls, 102);
+});
+
+test('fetchMovies never caches failed HTTP, body, JSON or missing-response results', async (t) => {
+  const bad = [
+    { ok: false, status: 400 },
+    { ok: true, json: async () => ({ error: 'bad query' }) },
+    { ok: true, json: async () => { throw new SyntaxError('bad JSON'); } },
+    { ok: true, json: async () => ({}) }
+  ];
+  for (let i = 0; i < bad.length; i++) {
+    let calls = 0;
+    const mock = t.mock.method(globalThis, 'fetch', async () => {
+      calls++;
+      return calls === 1 ? bad[i] : { ok: true, json: async () => ({ response: { docs: [], numFound: 0 } }) };
+    });
+    const options = { searchQuery: `failure ${i}` };
+    if (i < 3) await assert.rejects(() => archiveService.fetchMovies(options));
+    else await archiveService.fetchMovies(options);
+    await archiveService.fetchMovies(options);
+    await archiveService.fetchMovies(options);
+    assert.equal(calls, 2);
+    mock.mock.restore();
+  }
+});
+
+test('fetchMovies respects an already aborted caller even on a cache hit', async (t) => {
+  let calls = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    calls++;
+    return { ok: true, json: async () => ({ response: { docs: [], numFound: 0 } }) };
+  });
+  await archiveService.fetchMovies();
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(() => archiveService.fetchMovies({ signal: controller.signal }), { name: 'AbortError' });
+  assert.equal(calls, 1);
 });

@@ -3,6 +3,8 @@ import { matchRanges, suggestTags } from './suggest.js';
 
 const ARCHIVE_API = 'https://archive.org/advancedsearch.php';
 const ARCHIVE_METADATA_API = 'https://archive.org/metadata';
+const RESPONSE_TTL_MS = 5 * 60 * 1000;
+const MAX_RESPONSES = 100;
 
 const BLOCKED_TITLE_PATTERNS = [/\bthe child\b/i];
 // Identifier separators and year suffixes delimit tokens, but longer words do not.
@@ -211,6 +213,8 @@ export function betterCopy(a, b) {
 }
 
 class ArchiveService {
+  movieResponses = new Map();
+
   // The film's year: one written in the title wins ("House on Haunted Hill (1999)"), and a
   // metadata year equal to the upload year is the uploader's default, so it counts as unknown.
   filmYear(title, metadataYear, publicDate) {
@@ -442,6 +446,64 @@ class ArchiveService {
     return { films, tags };
   }
 
+  // Store raw responses so each caller gets freshly normalized movies and its own runtime filter.
+  async fetchMovieResponse(url, { signal, timeoutMs, retryDelayMs }) {
+    signal?.throwIfAborted();
+    const cached = this.movieResponses.get(url);
+    if (cached && cached.expiresAt > Date.now()) return cached.data;
+    this.movieResponses.delete(url);
+
+    // Archive.org intermittently returns 502s. Its error pages carry no CORS header, so a
+    // browser reports them as "Failed to fetch". Retry those; don't retry a bad request.
+    let response;
+    for (let attempt = 1; ; attempt++) {
+      let failure;
+      const timer = new AbortController();
+      let timedOut = false;
+      const timeout = setTimeout(() => { timedOut = true; timer.abort(); }, timeoutMs);
+      signal?.addEventListener('abort', () => timer.abort(), { once: true });
+      try {
+        response = await fetch(url, { signal: timer.signal });
+        if (response.ok) break;
+        failure = new Error(`Archive.org API error: ${response.status}`);
+        if (response.status < 500) throw failure;
+      } catch (err) {
+        if (err === failure) throw err;
+        if (err.name === 'AbortError') {
+          if (!timedOut) throw err; // cancelled by the caller: not a failure, not retried
+          failure = new Error('Archive.org took too long to answer'); // a hung request is
+        } else {
+          failure = failure || err;
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
+      if (attempt === 3) throw failure;
+      await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempt));
+    }
+
+    const data = await response.json();
+
+    // Archive.org reports query errors in the body with HTTP 200
+    if (data.error) {
+      throw new Error(`Archive.org API error: ${data.error}`);
+    }
+
+    if (!Array.isArray(data.response?.docs)) {
+      return data;
+    }
+
+    const now = Date.now();
+    for (const [key, entry] of this.movieResponses) {
+      if (entry.expiresAt <= now) this.movieResponses.delete(key);
+    }
+    this.movieResponses.set(url, { data, expiresAt: now + RESPONSE_TTL_MS });
+    while (this.movieResponses.size > MAX_RESPONSES) {
+      this.movieResponses.delete(this.movieResponses.keys().next().value);
+    }
+    return data;
+  }
+
   // Fetch movies from Archive.org
   async fetchMovies(options = {}) {
     const {
@@ -480,45 +542,8 @@ class ArchiveService {
     const fieldParams = fields.map(f => `fl[]=${f}`).join('&');
     const url = `${ARCHIVE_API}?q=${encodeURIComponent(query)}&${fieldParams}&sort[]=${sortBy}+${sortOrder}&rows=${rowsPerPage}&page=${page}&output=json`;
 
-    // Archive.org intermittently returns 502s. Its error pages carry no CORS header, so a
-    // browser reports them as "Failed to fetch". Retry those; don't retry a bad request.
-    let response;
-    for (let attempt = 1; ; attempt++) {
-      let failure;
-      const timer = new AbortController();
-      let timedOut = false;
-      const timeout = setTimeout(() => { timedOut = true; timer.abort(); }, timeoutMs);
-      signal?.addEventListener('abort', () => timer.abort(), { once: true });
-      try {
-        response = await fetch(url, { signal: timer.signal });
-        if (response.ok) break;
-        failure = new Error(`Archive.org API error: ${response.status}`);
-        if (response.status < 500) throw failure;
-      } catch (err) {
-        if (err === failure) throw err;
-        if (err.name === 'AbortError') {
-          if (!timedOut) throw err; // cancelled by the caller: not a failure, not retried
-          failure = new Error('Archive.org took too long to answer'); // a hung request is
-        } else {
-          failure = failure || err;
-        }
-      } finally {
-        clearTimeout(timeout);
-      }
-      if (attempt === 3) throw failure;
-      await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempt));
-    }
-
-    const data = await response.json();
-
-    // Archive.org reports query errors in the body with HTTP 200
-    if (data.error) {
-      throw new Error(`Archive.org API error: ${data.error}`);
-    }
-
-    if (!data.response || !data.response.docs) {
-      return { movies: [], total: 0 };
-    }
+    const data = await this.fetchMovieResponse(url, { signal, timeoutMs, retryDelayMs });
+    if (!data.response || !data.response.docs) return { movies: [], total: 0 };
 
     const movies = data.response.docs
       .filter(movie => !isBlockedContent(movie)) // Filter out inappropriate content
