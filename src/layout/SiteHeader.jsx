@@ -13,12 +13,12 @@ const NAV = [
 
 export function Logo() {
   return (
-    <a href="/" className="flex items-center gap-3 shrink-0">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x="2" y="2" width="24" height="24" rx="4" stroke="currentColor" strokeWidth="2.5" /><rect x="7" y="7" width="14" height="14" rx="1.5" fill="currentColor" /><rect x="19" y="4.5" width="4" height="3" rx="1" className="fill-ink" /></svg>
-      <span className="flex flex-col gap-0.5">
+    <a href="/" className="flex flex-col gap-0.5 shrink-0">
+      <span className="flex items-center gap-2.5">
+        <svg width="24" height="24" viewBox="0 0 28 28" fill="none" aria-hidden="true"><rect x="2" y="2" width="24" height="24" rx="4" stroke="currentColor" strokeWidth="2.5" /><rect x="7" y="7" width="14" height="14" rx="1.5" fill="currentColor" /><rect x="19" y="4.5" width="4" height="3" rx="1" className="fill-ink" /></svg>
         <span className="font-display font-black uppercase text-[28px] leading-[0.9] tracking-[0.02em]">Orphaned Films</span>
-        <span className="label hidden sm:block">Forgotten films, found</span>
       </span>
+      <span className="label hidden sm:block pl-[34px]">Forgotten films, found</span>
     </a>
   );
 }

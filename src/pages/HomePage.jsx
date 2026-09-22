@@ -58,7 +58,7 @@ function Hero({ featured, fileNumber }) {
 
   return (
     <section id="tonight" className="gutter rule grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 py-10 lg:py-12 items-center">
-      <div className="lg:col-span-8 flex flex-col gap-8">
+      <div className="lg:col-span-7 flex flex-col gap-8">
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
             <span className="eyebrow"><span className="inline-block w-2 h-2 rounded-full bg-signal mr-2 align-middle" />Tonight's orphan</span>
@@ -77,7 +77,7 @@ function Hero({ featured, fileNumber }) {
           <span className="label">Streams from archive.org</span>
         </div>
       </div>
-      <a href={watch(featured.id)} aria-label={`Watch ${entry.t}`} className="lg:col-span-4 relative block aspect-[2/3] w-full max-w-[320px] lg:max-w-[340px] mx-auto rounded-lg overflow-hidden border border-white/[0.06] bg-[#3A1420] group">
+      <a href={watch(featured.id)} aria-label={`Watch ${entry.t}`} className="lg:col-span-5 relative block aspect-square w-full rounded-lg overflow-hidden border border-white/[0.06] bg-[#3A1420] group">
         <img src={poster} alt="" className="absolute inset-0 w-full h-full object-cover" />
         <span className="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-ink/40" />
         <Sprockets />
