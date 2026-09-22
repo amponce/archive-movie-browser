@@ -78,14 +78,18 @@ tailwind.config.js        tokens: ink, bone, signal, line; Big Shoulders Display
 src/index.css             shapes: .btn-*, .pill, .control, .field, .film-frame, .display, .eyebrow, .label
 src/ui/                   primitives: Button, Section, FilmCard, SearchField
 src/layout/               SiteHeader, SiteFooter, on every page
-src/pages/                Home, Tv, Lists, Mcp, Stats; the film browser is src/components
+src/pages/                Home, Tv, Lists, Mcp, Stats
 src/components/home/      one file per front-page section
-src/services/             pure logic, tested: archive (queries), posterIndex, programme, rows,
-                          schedule, playback, urlFilters, suggest, lists, coverDesign
-src/hooks/                useFilms, useRelated, usePosterIndex, useRow
+src/components/browse/    FilterBar, GenrePills, FilmGrid; ArchiveMovieBrowser composes them
+src/components/film/      FilmTopBar, FilmPoster, FilmDetails, NowPlaying, RelatedShelf; MovieDetailPage composes them
+src/components/           FilmPlayer, SearchBox, MovieCard, TitleCover, SettingsModal, McpBanner
+src/hooks/                useBrowseFilters (the filters, in the URL), useFilms, useFilmDialog, useFilmDetails,
+                          useRelated, useMyChannel, usePosterIndex, useRow, useViewMode
+src/services/             pure logic, tested: archive (queries), posterIndex, programme, rows, schedule,
+                          playback, suggest, urlFilters, lists, myChannel, coverDesign
 src/programme/            featured.json, the hand-picked films of the day
-src/lists/                the lists, one JSON each
-public/poster-index.json  the index: upload -> film, poster, year, rating, confidence
+src/lists/                the lists, one JSON each; generated stations say so in the file
+public/poster-index.json  the index: upload -> film, poster, year, rating, confidence, original title
 public/tv-lineups.json    upload -> playable stream and length, for the channels
 api/                      event (usage counts), stats, mcp, tv
 mcp/                      the MCP server, stdio and hosted
