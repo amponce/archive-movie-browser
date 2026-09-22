@@ -152,6 +152,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
       e.stopPropagation(); // close the list, not whatever is behind it
       e.preventDefault();  // ...including a <dialog>, which closes on Escape's default action
       setOpen(false);
+      setActive(-1);
     }
   };
 
