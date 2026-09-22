@@ -13,10 +13,12 @@ const BOARDS = [
 const fmt = (n) => Number(n || 0).toLocaleString();
 const sum = (days, name) => days.reduce((total, day) => total + (day.events[name] || 0), 0);
 const readKey = () => { try { return localStorage.getItem(KEY) || ''; } catch { return ''; } };
+// A key pasted from a .env file often arrives with quotes or a newline; the server wants only the value
+export const cleanKey = (text) => String(text || '').trim().replace(/^["']|["']$/g, '').trim();
 
 async function fetchStats(key) {
   const response = await fetch('/api/stats', { headers: { Authorization: `Bearer ${key}` }, cache: 'no-store' });
-  if (!response.ok) throw new Error(response.status === 404 ? 'That key was not accepted.' : `The stats could not be loaded (${response.status}).`);
+  if (!response.ok) throw new Error(response.status === 404 ? 'That key does not match. It is the whole STATS_TOKEN value, no quotes around it.' : `The stats could not be loaded (${response.status}).`);
   return response.json();
 }
 
@@ -135,7 +137,7 @@ export default function StatsPage() {
         {!data && (
           <section>
             <p>This page is for the maintainer. Paste the stats key to see the numbers.</p>
-            <form className="flex gap-2 max-w-md mt-4" onSubmit={(event) => { event.preventDefault(); load(entered.trim()); }}>
+            <form className="flex gap-2 max-w-md mt-4" onSubmit={(event) => { event.preventDefault(); load(cleanKey(entered)); }}>
               <input
                 type="password" autoComplete="off" aria-label="Stats key" placeholder="Stats key" value={entered} onChange={(e) => setEntered(e.target.value)}
                 className="flex-1 bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-white focus:outline-none focus:border-yellow-400"
