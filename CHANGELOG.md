@@ -11,6 +11,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- Browsing a genre now lists every film the index knows in that genre, not only the uploads whose uploader typed a genre tag on Archive.org. Comedy in the 1980s goes from 37 films to 128, horror from 51 to 163. Archive.org's own tagged uploads follow after the index runs out. Most Popular sorts by how many people rated a film.
 - A "Wrong poster?" link on films whose poster came from the index, opening a pre-filled issue with the identifier, the upload title and our guess ([#221](https://github.com/amponce/archive-movie-browser/pull/221), closes #120).
 
 ### Fixed
