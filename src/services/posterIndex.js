@@ -86,5 +86,7 @@ export function decisionToEntry({ film, confidence }) {
   const entry = { i: film.id, t: film.title, y: Number((film.release_date || '').slice(0, 4)) || null, p: film.poster_path, v: film.vote_average, c: confidence };
   // The original title, when it differs: uploads and searches often use it ("Zombi Holocaust")
   if (film.original_title && film.original_title !== film.title) entry.o = film.original_title;
+  // Genres `g` (in our names) and length `l` in minutes come from TMDB details, filled in by
+  // scripts/backfill-film-facts.mjs; a search result carries neither
   return entry;
 }
