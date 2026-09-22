@@ -4,7 +4,7 @@
 // real posters without a TMDB key and without a burst of TMDB lookups per page.
 //
 // Entry shapes (kept short because the file is downloaded by every visitor):
-//   { i: tmdbId, t: title, y: year, p: posterPath, v: voteAverage, c: confidence }
+//   { i: tmdbId, t: title, y: year, p: posterPath, v: voteAverage, k: voteCount, c: confidence }
 //   { n: 1, c: confidence }   decided: show the generated cover
 // Add m: 1 to an entry corrected by hand; the build script never overwrites those.
 // r: 1 marks a 'none' that was decided again with extra candidates (--retry-none) and stayed none.
@@ -83,7 +83,7 @@ export function identifiedAs(movie, match) {
 // Used by the build script: turn a model decision into an index entry
 export function decisionToEntry({ film, confidence }) {
   if (!film || !film.poster_path || confidence < CONFIDENCE_THRESHOLD) return { n: 1, c: confidence };
-  const entry = { i: film.id, t: film.title, y: Number((film.release_date || '').slice(0, 4)) || null, p: film.poster_path, v: film.vote_average, c: confidence };
+  const entry = { i: film.id, t: film.title, y: Number((film.release_date || '').slice(0, 4)) || null, p: film.poster_path, v: film.vote_average, k: film.vote_count, c: confidence };
   // The original title, when it differs: uploads and searches often use it ("Zombi Holocaust")
   if (film.original_title && film.original_title !== film.title) entry.o = film.original_title;
   // Genres `g` (in our names) and length `l` in minutes come from TMDB details, filled in by

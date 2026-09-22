@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Fills in what TMDB knows about every identified film in public/poster-index.json and the
 // build did not keep: `o` the original title when it differs, `g` its genres in our names,
-// `l` its length in minutes. One request per film, about 50 a second, and only for entries
-// that lack them, so a rerun is cheap.
+// `l` its length in minutes, `k` how many people rated it. One request per film, about 50 a
+// second, and only for entries that lack them, so a rerun is cheap.
 //
 //   node scripts/backfill-film-facts.mjs
 import fs from 'node:fs';
@@ -26,7 +26,7 @@ function readKey() {
 }
 
 const index = JSON.parse(fs.readFileSync(OUT, 'utf8'));
-const todo = Object.entries(index.films).filter(([, e]) => e.i && e.g === undefined); // g is always set after a fill, even when empty
+const todo = Object.entries(index.films).filter(([, e]) => e.i && (e.g === undefined || e.k === undefined)); // both always set after a fill, even when empty or zero
 console.log(`${todo.length} entries to fill`);
 let done = 0, genres = 0, runtimes = 0;
 const byId = new Map(); // one request per TMDB film, however many uploads it has
@@ -41,6 +41,7 @@ for (let i = 0; i < todo.length; i += 40) {
     const ours = [...new Set((film.genres || []).map(g => archiveService.normalizeGenre(g.name)).filter(Boolean))];
     e.g = ours; if (ours.length) genres++;
     if (film.runtime > 0) { e.l = film.runtime; runtimes++; }
+    e.k = film.vote_count || 0;
     done++;
   }));
   if (i % 800 === 0) { process.stdout.write(`\r${done} filled`); fs.writeFileSync(OUT, JSON.stringify(index)); }
