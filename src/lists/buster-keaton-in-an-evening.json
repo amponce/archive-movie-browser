@@ -1,0 +1,15 @@
+{
+  "slug": "buster-keaton-in-an-evening",
+  "title": "Buster Keaton in an evening",
+  "blurb": "Four shorts and three features, in the order to watch them. Keaton did his own stunts, never smiled on camera, and built gags that still make a room laugh a hundred years later. The shorts run twenty minutes each; start there.",
+  "curator": "amponce",
+  "films": [
+    { "id": "OneWeek", "note": "A newlywed builds a house from a kit. The kit has been sabotaged." },
+    { "id": "Cops1922", "note": "One man, every policeman in the city. The chase to end all chases." },
+    { "id": "CutTheGoat1921", "note": "Mistaken for a murderer because he looked through a window at the wrong moment." },
+    { "id": "Silent_ThePlayHouse_1921", "note": "Keaton plays every member of an orchestra and its entire audience." },
+    { "id": "MyMovie_20190318", "note": "Sherlock Jr.: a projectionist walks into the film he's showing. Uploaded as 'MyMovie'; the poster index worked out which film it was." },
+    { "id": "TheGeneral1926", "note": "A Civil War locomotive chase, and the most expensive single shot of the silent era." },
+    { "id": "STEAMBOATBILLJR.1928BusterKeaton", "note": "The house-front falls. He stands in the window. It's real." }
+  ]
+}

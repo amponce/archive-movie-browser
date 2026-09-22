@@ -1,0 +1,20 @@
+{
+  "slug": "drive-in-double-features",
+  "title": "Drive-in double features",
+  "blurb": "Monsters, mad science and one Santa Claus, from the years when a film had to be scary enough for the back row and short enough for two showings a night. None of these is good in the usual sense. All of them are a good night.",
+  "curator": "amponce",
+  "films": [
+    { "id": "Night.Of.The.Living.Dead_1080p", "note": "The one that invented the modern zombie, on a budget of a hundred thousand dollars." },
+    { "id": "HouseOnHauntedHill1959", "note": "Vincent Price offers five strangers ten thousand dollars to survive a night." },
+    { "id": "CarnivalOfSouls1962", "note": "A woman walks away from a car crash and nothing is right afterwards." },
+    { "id": "TheLittleShopOfHorrors1960", "note": "Shot in two days. A young Jack Nicholson enjoys the dentist." },
+    { "id": "AttackOfTheGiantLeeches", "note": "Exactly what it says." },
+    { "id": "The_Killer_Shrews", "note": "Dogs in shag carpets. The film knows." },
+    { "id": "TheWaspWoman1959169Version", "note": "A cosmetics executive tries an anti-ageing serum made from wasps." },
+    { "id": "CreatureFromTheHauntedSea", "note": "Roger Corman's gangster-comedy-monster film. The creature has ping-pong-ball eyes." },
+    { "id": "AtomAgeVampire", "note": "A scientist restores a burned singer's face. It doesn't stay restored." },
+    { "id": "TeenagersFromOuterSpace", "note": "The aliens' pet is a lobster shadow. The hero is called Derek." },
+    { "id": "SantaClausConquerstheMartians1964", "note": "Martians kidnap Santa. A Christmas film, technically." },
+    { "id": "dead_people_ipod", "note": "Messiah of Evil, uploaded as 'Dead People': a seaside town where the dead eat raw meat in the supermarket." }
+  ]
+}

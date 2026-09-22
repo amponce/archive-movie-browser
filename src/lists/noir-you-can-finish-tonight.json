@@ -1,0 +1,18 @@
+{
+  "slug": "noir-you-can-finish-tonight",
+  "title": "Noir you can finish tonight",
+  "blurb": "Ten films under ninety minutes from the years when the studios shot fast and cheap and the shadows did the acting. Start with Detour if you have never seen a noir: sixty-eight minutes, six days of shooting, and one of the bleakest endings in American film.",
+  "curator": "amponce",
+  "films": [
+    { "id": "Detour", "note": "Shot in six days. Nobody in it is having a good time, and it's perfect." },
+    { "id": "D.o.a.VideoQualityUpgrade", "note": "A man walks into a police station to report his own murder." },
+    { "id": "Hitch_Hiker", "note": "Ida Lupino directing: two men, one gun, a long desert road." },
+    { "id": "KansasCityConfidential720p", "note": "The masked-heist film Tarantino borrowed for Reservoir Dogs." },
+    { "id": "TooLateForTears1949", "note": "A bag of money lands in the back seat. Lizabeth Scott decides to keep it." },
+    { "id": "Scarlet.Street.194517", "note": "Fritz Lang, Edward G. Robinson, and a painting that ruins everyone." },
+    { "id": "TheStranger720p", "note": "Orson Welles as a Nazi hiding in a Connecticut town." },
+    { "id": "HeWalkedByNight", "note": "The procedural that became Dragnet, shot in the LA storm drains." },
+    { "id": "Woman_on_the_Run", "note": "A wife hunts for the husband who ran from a murder he witnessed." },
+    { "id": "Quicksand720p1950", "note": "Mickey Rooney borrows twenty dollars from the till. It gets worse." }
+  ]
+}

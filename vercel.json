@@ -6,7 +6,9 @@
   },
   "rewrites": [
     { "source": "/mcp", "destination": "/index.html" },
-    { "source": "/stats", "destination": "/index.html" }
+    { "source": "/stats", "destination": "/index.html" },
+    { "source": "/lists", "destination": "/index.html" },
+    { "source": "/lists/:slug", "destination": "/index.html" }
   ],
   "redirects": [
     { "source": "/mcp.html", "destination": "/mcp", "permanent": true },
