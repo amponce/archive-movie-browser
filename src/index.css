@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+body { background: #0E0E10; color: #F2EFE6; -webkit-font-smoothing: antialiased; }
+
 /* Fix dropdown option colors */
 select option {
   background-color: #1f2937;
@@ -33,6 +35,13 @@ select {
 }
 
 /* Line clamp utility */
+.line-clamp-6 {
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
