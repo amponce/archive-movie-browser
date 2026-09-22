@@ -126,6 +126,23 @@ export default function ArchiveMovieBrowser() {
   const { movies, loading, error, nextPage, loadMore, retry } = useFilms({
     search: activeSearch, sort: sortBy, genre: genreFilter, collection: category, decade, contentType, minRuntime,
   });
+  const loadMoreStart = useRef(null);
+  const [loadMoreStatus, setLoadMoreStatus] = useState('');
+
+  useEffect(() => {
+    if (!loading && loadMoreStart.current !== null) {
+      setLoadMoreStatus(`${movies.length - loadMoreStart.current} more films loaded`);
+      loadMoreStart.current = null;
+    }
+  }, [loading, movies.length]);
+
+  const handleLoadMore = () => {
+    if (loading) return;
+    loadMoreStart.current = movies.length;
+    setLoadMoreStatus('');
+    track('Load more', { page: nextPage });
+    loadMore();
+  };
 
   // Handle search submit
   const handleSearch = (text = searchQuery) => {
@@ -659,13 +676,14 @@ export default function ArchiveMovieBrowser() {
         {nextPage && !error && (movies.length > 0 || !loading) && (
           <div className="flex justify-center mt-8 pt-8 border-t border-gray-800">
             <button
-              onClick={() => { track('Load more', { page: nextPage }); loadMore(); }}
-              disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-gray-900 font-medium rounded-lg hover:bg-yellow-400 disabled:opacity-50"
+              onClick={handleLoadMore}
+              aria-disabled={loading}
+              className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-gray-900 font-medium rounded-lg hover:bg-yellow-400 aria-disabled:opacity-50"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading ? 'Loading...' : 'Load more'}
             </button>
+            <span className="sr-only" aria-live="polite">{loadMoreStatus}</span>
           </div>
         )}
       </main>
