@@ -47,6 +47,7 @@ export default function useFilmDetails(movie) {
   return {
     tmdbData, tmdbDetails, loading,
     identified: identifiedAs(movie, tmdbData),
+    fromIndex: Boolean(tmdbData?.fromIndex),
     posterUrl: tmdbData?.posterPath ? tmdbService.getPosterUrl(tmdbData.posterPath, 'large') : null,
     backdropUrl: tmdbDetails?.backdrop_path ? tmdbService.getBackdropUrl(tmdbDetails.backdrop_path, 'w1280') : null,
     director: tmdbDetails?.credits?.crew?.find(c => c.job === 'Director'),

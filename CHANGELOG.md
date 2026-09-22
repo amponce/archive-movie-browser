@@ -8,6 +8,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 - Reuse successful Archive.org search responses for five minutes, keeping at most 100 in memory, so returning to a filter avoids another network request ([#217](https://github.com/amponce/archive-movie-browser/pull/217)).
 
+### Added
+
+- A "Wrong poster?" link on films whose poster came from the index, opening a pre-filled issue with the identifier, the upload title and our guess ([#221](https://github.com/amponce/archive-movie-browser/pull/221), closes #120).
+
 ### Fixed
 
 - Show a recovery message after a render error instead of a blank page; a broken film page closes without taking down the catalogue ([#219](https://github.com/amponce/archive-movie-browser/pull/219), closes #32).
