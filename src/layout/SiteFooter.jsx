@@ -4,7 +4,8 @@ const REPO = 'https://github.com/amponce/archive-movie-browser';
 
 // The same footer on every page: the one-line promise, the links, and the disclaimer that keeps
 // us honest about who hosts what.
-export default function SiteFooter({ children }) {
+// `counts` (from the poster index) adds one quiet line for people who want to help.
+export default function SiteFooter({ children, counts }) {
   const ext = { target: '_blank', rel: 'noopener noreferrer', className: 'underline hover:text-bone' };
   return (
     <footer className="gutter py-8 border-t border-line flex flex-col gap-5">
@@ -18,6 +19,12 @@ export default function SiteFooter({ children }) {
           <a href="https://archive.org/details/movies" className="label hover:text-bone inline-flex items-center min-h-[44px]">Archive.org</a>
         </span>
       </div>
+      {counts && (
+        <p className="font-mono text-[11px] tracking-[0.06em] text-dim">
+          {counts.identified.toLocaleString('en-US')} films identified so far, {counts.wanted.toLocaleString('en-US')} still without a poster.{' '}
+          <a href={`${REPO}#poster-index`} className="underline hover:text-bone">Know one? Help fix it.</a>
+        </p>
+      )}
       <p className="max-w-3xl text-xs leading-relaxed text-dim">
         This is an independent, open-source viewer. It hosts no video: every film is stored and streamed by the{' '}
         <a href="https://archive.org" {...ext}>Internet Archive</a>{' '}
