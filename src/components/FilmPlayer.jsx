@@ -1,14 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import archiveService from '../services/archive';
-import { pickPlayableFile, videoUrl, shortcutFor, resumeTime, rememberPosition } from '../services/playback';
+import { pickPlayableFile, videoUrl, shortcutFor, resumeTime, rememberPosition, readPositions, POSITIONS_KEY } from '../services/playback';
 import { track } from '../services/analytics';
 
-const POSITIONS_KEY = 'playback-positions';
-
-function readPositions() {
-  try { return JSON.parse(localStorage.getItem(POSITIONS_KEY) || '{}') || {}; } catch { return {}; }
-}
 
 const clock = (seconds) => {
   const s = Math.floor(seconds);

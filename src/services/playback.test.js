@@ -59,3 +59,15 @@ test('rememberPosition keeps the most recent 50 films', () => {
   assert.equal(saved.film0, undefined);
   assert.deepEqual(saved.film54, { time: 154, duration: 5000, at: 1054 });
 });
+
+test('unfinished lists films to go back to, most recent first, skipping finished ones', async () => {
+  const { unfinished } = await import('./playback.js');
+  const saved = {
+    half: { time: 2000, duration: 5000, at: 2 },
+    done: { time: 4980, duration: 5000, at: 3 },
+    barely: { time: 10, duration: 5000, at: 4 },
+    older: { time: 900, duration: 5000, at: 1 },
+  };
+  assert.deepEqual(unfinished(saved).map(f => f.identifier), ['half', 'older']);
+  assert.deepEqual(unfinished(saved, 1).map(f => f.identifier), ['half']);
+});

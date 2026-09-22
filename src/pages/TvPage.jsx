@@ -11,6 +11,9 @@ import Button from '../ui/Button';
 // schedule maths (services/schedule) says what is on now, so nothing is refetched when a film ends.
 
 const GUIDE_HOURS = 3;
+const LAST_CHANNEL_KEY = 'tv-last-channel';
+const readLast = () => { try { return localStorage.getItem(LAST_CHANNEL_KEY); } catch { return null; } };
+const rememberLast = id => { try { localStorage.setItem(LAST_CHANNEL_KEY, id); } catch { /* private mode */ } };
 const clock = ms => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 const mins = s => `${Math.floor(s / 60)} min`;
 
@@ -135,7 +138,8 @@ function Guide({ channels, current, now, onTune }) {
 
 export default function TvPage() {
   const { channels, error } = useSchedule();
-  const [currentId, setCurrentId] = useState(() => decodeURIComponent(window.location.hash.slice(1)) || null);
+  // The channel in the link, else the one this browser watched last, else channel 1
+  const [currentId, setCurrentId] = useState(() => decodeURIComponent(window.location.hash.slice(1)) || readLast());
   const [now, setNow] = useState(Date.now);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(t); }, []);
   useEffect(() => { document.title = 'TV | Orphaned Films'; }, []);
@@ -143,6 +147,7 @@ export default function TvPage() {
   const current = useMemo(() => channels.find(c => c.id === currentId) || channels[0] || null, [channels, currentId]);
   const tune = useCallback((channel) => {
     setCurrentId(channel.id);
+    rememberLast(channel.id);
     window.history.replaceState({}, '', `/tv#${channel.id}`);
     track('TV', { action: 'tune', channel: channel.id });
   }, []);

@@ -35,7 +35,8 @@ export function Sprockets() {
 
 export { fieldFor };
 
-// film: { id, title, year, genre, poster }   poster is a full image URL or null
+// film: { id, title, year, genre, poster, progress? }   poster is a full image URL or null;
+// progress (0..1) draws a line for how far along a film is
 // href: where the card goes. children: an optional line under the year (adopters, note)
 export default function FilmCard({ film, href, label, children }) {
   const genre = film.genre && film.genre !== 'Uncategorized' ? film.genre : null;
@@ -55,6 +56,9 @@ export default function FilmCard({ film, href, label, children }) {
           <span className="absolute top-3 left-4 font-mono text-[10px] tracking-[0.12em] uppercase bg-signal text-ink px-2 py-1 rounded-sm">
             {label}
           </span>
+        )}
+        {film.progress > 0 && (
+          <span aria-hidden="true" className="absolute left-3 right-3 bottom-2 h-0.5 bg-white/20"><span className="block h-full bg-signal" style={{ width: `${Math.round(film.progress * 100)}%` }} /></span>
         )}
         <Sprockets />
       </span>

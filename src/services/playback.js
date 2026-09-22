@@ -35,6 +35,21 @@ export function shortcutFor(event) {
   }
 }
 
+// Positions are kept in this browser only (no account): identifier -> { time, duration, at }
+export const POSITIONS_KEY = 'playback-positions';
+export function readPositions() {
+  try { return JSON.parse(localStorage.getItem(POSITIONS_KEY) || '{}') || {}; } catch { return {}; }
+}
+
+// Films worth going back to: started, not finished, most recent first
+export function unfinished(saved, limit = 6) {
+  return Object.entries(saved)
+    .filter(([, p]) => resumeTime(p) > 0)
+    .sort((a, b) => b[1].at - a[1].at)
+    .slice(0, limit)
+    .map(([identifier, p]) => ({ identifier, time: p.time, duration: p.duration }));
+}
+
 // Where to start a film that was watched before: not for the first half minute, not in the credits
 export function resumeTime(saved) {
   if (!saved || saved.time < 30 || saved.time > saved.duration - 60) return 0;
