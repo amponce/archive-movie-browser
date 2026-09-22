@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pickPlayableFile, videoUrl, shortcutFor, resumeTime, rememberPosition } from './playback.js';
+import { pickPlayableFile, playableFiles, videoUrl, shortcutFor, resumeTime, rememberPosition } from './playback.js';
 
 // Real file lists from Archive.org, trimmed to the fields used
 const deadPeople = [
@@ -15,6 +15,11 @@ test('pickPlayableFile prefers an h.264 derivative, then the original mp4, then 
   assert.equal(pickPlayableFile([...deadPeople, { name: 'dead_people.ia.mp4', format: 'h.264 IA', source: 'derivative', size: '600000000' }]).name, 'dead_people.ia.mp4');
   assert.equal(pickPlayableFile(deadPeople).name, 'dead_people.mp4');
   assert.equal(pickPlayableFile(deadPeople.filter(f => f.name !== 'dead_people.mp4')).name, 'dead_people_512kb.mp4');
+});
+
+test('playableFiles lists every streamable file best first, so a black-picture original has a fallback', () => {
+  assert.deepEqual(playableFiles(deadPeople).map(f => f.name), ['dead_people.mp4', 'dead_people_512kb.mp4']);
+  assert.deepEqual(playableFiles([]), []);
 });
 
 test('pickPlayableFile skips a master too big to stream, and gives up when nothing can play in a browser', () => {
