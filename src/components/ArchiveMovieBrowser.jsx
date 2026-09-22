@@ -87,6 +87,8 @@ export default function ArchiveMovieBrowser() {
 
   // A pasted archive.org/details/<identifier> link opens the film here
   const [linkError, setLinkError] = useState(null);
+  const selectedRef = useRef(null); // what popstate sees without re-subscribing
+  selectedRef.current = selectedMovie;
   const openFilmLink = (identifier) => {
     setLinkError(null);
     archiveService.getMovieByIdentifier(identifier)
@@ -209,9 +211,13 @@ export default function ArchiveMovieBrowser() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sortBy, minRuntime, contentType]);
 
-  // Back/Forward between filter views: restore the state from the URL.
+  // Back/Forward between filter views: restore the state from the URL. Forward can also land on
+  // a film's history entry (open a film, Back, Forward): reopen it, or the film URL would sit on
+  // a browse page and leak into the next film opened.
   useEffect(() => {
-    const onPopState = () => {
+    const onPopState = (event) => {
+      const identifier = event.state?.movieDetail && event.state.identifier;
+      if (identifier && !selectedRef.current) openFilmLink(identifier);
       const restored = parseFilters(window.location.search);
       setCategory(restored.collection);
       setGenreFilter(restored.genre);
