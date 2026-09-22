@@ -83,13 +83,21 @@ export const DECADES = [1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 20
 // was dated 2026), so such a date says nothing about the film. Nothing was uploaded to
 // Archive.org before 2000, which makes every earlier date trustworthy. Lucene cannot compare two
 // fields, hence one clause per year; this short form is about as long as Archive.org accepts.
+// Kept short (about 40 characters a year): Archive.org silently truncates long queries, and a
+// truncated guard let 2026-dated uploads sort to the top of "newest".
 function uploadDates(from, to) {
   const clauses = [];
   for (let year = Math.max(from, 2000); year <= Math.min(to, new Date().getFullYear()); year++) {
-    clauses.push(`(year:${year} AND publicdate:[${year}-01-01 TO ${year + 1}-12-31])`);
+    clauses.push(`(year:${year} AND publicdate:[${year} TO ${year + 1}])`);
   }
   return clauses.length ? ` AND NOT (${clauses.join(' OR ')})` : '';
 }
+
+// Sub-collections inside the film collections that are not films: the trailer bin (60,246 of
+// the 110,772 items), stock footage, home movies, digitisation deposits with numbered reels.
+// Left out of every browse and search; Shorts keeps the trailer bin, since that is where
+// trailers belong.
+export const NOT_FILMS = ['movie_trailers_unsorted', 'iicadom', 'home_movies', '35mmstockfootage', 'stock_footage', 'prelinger_mashups', 'laserdiscs'];
 
 // Content filter - block inappropriate content
 function isBlockedContent(movie) {
@@ -345,7 +353,8 @@ class ArchiveService {
       year = null,
       genre = null,
       decade = null, // one of DECADES
-      dated = false  // only films whose release date can be trusted (for sorting by it)
+      dated = false, // only films whose release date can be trusted (for sorting by it)
+      shorts = false
     } = options;
 
     // Just filter by collection - the collection itself defines content type
@@ -393,6 +402,8 @@ class ArchiveService {
     // Collections contain sub-collections ("Silent Films", "Vintage Cartoons"), which are
     // folders, not videos. A mediatype:movies filter would be too strict for some collections.
     query += ' AND NOT mediatype:collection';
+    const notFilms = shorts ? NOT_FILMS.filter(c => c !== 'movie_trailers_unsorted') : NOT_FILMS;
+    query += ` AND NOT collection:(${notFilms.join(' OR ')})`;
 
     return query;
   }

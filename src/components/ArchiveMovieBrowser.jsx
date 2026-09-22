@@ -565,7 +565,9 @@ export default function ArchiveMovieBrowser() {
           {contentType !== 'trailers' && minRuntime > 0 && (
             <>
               <span className="text-gray-600">|</span>
-              <span>{minRuntime}+ min runtime</span>
+              <span title="Uploads that record no length are kept: about a third of the catalogue, and nearly every film from the 2020s. Trailers are left out by their titles and file sizes instead.">
+                {minRuntime}+ min runtime{movies.length > 0 && movies.every(m => !m.runtimeMinutes) ? ' (no lengths recorded for these)' : ''}
+              </span>
             </>
           )}
           {decade && (

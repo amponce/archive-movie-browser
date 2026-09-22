@@ -185,7 +185,7 @@ test('buildQuery matches all search words and drops query syntax characters', ()
 });
 
 test('buildQuery ignores a search made only of punctuation', () => {
-  assert.equal(archiveService.buildQuery({ searchQuery: '"" ()', collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection');
+  assert.equal(archiveService.buildQuery({ searchQuery: '"" ()', collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection AND NOT collection:(movie_trailers_unsorted OR iicadom OR home_movies OR 35mmstockfootage OR stock_footage OR prelinger_mashups OR laserdiscs)');
 });
 
 test('fetchMovies throws when Archive.org returns an error body with HTTP 200', async () => {
@@ -276,7 +276,7 @@ test('buildQuery searches every app collection, but browses only the selected on
   assert.ok(search.startsWith('collection:(feature_films OR '), search);
   assert.ok(search.includes(' OR Film_Noir OR ') && !search.includes('collection:"SciFi_Horror"'), search);
 
-  assert.equal(archiveService.buildQuery({ collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection');
+  assert.equal(archiveService.buildQuery({ collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection AND NOT collection:(movie_trailers_unsorted OR iicadom OR home_movies OR 35mmstockfootage OR stock_footage OR prelinger_mashups OR laserdiscs)');
 });
 
 function mockDocs(docs) {
@@ -460,7 +460,7 @@ test('fetchMovies retries when Archive.org fails transiently', async () => {
 test('buildQuery excludes collection items, which are folders rather than videos', () => {
   for (const options of [{ collection: 'feature_films' }, { searchQuery: 'casablanca' }, { collection: 'Film_Noir', genre: 'Horror' }]) {
     const query = archiveService.buildQuery(options);
-    assert.ok(query.endsWith(' AND NOT mediatype:collection'), query);
+    assert.ok(query.includes(' AND NOT mediatype:collection'), query);
   }
 });
 
@@ -552,7 +552,7 @@ test('buildQuery: sorting by release date leaves out dates that are really uploa
   // Uploaders leave "date" at the upload date (Drunken Master, 1978, was dated 2026), or a year
   // before it. A date before 2000 cannot be one: nothing was uploaded to Archive.org that early.
   const query = archiveService.buildQuery({ collection: 'feature_films', dated: true });
-  assert.match(query, /AND date:\[1880-01-01 TO \d{4}-12-31\] AND NOT \(\(year:2000 AND publicdate:\[2000-01-01 TO 2001-12-31\]\) OR /);
+  assert.match(query, /AND date:\[1880-01-01 TO \d{4}-12-31\] AND NOT \(\(year:2000 AND publicdate:\[2000 TO 2001\]\) OR /);
   assert.match(query, new RegExp(`year:${new Date().getFullYear()} AND publicdate`), 'covers the current year');
   assert.doesNotMatch(query, /year:1999 AND/);
   assert.ok(encodeURIComponent(query).length < 3000, 'Archive.org rejects much longer queries');
@@ -564,7 +564,7 @@ test('buildQuery: sorting by release date leaves out dates that are really uploa
 
 test('buildQuery: decades from 2000 on only trust a date that is not the upload date', () => {
   const query = archiveService.buildQuery({ collection: 'feature_films', decade: 2000 });
-  assert.match(query, /\(\(date:\[2000-01-01 TO 2009-12-31\] AND NOT \(\(year:2000 AND publicdate:\[2000-01-01 TO 2001-12-31\]\) OR .*year:2009 AND publicdate:\[2009-01-01 TO 2010-12-31\]\)\)\) OR title:\(2000 OR /);
+  assert.match(query, /\(\(date:\[2000-01-01 TO 2009-12-31\] AND NOT \(\(year:2000 AND publicdate:\[2000 TO 2001\]\) OR .*year:2009 AND publicdate:\[2009 TO 2010\]\)\)\) OR title:\(2000 OR /);
   assert.doesNotMatch(query, /year:2010 AND/);
 });
 
@@ -668,5 +668,26 @@ test('a hung Archive.org request times out into an error instead of loading fore
     await assert.rejects(pending, /took too long/);
   } finally {
     globalThis.fetch = realFetch;
+  }
+});
+
+test('buildQuery leaves out the sub-collections that are not films: trailer bins, stock footage, home movies', async () => {
+  const { NOT_FILMS } = await import('./archive.js');
+  assert.ok(NOT_FILMS.includes('movie_trailers_unsorted'), '60,246 of the 110,772 items in the film collections are in the trailer bin');
+  for (const options of [{ collection: 'all' }, { collection: 'feature_films' }, { collection: 'all', genre: 'Horror' }, { collection: 'all', decade: 2020 }, { searchQuery: 'keaton' }]) {
+    assert.match(archiveService.buildQuery(options), /AND NOT collection:\(movie_trailers_unsorted OR /, JSON.stringify(options));
+  }
+  // Shorts is where trailers belong, so the trailer bin stays in for that view
+  assert.doesNotMatch(archiveService.buildQuery({ collection: 'all', shorts: true }), /movie_trailers_unsorted/);
+});
+
+test('the upload-date guard is compact enough that the current year never falls off the end', () => {
+  const thisYear = new Date().getFullYear();
+  for (const options of [{ collection: 'all', dated: true }, { collection: 'all', decade: 2020, dated: true }, { collection: 'all', genre: 'Drama', decade: 2020 }]) {
+    const query = archiveService.buildQuery(options);
+    assert.match(query, new RegExp(`year:${thisYear}\\b`), JSON.stringify(options));
+    // Measured: Archive.org applied a 2,133-character query to its last clause; the old long-form
+    // guard (about 2,300) lost its tail, which let 2026-dated uploads top 'newest'
+    assert.ok(encodeURIComponent(query).length < 2200, `${encodeURIComponent(query).length} chars: Archive.org truncates long queries`);
   }
 });

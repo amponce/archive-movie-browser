@@ -20,6 +20,11 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - A list that has reached its end says so, and offers to look in All Films with the same filters.
 - The rules for filters in the URL moved into `src/services/urlFilters.js`, with tests ([#145](https://github.com/amponce/archive-movie-browser/pull/145)).
 
+### Fixed
+
+- Every browse and search now leaves out the sub-collections that are not films: the trailer bin (60,246 of the 110,772 items in the film collections), stock footage, home movies and numbered digitisation reels. The 2020s view used to open on reels titled "133"; it now opens on films. Shorts keeps the trailer bin.
+- "Release Date (Newest)" was letting 2026-dated uploads through: the guard against upload dates was long enough that Archive.org truncated it. It is now compact.
+
 ## [1.3.0] - 2026-09-21
 
 ### Added
