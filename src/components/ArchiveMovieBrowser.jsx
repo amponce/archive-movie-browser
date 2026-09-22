@@ -53,25 +53,25 @@ export default function ArchiveMovieBrowser() {
   // A #identifier in the URL opens that film: on load (a shared link), and whenever the hash
   // changes while the page is open (Spin the reel, a link from the header's search).
   useEffect(() => {
-  let cancelled = false;
-  const openFromHash = () => {
-    const identifier = window.location.hash.slice(1);
-    if (!identifier) return;
-    let decoded;
-    try { decoded = decodeURIComponent(identifier); } catch { decoded = identifier; }
-    if (selectedRef.current?.identifier === decoded) return;
-    archiveService.getMovieByIdentifier(decoded)
-      .then((movie) => { if (!cancelled) setSelectedMovie(movie); })
-      .catch((err) => { if (!cancelled) console.error('Failed to open movie from URL hash:', err); });
-  };
-  openFromHash();
-  window.addEventListener('hashchange', openFromHash);
-  return () => { cancelled = true; window.removeEventListener('hashchange', openFromHash); };
-}, []);
+    let cancelled = false;
+    const openFromHash = () => {
+      const identifier = window.location.hash.slice(1);
+      if (!identifier) return;
+      let decoded;
+      try { decoded = decodeURIComponent(identifier); } catch { decoded = identifier; }
+      if (selectedRef.current?.identifier === decoded) return;
+      archiveService.getMovieByIdentifier(decoded)
+        .then((movie) => { if (!cancelled) setSelectedMovie(movie); })
+        .catch((err) => { if (!cancelled) console.error('Failed to open movie from URL hash:', err); });
+    };
+    openFromHash();
+    window.addEventListener('hashchange', openFromHash);
+    return () => { cancelled = true; window.removeEventListener('hashchange', openFromHash); };
+  }, []);
 
-useEffect(() => {
-  tmdbService.setApiKey(tmdbApiKey);
-}, [tmdbApiKey]);
+  useEffect(() => {
+    tmdbService.setApiKey(tmdbApiKey);
+  }, [tmdbApiKey]);
 
   // Every way of opening a film (card, link, search, related) ends up here
   useEffect(() => {
@@ -109,14 +109,9 @@ useEffect(() => {
         <GenrePills genre={filters.genre} onChange={browse.changeGenre} />
         <FilmGrid films={films} browse={browse} viewMode={viewMode} onOpen={setSelectedMovie} linkError={linkError} />
       </main>
-     <SiteFooter />
+      <SiteFooter />
 
-<SettingsModal
-  isOpen={settingsOpen}
-  onClose={() => setSettingsOpen(false)}
-  currentApiKey={tmdbApiKey}
-  onApiKeyChange={setTmdbApiKey}
-/>
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} currentApiKey={tmdbApiKey} onApiKeyChange={setTmdbApiKey} />
 
 {selectedMovie && (
         <MovieDetailPage
