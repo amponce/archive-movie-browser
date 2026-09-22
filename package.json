@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test \"src/**/*.test.js\"",
-    "index": "node scripts/build-poster-index.mjs"
+    "index": "node scripts/build-poster-index.mjs",
+    "tv": "node scripts/build-tv-lineups.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.47.0",

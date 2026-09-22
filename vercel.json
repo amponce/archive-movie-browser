@@ -5,9 +5,25 @@
     "api/mcp.js": {
       "includeFiles": "public/poster-index.json",
       "maxDuration": 30
+    },
+    "api/tv.js": {
+      "includeFiles": "{public/poster-index.json,src/lists/*.json}",
+      "maxDuration": 30
     }
   },
   "rewrites": [
+    {
+      "source": "/tv",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/api/tv/playlist.m3u",
+      "destination": "/api/tv?format=m3u"
+    },
+    {
+      "source": "/api/tv/guide.xml",
+      "destination": "/api/tv?format=xml"
+    },
     {
       "source": "/browse",
       "destination": "/index.html"
