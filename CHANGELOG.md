@@ -33,6 +33,63 @@ Every contributor's behaviour survived the redesign: `aria-pressed` on the toggl
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-09-22
+
+### Added
+
+- **A channel of your own.** "Add to my channel" on any film page. Your films become channel 0 on the TV page, on the same clock as every other channel, and "Copy a link to it" gives a `/tv?mine=…` link that shows the same channel at the same minute to anyone. Kept in the browser, no account.
+- **Sixteen generated stations**, for twenty-seven channels with the two new curated ones (Chaplin two reels at a time, Before the Code). Each station is a rule (a genre, a span of decades) picked from the index by `npm run stations`, posters and English only, re-picked every Monday by a workflow that opens a pull request.
+- **Scrub preview** in the player. Hover the strip over the picture to see the frame and the time, click to go there. The frames are the per-minute thumbnails Archive.org already keeps.
+- **Search by the film's real title.** The type-ahead matches the poster index's titles and original titles, so "Zombie Holocaust" finds the upload called "Zombi Holocaust 1980".
+- The film page shows how long the upload itself runs, and says when it is a trailer or a clip of the film.
+- MCP: `whats_on`, so an assistant can say what is on television and where to tune in.
+- ESLint (undefined names, unused imports, hooks called wrong) in CI.
+
+### Changed
+
+- Continue watching: each film can be removed, trailers never qualify, and one or two films show as a line instead of a grid.
+- The TV page: channels beside the screen, ending where it ends; one now-playing line; the guide under a rule.
+- Browse is one link in the nav; it already opens on Horror. New Year's Evil is off the 80s action channel.
+- A test refuses a list film that has not been measured (`npm run tv`), so a channel cannot silently lose films.
+- The MCP's links point at orphanedfilms.com.
+
+### Fixed
+
+- Spin the reel on the browse page opens the film (the page now watches the hash).
+- The header's search on every page is the type-ahead again.
+- The stats page accepts a pasted key with quotes around it.
+
+## [2.0.0] - 2026-09-22
+
+The site becomes **Orphaned Films**. A new name, a front page, one design system, and television. Announced in [discussion #188](https://github.com/amponce/archive-movie-browser/discussions/188).
+
+### Added
+
+- A front page at `/`: tonight's film, hand-picked from `src/programme/featured.json` and rotated daily; what is on the channels; the most-watched horror; new uploads with posters; the lists as tiles with their own posters; one decade a day; a "wanted" count of films with no poster; "Continue watching" from the positions the player already keeps in your browser.
+- **Television** at `/tv`. Every list is a channel that plays its lineup in order from a fixed moment, so the same film is on for everyone. Tune in mid-film, "From the start" to restart, ↑ ↓ to change channel, the next film starts on its own. A guide with a now-line. `public/tv-lineups.json` (built by `npm run tv`) holds each film's stream and length.
+- The schedule as feeds: `/api/tv` (JSON with the live offset), `/api/tv/playlist.m3u`, `/api/tv/guide.xml` (XMLTV).
+- Nine channels: 80s action, 80s horror, the stunts nobody would insure (Keaton), creature features, drive-in double features, Hitchcock before Hollywood and after, noir you can finish tonight, Saturday matinee westerns, silent but not quiet. All English-language, every film with a poster.
+- Two lists (Hitchcock, 80s horror) on top of the three from before.
+- A design system: tokens in `tailwind.config.js`, shapes in `src/index.css`, primitives in `src/ui/`, one header and footer in `src/layout/` on every page. `src/ui/README.md` explains the layers.
+- Cast on the film page can be clicked to search that actor. Genre pills on the film page link into browse. "More like this" is its own query, so it appears however a film was opened.
+- Vite serves the `api/` functions in development, so `npm run dev` runs everything.
+- The poster index walks genre × decade (`--cross`), shows the model each candidate's original title, and gives the films it gave up on a second look with OMDb. 7,457 uploads decided.
+
+### Changed
+
+- The film browser moved from `/` to `/browse`. Every filter, the view toggle, the settings dialog and the type-ahead are unchanged; `/?genre=` and `/#film` links still work.
+- One card per film: two uploads of the same film collapse to the better copy.
+- The player plays at the top of the film page instead of below the cast.
+- The hero poster, cards and lists use the new look; the generated covers (`TitleCover`) are still the art for films without a poster, inside the new frame.
+- "Runs" was tried and rejected; they are lists. "Buster Keaton in an evening" is "The stunts nobody would insure".
+- Site name, tagline ("Forgotten films, found"), page titles and the MCP banner.
+
+### Kept on purpose
+
+Every contributor's behaviour survived the redesign: `aria-pressed` on the toggles and screen-reader labels (#53), focus kept on Load more (#177), runtime snapping (#176), the year separator (#174), the `<dialog>` film page with its focus trap and Escape (#94), keyboard access to cards (#52, #172, #173), filters in the URL (#100), the remembered view mode (#110), the generated covers (#54, #98).
+
+## [Unreleased]
+
 ### Added
 
 - Sixteen generated stations, for twenty-five channels. Each is a rule (a genre, a span of decades) picked from the index by `npm run stations`, posters and English only, re-picked every Monday.
