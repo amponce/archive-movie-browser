@@ -21,17 +21,17 @@ export default function McpBanner() {
   };
 
   return (
-    <div className="bg-yellow-400 text-gray-900">
-      <div className="max-w-7xl mx-auto px-4 py-2 flex items-center gap-3 text-sm">
+    <div className="bg-signal text-ink">
+      <div className="gutter py-2 flex items-center gap-3 text-sm">
         <p className="flex-1 min-w-0">
-          <strong className="font-semibold">New: MCP server.</strong>{' '}
+          <strong className="font-mono text-xs tracking-[0.1em] uppercase">New. MCP server.</strong>{' '}
           <span className="hidden sm:inline">Search and browse Archive.org films from Claude, Cursor and other MCP clients.</span>{' '}
           <a href="/mcp" onClick={() => track('MCP banner', { action: 'opened' })} className="underline underline-offset-2 font-medium whitespace-nowrap hover:no-underline">Set it up</a>
         </p>
         <button
           onClick={dismiss}
           aria-label="Dismiss announcement"
-          className="shrink-0 p-1 rounded hover:bg-yellow-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900"
+          className="shrink-0 p-1 rounded hover:bg-bone focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink"
         >
           <X className="w-4 h-4" />
         </button>

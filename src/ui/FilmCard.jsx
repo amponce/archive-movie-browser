@@ -32,27 +32,36 @@ export function Sprockets() {
   );
 }
 
+// The card as the poster: meta line and the title set large. Used when there is no poster.
+export function TitleArt({ title, year, genre }) {
+  const meta = [year, genre].filter(Boolean).join(' · ');
+  return (
+    <span className="absolute inset-x-6 bottom-5 top-5 flex flex-col justify-end gap-2">
+      {meta && <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted">{meta}</span>}
+      <span className="font-display font-black uppercase text-bone leading-[0.86] line-clamp-6" lang="en" style={{ hyphens: 'auto', fontSize: String(title).length > 40 ? 'clamp(16px, 10cqw, 30px)' : 'clamp(20px, 13cqw, 40px)' }}>
+        {title}
+      </span>
+    </span>
+  );
+}
+
+export { fieldFor };
+
 // film: { id, title, year, genre, poster }   poster is a full image URL or null
 // href: where the card goes. children: an optional line under the year (adopters, note)
 export default function FilmCard({ film, href, label, children }) {
   const genre = film.genre && film.genre !== 'Uncategorized' ? film.genre : null;
-  const meta = [film.year, genre].filter(Boolean).join(' · ');
 
   return (
     <a href={href} className="group block min-w-0 focus-visible:outline-none">
       <span
-        className="relative block aspect-[2/3] rounded-md overflow-hidden border border-white/[0.06] group-hover:border-signal group-focus-visible:border-signal transition-colors"
+        className="film-frame group-hover:border-signal group-focus-visible:border-signal"
         style={{ background: fieldFor(genre, film.id), containerType: 'inline-size' }}
       >
         {film.poster ? (
           <img src={film.poster} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
-          <span className="absolute inset-x-6 bottom-5 top-5 flex flex-col justify-end gap-2">
-            {meta && <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-muted">{meta}</span>}
-            <span className="font-display font-black uppercase text-bone leading-[0.86] break-words line-clamp-6" style={{ fontSize: film.title.length > 40 ? 'clamp(16px, 11cqw, 30px)' : 'clamp(22px, 15cqw, 44px)' }}>
-              {film.title}
-            </span>
-          </span>
+          <TitleArt title={film.title} year={film.year} genre={genre} />
         )}
         {label && (
           <span className="absolute top-3 left-4 font-mono text-[10px] tracking-[0.12em] uppercase bg-signal text-ink px-2 py-1 rounded-sm">

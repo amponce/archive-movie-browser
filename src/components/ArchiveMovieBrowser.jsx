@@ -23,6 +23,8 @@ import SearchBox from './SearchBox';
 import SettingsModal from './SettingsModal';
 import MovieDetailPage from './MovieDetailPage';
 import McpBanner from './McpBanner';
+import SiteHeader from '../layout/SiteHeader';
+import SiteFooter from '../layout/SiteFooter';
 
 const VIEW_MODE_KEY = 'view-mode';
 
@@ -307,104 +309,80 @@ export default function ArchiveMovieBrowser() {
   const widenButton = (
     <button
       onClick={() => { track('Filter', { type: 'collection', value: 'all (widened)' }); setCategory(ALL_FILMS); }}
-      className="mt-3 px-4 py-2 rounded-lg bg-gray-800 text-yellow-400 hover:bg-gray-700 text-sm font-medium"
+      className="btn-ghost mt-3"
     >
       Look in All Films instead
     </button>
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen">
       <McpBanner />
-
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Film className="w-8 h-8 text-yellow-400" />
-              <div>
-                <h1 className="text-xl font-bold">Archive.org Videos</h1>
-                <p className="text-xs text-gray-500">
-                  {collectionDescription}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* View toggle */}
-              <div className="flex bg-gray-800 rounded-lg p-1">
-                <button
-                  onClick={() => changeViewMode('grid')}
-                  className={`p-2 rounded ${
-                    viewMode === 'grid'
-                      ? 'bg-gray-700 text-yellow-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                  title="Grid view"
-                  aria-label="Grid view"
-                  aria-pressed={viewMode === 'grid'}
-                >
-                  <Grid className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => changeViewMode('list')}
-                  className={`p-2 rounded ${
-                    viewMode === 'list'
-                      ? 'bg-gray-700 text-yellow-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                  title="List view"
-                  aria-label="List view"
-                  aria-pressed={viewMode === 'list'}
-                >
-                  <List className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Settings button */}
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className={`p-2 rounded-lg transition-colors ${
-                  tmdbApiKey
-                    ? 'bg-green-600/20 text-green-400 hover:bg-green-600/30'
-                    : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700'
-                }`}
-                title="About the posters"
-                aria-label="About the posters"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Search & Filters */}
+      <SiteHeader
+        current="/browse"
+        search={(
+          <SearchBox
+            value={searchQuery}
+            onChange={(text) => {
+              setSearchQuery(text);
+              // Emptying the box ends the search
+              if (text === '') setActiveSearch('');
+            }}
+            onSearch={handleSearch}
+            onOpenFilm={setSelectedMovie}
+            onPickGenre={(genre) => {
+              setSearchQuery('');
+              setActiveSearch('');
+              handleGenreChange(genre);
+            }}
+            onPickCollection={handleCategoryChange}
+            movies={movies}
+            loading={loading}
+          />
+        )}
+      >
+        <div className="gutter py-3 border-t border-line bg-ink/95 backdrop-blur sticky top-0 z-40">
           <div className="space-y-3">
-            {/* Search row */}
-            <div className="flex gap-2">
-              <SearchBox
-                value={searchQuery}
-                onChange={(text) => {
-                  setSearchQuery(text);
-                  // Emptying the box ends the search
-                  if (text === '') setActiveSearch('');
-                }}
-                onSearch={handleSearch}
-                onOpenFilm={setSelectedMovie}
-                onPickGenre={(genre) => {
-                  setSearchQuery('');
-                  setActiveSearch('');
-                  handleGenreChange(genre);
-                }}
-                onPickCollection={handleCategoryChange}
-                movies={movies}
-                loading={loading}
-              />
+            <div className="flex items-center justify-between gap-3">
+              <p className="label">{collectionDescription}</p>
+              <div className="flex items-center gap-2">
+                {/* View toggle */}
+                <div className="flex bg-panel border border-line rounded-full p-1">
+                  <button
+                    onClick={() => changeViewMode('grid')}
+                    className={`p-2 rounded-full ${viewMode === 'grid' ? 'bg-bone text-ink' : 'text-muted hover:text-bone'}`}
+                    title="Grid view"
+                    aria-label="Grid view"
+                    aria-pressed={viewMode === 'grid'}
+                  >
+                    <Grid className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => changeViewMode('list')}
+                    className={`p-2 rounded-full ${viewMode === 'list' ? 'bg-bone text-ink' : 'text-muted hover:text-bone'}`}
+                    title="List view"
+                    aria-label="List view"
+                    aria-pressed={viewMode === 'list'}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Settings button */}
+                <button
+                  onClick={() => setSettingsOpen(true)}
+                  className="p-2 rounded-full border border-line text-muted hover:text-bone hover:border-bone"
+                  title="About the posters"
+                  aria-label="About the posters"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Mobile disclosure keeps active choices visible without a tall sticky header. */}
             <button
-              className="md:hidden flex items-center gap-2 w-full text-left text-xs text-gray-300"
+              className="md:hidden flex items-center gap-2 w-full text-left text-xs text-muted"
               aria-expanded={filtersOpen}
               aria-controls="catalogue-filters"
               onClick={() => setFiltersOpen(open => !open)}
@@ -417,13 +395,12 @@ export default function ArchiveMovieBrowser() {
             {/* Filters row */}
             <div id="catalogue-filters" className={`${filtersOpen ? 'flex' : 'hidden'} md:flex flex-wrap gap-2`}>
               {/* Category/Collection dropdown */}
-              <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
-                <Library className="w-4 h-4 text-yellow-400 hidden sm:block" />
+              <div className="control">
+                <Library className="w-4 h-4 hidden sm:block" />
                 <select
                   value={activeSearch ? 'search' : category}
                   aria-label="Collection"
                   onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer max-w-[140px] sm:max-w-none"
                 >
                   {/* A search looks everywhere, so say so rather than keep showing a collection */}
                   {activeSearch && <option value="search" disabled>Everything (searching)</option>}
@@ -437,18 +414,13 @@ export default function ArchiveMovieBrowser() {
               </div>
 
               {/* Content type toggle */}
-              <div className="flex bg-gray-800 rounded-lg p-1">
+              <div className="seg">
                 <button
                   onClick={() => {
                     setContentType('features');
                     setMinRuntime(defaultMinRuntime(category));
                   }}
                   aria-pressed={contentType === 'features'}
-                  className={`px-2 sm:px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition-colors ${
-                    contentType === 'features'
-                      ? 'bg-yellow-500 text-gray-900'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
                 >
                   Full Movies
                 </button>
@@ -458,22 +430,17 @@ export default function ArchiveMovieBrowser() {
                     setMinRuntime(0);
                   }}
                   aria-pressed={contentType === 'trailers'}
-                  className={`px-2 sm:px-3 py-1.5 rounded text-xs sm:text-sm font-medium transition-colors ${
-                    contentType === 'trailers'
-                      ? 'bg-yellow-500 text-gray-900'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
                 >
                   Shorts
                 </button>
               </div>
 
               {/* Runtime filter. Shorts are hard-capped at ≤30 min, so do not show a live select. */}
-              <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
-                <Clock className="w-4 h-4 text-gray-400 hidden sm:block" />
+              <div className="control">
+                <Clock className="w-4 h-4 hidden sm:block" />
                 {contentType === 'trailers' ? (
                   <span
-                    className="py-2 text-xs sm:text-sm text-gray-400 cursor-default select-none"
+                    className="font-mono text-xs uppercase cursor-default select-none"
                     title="Shorts are limited to 30 minutes or less"
                     aria-label="Runtime is limited to 30 minutes or less in Shorts mode"
                   >
@@ -484,7 +451,6 @@ export default function ArchiveMovieBrowser() {
                     value={minRuntime}
                     aria-label="Minimum runtime"
                     onChange={(e) => setMinRuntime(Number(e.target.value))}
-                    className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
                   >
                     {RUNTIME_OPTIONS.map(minutes => (
                       <option key={minutes} value={minutes}>
@@ -496,8 +462,8 @@ export default function ArchiveMovieBrowser() {
               </div>
 
               {/* Decade */}
-              <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
-                <Calendar className="w-4 h-4 text-gray-400 hidden sm:block" />
+              <div className="control">
+                <Calendar className="w-4 h-4 hidden sm:block" />
                 <select
                   value={decade ?? ''}
                   aria-label="Decade"
@@ -505,7 +471,6 @@ export default function ArchiveMovieBrowser() {
                     track('Filter', { type: 'decade', value: e.target.value || 'any' });
                     setDecade(e.target.value ? Number(e.target.value) : null);
                   }}
-                  className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
                 >
                   <option value="">Any decade</option>
                   {[...DECADES].reverse().map(d => (
@@ -515,13 +480,12 @@ export default function ArchiveMovieBrowser() {
               </div>
 
               {/* Sort */}
-              <div className="flex items-center gap-1 sm:gap-2 bg-gray-800 rounded-lg px-2 sm:px-3">
-                <SlidersHorizontal className="w-4 h-4 text-gray-400 hidden sm:block" />
+              <div className="control">
+                <SlidersHorizontal className="w-4 h-4 hidden sm:block" />
                 <select
                   value={sortBy}
                   aria-label="Sort movies"
                   onChange={(e) => handleSortChange(e.target.value)}
-                  className="bg-gray-800 text-white py-2 text-xs sm:text-sm focus:outline-none cursor-pointer"
                 >
                   {Object.entries(SORT_OPTIONS).map(([value, label]) => (
                     <option key={value} value={value}>{label}</option>
@@ -531,24 +495,20 @@ export default function ArchiveMovieBrowser() {
             </div>
           </div>
         </div>
-      </header>
+      </SiteHeader>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="gutter py-6">
         {/* Genre pills */}
         <div className="mb-6">
             <div className="flex items-center gap-2 mb-2">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-400">Filter by genre:</span>
+              <Filter className="w-4 h-4 text-dim" />
+              <span className="label">Genre</span>
             </div>
             <div ref={genreRowRef} className={`flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible pb-1 md:pb-0 md:[mask-image:none] ${genreRowAtEnd ? '' : '[mask-image:linear-gradient(to_right,black_94%,transparent)]'}`}>
               <button
                 onClick={() => handleGenreChange('all')}
                 aria-pressed={genreFilter === 'all'}
-                className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  genreFilter === 'all'
-                    ? 'bg-yellow-500 text-gray-900'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                }`}
+                className={genreFilter === 'all' ? 'pill-on' : 'pill'}
               >
                 All Genres
               </button>
@@ -557,11 +517,7 @@ export default function ArchiveMovieBrowser() {
                   key={genre}
                   onClick={() => handleGenreChange(genre)}
                   aria-pressed={genreFilter === genre}
-                  className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    genreFilter === genre
-                      ? 'bg-yellow-500 text-gray-900'
-                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                  }`}
+                  className={genreFilter === genre ? 'pill-on' : 'pill'}
                 >
                   {genre}
                 </button>
@@ -570,9 +526,9 @@ export default function ArchiveMovieBrowser() {
           </div>
 
         {/* Stats bar */}
-        <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-gray-400">
+        <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-muted">
           <span>
-            Showing <strong className="text-white">{movies.length}</strong>
+            Showing <strong className="text-bone">{movies.length}</strong>
             {' '}{contentType === 'trailers' ? 'shorts' : 'movies'}
             {genreFilter !== 'all' && ` in ${genreFilter}`}
             {!activeSearch && ` from ${currentCategory.name}`}
@@ -580,7 +536,7 @@ export default function ArchiveMovieBrowser() {
           </span>
           {contentType !== 'trailers' && minRuntime > 0 && (
             <>
-              <span className="text-gray-600">|</span>
+              <span className="text-line">|</span>
               <span title="Uploads that record no length are kept: about a third of the catalogue, and nearly every film from the 2020s. Trailers are left out by their titles and file sizes instead.">
                 {minRuntime}+ min runtime{movies.length > 0 && movies.every(m => !m.runtimeMinutes) ? ' (no lengths recorded for these)' : ''}
               </span>
@@ -588,20 +544,20 @@ export default function ArchiveMovieBrowser() {
           )}
           {decade && (
             <>
-              <span className="text-gray-600">|</span>
+              <span className="text-line">|</span>
               <span>{decade}s</span>
             </>
           )}
           {sortBy.startsWith('date') && (
             <>
-              <span className="text-gray-600">|</span>
+              <span className="text-line">|</span>
               <span>Films with a known release date. Uploads dated the year they were uploaded are left out: that date is usually not the film's.</span>
             </>
           )}
           {tmdbApiKey && (
             <>
-              <span className="text-gray-600">|</span>
-              <span className="text-green-400">TMDB enabled</span>
+              <span className="text-line">|</span>
+              <span className="text-nitrate">Posters on</span>
             </>
           )}
         </div>
@@ -628,7 +584,7 @@ export default function ArchiveMovieBrowser() {
         {/* Loading state (first batch only - "Load more" keeps the grid visible) */}
         {loading && movies.length === 0 && (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-yellow-400" />
+            <Loader2 className="w-8 h-8 animate-spin text-signal" />
             <span className="ml-3 text-lg">Loading movies from Archive.org...</span>
           </div>
         )}
@@ -655,7 +611,7 @@ export default function ArchiveMovieBrowser() {
 
         {/* Empty state */}
         {!loading && movies.length === 0 && !error && (
-          <div className="text-center py-16 text-gray-400">
+          <div className="text-center py-16 text-muted">
             <Film className="w-16 h-16 mx-auto mb-4 opacity-30" />
             <p className="text-lg">No movies found matching your criteria</p>
             <p className="text-sm mt-2">Try adjusting the filters or search query</p>
@@ -665,7 +621,7 @@ export default function ArchiveMovieBrowser() {
 
         {/* End of the list: say so, or a short list looks like broken paging */}
         {!loading && !nextPage && !error && movies.length > 0 && (
-          <div className="text-center mt-8 pt-8 border-t border-gray-800 text-gray-400">
+          <div className="text-center mt-8 pt-8 border-t border-line text-muted">
             <p>
               That's all {movies.length}{!activeSearch && ` in ${currentCategory.name}`} for these filters.
             </p>
@@ -675,11 +631,11 @@ export default function ArchiveMovieBrowser() {
 
         {/* Load more */}
         {nextPage && !error && (movies.length > 0 || !loading) && (
-          <div className="flex justify-center mt-8 pt-8 border-t border-gray-800">
+          <div className="flex justify-center mt-8 pt-8 border-t border-line">
             <button
               onClick={handleLoadMore}
               aria-disabled={loading}
-              className="flex items-center gap-2 px-6 py-3 bg-yellow-500 text-gray-900 font-medium rounded-lg hover:bg-yellow-400 aria-disabled:opacity-50"
+              className="btn-primary btn-lg aria-disabled:opacity-50"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {loading ? 'Loading...' : 'Load more'}
@@ -688,36 +644,8 @@ export default function ArchiveMovieBrowser() {
           </div>
         )}
       </main>
+      <SiteFooter />
 
-      {/* Footer */}
-      <footer className="border-t border-gray-800 mt-12 py-6">
-        <div className="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
-          <p>
-            Data sourced from{' '}
-            <a
-              href={`https://archive.org/details/${acrossCollections || category === ALL_FILMS ? 'movies' : category}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-yellow-400 hover:underline"
-            >
-              Internet Archive's {acrossCollections || category === ALL_FILMS ? 'Moving Image Archive' : `${currentCategory.name} Collection`}
-            </a>
-          </p>
-          <p className="mt-1">
-            <a href="/lists" className="text-yellow-400 hover:underline">Curated lists</a> · <a href="/mcp" className="text-yellow-400 hover:underline">MCP server</a>: search these films from Claude, Cursor and other MCP clients
-          </p>
-          <p className="mt-4 max-w-3xl mx-auto text-xs leading-relaxed text-gray-500">
-            This is an independent, open-source viewer. It hosts no video: every film is stored and streamed by the{' '}
-            <a href="https://archive.org" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300">Internet Archive</a>{' '}
-            and appears here as its uploader published it there. We are not affiliated with or endorsed by the Internet Archive.
-            For rights questions or to have a film removed, contact the Internet Archive under its{' '}
-            <a href="https://archive.org/about/terms.php" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300">terms of use and copyright policy</a>;
-            once it is gone there, it is gone here. Posters and film details come from{' '}
-            <a href="https://www.themoviedb.org" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-300">TMDB</a>.
-            This product uses the TMDB API but is not endorsed or certified by TMDB.
-          </p>
-        </div>
-      </footer>
 
       {/* Settings Modal */}
       <SettingsModal

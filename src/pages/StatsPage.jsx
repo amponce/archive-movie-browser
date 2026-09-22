@@ -1,3 +1,4 @@
+import SiteHeader from '../layout/SiteHeader';
 import React, { useEffect, useState } from 'react';
 
 const KEY = 'stats-key';
@@ -119,12 +120,12 @@ export default function StatsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-200">
+    <div className="min-h-screen text-muted">
+      <SiteHeader current="/stats" />
       <div className="max-w-6xl mx-auto p-5">
         <header className="flex flex-wrap justify-between items-baseline gap-4 mb-6">
-          <h1 className="text-2xl font-semibold">Archive Movie Browser: usage</h1>
+          <h1 className="display text-3xl text-bone">Usage</h1>
           <span className="flex items-center gap-3 text-sm">
-            <a href="/" className="text-yellow-400 underline">Back to the films</a>
             {data && <span className="text-gray-400">Updated {updated?.toLocaleTimeString()}</span>}
             {data && <button onClick={() => load(readKey())} className="border border-gray-700 rounded-md px-3 py-1 text-gray-300 hover:text-white">Refresh</button>}
             {data && <button onClick={forget} className="border border-gray-700 rounded-md px-3 py-1 text-gray-400 hover:text-white">Forget key on this device</button>}

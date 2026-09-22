@@ -27,7 +27,7 @@ function Highlighted({ text, ranges }) {
   let cursor = 0;
   (ranges || []).forEach(([start, end]) => {
     if (start > cursor) parts.push(text.slice(cursor, start));
-    parts.push(<span key={start} className="text-yellow-400 font-semibold">{text.slice(start, end)}</span>);
+    parts.push(<span key={start} className="text-signal font-semibold">{text.slice(start, end)}</span>);
     cursor = end;
   });
   parts.push(text.slice(cursor));
@@ -159,8 +159,8 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
   const showList = open && (items.length > 0 || remoteLoading);
 
   return (
-    <div className="flex-1 relative flex">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+    <div className="field relative w-full pr-1">
+      <Search className="w-4 h-4 text-dim pointer-events-none shrink-0" />
       <input
         type="text"
         role="combobox"
@@ -170,7 +170,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
         aria-controls={listId}
         aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
         autoComplete="off"
-        placeholder="Search movies, or paste an Archive.org link"
+        placeholder="Search films, or paste an Archive.org link"
         value={value}
         onChange={(e) => {
           onChange(e.target.value);
@@ -179,15 +179,15 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
         onFocus={() => { setRecent(readRecent()); setOpen(true); }}
         onBlur={() => setOpen(false)}
         onKeyDown={handleKeyDown}
-        className="flex-1 pl-10 pr-4 py-2 bg-gray-800 text-white placeholder-gray-400 border border-gray-700 rounded-l-lg focus:outline-none focus:border-yellow-400 min-w-0"
+        className="min-w-0"
       />
       <button
         onClick={() => runSearch(value)}
         disabled={loading}
-        className="px-3 sm:px-4 py-2 bg-yellow-500 text-gray-900 font-medium rounded-r-lg hover:bg-yellow-400 disabled:opacity-50 flex items-center gap-1 sm:gap-2 flex-shrink-0"
+        aria-label="Search"
+        className="shrink-0 w-9 h-9 rounded-full bg-bone text-ink flex items-center justify-center hover:bg-signal disabled:opacity-50"
       >
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-        <span className="hidden sm:inline">Search</span>
       </button>
 
       {showList && (
@@ -195,7 +195,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
           id={listId}
           role="listbox"
           aria-label="Search suggestions"
-          className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[70vh] overflow-y-auto bg-gray-800 border border-gray-700 rounded-lg shadow-2xl py-1"
+          className="absolute left-0 right-0 top-full mt-2 z-50 max-h-[70vh] overflow-y-auto panel shadow-2xl py-1"
           onMouseDown={(e) => e.preventDefault()} // keep focus in the input so a click registers before blur
         >
           {items.map((item, index) => {
@@ -208,22 +208,22 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
                 aria-selected={index === active}
                 onMouseEnter={() => setActive(index)}
                 onClick={() => pick(item)}
-                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer text-sm ${index === active ? 'bg-gray-700' : ''} ${item.type === 'clear' ? 'border-t border-gray-700 mt-1' : ''}`}
+                className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer text-sm ${index === active ? 'bg-white/10' : ''} ${item.type === 'clear' ? 'border-t border-line mt-1' : ''}`}
               >
-                <Icon className={`w-4 h-4 flex-shrink-0 ${item.type === 'film' ? 'text-yellow-400' : 'text-gray-400'}`} />
-                <span className={`flex-1 min-w-0 truncate ${item.type === 'clear' ? 'text-gray-400' : 'text-gray-100'}`}>
+                <Icon className={`w-4 h-4 flex-shrink-0 ${item.type === 'film' ? 'text-signal' : 'text-dim'}`} />
+                <span className={`flex-1 min-w-0 truncate ${item.type === 'clear' ? 'text-dim' : 'text-bone'}`}>
                   {item.type === 'search' ? <>Search for “{item.label}”</>
                     : item.type === 'link' ? <>Open this Archive.org link</>
                     : <Highlighted text={item.label} ranges={item.ranges} />}
                 </span>
-                <span className="flex-shrink-0 text-xs text-gray-500 tabular-nums">
+                <span className="flex-shrink-0 text-xs text-dim tabular-nums">
                   {item.type === 'film' ? item.movie.year : HINTS[item.type]}
                 </span>
               </li>
             );
           })}
           {remoteLoading && (
-            <li role="presentation" className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-500">
+            <li role="presentation" className="flex items-center gap-3 px-3 py-2.5 text-sm text-dim">
               <Loader2 className="w-4 h-4 animate-spin" />
               Looking up titles on Archive.org
             </li>

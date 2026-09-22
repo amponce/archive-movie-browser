@@ -2,7 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-body { background: #0E0E10; color: #F2EFE6; -webkit-font-smoothing: antialiased; }
+/* The design system. Tokens live in tailwind.config.js (colours, type). The classes here are the
+   handful of shapes every page is built from. Change a button here and it changes everywhere. */
+@layer base {
+  body { @apply bg-ink text-bone font-sans antialiased; }
+}
+
+@layer components {
+  /* Type */
+  .display { @apply font-display font-extrabold uppercase leading-[0.95] tracking-[0.01em]; }
+  .eyebrow { @apply font-mono text-[11px] tracking-[0.16em] uppercase text-signal; }
+  .label { @apply font-mono text-[11px] tracking-[0.12em] uppercase text-dim; }
+  .nav-link { @apply font-mono text-xs tracking-[0.1em] uppercase text-muted hover:text-bone py-2.5; }
+
+  /* Buttons. Same height, same type, three fills. */
+  .btn { @apply inline-flex shrink-0 items-center justify-center gap-2.5 h-11 px-5 rounded-full font-mono text-xs tracking-[0.1em] uppercase font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal; }
+  .btn-primary { @apply btn bg-signal text-ink hover:bg-bone; }
+  .btn-light { @apply btn bg-bone text-ink hover:bg-signal; }
+  .btn-ghost { @apply btn border border-line text-bone hover:border-bone; }
+  .btn-lg { @apply h-[52px] px-6 text-[13px]; }
+
+  /* Controls: pills, segmented toggles, selects. One look for every filter. */
+  .pill { @apply shrink-0 whitespace-nowrap h-9 px-4 rounded-full border border-line font-mono text-xs tracking-[0.08em] uppercase text-muted hover:text-bone hover:border-bone transition-colors; }
+  .pill-on { @apply pill bg-bone text-ink border-bone hover:text-ink; }
+  .seg { @apply flex bg-panel border border-line rounded-full p-1; }
+  .seg > * { @apply px-3 h-7 rounded-full font-mono text-xs tracking-[0.08em] uppercase text-muted hover:text-bone transition-colors; }
+  .seg > [aria-pressed="true"] { @apply bg-bone text-ink; }
+  .control { @apply flex items-center gap-2 h-9 px-3 bg-panel border border-line rounded-full text-muted; }
+  .control select { @apply bg-transparent text-bone font-mono text-xs tracking-[0.06em] uppercase focus:outline-none cursor-pointer max-w-[140px] sm:max-w-none; }
+  .control select option { @apply bg-panel text-bone normal-case; }
+
+  /* Surfaces */
+  .panel { @apply bg-panel border border-line rounded-lg; }
+  .field { @apply flex items-center gap-2.5 bg-panel border border-line rounded-full h-11 px-4 focus-within:border-bone; }
+  .field input { @apply bg-transparent w-full text-sm text-bone placeholder:text-dim focus:outline-none; }
+  .film-frame { @apply relative block aspect-[2/3] rounded-md overflow-hidden border border-white/[0.06] transition-colors; }
+
+  /* Page rhythm: one gutter, one section gap */
+  .gutter { @apply px-4 sm:px-8 lg:px-14; }
+  .section { @apply gutter flex flex-col gap-7 pt-12; }
+  .rule { @apply border-b border-line; }
+}
 
 /* Fix dropdown option colors */
 select option {

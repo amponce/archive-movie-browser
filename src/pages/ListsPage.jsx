@@ -7,6 +7,8 @@ import { indexedMatch } from '../services/posterIndex';
 import tmdbService from '../services/tmdb';
 import MovieDetailPage from '../components/MovieDetailPage';
 import { track } from '../services/analytics';
+import SiteHeader from '../layout/SiteHeader';
+import SiteFooter from '../layout/SiteFooter';
 
 const REPO = 'https://github.com/amponce/archive-movie-browser';
 
@@ -47,11 +49,12 @@ export default function ListsPage({ slug }) {
   const open = (id) => archiveService.getMovieByIdentifier(id).then(movie => { track('Film opened', { film: id, title: movie.title }); setSelected(movie); }).catch(() => {});
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-200">
+    <div className="min-h-screen text-muted">
+      <SiteHeader current="/lists" />
       <div className="max-w-3xl mx-auto px-4 py-6">
         <nav className="flex items-center justify-between text-sm mb-8">
-          <a href={list ? '/lists' : '/'} className="flex items-center gap-1 text-gray-400 hover:text-white"><ChevronLeft className="w-4 h-4" />{list ? 'All lists' : 'Back to the films'}</a>
-          <a href={`${REPO}/tree/main/src/lists`} className="text-yellow-400 hover:underline">Add a list</a>
+          {list ? <a href="/lists" className="nav-link flex items-center gap-1"><ChevronLeft className="w-4 h-4" />All runs</a> : <span />}
+          <a href={`${REPO}/tree/main/src/lists`} className="nav-link">Add a list</a>
         </nav>
 
         {list ? (
@@ -86,6 +89,7 @@ export default function ListsPage({ slug }) {
       {selected && (
         <MovieDetailPage movie={selected} onClose={() => setSelected(null)} allMovies={[]} onPlayRelated={setSelected} />
       )}
+      <SiteFooter />
     </div>
   );
 }
