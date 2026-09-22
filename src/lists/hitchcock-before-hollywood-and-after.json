@@ -4,17 +4,53 @@
   "blurb": "Twelve Hitchcocks the Archive holds, from the silent London thrillers through the British spy films to the first American decade. Start with The 39 Steps if you have only seen the famous ones. Everything he did later is already in it.",
   "curator": "amponce",
   "films": [
-    { "id": "The39Steps_1935", "note": "Handcuffed to a stranger and running across Scotland. The whole wrong-man career starts here." },
-    { "id": "the-lady-vanishes-1938", "note": "A train, a missing old lady, and everyone insisting she was never on board." },
-    { "id": "TheLodgerAStoryOfTheLondonFog_579", "note": "Silent. A lodger who might be the Ripper. The first film Hitchcock said was really his." },
-    { "id": "blackmail_1929", "note": "Britain's first talkie. Listen for the word knife." },
-    { "id": "themanwhoknewtoomuch", "note": "The 1934 original. Peter Lorre, a kidnapped child and the Albert Hall." },
-    { "id": "Hitchcock_Secret_Agent", "note": "John Gielgud as a reluctant assassin, Peter Lorre as the enthusiastic one." },
-    { "id": "SabotageImageQualityUpgrade", "note": "A boy, a bus and a bomb. Hitchcock later said he regretted what happens." },
-    { "id": "YoungandInnocentTheGirlWasYoung", "note": "The crane shot across the ballroom to the drummer's twitching eyes." },
-    { "id": "Jamaica_Inn", "note": "Charles Laughton, wreckers on the Cornish coast, and the last British film before America." },
-    { "id": "RebeccaClassic4050", "note": "His first Hollywood picture and his only Best Picture winner. Judith Anderson as Mrs Danvers." },
-    { "id": "shadowofadoubt1943_202003", "note": "Uncle Charlie comes to visit a small town. Hitchcock's own favourite." },
-    { "id": "spellbound1945_202001", "note": "Dalí designed the dream. Ingrid Bergman analyses Gregory Peck." }
+    {
+      "id": "hitchcock_39_steps",
+      "note": "Handcuffed to a stranger and running across Scotland. The whole wrong-man career starts here."
+    },
+    {
+      "id": "the-lady-vanishes-1938",
+      "note": "A train, a missing old lady, and everyone insisting she was never on board."
+    },
+    {
+      "id": "TheLodgerAStoryOfTheLondonFog_579",
+      "note": "Silent. A lodger who might be the Ripper. The first film Hitchcock said was really his."
+    },
+    {
+      "id": "blackmail_1929",
+      "note": "Britain's first talkie. Listen for the word knife."
+    },
+    {
+      "id": "themanwhoknewtoomuch",
+      "note": "The 1934 original. Peter Lorre, a kidnapped child and the Albert Hall."
+    },
+    {
+      "id": "Hitchcock_Secret_Agent",
+      "note": "John Gielgud as a reluctant assassin, Peter Lorre as the enthusiastic one."
+    },
+    {
+      "id": "SabotageImageQualityUpgrade",
+      "note": "A boy, a bus and a bomb. Hitchcock later said he regretted what happens."
+    },
+    {
+      "id": "YoungandInnocentTheGirlWasYoung",
+      "note": "The crane shot across the ballroom to the drummer's twitching eyes."
+    },
+    {
+      "id": "Jamaica_Inn",
+      "note": "Charles Laughton, wreckers on the Cornish coast, and the last British film before America."
+    },
+    {
+      "id": "RebeccaClassic4050",
+      "note": "His first Hollywood picture and his only Best Picture winner. Judith Anderson as Mrs Danvers."
+    },
+    {
+      "id": "shadowofadoubt1943_202003",
+      "note": "Uncle Charlie comes to visit a small town. Hitchcock's own favourite."
+    },
+    {
+      "id": "spellbound1945_202001",
+      "note": "Dalí designed the dream. Ingrid Bergman analyses Gregory Peck."
+    }
   ]
 }

@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 // Generated channels. Each station is a rule (a genre, a span of decades, how many films) and this
-// script turns it into an ordinary list in src/lists/, picked from what Archive.org has and the
-// poster index knows: posters only, English only, one upload per film, feature length.
+// script turns it into an ordinary list in src/lists/, picked from the poster index: films the
+// index identified with confidence, with a poster, in that genre and those decades, feature
+// length, well regarded. Each pick's file is measured before it is accepted, because an upload
+// the index matched to a feature can be a one-minute clip of it.
 // Picks are seeded by the ISO week, so a station changes its films every Monday and stays put
 // in between. Curated lists are never touched; a generated list says so in its file.
 //
@@ -11,19 +13,20 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadLineups, saveLineups, measure, isFeature } from './measure.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { archiveService, ALL_FILMS, runtimeFilter } = await import(path.join(root, 'src/services/archive.js'));
 const index = JSON.parse(fs.readFileSync(path.join(root, 'public/poster-index.json'), 'utf8')).films;
 const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
 
-// The rules. `decades` are inclusive starts; `count` is how many films air per week.
+// The rules. `genre` (or `genres`, any of) in our names; `decades` are inclusive starts; `count`
+// is how many films air per week.
 const STATIONS = [
   { slug: 'horror-all-night', title: 'Horror all night', blurb: 'Whatever the collections have that goes bump. Different every week.', genre: 'Horror', decades: [1920, 1990], count: 14 },
   { slug: 'universal-years', title: 'The Universal years', blurb: 'Horror and mystery from the 1930s and 40s, when the monsters wore suits.', genre: 'Horror', decades: [1930, 1940], count: 12 },
   { slug: 'atomic-age', title: 'Atomic age', blurb: 'Science fiction from the 1950s. Saucers, mutations, and a lot of desert.', genre: 'Sci-Fi', decades: [1950, 1950], count: 12 },
   { slug: 'space-and-after', title: 'Space and after', blurb: 'Science fiction from the 60s onward. Cheaper, weirder, occasionally brilliant.', genre: 'Sci-Fi', decades: [1960, 1990], count: 12 },
-  { slug: 'noir-after-dark', title: 'Noir after dark', blurb: 'Shadows, cigarettes and bad decisions. Film noir from the 40s and 50s.', genre: 'Film Noir', decades: [1940, 1950], count: 12 },
+  { slug: 'noir-after-dark', title: 'Noir after dark', blurb: 'Shadows, cigarettes and bad decisions. Crime, thrillers and mysteries from the 40s and 50s.', genres: ['Crime', 'Thriller', 'Mystery'], decades: [1940, 1950], count: 12 },
   { slug: 'crime-and-punishment', title: 'Crime and punishment', blurb: 'Gangsters, heists and the police who catch up with them.', genre: 'Crime', decades: [1930, 1970], count: 12 },
   { slug: 'mystery-hour', title: 'Mystery hour', blurb: 'Whodunits and locked rooms from the golden age.', genre: 'Mystery', decades: [1930, 1960], count: 12 },
   { slug: 'thrills-and-spills', title: 'Thrills and spills', blurb: 'Thrillers from the 1970s and 80s. Paranoia, car chases, one last job.', genre: 'Thriller', decades: [1970, 1980], count: 12 },
@@ -49,25 +52,27 @@ function shuffle(items, s) {
 }
 
 const week = seed();
+const lineups = loadLineups();
 const listsDir = path.join(root, 'src/lists');
 let written = 0;
 for (const station of STATIONS) {
   if (only && station.slug !== only) continue;
   const pool = new Map(); // film id -> upload identifier, one per film
-  for (let decade = station.decades[0]; decade <= station.decades[1]; decade += 10) {
-    try {
-      const { movies } = await archiveService.fetchMovies({ collection: ALL_FILMS, genre: station.genre, decade, sortBy: 'downloads', sortOrder: 'desc', rowsPerPage: 100 });
-      for (const m of movies.filter(runtimeFilter({ minRuntime: 55 }))) {
-        const e = index[m.identifier];
-        if (!e?.p || e.c < 0.8 || /trailer/i.test(m.identifier) || pool.has(e.i)) continue;
-        pool.set(e.i, m.identifier);
-      }
-    } catch (error) { console.log(`  ${station.slug} ${decade}s: ${error.message}`); }
-    await new Promise(r => setTimeout(r, 300));
+  for (const [id, e] of Object.entries(index)) {
+    const wanted = station.genres || [station.genre];
+    if (!e.p || e.c < 0.8 || !e.g?.some(g => wanted.includes(g)) || !e.y || e.y < station.decades[0] || e.y >= station.decades[1] + 10) continue;
+    if (!(e.l >= 55) || (e.v || 0) < 5.5 || /trailer/i.test(id) || pool.has(e.i)) continue;
+    pool.set(e.i, id);
   }
-  const picks = shuffle([...pool.values()], week * 31 + STATIONS.indexOf(station)).slice(0, station.count);
+  // Walk the shuffled pool and keep the first `count` uploads whose file is really a feature
+  const picks = [];
+  for (const id of shuffle([...pool.values()], week * 31 + STATIONS.indexOf(station))) {
+    if (picks.length >= station.count) break;
+    try { if (isFeature(await measure(id, lineups))) picks.push(id); } catch { /* unreachable now, skip */ }
+  }
+  saveLineups(lineups);
   if (picks.length < 6) { console.log(`${station.slug}: only ${picks.length} films, not written`); continue; }
-  const list = { slug: station.slug, title: station.title, blurb: station.blurb, curator: 'the station', generated: { rule: `${station.genre} ${station.decades[0]}s–${station.decades[1]}s`, week }, films: picks.map(id => ({ id })) };
+  const list = { slug: station.slug, title: station.title, blurb: station.blurb, curator: 'the station', generated: { rule: `${(station.genres || [station.genre]).join(' or ')} ${station.decades[0]}s–${station.decades[1]}s`, week }, films: picks.map(id => ({ id })) };
   fs.writeFileSync(path.join(listsDir, `${station.slug}.json`), `${JSON.stringify(list, null, 2)}\n`);
   written++;
   console.log(`${station.slug}: ${picks.length} of ${pool.size} films`);

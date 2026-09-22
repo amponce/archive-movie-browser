@@ -1,48 +1,48 @@
 {
   "slug": "noir-after-dark",
   "title": "Noir after dark",
-  "blurb": "Shadows, cigarettes and bad decisions. Film noir from the 40s and 50s.",
+  "blurb": "Shadows, cigarettes and bad decisions. Crime, thrillers and mysteries from the 40s and 50s.",
   "curator": "the station",
   "generated": {
-    "rule": "Film Noir 1940s–1950s",
+    "rule": "Crime or Thriller or Mystery 1940s–1950s",
     "week": 202639
   },
   "films": [
     {
-      "id": "TheLimpingMan"
+      "id": "bo44512332"
     },
     {
-      "id": "C-Man"
+      "id": "Mantrap1953"
     },
     {
-      "id": "the-grapes-of-wrath-1940"
+      "id": "UnforgottenCrime"
     },
     {
-      "id": "amazing_mr_x"
+      "id": "StrangeWoman"
     },
     {
-      "id": "Hitch_Hiker"
+      "id": "BlackWidow1954"
     },
     {
-      "id": "killerskiss1955_201908"
+      "id": "TheBlueLamp1950"
     },
     {
-      "id": "the_green_glove"
+      "id": "curse-of-the-demon"
     },
     {
-      "id": "Port_of_New_York"
+      "id": "pushover1954_202001"
     },
     {
-      "id": "WhisperingCity"
+      "id": "the-big-clock-1948"
     },
     {
-      "id": "Jigsaw_"
+      "id": "KansasCityConfidential720p"
     },
     {
-      "id": "naked-alibi-1954"
+      "id": "1955-the-night-of-the-hunter-la-noche-del-cazador-charles-laughton"
     },
     {
-      "id": "TooLateForTears1949"
+      "id": "thecrookedway1949"
     }
   ]
 }
