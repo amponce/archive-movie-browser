@@ -15,7 +15,8 @@ const clock = (seconds) => {
 // Plays the film in our own <video>, so the keyboard works (arrows scrub, Escape still closes the
 // dialog) and the position is remembered. Falls back to Archive.org's embedded player whenever
 // there is no file a browser can stream, or the one we picked fails to play.
-export default function FilmPlayer({ movie }) {
+// `files`: the file names to play, best first, when the upload holds several films (see UploadFilms)
+export default function FilmPlayer({ movie, files }) {
   const [source, setSource] = useState(undefined); // undefined = looking, null = use the embed
   const [resumedAt, setResumedAt] = useState(0);
   const [frames, setFrames] = useState([]);
@@ -37,14 +38,15 @@ export default function FilmPlayer({ movie }) {
     archiveService.getMetadata(movie.identifier)
       .then(data => {
         if (cancelled) return;
-        const [first, ...rest] = playableFiles(data.files).map(file => videoUrl(movie.identifier, file.name));
+        const names = files || playableFiles(data.files).map(file => file.name);
+        const [first, ...rest] = names.map(name => videoUrl(movie.identifier, name));
         queue.current = rest;
         setSource(first || null);
         setFrames(previewFrames(movie.identifier, data.files));
       })
       .catch(() => { if (!cancelled) setSource(null); });
     return () => { cancelled = true; };
-  }, [movie.identifier]);
+  }, [movie.identifier, files?.join('|')]);
 
   // The file would not play, or played sound over a black picture (a codec the browser has
   // no decoder for): the next file, or Archive.org's player when there is none left

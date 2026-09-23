@@ -4,6 +4,7 @@ import tmdbService from '../services/tmdb';
 import archiveService from '../services/archive';
 import { Sprockets, fieldFor } from '../ui/FilmCard';
 import TitleCover from './TitleCover';
+import { plainText } from '../services/plainText';
 
 const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) {
   const [tmdbData, setTmdbData] = useState(null);
@@ -187,9 +188,7 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
 
         {movie.description && (
           <p className="text-sm text-muted mt-2 line-clamp-2">
-            {typeof movie.description === 'string'
-              ? movie.description.slice(0, 200)
-              : String(movie.description).slice(0, 200)}
+            {plainText(movie.description).slice(0, 200)}
           </p>
         )}
       </div>

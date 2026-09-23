@@ -4,6 +4,7 @@ import tmdbService from '../../services/tmdb';
 import archiveService from '../../services/archive';
 import Button from '../../ui/Button';
 import { track } from '../../services/analytics';
+import { plainText } from '../../services/plainText';
 import { readMyChannel, toggleSaved, hasFilm, MY_CHANNEL_KEY } from '../../services/myChannel';
 
 // The words about the film: what it is, what the upload was called, the facts, the overview,
@@ -63,7 +64,7 @@ export default function FilmDetails({ movie, details, titleId, playing, onPlay, 
 
       <div className="mb-6">
         <h3 className="label mb-2">Overview</h3>
-        <p className="text-muted text-[17px] leading-relaxed max-w-[64ch]">{tmdbDetails?.overview || movie.description || 'No description available.'}</p>
+        <p className="text-muted text-[17px] leading-relaxed max-w-[64ch] whitespace-pre-line">{tmdbDetails?.overview || plainText(movie.description) || 'No description available.'}</p>
       </div>
 
       {director && <div className="mb-6"><h3 className="label mb-2">Director</h3><p className="text-bone">{director.name}</p></div>}

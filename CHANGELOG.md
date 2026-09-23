@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- Pasting an Archive.org upload that holds many films (some people keep a list of films in one upload) shows each film with its poster, and picking one plays that file. Read from Archive.org each time; nothing is kept on our side.
 - MCP clients can attach catalogue and film resources, and use a `movie_night` prompt for three picks suited to their mood and available time.
 - The front page's lead changes category every week (Westerns, Cult 80s, Noir, Horror, Silent and early, Drive-in sci-fi, Mystery), with a different list from that category each day.
 - A Cult 80s list and channel: Big Trouble in Little China, RoboCop, UHF, Alligator, Turkish Star Wars and seven more.
@@ -33,6 +34,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- Film descriptions from Archive.org show as text instead of raw HTML (closes #246).
 - Adding films to your channel from more than one tab (or from a page brought back with Back) no longer drops the films added elsewhere. Every add and remove now starts from what is saved at that moment, and open pages keep up with each other.
 - MCP genre browsing across All Films now uses the same poster index as the site, including decade, upload length, ordering and duplicate-upload filtering. Recent uploads and collection-specific browsing still use Archive.org.
 - Opening a film from a card no longer flashes the browse page and its filters for a moment before the film appears.
