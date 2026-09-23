@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
+import { Analytics } from '@vercel/analytics/react';
 import { startAnalytics } from './services/analytics';
 
 startAnalytics();
@@ -19,5 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
+    {/* Vercel Web Analytics: page views and visitors, cookieless, beside our own counts (api/_stats.js) */}
+    <Analytics />
   </React.StrictMode>
 );
