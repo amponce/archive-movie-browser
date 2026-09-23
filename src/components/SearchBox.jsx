@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useId } from 'react';
 import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock, Link2, Tag, Trash2 } from 'lucide-react';
-import archiveService, { STANDARD_GENRES, BROWSABLE_COLLECTIONS } from '../services/archive';
+import archiveService, { STANDARD_GENRES, BROWSABLE_COLLECTIONS, isArchiveQuery } from '../services/archive';
 import { matchRanges, localSuggestions, rememberSearch, indexSuggestions } from '../services/suggest';
 import { loadPosterIndex } from '../services/posterIndex';
 import { parseArchiveUrl } from '../services/archiveUrl';
@@ -56,7 +56,7 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
   // Titles and tags from Archive.org: wait for a pause in typing, cancel the previous request
   useEffect(() => {
     const text = value.trim().toLowerCase();
-    if (!open || parseArchiveUrl(text) || !archiveService.buildSuggestQuery(text)) {
+    if (!open || parseArchiveUrl(text) || isArchiveQuery(text) || !archiveService.buildSuggestQuery(text)) { // no suggestions for Archive.org query syntax
       setRemote(NOTHING);
       setRemoteLoading(false);
       return;

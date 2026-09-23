@@ -18,6 +18,9 @@ export function parseArchiveUrl(text) {
   const [section, identifier] = url.pathname.split('/').filter(Boolean);
   const list = listFromPath(url.pathname);
   if (list) return list;
+  // A search or collection page carrying a query (details/movies?query=subject:horror...): run it here
+  const pageQuery = section === 'details' ? (url.searchParams.get('query') || '').replace(/\s+/g, ' ').trim() : '';
+  if (pageQuery) return { type: 'search', query: pageQuery };
   // services/collection-rss.php?collection=x: the collection's newest uploads, which is what
   // browsing it newest first shows, so it opens as that
   if (section === 'services' && identifier === 'collection-rss.php') {
