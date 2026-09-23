@@ -6,6 +6,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- The front page's lead changes category every week (Westerns, Cult 80s, Noir, Horror, Silent and early, Drive-in sci-fi, Mystery), with a different list from that category each day.
+- A Cult 80s list and channel: Big Trouble in Little China, RoboCop, UHF, Alligator, Turkish Star Wars and seven more.
 - Analytics count minutes actually watched (per film, per channel, per day), clicks on the front page, film page and header (anything with `data-track`), and a daily funnel: visits that clicked something, pressed play, and watched 1, 10 and 30+ minutes. Each tab carries a random visit id that is only counted into the funnel, never stored; still no cookies and no IP addresses. The stats page shows all three.
 - The TV page shows what audiences (TMDB) and critics (Rotten Tomatoes, or Metacritic) made of the film on now. `scripts/backfill-critics.mjs` adds the critics' score (`rt`) to the index for every film on a channel; 144 of 296 have one.
 - The front page leads with a list, face out like a video store's new-releases wall, and a button that goes deeper (all 80s action, all westerns). A different list each day from `src/programme/shelves.json`, the same for everyone.

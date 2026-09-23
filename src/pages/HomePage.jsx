@@ -19,7 +19,7 @@ import Shelf from '../components/home/Shelf';
 // The front desk. Tonight's film, the numbers, and rows with a reason. Everything comes from
 // the poster index except two live rows (horror, newest), and those only show posters.
 
-const today = shelfOfDay(SHELVES.shelves);
+const today = shelfOfDay(SHELVES.categories);
 const loadHorror = () => popularRow({ genre: 'Horror' });
 
 export default function HomePage() {

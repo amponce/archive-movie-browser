@@ -15,19 +15,25 @@ test('every featured pick is in the poster index with a poster and a line of why
   assert.ok(picks.length >= 14, 'two weeks without a repeat');
 });
 
-test('every front-page shelf is a real list with a button that goes deeper', async () => {
-  const { shelves } = JSON.parse(readFileSync(new URL('./shelves.json', import.meta.url), 'utf8'));
+test('every front-page shelf is a real list with a button that goes deeper, and the rotation is weekly', async () => {
+  const { categories } = JSON.parse(readFileSync(new URL('./shelves.json', import.meta.url), 'utf8'));
   const { shelfOfDay } = await import('../services/programme.js');
   const { readdirSync } = await import('node:fs');
   const slugs = readdirSync(new URL('../lists/', import.meta.url)).filter(f => f.endsWith('.json')).map(f => f.replace('.json', ''));
+  const shelves = categories.flatMap(c => c.shelves);
   for (const shelf of shelves) {
     assert.ok(slugs.includes(shelf.list), `${shelf.list} is not a list`);
     assert.ok(shelf.more.label && shelf.more.href.startsWith('/browse?'), `${shelf.list} needs a way deeper`);
   }
   assert.equal(new Set(shelves.map(s => s.list)).size, shelves.length, 'no list twice');
-  // One a day, in order, wrapping round
-  const day = new Date(Date.UTC(2026, 8, 22, 12));
-  const next = new Date(day.getTime() + 86400000);
-  const i = shelves.indexOf(shelfOfDay(shelves, day));
-  assert.equal(shelfOfDay(shelves, next), shelves[(i + 1) % shelves.length]);
+
+  const at = (y, m, d) => shelfOfDay(categories, new Date(Date.UTC(y, m - 1, d, 12)));
+  // The week of 21 September 2026 is westerns, the next one cult 80s
+  assert.equal(at(2026, 9, 21).category, 'Westerns');
+  assert.equal(at(2026, 9, 27).category, 'Westerns');
+  assert.equal(at(2026, 9, 28).category, 'Cult 80s');
+  // A different list on consecutive days of a week with more than one
+  assert.notEqual(at(2026, 9, 28).list, at(2026, 9, 29).list);
+  // After the last category it starts again
+  assert.equal(at(2026, 9, 21 + 7 * categories.length).category, 'Westerns');
 });
