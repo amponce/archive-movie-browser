@@ -81,7 +81,7 @@ export default function FilmDetails({ movie, details, titleId, playing, onPlay, 
 
       {!playing && (
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <Button size="lg" onClick={onPlay} className="flex-1"><Play className="w-5 h-5 fill-current" /> Watch now</Button>
+          <Button size="lg" onClick={onPlay} className="sm:flex-1" data-track="film-watch-now" data-film={movie.identifier}><Play className="w-5 h-5 fill-current" /> Watch now</Button>
           <Button size="lg" variant="ghost" onClick={toggleMyChannel} aria-pressed={onMyChannel} title="Your own TV channel, kept in this browser">
             {onMyChannel ? 'On my channel' : 'Add to my channel'}
           </Button>

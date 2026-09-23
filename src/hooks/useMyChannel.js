@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import archiveService from '../services/archive';
 import tmdbService from '../services/tmdb';
 import { indexedMatch } from '../services/posterIndex';
 import { pickPlayableFile, videoUrl } from '../services/playback';
 import { onAirAt, programmesBetween, airable } from '../services/schedule';
-import { readMyChannel, channelFromUrl, MY_CHANNEL_ID } from '../services/myChannel';
+import { readMyChannel, writeMyChannel, channelFromUrl, MY_CHANNEL_ID } from '../services/myChannel';
 
 // The personal channel in the same shape as the channels from /api/tv, so the TV page treats it
 // like any other. Film lengths come from each item's own Archive.org record (one request per
@@ -24,8 +24,16 @@ async function measure(id, known) {
 
 export default function useMyChannel(hours = 6) {
   const fromLink = useMemo(() => channelFromUrl(window.location.search), []);
-  const ids = useMemo(() => fromLink || readMyChannel(), [fromLink]);
+  const [ids, setIds] = useState(() => fromLink || readMyChannel());
   const [lengths, setLengths] = useState(readLengths);
+
+  // Take a film off your own channel (a shared one is someone else's to edit)
+  const remove = useCallback((id) => {
+    if (fromLink) return;
+    const next = ids.filter(x => x !== id);
+    writeMyChannel(next);
+    setIds(next);
+  }, [ids, fromLink]);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,10 +62,11 @@ export default function useMyChannel(hours = 6) {
       name: fromLink ? 'A shared channel' : 'My channel',
       mine: !fromLink,
       ids,
+      remove,
       pending: ids.filter(id => !lengths[id]).length,
       lineup,
       now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
       programmes: programmesBetween(lineup, now, now + hours * 3600_000).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, startsAt: p.startsAt, endsAt: p.endsAt })),
     };
-  }, [ids, lengths, fromLink, hours]);
+  }, [ids, lengths, fromLink, hours, remove]);
 }

@@ -24,7 +24,7 @@ export default function McpBanner() {
     <div className="bg-signal text-ink">
       <div className="gutter py-2 flex items-center gap-3 text-sm">
         <p className="flex-1 min-w-0">
-          <strong className="font-mono text-xs tracking-[0.1em] uppercase">New. MCP server.</strong>{' '}
+          <strong className="font-mono text-xs tracking-[0.1em] uppercase">New MCP server.</strong>{' '}
           <span className="hidden sm:inline">Search and browse Archive.org films from Claude, Cursor and other MCP clients.</span>{' '}
           <a href="/mcp" onClick={() => track('MCP banner', { action: 'opened' })} className="underline underline-offset-2 font-medium whitespace-nowrap hover:no-underline inline-block py-2.5 -my-2.5">Set it up</a>
         </p>

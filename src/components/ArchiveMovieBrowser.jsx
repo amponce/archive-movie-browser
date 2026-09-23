@@ -14,6 +14,7 @@ import SiteFooter from '../layout/SiteFooter';
 import FilterBar from './browse/FilterBar';
 import GenrePills from './browse/GenrePills';
 import FilmGrid from './browse/FilmGrid';
+const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
 
 // The browse page. The filters live in useBrowseFilters (and the URL), the films in useFilms,
 // the pieces of the page in components/browse. What is left here is opening and closing a
@@ -22,6 +23,9 @@ export default function ArchiveMovieBrowser() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [linkError, setLinkError] = useState(null);
+  // Opened with a film in the link (every film card links to /browse#id): until that film has
+  // loaded, the page stays blank rather than flashing the browse grid for a moment
+  const [opening, setOpening] = useState(() => window.location.hash.length > 1);
   const [viewMode, changeViewMode] = useViewMode();
   const selectedRef = useRef(null); // what popstate and hashchange see without re-subscribing
   selectedRef.current = selectedMovie;
@@ -33,8 +37,14 @@ export default function ArchiveMovieBrowser() {
       .then(setSelectedMovie)
       .catch(() => setLinkError(`Couldn't open that Archive.org link. Check the address: nothing was found at "${identifier}".`));
   };
+
   // A pick from the type-ahead can be a full film or just an identifier from the index
   const openPick = (film) => (film.fromIndex ? openFilmLink(film.identifier) : setSelectedMovie(film));
+
+  // TMDB API key from localStorage or environment variable
+  const [tmdbApiKey, setTmdbApiKey] = useState(
+    () => localStorage.getItem('tmdb-api-key') || TMDB_API_KEY
+  );
 
   const browse = useBrowseFilters({
     onOpenFilmLink: openFilmLink,
@@ -55,12 +65,17 @@ export default function ArchiveMovieBrowser() {
       if (selectedRef.current?.identifier === decoded) return;
       archiveService.getMovieByIdentifier(decoded)
         .then((movie) => { if (!cancelled) setSelectedMovie(movie); })
-        .catch((err) => { if (!cancelled) console.error('Failed to open movie from URL hash:', err); });
+        .catch((err) => { if (!cancelled) console.error('Failed to open movie from URL hash:', err); })
+        .finally(() => { if (!cancelled) setOpening(false); });
     };
     openFromHash();
     window.addEventListener('hashchange', openFromHash);
     return () => { cancelled = true; window.removeEventListener('hashchange', openFromHash); };
   }, []);
+
+  useEffect(() => {
+    tmdbService.setApiKey(tmdbApiKey);
+  }, [tmdbApiKey]);
 
   // Every way of opening a film (card, link, search, related) ends up here
   useEffect(() => {
@@ -72,6 +87,8 @@ export default function ArchiveMovieBrowser() {
   // applied any earlier, the restore would undo it.
   const afterClose = useRef(null);
   const closeFilmThen = (action) => { afterClose.current = action; window.history.back(); };
+
+  if (opening && !selectedMovie) return <div className="min-h-screen bg-ink" />;
 
   return (
     <div className="min-h-screen">
@@ -100,9 +117,9 @@ export default function ArchiveMovieBrowser() {
       </main>
       <SiteFooter />
 
-      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} currentApiKey={tmdbService.apiKey} />
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} currentApiKey={tmdbApiKey} onApiKeyChange={setTmdbApiKey} />
 
-      {selectedMovie && (
+{selectedMovie && (
         <MovieDetailPage
           movie={selectedMovie}
           onClose={() => {

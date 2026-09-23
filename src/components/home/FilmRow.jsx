@@ -12,7 +12,7 @@ export default function FilmRow({ cards, skeletons = 6, firstLabel, onRemove, ..
     <Section {...section}>
       <CardGrid>
         {cards
-          ? cards.map((card, i) => <FilmCard key={card.id} film={card} href={watchUrl(card.id)} label={i === 0 ? firstLabel : null} onRemove={onRemove} />)
+          ? cards.map((card, i) => <FilmCard key={card.id} film={card} href={watchUrl(card.id)} label={i === 0 ? firstLabel : null} onRemove={onRemove} track={`row-${section.id || 'shelf'}`} />)
           : Array.from({ length: skeletons }, (_, i) => <span key={i} className="film-frame bg-panel animate-pulse" />)}
       </CardGrid>
     </Section>

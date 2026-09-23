@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import archiveService from '../services/archive';
-import { pickPlayableFile, videoUrl, shortcutFor, resumeTime, rememberPosition, readPositions, POSITIONS_KEY, previewFrames, frameAt } from '../services/playback';
+import { playableFiles, videoUrl, shortcutFor, resumeTime, rememberPosition, readPositions, POSITIONS_KEY, previewFrames, frameAt } from '../services/playback';
 import { track } from '../services/analytics';
+import useWatchReport from '../hooks/useWatchReport';
 
 
 const clock = (seconds) => {
@@ -20,8 +21,10 @@ export default function FilmPlayer({ movie }) {
   const [frames, setFrames] = useState([]);
   const [hover, setHover] = useState(null); // { x (0..1), seconds } while the pointer is on the scrub strip
   const videoRef = useRef(null);
+  const queue = useRef([]); // files still to try, best first, after the one playing
   const lastSaved = useRef(0);
   const watched = useRef({ seconds: 0, lastTick: 0, reported: false });
+  const minutes = useWatchReport('film', { film: movie.identifier }, movie.identifier);
 
   // Which player ended up showing the film: ours, or Archive.org's as the fallback
   useEffect(() => {
@@ -33,14 +36,24 @@ export default function FilmPlayer({ movie }) {
     setSource(undefined);
     archiveService.getMetadata(movie.identifier)
       .then(data => {
-        const file = pickPlayableFile(data.files);
         if (cancelled) return;
-        setSource(file ? videoUrl(movie.identifier, file.name) : null);
+        const [first, ...rest] = playableFiles(data.files).map(file => videoUrl(movie.identifier, file.name));
+        queue.current = rest;
+        setSource(first || null);
         setFrames(previewFrames(movie.identifier, data.files));
       })
       .catch(() => { if (!cancelled) setSource(null); });
     return () => { cancelled = true; };
   }, [movie.identifier]);
+
+  // The file would not play, or played sound over a black picture (a codec the browser has
+  // no decoder for): the next file, or Archive.org's player when there is none left
+  const nextFile = () => setSource(queue.current.shift() || null);
+
+  const loaded = () => {
+    if (videoRef.current.videoWidth === 0) return nextFile();
+    resume();
+  };
 
   // Shortcuts. Capture phase, so a focused <video> does not also handle the arrow keys itself.
   useEffect(() => {
@@ -71,7 +84,11 @@ export default function FilmPlayer({ movie }) {
   const countWatching = () => {
     const now = Date.now();
     const w = watched.current;
-    if (!videoRef.current.paused && w.lastTick) w.seconds += Math.min((now - w.lastTick) / 1000, 1);
+    if (!videoRef.current.paused && w.lastTick) {
+      const played = Math.min((now - w.lastTick) / 1000, 1);
+      w.seconds += played;
+      minutes.current.add(played);
+    }
     w.lastTick = now;
     if (w.seconds >= 600 && !w.reported) {
       w.reported = true;
@@ -130,9 +147,10 @@ export default function FilmPlayer({ movie }) {
         playsInline
         className="absolute inset-0 w-full h-full bg-black"
         aria-label={movie.title}
-        onLoadedMetadata={resume}
+        onLoadedMetadata={loaded}
         onTimeUpdate={() => { countWatching(); savePosition(); }}
-        onError={() => setSource(null)}
+        onPause={() => minutes.current.flush()}
+        onError={nextFile}
       />
       {frames.length > 0 && (
         <div

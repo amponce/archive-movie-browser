@@ -1,0 +1,20 @@
+{
+  "slug": "cult-80s",
+  "title": "Cult 80s",
+  "blurb": "The ones that flopped in theatres and lived forever on the rental shelf. Sorcerers in Chinatown, a satire in a steel suit, an alligator in the sewers, and Turkish Star Wars.",
+  "curator": "amponce",
+  "films": [
+    { "id": "big-trouble-little-china", "note": "John Carpenter, Kurt Russell and a Chinatown full of sorcerers. It flopped in 1986 and has been a midnight movie ever since." },
+    { "id": "ROBOCOPCC", "note": "Paul Verhoeven's satire of corporations, cops and TV ads, dressed up as an action film." },
+    { "id": "uhf.-1989", "note": "Weird Al Yankovic takes over a failing TV station. A box-office miss that found its audience on video." },
+    { "id": "alligator-1980", "note": "A flushed baby alligator grows up in the sewers. Written by John Sayles, who knew exactly what film he was making." },
+    { "id": "TheManWhoSavedTheWorldturkishStarWars1982", "note": "Turkish Star Wars. Borrowed footage, borrowed music, total conviction." },
+    { "id": "dead-men-don-t-wear-plaid-1982", "note": "Steve Martin plays opposite Bogart, Stanwyck and Cagney, spliced in from forties noir." },
+    { "id": "dead-buried-1981_202406", "note": "A seaside town where the tourists keep dying and the locals keep smiling. From the writers of Alien." },
+    { "id": "hangar-18-invasion-force-1980-full-sci-fi-movie-robert-vaughn-gary-collins", "note": "A UFO cover-up from Sunn Classic Pictures, who made a business of this sort of thing." },
+    { "id": "amazon-women-on-the-moon-extended-version-1987", "note": "Sketch comedy shaped like a night of channel-surfing, from five directors including Joe Dante and John Landis." },
+    { "id": "strange-behavior-1981_202503", "note": "Small-town teenagers, a mad scientist, and a Tangerine Dream score." },
+    { "id": "y-2-mate.is-stagefright-1987-full-movie.-cw-jff-wtx-u-8-m-720p-1628488874807", "note": "Michele Soavi's debut: a theatre locked for the night, with a killer in an owl mask." },
+    { "id": "NinjaClassic", "note": "Godfrey Ho's cut-and-paste ninja cinema, the kind only the eighties could make." }
+  ]
+}

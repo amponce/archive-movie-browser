@@ -108,6 +108,21 @@ class TMDBService {
     // Don't clear cache - poster data is valid regardless of API key
   }
 
+
+  // Validate the current TMDB API key
+  async validateApiKey(apiKey = this.apiKey) {
+    if (!apiKey) return false;
+
+    try {
+      const response = await this.throttledFetch(
+        `${TMDB_API_BASE}/configuration?api_key=${apiKey}`
+      );
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
   async throttledFetch(url) {
     const now = Date.now();
     // Reserve the slot before yielding so a batch cannot share one timer.
@@ -189,32 +204,44 @@ class TMDBService {
       // Try the tidied title, then guesses at the real title hidden in it (at most four
       // requests, and only on a miss). The year is not sent: Archive.org years are often
       // the upload year, so same-titled films are told apart by the closest year instead.
-      const filmYear = filmYearFromTitle(title) ?? year;
-      let bestMatch = null;
-      const guesses = [];
-      for (const candidate of titleCandidates(title)) {
-        const params = new URLSearchParams({
-          api_key: this.apiKey,
-          query: candidate.query,
-          include_adult: false
-        });
+  const filmYear = filmYearFromTitle(title) ?? year;
+let bestMatch = null;
 
-        const response = await this.throttledFetch(`${TMDB_API_BASE}/search/movie?${params}`);
-        if (!response.ok) {
-          // Not cached: an outage or rate limit must not hide this film's poster for a week
-          console.warn('TMDB search failed:', response.status);
-          return null;
-        }
+const guesses = [];
+for (const candidate of titleCandidates(title)) {
+  const params = new URLSearchParams({
+    api_key: this.apiKey,
+    query: candidate.query,
+    include_adult: false
+  });
 
-        const data = await response.json();
-        const match = selectMovieMatch(data.results, candidate.query, filmYear, { strict: candidate.strict });
-        if (match && !candidate.strict) {
-          bestMatch = match;
-          break;
-        }
-        guesses.push(match);
-      }
-      bestMatch = bestMatch || bestStrictMatch(guesses, filmYear);
+  const response = await this.throttledFetch(
+    `${TMDB_API_BASE}/search/movie?${params}`
+  );
+
+  if (!response.ok) {
+    // Not cached: an outage or rate limit must not hide this film's poster for a week
+    console.warn('TMDB search failed:', response.status);
+    return null;
+  }
+
+  const data = await response.json();
+  const match = selectMovieMatch(
+    data.results,
+    candidate.query,
+    filmYear,
+    { strict: candidate.strict }
+  );
+
+  if (match && !candidate.strict) {
+    bestMatch = match;
+    break;
+  }
+
+  guesses.push(match);
+}
+
+bestMatch = bestMatch || bestStrictMatch(guesses, filmYear);
 
       const result = bestMatch ? {
         id: bestMatch.id,

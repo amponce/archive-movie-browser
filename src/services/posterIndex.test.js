@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { setPosterIndex, indexedMatch, decisionToEntry, oneCopyPerFilm } from './posterIndex.js';
+import { withIndexedLength, setPosterIndex, indexedMatch, decisionToEntry, oneCopyPerFilm } from './posterIndex.js';
 
 test('indexedMatch: a poster entry, a deliberate "no poster" entry, and an unknown identifier are three different answers', async () => {
   setPosterIndex({
@@ -16,8 +16,8 @@ test('indexedMatch: a poster entry, a deliberate "no poster" entry, and an unkno
 });
 
 test('decisionToEntry keeps a poster only above the confidence threshold', () => {
-  const film = { id: 653, title: 'Nosferatu', release_date: '1922-03-04', poster_path: '/n.jpg', vote_average: 7.7 };
-  assert.deepEqual(decisionToEntry({ film, confidence: 0.91 }), { i: 653, t: 'Nosferatu', y: 1922, p: '/n.jpg', v: 7.7, c: 0.91 });
+  const film = { id: 653, title: 'Nosferatu', release_date: '1922-03-04', poster_path: '/n.jpg', vote_average: 7.7, vote_count: 1200 };
+  assert.deepEqual(decisionToEntry({ film, confidence: 0.91 }), { i: 653, t: 'Nosferatu', y: 1922, p: '/n.jpg', v: 7.7, k: 1200, c: 0.91 });
   assert.deepEqual(decisionToEntry({ film, confidence: 0.66 }), { n: 1, c: 0.66 }, 'a wrong poster is worse than a generated cover');
   assert.equal(decisionToEntry({ film, confidence: 0.7 }).i, 653);
   assert.deepEqual(decisionToEntry({ film: null, confidence: 0.98 }), { n: 1, c: 0.98 });
@@ -68,4 +68,11 @@ test('decisionToEntry keeps the original title when it differs from the English 
   const film = { id: 7216, title: 'Doctor Butcher M.D.', original_title: 'Zombi Holocaust', release_date: '1980-03-28', poster_path: '/p.jpg', vote_average: 5.5 };
   assert.equal(decisionToEntry({ film, confidence: 0.9 }).o, 'Zombi Holocaust');
   assert.equal(decisionToEntry({ film: { ...film, original_title: 'Doctor Butcher M.D.' }, confidence: 0.9 }).o, undefined);
+});
+
+test('withIndexedLength fills a missing runtime from the index and leaves a known one alone', () => {
+  setPosterIndex({ shining_clip: { i: 694, t: 'The Shining', d: 1 }, detour: { i: 3, t: 'Detour', d: 68 } });
+  assert.equal(withIndexedLength({ identifier: 'shining_clip', runtimeMinutes: 0 }).runtimeMinutes, 1);
+  assert.equal(withIndexedLength({ identifier: 'detour', runtimeMinutes: 70 }).runtimeMinutes, 70);
+  assert.equal(withIndexedLength({ identifier: 'unknown', runtimeMinutes: 0 }).runtimeMinutes, 0);
 });

@@ -25,7 +25,7 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
     if (loading) return;
     loadMoreStart.current = movies.length;
     setLoadMoreStatus('');
-    track('Load more', { page: nextPage });
+    track('Load more', { page: nextPage.page, from: nextPage.from });
     loadMore();
   };
 

@@ -3,15 +3,21 @@ import { onAirAt, tuneIn } from '../services/schedule';
 import { shortcutFor } from '../services/playback';
 import { track } from '../services/analytics';
 import useMyChannel from '../hooks/useMyChannel';
+import useWatchReport from '../hooks/useWatchReport';
 import { shareUrl } from '../services/myChannel';
+import { watchUrl } from '../services/reel';
+import Section, { CardGrid } from '../ui/Section';
+import FilmCard from '../ui/FilmCard';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
+import Guide, { useGuideSpan } from '../components/tv/Guide';
+import InlineSet from '../components/tv/InlineSet';
+import { Ratings, WatchTogether, EmptyChannel } from '../components/tv/Extras';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
 // the same for everyone. The page keeps its own clock: /api/tv gives the lineups once, and the
 // schedule maths (services/schedule) says what is on now, so nothing is refetched when a film ends.
 
-const GUIDE_HOURS = 3;
 const LAST_CHANNEL_KEY = 'tv-last-channel';
 const readLast = () => { try { return localStorage.getItem(LAST_CHANNEL_KEY); } catch { return null; } };
 const rememberLast = id => { try { localStorage.setItem(LAST_CHANNEL_KEY, id); } catch { /* private mode */ } };
@@ -74,11 +80,28 @@ function useTuning(channel, onNext) {
   return { film, slot, start, fromStart, restart: () => setFromStart(true), needsClick, play, videoRef, next };
 }
 
-function Screen({ tuning }) {
+// Ten minutes of actual playback on one channel counts as someone staying, once per tune-in
+// Every second played also goes to the minutes-watched report for this channel
+function useStayed(channelId) {
+  const played = useRef({ seconds: 0, last: null, sent: false });
+  const minutes = useWatchReport('tv', { channel: channelId }, channelId);
+  useEffect(() => { played.current = { seconds: 0, last: null, sent: false }; }, [channelId]);
+  return (event) => {
+    const p = played.current;
+    const t = event.currentTarget.currentTime;
+    if (event.type === 'pause') { minutes.current.flush(); return; }
+    if (p.last !== null && t > p.last && t - p.last < 2) { p.seconds += t - p.last; minutes.current.add(t - p.last); } // skip seeks
+    p.last = t;
+    if (!p.sent && p.seconds >= 600) { p.sent = true; track('TV', { action: 'watched 10 minutes', channel: channelId }); }
+  };
+}
+
+function Screen({ tuning, channelId }) {
   const { film, needsClick, play, videoRef, next } = tuning;
+  const onTimeUpdate = useStayed(channelId);
   return (
     <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-      {film ? <video ref={videoRef} key={film.id} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} />
+      {film ? <video ref={videoRef} key={film.id} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} onTimeUpdate={onTimeUpdate} onPause={onTimeUpdate} />
         : <div className="absolute inset-0 flex items-center justify-center text-muted">Nothing on this channel yet.</div>}
       {film && needsClick && (
         <button type="button" onClick={play} className="absolute inset-0 flex items-center justify-center bg-ink/60">
@@ -102,6 +125,7 @@ function NowPlaying({ channel, tuning }) {
       </div>
       <div className="flex items-center gap-4">
         {!fromStart && start?.offset > 0 && <button type="button" onClick={() => { track('TV', { action: 'from start', channel: channel.id }); restart(); }} className="nav-link hover:text-signal">From the start</button>}
+        <Ratings film={film} />
         <a href={`/browse#${encodeURIComponent(film.id)}`} className="nav-link">Film page</a>
       </div>
     </div>
@@ -116,10 +140,11 @@ function Stage({ channel, channels, onTune, onNext }) {
   const tuning = useTuning(channel, onNext);
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-4">
-      <div className="lg:col-span-8"><Screen tuning={tuning} /></div>
-      <aside className="lg:col-span-4 relative flex flex-col gap-3" aria-label="Channels">
+      <div className="lg:col-span-8"><Screen tuning={tuning} channelId={channel.id} /></div>
+      <aside className="lg:col-span-4 flex flex-col gap-3" aria-label="Channels">
         <span className="label lg:hidden">Channels</span>
-        <Rail channels={channels} current={channel} onTune={onTune} />
+        <div className="relative lg:flex-1"><Rail channels={channels} current={channel} onTune={onTune} /></div>
+        <WatchTogether channel={channel} />
       </aside>
       <div className="lg:col-span-8"><NowPlaying channel={channel} tuning={tuning} /></div>
     </div>
@@ -154,48 +179,11 @@ function Rail({ channels, current, onTune }) {
   );
 }
 
-// The guide: one row per channel, the next hours across, a line where now is
-function Guide({ channels, current, now, onTune }) {
-  const from = now;
-  const to = now + GUIDE_HOURS * 3600_000;
-  const span = to - from;
-  const left = ms => `${Math.max(0, ((ms - from) / span) * 100)}%`;
-  const width = (a, b) => `${((Math.min(b, to) - Math.max(a, from)) / span) * 100}%`;
-  const ticks = Array.from({ length: GUIDE_HOURS * 2 + 1 }, (_, i) => from + i * 1800_000);
-
-  return (
-    <div className="flex flex-col">
-      <div className="hidden sm:grid grid-cols-[200px_1fr] gap-4 mb-2">
-        <span />
-        <div className="relative h-5">
-          {ticks.map(t => <span key={t} className="absolute label -translate-x-1/2" style={{ left: left(t) }}>{clock(t)}</span>)}
-        </div>
-      </div>
-      {channels.map(channel => (
-        <button key={channel.id} type="button" onClick={() => onTune(channel)} aria-current={channel.id === current?.id ? 'true' : undefined}
-          className={`group grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 sm:gap-4 py-3 border-t border-line text-left focus-visible:outline-none ${channel.id === current?.id ? 'bg-panel/60' : 'hover:bg-panel/40'}`}>
-          <span className="flex items-baseline gap-3 px-2 min-w-0">
-            <span className="font-display font-black text-2xl tabular-nums text-dim group-aria-[current]:text-signal">{channel.number}</span>
-            <span className="font-medium text-sm text-bone truncate">{channel.name}</span>
-          </span>
-          <span className="relative h-14 overflow-hidden">
-            {channel.programmes.map(p => (
-              <span key={`${p.id}-${p.startsAt}`} className="absolute top-0 bottom-0 flex flex-col justify-center px-3 rounded-md bg-panel border border-line overflow-hidden" style={{ left: left(p.startsAt), width: width(p.startsAt, p.endsAt) }}>
-                <span className="text-sm text-bone truncate">{p.title}</span>
-                <span className="label truncate">{clock(p.startsAt)} – {clock(p.endsAt)}</span>
-              </span>
-            ))}
-            <span aria-hidden="true" className="absolute top-0 bottom-0 w-px bg-signal" style={{ left: left(now) }} />
-          </span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export default function TvPage() {
   const { channels: stations, error } = useSchedule();
   const mine = useMyChannel();
+  const span = useGuideSpan();
+  const [open, setOpen] = useState(null); // the guide row playing under itself
   // The personal channel goes first, as channel 0, when it has anything on it
   const channels = useMemo(() => (mine && mine.lineup.length ? [mine, ...stations] : stations), [mine, stations]);
   // The channel in the link, else the one this browser watched last, else channel 1
@@ -229,6 +217,7 @@ export default function TvPage() {
       <SiteHeader current="/tv" />
       <main className="gutter py-8 flex flex-col gap-8">
         {error && <p className="text-muted">The guide didn't load ({error}). <a href="/browse" className="text-bone underline">Browse instead.</a></p>}
+        {currentId === 'mine' && !mine?.ids.length && <EmptyChannel />}
         {current && <Stage channel={current} channels={channels} onTune={tune} onNext={() => setNow(Date.now())} />}
         {mine && (mine.lineup.length > 0 || mine.pending > 0) && (
           <p className="label flex flex-wrap items-center gap-x-4 gap-y-1 -mt-4">
@@ -237,16 +226,26 @@ export default function TvPage() {
             {mine.lineup.length > 0 && <a href={`/api/tv?format=m3u&mine=${mine.ids.map(encodeURIComponent).join(',')}`} className="nav-link hover:text-signal">M3U for your player</a>}
           </p>
         )}
+        {mine?.mine && mine.lineup.length > 0 && (
+          <Section id="my-lineup" eyebrow="Your channel" title="The lineup" blurb="Plays in this order, round the clock. Take a film off here, add more from any film page.">
+            <CardGrid>
+              {mine.lineup.map(film => (
+                <FilmCard key={film.id} film={{ id: film.id, title: film.title, year: film.year, poster: film.poster }} href={watchUrl(film.id)} onRemove={mine.remove} />
+              ))}
+            </CardGrid>
+          </Section>
+        )}
         {channels.length > 0 && (
           <section className="flex flex-col gap-5 pt-4 border-t border-line">
             <div className="flex items-end justify-between gap-6">
               <div>
                 <span className="eyebrow">Guide</span>
-                <h2 className="display text-2xl mt-1">The next three hours</h2>
+                <h2 className="display text-2xl mt-1">{span.label[0].toUpperCase() + span.label.slice(1)}</h2>
               </div>
               <a href="/api/tv/playlist.m3u" className="nav-link shrink-0 hover:text-signal">M3U for your player →</a>
             </div>
-            <Guide channels={channels} current={current} now={now} onTune={tune} />
+            <Guide channels={channels} current={current} now={now} hours={span.hours} onTune={c => setOpen(o => (o === c.id ? null : c.id))}
+              open={open} renderOpen={c => <InlineSet channel={c} onClose={() => setOpen(null)} />} />
           </section>
         )}
       </main>

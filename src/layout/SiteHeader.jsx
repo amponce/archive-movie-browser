@@ -35,12 +35,12 @@ export default function SiteHeader({ current = '/', search, children }) {
         <Logo />
         <nav className="hidden md:flex items-center gap-6" aria-label="Site">
           {NAV.map(([href, name]) => (
-            <a key={href} href={href} className={`nav-link ${href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{name}</a>
+            <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link ${href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{name}</a>
           ))}
         </nav>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="flex-1 md:flex-none md:w-[240px] xl:w-[300px]">{search || <SearchField />}</div>
-          <Button variant="light" onClick={spin} aria-label="Spin the reel: a random film">
+          <Button variant="light" onClick={spin} data-track="spin" aria-label="Spin the reel: a random film">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 3h5v5" /><path d="M4 20L21 3" /><path d="M21 16v5h-5" /><path d="M15 15l6 6" /><path d="M4 4l5 5" /></svg>
             <span className="hidden sm:inline">Spin the reel</span><span className="sm:hidden">Spin</span>
           </Button>
@@ -48,7 +48,7 @@ export default function SiteHeader({ current = '/', search, children }) {
       </div>
       <nav className="md:hidden gutter flex gap-5 overflow-x-auto pb-3 -mt-1" aria-label="Site">
         {NAV.map(([href, name]) => (
-          <a key={href} href={href} className={`nav-link shrink-0 ${href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{name}</a>
+          <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link shrink-0 ${href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{name}</a>
         ))}
       </nav>
       {children}

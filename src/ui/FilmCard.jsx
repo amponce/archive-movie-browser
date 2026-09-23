@@ -38,7 +38,8 @@ export { fieldFor };
 // film: { id, title, year, genre, poster, progress? }   poster is a full image URL or null;
 // progress (0..1) draws a line for how far along a film is
 // href: where the card goes. children: an optional line under the year (adopters, note)
-export default function FilmCard({ film, href, label, onRemove, children }) {
+// `track`: the click name for analytics (data-track), counted with the film
+export default function FilmCard({ film, href, label, onRemove, track, children }) {
   const genre = film.genre && film.genre !== 'Uncategorized' ? film.genre : null;
 
   return (
@@ -48,7 +49,7 @@ export default function FilmCard({ film, href, label, onRemove, children }) {
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
       </button>
     )}
-    <a href={href} className="group block min-w-0 focus-visible:outline-none">
+    <a href={href} data-track={track} data-film={track ? film.id : undefined} className="group block min-w-0 focus-visible:outline-none">
       <span
         className="film-frame group-hover:border-signal group-focus-visible:border-signal"
         style={{ background: fieldFor(genre, film.id), containerType: 'inline-size' }}
