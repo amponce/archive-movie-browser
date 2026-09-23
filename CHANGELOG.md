@@ -20,6 +20,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Changed
 
+- Picking a channel in the guide (front page and TV page) plays it right under the row, with sound, from the scheduled minute. It shows the poster and "Tuning in" while Archive.org starts the stream, and Tap to play if a phone blocks autoplay. Pick the row again to close it. Only one film plays with sound at a time.
 - Watch together moves under the channel list on the TV page.
 - Tonight's orphan moves down the front page, between the category rows.
 - The guide shows 90 minutes on a phone, times on the half hour, and tints what is on air up to now. It works out programmes from the lineups, so a page left open does not go stale. Guide rows show keyboard focus.

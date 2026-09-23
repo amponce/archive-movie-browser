@@ -21,7 +21,8 @@ export function useGuideSpan() {
 // The guide: one row per channel, `hours` across, the programme on air now tinted up to now.
 // lead: how much of the past to show before now, so now sits inside the grid, not on its edge.
 // Programmes come from each channel's lineup and the shared clock, so the grid never goes stale.
-export default function Guide({ channels, current, now, onTune, hours = 3, lead = 0 }) {
+// open / renderOpen: the channel whose row is expanded, and what to show under it (a player)
+export default function Guide({ channels, current, now, onTune, hours = 3, lead = 0, open = null, renderOpen = null }) {
   const from = now - lead;
   const to = from + hours * 3600_000;
   const span = to - from;
@@ -46,7 +47,8 @@ export default function Guide({ channels, current, now, onTune, hours = 3, lead 
         </div>
       </div>
       {channels.map(channel => (
-        <button key={channel.id} type="button" data-track="guide-row" onClick={() => onTune(channel)} aria-current={channel.id === current?.id ? 'true' : undefined}
+        <React.Fragment key={channel.id}>
+        <button type="button" data-track="guide-row" onClick={() => onTune(channel)} aria-current={channel.id === current?.id ? 'true' : undefined} aria-expanded={renderOpen ? open === channel.id : undefined}
           className={`group grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 sm:gap-4 py-3 border-t border-line text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal ${channel.id === current?.id ? 'bg-panel shadow-[inset_3px_0_0_#FF5A2E]' : 'hover:bg-panel/40'}`}>
           <span className="flex items-baseline gap-3 px-2 min-w-0">
             <span className="font-display font-black text-2xl tabular-nums text-dim group-aria-[current]:text-signal">{channel.number}</span>
@@ -62,6 +64,8 @@ export default function Guide({ channels, current, now, onTune, hours = 3, lead 
             ))}
           </span>
         </button>
+        {renderOpen && open === channel.id && <div className="border-t border-line py-4">{renderOpen(channel)}</div>}
+        </React.Fragment>
       ))}
     </div>
   );

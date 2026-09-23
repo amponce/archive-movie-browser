@@ -3,6 +3,7 @@ import { onAirAt } from '../../services/schedule';
 import { Sprockets } from '../../ui/FilmCard';
 import Button from '../../ui/Button';
 import Guide, { useGuideSpan } from '../tv/Guide';
+import InlineSet from '../tv/InlineSet';
 
 const PAGE = 6;
 const LEAD_MS = 20 * 60_000;
@@ -39,13 +40,15 @@ function Picture({ slot }) {
 }
 
 // Television on the front page, laid out like the old Prevue channel: the selected channel playing
-// over the guide grid, six channels at a time. Choosing a row previews it; Tune in opens the set.
+// over the guide grid, six channels at a time. Choosing a row plays it right under the row, with
+// sound; Tune in opens the set.
 // `skip`: a channel id not to open on (the list the page already leads with).
 export default function OnAir({ skip } = {}) {
   const [channels, setChannels] = useState(null);
   const [selected, setSelected] = useState(0);
   const [page, setPage] = useState(0);
   const [visible, setVisible] = useState(false);
+  const [open, setOpen] = useState(null); // the guide row playing under itself
   const [now, setNow] = useState(Date.now);
   const screenRef = useRef(null);
   const span = useGuideSpan();
@@ -131,7 +134,9 @@ export default function OnAir({ skip } = {}) {
           </div>
         </div>
         <div className="rounded-lg border border-line px-2">
-          <Guide channels={shown} current={channel} now={now} onTune={c => setSelected(channels.indexOf(c))} hours={span.hours} lead={LEAD_MS} />
+          <Guide channels={shown} current={channel} now={now} hours={span.hours} lead={LEAD_MS}
+            onTune={c => { setSelected(channels.indexOf(c)); setOpen(o => (o === c.id ? null : c.id)); }}
+            open={open} renderOpen={c => <InlineSet channel={c} onClose={() => setOpen(null)} />} />
         </div>
       </div>
     </section>
