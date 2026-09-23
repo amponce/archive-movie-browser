@@ -43,6 +43,10 @@
     {
       "source": "/lists/:slug",
       "destination": "/index.html"
+    },
+    {
+      "source": "/details/:path*",
+      "destination": "/index.html"
     }
   ],
   "redirects": [

@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- Any Archive.org address works on this site: swap `archive.org` for `orphanedfilms.com` (`/details/hexziasmovies`, `/details/@someone/lists/1/…`). Someone's Archive.org list opens as a page of its films, read from Archive.org each visit and not kept here, with Add to my channel on each film and Watch this list as a channel.
 - Pasting an Archive.org upload that holds many films (some people keep a list of films in one upload) shows each film with its poster, and picking one plays that file. Read from Archive.org each time; nothing is kept on our side.
 - MCP clients can attach catalogue and film resources, and use a `movie_night` prompt for three picks suited to their mood and available time.
 - The front page's lead changes category every week (Westerns, Cult 80s, Noir, Horror, Silent and early, Drive-in sci-fi, Mystery), with a different list from that category each day.
@@ -34,6 +35,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- An Archive.org link pasted into the search box on the front page, TV or Lists pages opened a search for the link's text. It opens what the link points at now, and old `/browse?q=<archive link>` addresses redirect.
 - Film descriptions from Archive.org show as text instead of raw HTML (closes #246).
 - Adding films to your channel from more than one tab (or from a page brought back with Back) no longer drops the films added elsewhere. Every add and remove now starts from what is saved at that moment, and open pages keep up with each other.
 - MCP genre browsing across All Films now uses the same poster index as the site, including decade, upload length, ordering and duplicate-upload filtering. Recent uploads and collection-specific browsing still use Archive.org.

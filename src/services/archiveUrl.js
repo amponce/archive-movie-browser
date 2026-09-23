@@ -16,6 +16,8 @@ export function parseArchiveUrl(text) {
   }
 
   const [section, identifier] = url.pathname.split('/').filter(Boolean);
+  const list = listFromPath(url.pathname);
+  if (list) return list;
   if (/^search(\.php)?$/.test(section || '')) {
     const query = (url.searchParams.get('query') || '').trim();
     return query ? { type: 'search', query } : null;
@@ -23,4 +25,38 @@ export function parseArchiveUrl(text) {
   if (!['details', 'embed', 'download'].includes(section) || !IDENTIFIER.test(identifier || '')) return null;
   if (VIDEO_CATEGORIES.some(c => c.id === identifier)) return { type: 'collection', id: identifier };
   return { type: 'film', identifier };
+}
+
+// /details/@someone/lists/1/any-name: a list someone keeps on Archive.org
+const USER = /^[A-Za-z0-9._-]{1,64}$/;
+function listFromPath(pathname) {
+  const [section, user, lists, id] = pathname.split('/').filter(Boolean);
+  if (section !== 'details' || !user?.startsWith('@') || lists !== 'lists') return null;
+  const name = user.slice(1);
+  return USER.test(name) && /^\d{1,6}$/.test(id || '') ? { type: 'list', user: name, id: Number(id) } : null;
+}
+
+// The same path on this site: orphanedfilms.com/details/... is archive.org/details/... opened here
+export function parseSitePath(pathname) {
+  if (!pathname.startsWith('/details/')) return null;
+  return listFromPath(pathname) || parseArchiveUrl(`https://archive.org${pathname}`);
+}
+
+// Where a link leads on this site
+export function pathFor(link) {
+  if (link.type === 'film') return `/browse#${encodeURIComponent(link.identifier)}`;
+  if (link.type === 'list') return `/details/@${link.user}/lists/${link.id}`;
+  if (link.type === 'collection') return `/browse?collection=${encodeURIComponent(link.id)}`;
+  return `/browse?q=${encodeURIComponent(link.query)}`;
+}
+
+// An Archive.org address opened on this site (orphanedfilms.com/details/...), or a pasted link
+// that arrived as search text (/browse?q=https://archive.org/...): where it should really go.
+// null when the address is already the right one.
+export function redirectFor(pathname, search = '') {
+  const link = parseSitePath(pathname);
+  if (link) return link.type === 'list' ? null : pathFor(link);
+  const q = new URLSearchParams(search).get('q');
+  const pasted = q && parseArchiveUrl(q);
+  return pasted ? pathFor(pasted) : null;
 }
