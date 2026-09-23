@@ -18,6 +18,12 @@ export function parseArchiveUrl(text) {
   const [section, identifier] = url.pathname.split('/').filter(Boolean);
   const list = listFromPath(url.pathname);
   if (list) return list;
+  // services/collection-rss.php?collection=x: the collection's newest uploads, which is what
+  // browsing it newest first shows, so it opens as that
+  if (section === 'services' && identifier === 'collection-rss.php') {
+    const id = url.searchParams.get('collection') || '';
+    return IDENTIFIER.test(id) ? { type: 'collection', id, newest: true } : null;
+  }
   if (/^search(\.php)?$/.test(section || '')) {
     const query = (url.searchParams.get('query') || '').trim();
     return query ? { type: 'search', query } : null;
@@ -52,7 +58,7 @@ export function pathFor(link) {
   if (link.type === 'film') return `/browse#${encodeURIComponent(link.identifier)}${link.file ? `/${encodeURIComponent(link.file)}` : ''}`;
   if (link.type === 'list') return `/details/@${link.user}/lists/${link.id}`;
   // A collection opens on all its films, unless it stands for a genre (Film_Noir opens that pill)
-  if (link.type === 'collection') return `/browse?collection=${encodeURIComponent(link.id)}${VIDEO_CATEGORIES.some(c => c.id === link.id && c.asGenre) ? '' : '&genre=all'}`;
+  if (link.type === 'collection') return `/browse?collection=${encodeURIComponent(link.id)}${VIDEO_CATEGORIES.some(c => c.id === link.id && c.asGenre) ? '' : '&genre=all'}${link.newest ? '&sort=publicdate+desc' : ''}`;
   return `/browse?q=${encodeURIComponent(link.query)}`;
 }
 

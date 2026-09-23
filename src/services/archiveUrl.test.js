@@ -75,3 +75,11 @@ test('a link to one file inside an upload plays that file', async () => {
   assert.deepEqual(filmFromHash('#Cops1922'), { identifier: 'Cops1922', file: null });
   assert.equal(filmFromHash(''), null);
 });
+
+test("an Archive.org collection RSS feed opens that collection, newest first", async () => {
+  const { pathFor } = await import('./archiveUrl.js');
+  const link = parseArchiveUrl('https://archive.org/services/collection-rss.php?collection=classic_tv_1980s');
+  assert.deepEqual(link, { type: 'collection', id: 'classic_tv_1980s', newest: true });
+  assert.equal(pathFor(link), '/browse?collection=classic_tv_1980s&genre=all&sort=publicdate+desc');
+  assert.equal(parseArchiveUrl('https://archive.org/services/collection-rss.php?collection=bad%20id'), null);
+});
