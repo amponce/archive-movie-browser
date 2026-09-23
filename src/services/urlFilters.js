@@ -39,7 +39,8 @@ export function parseFilters(search) {
   const filters = {};
 
   const collection = params.get('collection');
-  if (collection && (collection === ALL_FILMS || VIDEO_CATEGORIES.some(c => c.id === collection))) {
+  // Ours, or any Archive.org collection (a pasted link to one): anything shaped like an identifier
+  if (collection && (collection === ALL_FILMS || VIDEO_CATEGORIES.some(c => c.id === collection) || /^[A-Za-z0-9._-]{1,100}$/.test(collection))) {
     // A genre-named collection (links from before genres moved to the pills) becomes its pill
     const choice = collectionChoice(collection);
     filters.collection = choice.collection;

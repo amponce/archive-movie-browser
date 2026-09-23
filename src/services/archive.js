@@ -41,6 +41,15 @@ export const VIDEO_CATEGORIES = [
 // "All Films" in the collection dropdown: every film collection at once. It is the default, so
 // the genre pills have thousands of films to narrow, and the dropdown never has to lie.
 export const ALL_FILMS = 'all';
+// Archive.org's Moving Image Archive, the parent of every video collection: all of its video
+// (17 million uploads), without the TV news clips. Mostly not films, so it starts at feature length.
+export const EVERYTHING = 'movies';
+
+// A collection's name for the dropdown: ours, everything, or the identifier of one we don't list
+export function collectionName(id) {
+  if (id === EVERYTHING) return 'All of Archive.org';
+  return VIDEO_CATEGORIES.find(c => c.id === id)?.name || id;
+}
 
 // What the collection dropdown offers
 export const BROWSABLE_COLLECTIONS = VIDEO_CATEGORIES.filter(c => !c.asGenre);
@@ -53,7 +62,7 @@ export function collectionChoice(id) {
 }
 
 export function defaultMinRuntime(collectionId) {
-  return collectionId === ALL_FILMS || VIDEO_CATEGORIES.find(c => c.id === collectionId)?.features ? 40 : 0;
+  return collectionId === ALL_FILMS || collectionId === EVERYTHING || VIDEO_CATEGORIES.find(c => c.id === collectionId)?.features ? 40 : 0;
 }
 
 // Predicate for the Full Movies / Shorts toggle. Many Archive.org items have no runtime
@@ -364,7 +373,9 @@ class ArchiveService {
     // Just filter by collection - the collection itself defines content type
     // Adding mediatype filter is too restrictive for many collections
     const filmCollections = `collection:(${VIDEO_CATEGORIES.filter(c => c.films).map(c => c.id).join(' OR ')})`;
-    let query = collection === ALL_FILMS ? filmCollections : `collection:"${collection}"`;
+    let query = collection === ALL_FILMS ? filmCollections
+      : collection === EVERYTHING ? 'mediatype:movies AND NOT collection:(tvnews OR tvarchive)'
+      : `collection:"${collection}"`;
 
     // Match every search word (a phrase match finds nothing for "night living").
     // Only letters and digits survive - Archive.org's backend errors on escaped quotes.
@@ -406,7 +417,8 @@ class ArchiveService {
     // Collections contain sub-collections ("Silent Films", "Vintage Cartoons"), which are
     // folders, not videos. A mediatype:movies filter would be too strict for some collections.
     query += ' AND NOT mediatype:collection';
-    const notFilms = shorts ? NOT_FILMS.filter(c => c !== 'movie_trailers_unsorted') : NOT_FILMS;
+    // Never exclude the collection itself when someone opened it (home_movies, from a link)
+    const notFilms = (shorts ? NOT_FILMS.filter(c => c !== 'movie_trailers_unsorted') : NOT_FILMS).filter(c => c !== collection);
     query += ` AND NOT collection:(${notFilms.join(' OR ')})`;
 
     return query;
@@ -645,6 +657,10 @@ class ArchiveService {
       throw new Error(`Archive.org item not found: ${identifier}`);
     }
 
+    // A collection is not a film: say so, and the page browses it instead
+    if (data.metadata.mediatype === 'collection') {
+      throw Object.assign(new Error(`${identifier} is a collection of films, not a film`), { collection: identifier });
+    }
     const movie = this.normalizeMovie(data.metadata);
     if (isBlockedContent(movie)) {
       throw new Error(`Archive.org item is blocked: ${identifier}`);

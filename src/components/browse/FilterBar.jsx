@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, Filter, Settings, Grid, List, SlidersHorizontal, Library, ChevronDown, Calendar } from 'lucide-react';
-import { BROWSABLE_COLLECTIONS, DECADES, ALL_FILMS } from '../../services/archive';
+import { BROWSABLE_COLLECTIONS, DECADES, ALL_FILMS, collectionName } from '../../services/archive';
 import { SORT_OPTIONS, RUNTIME_OPTIONS } from '../../services/urlFilters';
 
 // The sticky bar under the header: what you are looking at, grid or list, the settings dialog,
@@ -45,6 +45,9 @@ export default function FilterBar({ browse, viewMode, onViewMode, onOpenSettings
               {/* A search looks everywhere, so say so rather than keep showing a collection */}
               {activeSearch && <option value="search" disabled>Everything (searching)</option>}
               <option value={ALL_FILMS}>All Films</option>
+              {/* A collection opened from a link that the list below doesn't carry (All of Archive.org is
+                  one: it's mostly not films, so it's only offered when a link asks for it) */}
+              {category !== ALL_FILMS && !BROWSABLE_COLLECTIONS.some(c => c.id === category) && <option value={category}>{collectionName(category)}</option>}
               {BROWSABLE_COLLECTIONS.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
             </select>
           </div>

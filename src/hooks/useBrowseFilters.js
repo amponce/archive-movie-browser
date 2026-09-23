@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { VIDEO_CATEGORIES, ALL_FILMS, defaultMinRuntime, collectionChoice } from '../services/archive';
+import { VIDEO_CATEGORIES, ALL_FILMS, defaultMinRuntime, collectionChoice, collectionName } from '../services/archive';
 import { parseArchiveUrl, pathFor } from '../services/archiveUrl';
 import { parseFilters, filtersToQuery } from '../services/urlFilters';
 import { track } from '../services/analytics';
@@ -20,6 +20,7 @@ export default function useBrowseFilters({ onOpenFilmLink, onReopenFilm } = {}) 
   const [category, setCategory] = useState(urlFilters.collection);
 
   const currentCategory = VIDEO_CATEGORIES.find(c => c.id === category)
+    || (category !== ALL_FILMS && { id: category, name: collectionName(category), description: `Everything in ${collectionName(category)}` })
     || { id: ALL_FILMS, name: 'All Films', description: 'Every film collection on the Internet Archive' };
   // Only a search looks outside the chosen collection; the genre pills narrow it
   const acrossCollections = Boolean(activeSearch);

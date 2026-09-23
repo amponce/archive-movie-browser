@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- Any Archive.org collection opens as a browse of that collection, from a pasted link or `/details/<collection>` (Community Video, Home Movies, thousands more), on all genres and with its own name in the dropdown. `archive.org/details/movies`, the whole Moving Image Archive, opens as All of Archive.org, without the TV news clips; it's mostly not films, so it isn't in the dropdown.
 - Any Archive.org address works on this site: swap `archive.org` for `orphanedfilms.com` (`/details/hexziasmovies`, `/details/@someone/lists/1/…`). A link to one file inside an upload (`/details/hexziasmovies/Annabelle+Comes+Home.mp4`) plays that film. Someone's Archive.org list opens as a page of its films, read from Archive.org each visit and not kept here, with Add to my channel on each film and Watch this list as a channel.
 - Pasting an Archive.org upload that holds many films (some people keep a list of films in one upload) shows each film with its poster, and picking one plays that file. Read from Archive.org each time; nothing is kept on our side.
 - MCP clients can attach catalogue and film resources, and use a `movie_night` prompt for three picks suited to their mood and available time.
