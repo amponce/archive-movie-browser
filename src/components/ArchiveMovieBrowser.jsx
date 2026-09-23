@@ -23,6 +23,9 @@ export default function ArchiveMovieBrowser() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [linkError, setLinkError] = useState(null);
+  // Opened with a film in the link (every film card links to /browse#id): until that film has
+  // loaded, the page stays blank rather than flashing the browse grid for a moment
+  const [opening, setOpening] = useState(() => window.location.hash.length > 1);
   const [viewMode, changeViewMode] = useViewMode();
   const selectedRef = useRef(null); // what popstate and hashchange see without re-subscribing
   selectedRef.current = selectedMovie;
@@ -62,7 +65,8 @@ export default function ArchiveMovieBrowser() {
       if (selectedRef.current?.identifier === decoded) return;
       archiveService.getMovieByIdentifier(decoded)
         .then((movie) => { if (!cancelled) setSelectedMovie(movie); })
-        .catch((err) => { if (!cancelled) console.error('Failed to open movie from URL hash:', err); });
+        .catch((err) => { if (!cancelled) console.error('Failed to open movie from URL hash:', err); })
+        .finally(() => { if (!cancelled) setOpening(false); });
     };
     openFromHash();
     window.addEventListener('hashchange', openFromHash);
@@ -83,6 +87,8 @@ export default function ArchiveMovieBrowser() {
   // applied any earlier, the restore would undo it.
   const afterClose = useRef(null);
   const closeFilmThen = (action) => { afterClose.current = action; window.history.back(); };
+
+  if (opening && !selectedMovie) return <div className="min-h-screen bg-ink" />;
 
   return (
     <div className="min-h-screen">
