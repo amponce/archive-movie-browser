@@ -3,14 +3,16 @@ import React, { useEffect, useState } from 'react';
 
 const KEY = 'stats-key';
 const MARK = '#c08a10'; // single series; passes the dark-surface lightness and contrast checks
-const EVENTS = ['Page view', 'Film opened', 'Play', 'Watched 10 minutes', 'Search', 'Filter', 'Load more'];
-const FILM_BOARDS = ['played', 'watched', 'opened'];
+const EVENTS = ['Page view', 'Click', 'Film opened', 'Play', 'Watched 10 minutes', 'Seconds watched', 'Search', 'Filter', 'Load more'];
+const STAGES = ['visited', 'clicked', 'played', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
+const FILM_BOARDS = ['played', 'watched', 'opened', 'minutes'];
 const BOARDS = [
-  ['played', 'Films played'], ['watched', 'Watched 10+ minutes'], ['opened', 'Films opened'], ['searches', 'Searches'], ['filters', 'Filters used'],
+  ['minutes', 'Minutes watched, by film'], ['channel-minutes', 'Minutes watched, by channel'], ['clicks', 'What people click'],
+  ['tuned', 'Channels tuned to'], ['stayed', 'Channels watched 10+ minutes'], ['played', 'Films played'], ['watched', 'Watched 10+ minutes'], ['opened', 'Films opened'], ['searches', 'Searches'], ['filters', 'Filters used'],
   ['referrers', 'Where visitors came from'], ['pages', 'Pages'], ['players', 'Player used'], ['banner', 'MCP banner'],
 ];
 
-const fmt = (n) => Number(n || 0).toLocaleString();
+const fmt = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
 const sum = (days, name) => days.reduce((total, day) => total + (day.events[name] || 0), 0);
 const readKey = () => { try { return localStorage.getItem(KEY) || ''; } catch { return ''; } };
 // A key pasted from a .env file often arrives with quotes or a newline; the server wants only the value
@@ -49,6 +51,31 @@ function DailyChart({ days }) {
   );
 }
 
+// How far visits got, per day: each stage counts distinct visits, and the share is of that
+// day's visits. A visit is one browser tab, counted without keeping its id.
+function Funnel({ days }) {
+  if (!days?.length) return null;
+  return (
+    <div className="overflow-x-auto">
+      <table className="text-sm w-full">
+        <thead><tr className="text-gray-400">{['Day', ...STAGES].map(h => <th key={h} className="font-medium text-right first:text-left pr-4 py-1 whitespace-nowrap">{h}</th>)}</tr></thead>
+        <tbody>
+          {[...days].reverse().map(day => (
+            <tr key={day.day} className="border-t border-gray-700 tabular-nums">
+              <td className="pr-4 py-1">{day.day}</td>
+              {STAGES.map((stage, i) => (
+                <td key={stage} className="text-right pr-4">
+                  {fmt(day[stage])}{i > 0 && day.visited > 0 && <span className="text-gray-500"> {Math.round((day[stage] / day.visited) * 100)}%</span>}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 // A film by its name, linking to it; the Archive.org identifier is the fallback and the tooltip
 const Film = ({ id, titles }) => <a href={`/#${encodeURIComponent(id)}`} title={id} className="hover:text-yellow-400 hover:underline">{titles[id] || id}</a>;
 
@@ -73,7 +100,9 @@ function Board({ rows, films, titles }) {
 // What just happened, newest first: the quickest way to see that something was counted
 function Latest({ events, titles }) {
   if (!events.length) return <p className="text-gray-400">Nothing yet.</p>;
-  const detail = ({ name, data }) => data.film ? <Film id={data.film} titles={titles} />
+  const detail = ({ name, data }) => name === 'Watched' ? <>{Math.round(data.seconds / 60)} min of {data.film ? <Film id={data.film} titles={titles} /> : `channel ${data.channel}`} ({Math.round(data.total / 60)} min so far)</>
+    : name === 'Click' ? <>{data.target}{data.film && <> · <Film id={data.film} titles={titles} /></>}</>
+    : data.film ? <Film id={data.film} titles={titles} />
     : name === 'Search' ? (data.query ? `“${data.query}”` : 'a pasted link')
     : name === 'Filter' ? `${data.type}: ${data.value}`
     : name === 'Page view' ? `${data.path}${data.referrer ? ` from ${data.referrer}` : ''}`
@@ -118,7 +147,7 @@ export default function StatsPage() {
   const week = data?.days.slice(-7) || [];
   const tiles = data && [
     [data.days.at(-1).visitors, 'visitors today'], [data.visitorsThisMonth, 'visitors this month'], [sum(week, 'Page view'), 'page views, 7 days'],
-    [sum(week, 'Film opened'), 'films opened, 7 days'], [sum(week, 'Play'), 'plays, 7 days'], [sum(week, 'Watched 10 minutes'), 'watched 10+ min, 7 days'], [sum(week, 'Search'), 'searches, 7 days'],
+    [sum(week, 'Film opened'), 'films opened, 7 days'], [sum(week, 'Seconds watched') / 60, 'minutes watched, 7 days'], [sum(week, 'Play'), 'plays, 7 days'], [sum(week, 'Watched 10 minutes'), 'watched 10+ min, 7 days'], [sum(week, 'Search'), 'searches, 7 days'],
   ];
 
   return (
@@ -159,6 +188,10 @@ export default function StatsPage() {
               ))}
             </div>
 
+            <Panel title="How far visits got" note="(distinct visits per stage, last 14 days, UTC)">
+              <Funnel days={data.funnel} />
+            </Panel>
+
             <Panel title="Visitors per day" note="(estimated distinct people, last 30 days, UTC)">
               <DailyChart days={data.days} />
               <details className="mt-3">
@@ -188,7 +221,7 @@ export default function StatsPage() {
                 <Panel key={key} title={title}><Board rows={data.boards[key] || []} films={FILM_BOARDS.includes(key)} titles={data.titles || {}} /></Panel>
               ))}
             </div>
-            <p className="text-gray-400 text-sm">Counts only: no cookies, no IP addresses, no visitor identifiers. Bots are not counted. Leaderboards are for the current month.</p>
+            <p className="text-gray-400 text-sm">Counts only: no cookies, no IP addresses. Each browser tab carries a random visit id that is only counted into the funnel, never stored. Bots are not counted. Leaderboards are for the current month.</p>
           </main>
         )}
       </div>

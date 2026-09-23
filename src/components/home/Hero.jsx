@@ -41,9 +41,9 @@ export default function Hero({ featured, fileNumber, wall }) {
           </div>
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-3">
-              <Button href={href} size="lg"><PlayIcon /> Watch now</Button>
-              <Button href="/browse" variant="ghost" size="lg">Browse films</Button>
-              <Button href="/tv" variant="ghost" size="lg"><span className="inline-block w-2 h-2 rounded-full bg-signal" aria-hidden="true" /> On now</Button>
+              <Button href={href} size="lg" data-track="orphan-watch" data-film={featured.id}><PlayIcon /> Watch now</Button>
+              <Button href="/browse" variant="ghost" size="lg" data-track="orphan-browse">Browse films</Button>
+              <Button href="/tv" variant="ghost" size="lg" data-track="orphan-on-now"><span className="inline-block w-2 h-2 rounded-full bg-signal" aria-hidden="true" /> On now</Button>
             </div>
             <span className="font-mono text-xs tracking-[0.1em] uppercase text-muted">Hosted by the <span className="text-bone">Internet Archive</span></span>
           </div>

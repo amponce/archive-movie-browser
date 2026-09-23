@@ -19,14 +19,14 @@ export default function Shelf({ list, index, more }) {
           <p className="text-lg text-muted leading-relaxed max-w-[52ch]">{list.blurb}</p>
           <p className="text-bone">{films.length} films{hours ? `, about ${hours} hours` : ''}, picked by {list.curator}.</p>
           <div className="flex flex-wrap items-center gap-3">
-            <Button href={more.href} size="lg">{more.label}</Button>
-            <Button href={`/lists/${list.slug}`} variant="ghost" size="lg">Open the list</Button>
+            <Button href={more.href} size="lg" data-track="lead-more">{more.label}</Button>
+            <Button href={`/lists/${list.slug}`} variant="ghost" size="lg" data-track="lead-list">Open the list</Button>
           </div>
         </div>
         <ol aria-label={`The films in ${list.title}`} className="lg:col-span-12 lg:row-start-2 order-2 lg:order-none flex gap-3 sm:gap-4 overflow-x-auto lg:overflow-visible pb-6 -mx-4 px-4 scroll-px-4 sm:mx-0 sm:px-0 sm:scroll-px-0 snap-x border-b-2 border-bone/15">
           {films.map(({ id, entry }) => (
             <li key={id} className="shrink-0 w-[132px] sm:w-[156px] lg:w-auto lg:flex-1 lg:min-w-0 snap-start">
-              <a href={watchUrl(id)} className="group block focus-visible:outline-none">
+              <a href={watchUrl(id)} data-track="lead-poster" data-film={id} className="group block focus-visible:outline-none">
                 <span className="relative block aspect-[2/3] rounded-sm overflow-hidden bg-line shadow-[0_14px_28px_-12px_rgba(0,0,0,0.8)] ring-1 ring-white/10 group-hover:ring-signal group-focus-visible:ring-2 group-focus-visible:ring-signal transition-transform duration-200 group-hover:-translate-y-1.5 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
                   <img src={tmdbService.getPosterUrl(entry.p, 'medium')} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
                 </span>

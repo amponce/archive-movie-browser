@@ -46,7 +46,7 @@ export default function Guide({ channels, current, now, onTune, hours = 3, lead 
         </div>
       </div>
       {channels.map(channel => (
-        <button key={channel.id} type="button" onClick={() => onTune(channel)} aria-current={channel.id === current?.id ? 'true' : undefined}
+        <button key={channel.id} type="button" data-track="guide-row" onClick={() => onTune(channel)} aria-current={channel.id === current?.id ? 'true' : undefined}
           className={`group grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 sm:gap-4 py-3 border-t border-line text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal ${channel.id === current?.id ? 'bg-panel shadow-[inset_3px_0_0_#FF5A2E]' : 'hover:bg-panel/40'}`}>
           <span className="flex items-baseline gap-3 px-2 min-w-0">
             <span className="font-display font-black text-2xl tabular-nums text-dim group-aria-[current]:text-signal">{channel.number}</span>

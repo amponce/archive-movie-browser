@@ -2,8 +2,10 @@
 import { timingSafeEqual } from 'node:crypto';
 import { redis } from './_redis.js';
 
-const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'banner', 'tv', 'tuned', 'stayed'];
-const FILM_BOARDS = ['opened', 'played', 'watched'];
+const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'banner', 'tv', 'tuned', 'stayed', 'minutes', 'channel-minutes', 'clicks'];
+const STAGES = ['visited', 'clicked', 'played', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
+const FUNNEL_DAYS = 14;
+const FILM_BOARDS = ['opened', 'played', 'watched', 'minutes'];
 const DAYS = 30;
 
 function allowed(request) {
@@ -28,7 +30,11 @@ export async function GET(request) {
       ...BOARDS.map(board => ['ZREVRANGE', `stats:${board}:${month}`, 0, 24, 'WITHSCORES']),
       ['LRANGE', 'stats:recent', 0, 39],
     ], { readOnly: true }),
-    redis([...days.map(day => ['PFCOUNT', `stats:visitors:${day}`]), ['PFCOUNT', `stats:visitors:${month}`]]),
+    redis([
+      ...days.map(day => ['PFCOUNT', `stats:visitors:${day}`]), ['PFCOUNT', `stats:visitors:${month}`],
+      // The funnel: how many visits reached each stage, per day
+      ...days.slice(-FUNNEL_DAYS).flatMap(day => STAGES.map(stage => ['PFCOUNT', `stats:funnel:${stage}:${day}`])),
+    ]),
   ]);
 
   const boards = Object.fromEntries(BOARDS.map((board, i) => [board, pairs(reads[DAYS + i])]));
@@ -43,6 +49,7 @@ export async function GET(request) {
     month,
     days: days.map((day, i) => ({ day, visitors: visitors[i] || 0, events: Object.fromEntries(pairs(reads[i])) })),
     visitorsThisMonth: visitors[DAYS] || 0,
+    funnel: days.slice(-FUNNEL_DAYS).map((day, i) => ({ day, ...Object.fromEntries(STAGES.map((stage, j) => [stage, visitors[DAYS + 1 + i * STAGES.length + j] || 0])) })),
     boards,
     titles,
     recent,
