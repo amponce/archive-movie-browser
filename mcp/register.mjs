@@ -1,6 +1,6 @@
 // Builds the MCP server with its tools. Shared by the local stdio entry (server.mjs) and the
 // hosted HTTP endpoint (../api/mcp.js), so both always offer exactly the same thing.
-import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
+import { McpServer, ResourceTemplate, createMcpHandler } from '@modelcontextprotocol/server';
 import * as z from 'zod/v4';
 import { searchFilms, browseFilms, getFilm, listCollections, whatsOn, SORTS, COLLECTION_IDS, DECADES } from './tools.mjs';
 import { STANDARD_GENRES } from '../src/services/archive.js';
@@ -9,6 +9,7 @@ import { STANDARD_GENRES } from '../src/services/archive.js';
 export function createServer({ wrap = (name, run) => run } = {}) {
   const server = new McpServer({ name: 'archive-movie-browser', version: '0.1.0' });
   const limit = z.number().int().min(1).max(25).default(10).describe('How many films to return');
+  const identifier = z.string().regex(/^[A-Za-z0-9._-]{1,200}$/, 'An Archive.org identifier: letters, digits, dot, dash, underscore');
 
   // Every tool answers with JSON text; a failure (Archive.org is often slow or down) is an error result, not a crash
   const tool = (name, config, run) => server.registerTool(name, config, async (args) => {
@@ -38,7 +39,7 @@ export function createServer({ wrap = (name, run) => run } = {}) {
 
   tool('get_film', {
     description: 'Details for one Archive.org item by its identifier (the last part of archive.org/details/<identifier>): description, runtime, genres and the matched film if known. Lead with watchUrl (plays it on this site) and also give sourceUrl (the original Archive.org page); embedUrl is for an iframe.',
-    inputSchema: z.object({ identifier: z.string().regex(/^[A-Za-z0-9._-]{1,200}$/, 'An Archive.org identifier: letters, digits, dot, dash, underscore') }),
+    inputSchema: z.object({ identifier }),
   }, getFilm);
 
   tool('whats_on', {
@@ -50,6 +51,37 @@ export function createServer({ wrap = (name, run) => run } = {}) {
     description: 'The collections, genres and sort orders the other tools accept.',
     inputSchema: z.object({}),
   }, listCollections);
+
+  // Reuse the tool handlers (including the hosted cache) so attached resources
+  // contain the same film identities and watch/source links as tool results.
+  const resource = (uri, data) => ({ contents: [{ uri: uri.href, mimeType: 'application/json', text: JSON.stringify(data, null, 2) }] });
+  server.registerResource('collections', 'archive://collections', {
+    description: 'Available film collections, genres, decades and sort orders.',
+    mimeType: 'application/json',
+  }, async uri => resource(uri, await wrap('list_collections', listCollections)({})));
+
+  server.registerResource('film', new ResourceTemplate('archive://film/{identifier}', { list: undefined }), {
+    description: 'Details for one Archive.org film, including watchUrl and sourceUrl.',
+    mimeType: 'application/json',
+  }, async (uri, variables) => {
+    const id = identifier.parse(variables.identifier);
+    return resource(uri, await wrap('get_film', getFilm)({ identifier: id }));
+  });
+
+  server.registerPrompt('movie_night', {
+    description: 'Find three films for a movie night, with reasons and playable links.',
+    argsSchema: z.object({
+      mood: z.string().min(1).max(200).optional().describe('The mood or genre you want, e.g. a light comedy'),
+      time: z.string().min(1).max(80).optional().describe('How much time you have, e.g. 90 minutes'),
+    }),
+  }, ({ mood, time }) => ({
+    messages: [{ role: 'user', content: { type: 'text', text:
+      `Plan a movie night for these preferences: ${JSON.stringify({ mood: mood || 'open to suggestions', time: time || 'no time limit specified' })}. ` +
+      'Call list_collections to learn the available filters, then browse_films or search_films to find candidates. ' +
+      'Return three distinct picks and explain why each fits. Check runtimeMinutes against the available time; ' +
+      'say when runtime is unknown or fewer than three matches are available instead of inventing details. ' +
+      'For each pick lead with watchUrl and also include sourceUrl.' } }],
+  }));
 
   return server;
 }

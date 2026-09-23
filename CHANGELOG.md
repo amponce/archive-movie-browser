@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- MCP clients can attach catalogue and film resources, and use a `movie_night` prompt for three picks suited to their mood and available time.
 - The front page's lead changes category every week (Westerns, Cult 80s, Noir, Horror, Silent and early, Drive-in sci-fi, Mystery), with a different list from that category each day.
 - A Cult 80s list and channel: Big Trouble in Little China, RoboCop, UHF, Alligator, Turkish Star Wars and seven more.
 - Analytics count minutes actually watched (per film, per channel, per day), clicks on the front page, film page and header (anything with `data-track`), and a daily funnel: visits that clicked something, pressed play, and watched 1, 10 and 30+ minutes. Each tab carries a random visit id that is only counted into the funnel, never stored; still no cookies and no IP addresses. The stats page shows all three.

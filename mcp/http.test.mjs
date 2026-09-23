@@ -27,6 +27,12 @@ test('an MCP client can list and call the tools over HTTP', async t => {
   assert.deepEqual(tools.map(tool => tool.name).sort(), ['browse_films', 'get_film', 'list_collections', 'search_films', 'whats_on']);
   const result = await client.callTool({ name: 'list_collections', arguments: {} });
   assert.ok(JSON.parse(result.content[0].text).decades.includes(1980));
+  const collections = await client.readResource({ uri: 'archive://collections' });
+  assert.deepEqual(JSON.parse(collections.contents[0].text), JSON.parse(result.content[0].text));
+  assert.ok((await client.listResourceTemplates()).resourceTemplates.some(r => r.uriTemplate === 'archive://film/{identifier}'));
+  assert.ok((await client.listPrompts()).prompts.some(p => p.name === 'movie_night'));
+  const prompt = await client.getPrompt({ name: 'movie_night', arguments: { mood: 'noir', time: '70 minutes' } });
+  assert.match(prompt.messages[0].content.text, /70 minutes/);
 });
 
 test('browsers may call it (CORS), and one address cannot flood it', async t => {

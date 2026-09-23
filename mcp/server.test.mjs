@@ -3,6 +3,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
+import { InMemoryTransport } from '@modelcontextprotocol/server';
+import { createServer } from './register.mjs';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { describe, browseFilms, searchFilms } from './tools.mjs';
@@ -29,6 +31,49 @@ test('list_collections answers without touching the network', async t => {
   const data = JSON.parse(result.content[0].text);
   assert.ok(data.collections.some(c => c.id === 'feature_films' && c.films));
   assert.ok(data.genres.includes('Horror'));
+});
+
+test('resources and movie_night are discoverable and readable over stdio', async t => {
+  const client = await connect(t);
+  assert.ok((await client.listResources()).resources.some(r => r.uri === 'archive://collections'));
+  assert.ok((await client.listResourceTemplates()).resourceTemplates.some(r => r.uriTemplate === 'archive://film/{identifier}'));
+  const resource = await client.readResource({ uri: 'archive://collections' });
+  const tool = await client.callTool({ name: 'list_collections', arguments: {} });
+  assert.equal(resource.contents[0].mimeType, 'application/json');
+  assert.deepEqual(JSON.parse(resource.contents[0].text), JSON.parse(tool.content[0].text));
+  const prompt = (await client.listPrompts()).prompts.find(p => p.name === 'movie_night');
+  assert.deepEqual(prompt.arguments.map(a => a.name), ['mood', 'time']);
+  const result = await client.getPrompt({ name: 'movie_night', arguments: { mood: 'comedy', time: '70 minutes' } });
+  assert.equal(result.messages[0].role, 'user');
+  for (const phrase of ['comedy', '70 minutes', 'browse_films', 'search_films', 'three distinct', 'watchUrl', 'sourceUrl']) {
+    assert.ok(result.messages[0].content.text.includes(phrase), phrase);
+  }
+  const defaults = await client.getPrompt({ name: 'movie_night', arguments: {} });
+  assert.match(defaults.messages[0].content.text, /no time limit specified/);
+  await assert.rejects(client.getPrompt({ name: 'movie_night', arguments: { mood: 'a'.repeat(201) } }));
+});
+
+test('film resources reuse the wrapped handler, reject bad ids and propagate failures', async t => {
+  const calls = [];
+  const film = { title: 'Cops', identifier: 'Cops1922', watchUrl: 'https://www.orphanedfilms.com/browse#Cops1922' };
+  const server = createServer({ wrap: (name, run) => async args => {
+    if (name !== 'get_film') return run(args);
+    calls.push(args);
+    if (args.identifier === 'unavailable') throw new Error('Archive unavailable');
+    return film;
+  } });
+  const client = new Client({ name: 'resource-test', version: '1.0.0' });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+  t.after(async () => { await client.close(); await server.close(); });
+  const result = await client.readResource({ uri: 'archive://film/Cops1922' });
+  assert.equal(result.contents[0].uri, 'archive://film/Cops1922');
+  assert.deepEqual(JSON.parse(result.contents[0].text), film);
+  assert.deepEqual(calls, [{ identifier: 'Cops1922' }]);
+  await assert.rejects(client.readResource({ uri: 'archive://film/bad%2Fidentifier' }));
+  assert.equal(calls.length, 1, 'invalid input must not reach the handler');
+  await assert.rejects(client.readResource({ uri: 'archive://film/unavailable' }), /Archive unavailable/);
 });
 
 test('bad input is rejected before it reaches Archive.org', async t => {
