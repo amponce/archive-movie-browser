@@ -4,6 +4,18 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added
+
+- The front page leads with a list, face out like a video store's new-releases wall, and a button that goes deeper (all 80s action, all westerns). A different list each day from `src/programme/shelves.json`, the same for everyone.
+- Television is the second thing on the front page: the selected channel playing silently at the scheduled minute, over the guide grid, six channels at a time with Channel up and Channel down. The picture only streams while it is on screen, pauses in a hidden tab, and stays a poster for reduced motion or Data Saver.
+- Watch together on the TV page copies a link that puts whoever opens it on the same frame.
+- Channel 0 explains itself when it is empty.
+
+### Changed
+
+- Tonight's orphan moves down the front page, between the category rows.
+- The guide shows 90 minutes on a phone, times on the half hour, and tints what is on air up to now. It works out programmes from the lineups, so a page left open does not go stale. Guide rows show keyboard focus.
+
 ### Changed
 
 - More like this on a film page only shows films matched to TMDB. It used to fill up with unidentified uploads when the index ran short.

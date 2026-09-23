@@ -9,12 +9,12 @@ import Section, { CardGrid } from '../ui/Section';
 import FilmCard from '../ui/FilmCard';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
+import Guide, { useGuideSpan } from '../components/tv/Guide';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
 // the same for everyone. The page keeps its own clock: /api/tv gives the lineups once, and the
 // schedule maths (services/schedule) says what is on now, so nothing is refetched when a film ends.
 
-const GUIDE_HOURS = 3;
 const LAST_CHANNEL_KEY = 'tv-last-channel';
 const readLast = () => { try { return localStorage.getItem(LAST_CHANNEL_KEY); } catch { return null; } };
 const rememberLast = id => { try { localStorage.setItem(LAST_CHANNEL_KEY, id); } catch { /* private mode */ } };
@@ -92,6 +92,18 @@ function Screen({ tuning }) {
   );
 }
 
+// Everyone who opens a channel's link lands on the same frame, so a link is a watch party
+function WatchTogether({ channel }) {
+  const [copied, setCopied] = useState(false);
+  const url = channel.id === 'mine' && channel.ids ? shareUrl(channel.ids, window.location.origin) : `${window.location.origin}/tv#${channel.id}`;
+  const copy = () => { navigator.clipboard?.writeText(url); setCopied(true); track('TV', { action: 'watch together', channel: channel.id }); setTimeout(() => setCopied(false), 4000); };
+  return (
+    <button type="button" onClick={copy} className="btn-primary px-4 py-2 text-xs">
+      {copied ? 'Link copied. Whoever opens it is on this frame' : 'Watch together: copy link'}
+    </button>
+  );
+}
+
 // One line under the screen: what this is, and the two things you can do about it
 function NowPlaying({ channel, tuning }) {
   const { film, slot, start, fromStart, restart } = tuning;
@@ -105,6 +117,7 @@ function NowPlaying({ channel, tuning }) {
       </div>
       <div className="flex items-center gap-4">
         {!fromStart && start?.offset > 0 && <button type="button" onClick={() => { track('TV', { action: 'from start', channel: channel.id }); restart(); }} className="nav-link hover:text-signal">From the start</button>}
+        <WatchTogether channel={channel} />
         <a href={`/browse#${encodeURIComponent(film.id)}`} className="nav-link">Film page</a>
       </div>
     </div>
@@ -157,48 +170,24 @@ function Rail({ channels, current, onTune }) {
   );
 }
 
-// The guide: one row per channel, the next hours across, a line where now is
-function Guide({ channels, current, now, onTune }) {
-  const from = now;
-  const to = now + GUIDE_HOURS * 3600_000;
-  const span = to - from;
-  const left = ms => `${Math.max(0, ((ms - from) / span) * 100)}%`;
-  const width = (a, b) => `${((Math.min(b, to) - Math.max(a, from)) / span) * 100}%`;
-  const ticks = Array.from({ length: GUIDE_HOURS * 2 + 1 }, (_, i) => from + i * 1800_000);
-
+// Someone followed "Start your own channel" and has nothing on it yet
+function EmptyChannel() {
   return (
-    <div className="flex flex-col">
-      <div className="hidden sm:grid grid-cols-[200px_1fr] gap-4 mb-2">
-        <span />
-        <div className="relative h-5">
-          {ticks.map(t => <span key={t} className="absolute label -translate-x-1/2" style={{ left: left(t) }}>{clock(t)}</span>)}
-        </div>
+    <section aria-labelledby="empty-channel" className="panel p-6 sm:p-8 flex flex-col gap-4 max-w-[720px]">
+      <h2 id="empty-channel" className="display text-3xl">Channel 0 is yours</h2>
+      <p className="text-muted leading-relaxed">Open any film and choose Add to my channel. Your films play in order, round the clock, and anyone you send the link to lands on the same frame as you.</p>
+      <div className="flex flex-wrap gap-3">
+        <a href="/lists" className="btn-primary">Pick from the lists</a>
+        <a href="/browse" className="btn-ghost">Browse films</a>
       </div>
-      {channels.map(channel => (
-        <button key={channel.id} type="button" onClick={() => onTune(channel)} aria-current={channel.id === current?.id ? 'true' : undefined}
-          className={`group grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 sm:gap-4 py-3 border-t border-line text-left focus-visible:outline-none ${channel.id === current?.id ? 'bg-panel/60' : 'hover:bg-panel/40'}`}>
-          <span className="flex items-baseline gap-3 px-2 min-w-0">
-            <span className="font-display font-black text-2xl tabular-nums text-dim group-aria-[current]:text-signal">{channel.number}</span>
-            <span className="font-medium text-sm text-bone truncate">{channel.name}</span>
-          </span>
-          <span className="relative h-14 overflow-hidden">
-            {channel.programmes.map(p => (
-              <span key={`${p.id}-${p.startsAt}`} className="absolute top-0 bottom-0 flex flex-col justify-center px-3 rounded-md bg-panel border border-line overflow-hidden" style={{ left: left(p.startsAt), width: width(p.startsAt, p.endsAt) }}>
-                <span className="text-sm text-bone truncate">{p.title}</span>
-                <span className="label truncate">{clock(p.startsAt)} – {clock(p.endsAt)}</span>
-              </span>
-            ))}
-            <span aria-hidden="true" className="absolute top-0 bottom-0 w-px bg-signal" style={{ left: left(now) }} />
-          </span>
-        </button>
-      ))}
-    </div>
+    </section>
   );
 }
 
 export default function TvPage() {
   const { channels: stations, error } = useSchedule();
   const mine = useMyChannel();
+  const span = useGuideSpan();
   // The personal channel goes first, as channel 0, when it has anything on it
   const channels = useMemo(() => (mine && mine.lineup.length ? [mine, ...stations] : stations), [mine, stations]);
   // The channel in the link, else the one this browser watched last, else channel 1
@@ -232,6 +221,7 @@ export default function TvPage() {
       <SiteHeader current="/tv" />
       <main className="gutter py-8 flex flex-col gap-8">
         {error && <p className="text-muted">The guide didn't load ({error}). <a href="/browse" className="text-bone underline">Browse instead.</a></p>}
+        {currentId === 'mine' && !mine?.ids.length && <EmptyChannel />}
         {current && <Stage channel={current} channels={channels} onTune={tune} onNext={() => setNow(Date.now())} />}
         {mine && (mine.lineup.length > 0 || mine.pending > 0) && (
           <p className="label flex flex-wrap items-center gap-x-4 gap-y-1 -mt-4">
@@ -254,11 +244,11 @@ export default function TvPage() {
             <div className="flex items-end justify-between gap-6">
               <div>
                 <span className="eyebrow">Guide</span>
-                <h2 className="display text-2xl mt-1">The next three hours</h2>
+                <h2 className="display text-2xl mt-1">{span.label[0].toUpperCase() + span.label.slice(1)}</h2>
               </div>
               <a href="/api/tv/playlist.m3u" className="nav-link shrink-0 hover:text-signal">M3U for your player →</a>
             </div>
-            <Guide channels={channels} current={current} now={now} onTune={tune} />
+            <Guide channels={channels} current={current} now={now} onTune={tune} hours={span.hours} />
           </section>
         )}
       </main>

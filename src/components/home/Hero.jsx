@@ -34,7 +34,7 @@ export default function Hero({ featured, fileNumber, wall }) {
               <span className="eyebrow"><span className="inline-block w-2 h-2 rounded-full bg-signal mr-2 align-middle" />Tonight's orphan</span>
               <span className="label">{today} · changes in {changesIn()}</span>
             </div>
-            <h1 className="font-display font-black uppercase leading-[0.86] tracking-[0.005em] text-[56px] sm:text-[88px] lg:text-[112px]">{entry.t}</h1>
+            <h2 className="font-display font-black uppercase leading-[0.86] tracking-[0.005em] text-[56px] sm:text-[88px] lg:text-[112px]">{entry.t}</h2>
             <p className="text-lg text-muted leading-relaxed max-w-[560px]">
               {meta && <span className="text-bone">{meta}. </span>}{why}
             </p>
