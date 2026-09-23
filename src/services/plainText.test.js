@@ -11,3 +11,11 @@ test('plainText turns an Archive.org description into text', () => {
   assert.equal(plainText(null), '');
   assert.equal(plainText(['first', 'second']), 'first\nsecond', 'Archive.org sometimes sends a list');
 });
+
+test('plainText survives hostile descriptions: impossible characters and endless brackets', () => {
+  assert.equal(plainText('a &#99999999; b &#x110000; c'), 'a b c', 'code points past Unicode are dropped, not thrown');
+  const started = Date.now();
+  plainText('<'.repeat(200000));
+  plainText('<script>'.repeat(50000));
+  assert.ok(Date.now() - started < 500, `took ${Date.now() - started} ms`);
+});
