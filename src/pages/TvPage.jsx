@@ -10,6 +10,7 @@ import FilmCard from '../ui/FilmCard';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import Guide, { useGuideSpan } from '../components/tv/Guide';
+import { Ratings, WatchTogether, EmptyChannel } from '../components/tv/Extras';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
 // the same for everyone. The page keeps its own clock: /api/tv gives the lineups once, and the
@@ -77,11 +78,25 @@ function useTuning(channel, onNext) {
   return { film, slot, start, fromStart, restart: () => setFromStart(true), needsClick, play, videoRef, next };
 }
 
-function Screen({ tuning }) {
+// Ten minutes of actual playback on one channel counts as someone staying, once per tune-in
+function useStayed(channelId) {
+  const played = useRef({ seconds: 0, last: null, sent: false });
+  useEffect(() => { played.current = { seconds: 0, last: null, sent: false }; }, [channelId]);
+  return (event) => {
+    const p = played.current;
+    const t = event.currentTarget.currentTime;
+    if (p.last !== null && t > p.last && t - p.last < 2) p.seconds += t - p.last; // skip seeks
+    p.last = t;
+    if (!p.sent && p.seconds >= 600) { p.sent = true; track('TV', { action: 'watched 10 minutes', channel: channelId }); }
+  };
+}
+
+function Screen({ tuning, channelId }) {
   const { film, needsClick, play, videoRef, next } = tuning;
+  const onTimeUpdate = useStayed(channelId);
   return (
     <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-      {film ? <video ref={videoRef} key={film.id} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} />
+      {film ? <video ref={videoRef} key={film.id} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} onTimeUpdate={onTimeUpdate} />
         : <div className="absolute inset-0 flex items-center justify-center text-muted">Nothing on this channel yet.</div>}
       {film && needsClick && (
         <button type="button" onClick={play} className="absolute inset-0 flex items-center justify-center bg-ink/60">
@@ -89,18 +104,6 @@ function Screen({ tuning }) {
         </button>
       )}
     </div>
-  );
-}
-
-// Everyone who opens a channel's link lands on the same frame, so a link is a watch party
-function WatchTogether({ channel }) {
-  const [copied, setCopied] = useState(false);
-  const url = channel.id === 'mine' && channel.ids ? shareUrl(channel.ids, window.location.origin) : `${window.location.origin}/tv#${channel.id}`;
-  const copy = () => { navigator.clipboard?.writeText(url); setCopied(true); track('TV', { action: 'watch together', channel: channel.id }); setTimeout(() => setCopied(false), 4000); };
-  return (
-    <button type="button" onClick={copy} className="btn-primary px-4 py-2 text-xs">
-      {copied ? 'Link copied. Whoever opens it is on this frame' : 'Watch together: copy link'}
-    </button>
   );
 }
 
@@ -117,7 +120,7 @@ function NowPlaying({ channel, tuning }) {
       </div>
       <div className="flex items-center gap-4">
         {!fromStart && start?.offset > 0 && <button type="button" onClick={() => { track('TV', { action: 'from start', channel: channel.id }); restart(); }} className="nav-link hover:text-signal">From the start</button>}
-        <WatchTogether channel={channel} />
+        <Ratings film={film} />
         <a href={`/browse#${encodeURIComponent(film.id)}`} className="nav-link">Film page</a>
       </div>
     </div>
@@ -132,10 +135,11 @@ function Stage({ channel, channels, onTune, onNext }) {
   const tuning = useTuning(channel, onNext);
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-4">
-      <div className="lg:col-span-8"><Screen tuning={tuning} /></div>
-      <aside className="lg:col-span-4 relative flex flex-col gap-3" aria-label="Channels">
+      <div className="lg:col-span-8"><Screen tuning={tuning} channelId={channel.id} /></div>
+      <aside className="lg:col-span-4 flex flex-col gap-3" aria-label="Channels">
         <span className="label lg:hidden">Channels</span>
-        <Rail channels={channels} current={channel} onTune={onTune} />
+        <div className="relative lg:flex-1"><Rail channels={channels} current={channel} onTune={onTune} /></div>
+        <WatchTogether channel={channel} />
       </aside>
       <div className="lg:col-span-8"><NowPlaying channel={channel} tuning={tuning} /></div>
     </div>
@@ -167,20 +171,6 @@ function Rail({ channels, current, onTune }) {
         );
       })}
     </ol>
-  );
-}
-
-// Someone followed "Start your own channel" and has nothing on it yet
-function EmptyChannel() {
-  return (
-    <section aria-labelledby="empty-channel" className="panel p-6 sm:p-8 flex flex-col gap-4 max-w-[720px]">
-      <h2 id="empty-channel" className="display text-3xl">Channel 0 is yours</h2>
-      <p className="text-muted leading-relaxed">Open any film and choose Add to my channel. Your films play in order, round the clock, and anyone you send the link to lands on the same frame as you.</p>
-      <div className="flex flex-wrap gap-3">
-        <a href="/lists" className="btn-primary">Pick from the lists</a>
-        <a href="/browse" className="btn-ghost">Browse films</a>
-      </div>
-    </section>
   );
 }
 

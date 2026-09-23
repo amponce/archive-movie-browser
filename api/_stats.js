@@ -3,6 +3,8 @@
 // (The leading underscore keeps Vercel from treating this file as an endpoint.)
 
 const FILM = /^[A-Za-z0-9._-]{1,200}$/;
+const CHANNEL = /^[a-z0-9-]{1,60}$/; // a list slug, or 'mine'
+const TV_ACTIONS = ['tune', 'watched 10 minutes', 'watch together', 'from start', 'share my channel', 'add to my channel', 'remove from my channel'];
 const KEEP_DAYS = 400;
 const RECENT = 50;
 // eslint-disable-next-line no-control-regex -- stripping control characters is the point
@@ -17,6 +19,13 @@ const EVENTS = {
   'Search': d => ({ query: clean(d.query).toLowerCase(), kind: d.kind === 'pasted link' ? 'pasted link' : 'typed' }),
   'Filter': d => (['genre', 'decade', 'collection', 'sort'].includes(d.type) ? { type: d.type, value: clean(d.value, 40) } : null),
   'Load more': () => ({}),
+  // What people do with television. channel and film are optional, but checked when present.
+  'TV': d => {
+    if (!TV_ACTIONS.includes(d.action)) return null;
+    if (d.channel !== undefined && !CHANNEL.test(d.channel)) return null;
+    if (d.film !== undefined && !FILM.test(d.film)) return null;
+    return { action: d.action, ...(d.channel && { channel: d.channel }), ...(d.film && { film: d.film }) };
+  },
   'MCP banner': d => (['opened', 'dismissed'].includes(d.action) ? { action: d.action } : null),
 };
 
@@ -58,6 +67,12 @@ export function commandsFor({ name, data }, { now = new Date(), visitor } = {}) 
   if (name === 'Search' && data.kind === 'typed' && data.query) count('searches', data.query);
   if (name === 'Filter') count('filters', `${data.type}: ${data.value}`);
   if (name === 'MCP banner') count('banner', data.action);
+  // Per channel: how often it was tuned to, and how often someone stayed ten minutes
+  if (name === 'TV') {
+    count('tv', data.action);
+    if (data.channel && data.action === 'tune') count('tuned', data.channel);
+    if (data.channel && data.action === 'watched 10 minutes') count('stayed', data.channel);
+  }
 
   // The latest events, newest first: what happened and when, never who. It answers "I just
   // opened a film, did it count?" without waiting for a leaderboard to move.
