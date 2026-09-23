@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { VIDEO_CATEGORIES, ALL_FILMS, defaultMinRuntime, collectionChoice } from '../services/archive';
-import { parseArchiveUrl } from '../services/archiveUrl';
+import { parseArchiveUrl, pathFor } from '../services/archiveUrl';
 import { parseFilters, filtersToQuery } from '../services/urlFilters';
 import { track } from '../services/analytics';
 
@@ -54,8 +54,10 @@ export default function useBrowseFilters({ onOpenFilmLink, onReopenFilm } = {}) 
   const search = (text = searchQuery) => {
     // An Archive.org link opens what it points at instead of being searched for as words
     const link = parseArchiveUrl(text);
+    if (link?.type === 'film' && link.file) { setSearchQuery(''); window.location.hash = pathFor(link).split('#')[1]; return undefined; }
     if (link?.type === 'film') { setSearchQuery(''); track('Search', { kind: 'pasted link' }); return onOpenFilmLink?.(link.identifier); }
     if (link?.type === 'collection') return changeCategory(link.id);
+    if (link?.type === 'list') { window.location.href = pathFor(link); return undefined; }
     if (link?.type === 'search') text = link.query;
     if (text.trim()) track('Search', { query: text, kind: link ? 'pasted link' : 'typed' });
     const limitedText = text.slice(0, 200);

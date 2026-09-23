@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import ArchiveMovieBrowser from './components/ArchiveMovieBrowser';
+import { parseSitePath, redirectFor } from './services/archiveUrl';
 
 // A few pages do not need a router: the path picks the page, and links between them are
 // ordinary links. The side pages load on demand so the film browser stays small.
@@ -9,6 +10,7 @@ const PAGES = {
   '/mcp': lazy(() => import('./pages/McpPage')),
   '/stats': lazy(() => import('./pages/StatsPage')),
   '/lists': lazy(() => import('./pages/ListsPage')),
+  '/details': lazy(() => import('./pages/ArchiveListPage')),
 };
 
 // '/lists/noir-you-can-finish-tonight' -> the lists page with that slug.
@@ -25,6 +27,13 @@ export function pageFor(pathname, search = '', hash = '') {
 }
 
 export default function App() {
+  const redirect = redirectFor(window.location.pathname, window.location.search);
+  if (redirect) { window.location.replace(redirect); return null; }
+  const list = parseSitePath(window.location.pathname);
+  if (list?.type === 'list') {
+    const Page = PAGES['/details'];
+    return <Suspense fallback={<div className="min-h-screen bg-ink" />}><Page user={list.user} id={list.id} /></Suspense>;
+  }
   const match = pageFor(window.location.pathname, window.location.search, window.location.hash);
   if (!match) return <ArchiveMovieBrowser />;
   const { Page, slug } = match;

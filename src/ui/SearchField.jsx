@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import SearchBox from '../components/SearchBox';
+import { parseArchiveUrl, pathFor } from '../services/archiveUrl';
 
 // The header's search on pages that are not the browser: the same type-ahead (genres,
 // collections, recent searches, tags, live suggestions from Archive.org), with every pick
@@ -12,7 +13,11 @@ export default function SearchField() {
     <SearchBox
       value={value}
       onChange={setValue}
-      onSearch={(text) => text.trim() && go(`q=${encodeURIComponent(text.trim())}`)}
+      onSearch={(text) => {
+        const link = parseArchiveUrl(text); // a pasted Archive.org link goes to what it points at
+        if (link) { window.location.href = pathFor(link); return; }
+        if (text.trim()) go(`q=${encodeURIComponent(text.trim())}`);
+      }}
       onOpenFilm={(film) => { window.location.href = `/browse#${encodeURIComponent(film.identifier)}`; }}
       onPickGenre={(genre) => go(`genre=${encodeURIComponent(genre)}`)}
       onPickCollection={(id) => go(`collection=${encodeURIComponent(id)}`)}

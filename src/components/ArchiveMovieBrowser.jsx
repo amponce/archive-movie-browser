@@ -14,6 +14,7 @@ import SiteFooter from '../layout/SiteFooter';
 import FilterBar from './browse/FilterBar';
 import GenrePills from './browse/GenrePills';
 import FilmGrid from './browse/FilmGrid';
+import { filmFromHash } from '../services/archiveUrl';
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
 
 // The browse page. The filters live in useBrowseFilters (and the URL), the films in useFilms,
@@ -22,6 +23,7 @@ const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
 export default function ArchiveMovieBrowser() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
+  const [startFile, setStartFile] = useState(null); // #upload/file name: play that file in the upload
   const [linkError, setLinkError] = useState(null);
   // Opened with a film in the link (every film card links to /browse#id): until that film has
   // loaded, the page stays blank rather than flashing the browse grid for a moment
@@ -58,10 +60,10 @@ export default function ArchiveMovieBrowser() {
   useEffect(() => {
     let cancelled = false;
     const openFromHash = () => {
-      const identifier = window.location.hash.slice(1);
-      if (!identifier) return;
-      let decoded;
-      try { decoded = decodeURIComponent(identifier); } catch { decoded = identifier; }
+      const link = filmFromHash(window.location.hash);
+      if (!link) return;
+      const decoded = link.identifier;
+      setStartFile(link.file);
       if (selectedRef.current?.identifier === decoded) return;
       archiveService.getMovieByIdentifier(decoded)
         .then((movie) => { if (!cancelled) setSelectedMovie(movie); })
@@ -122,8 +124,10 @@ export default function ArchiveMovieBrowser() {
 {selectedMovie && (
         <MovieDetailPage
           movie={selectedMovie}
+          startFile={startFile}
           onClose={() => {
             setSelectedMovie(null);
+            setStartFile(null);
             // A search made from the film page runs once the page has closed (see afterClose)
             const next = afterClose.current;
             afterClose.current = null;
