@@ -45,7 +45,7 @@
       "destination": "/index.html"
     },
     {
-      "source": "/details/:path*",
+      "source": "/details/(.*)",
       "destination": "/index.html"
     }
   ],
