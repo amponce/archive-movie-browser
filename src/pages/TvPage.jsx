@@ -11,6 +11,7 @@ import FilmCard from '../ui/FilmCard';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import Guide, { useGuideSpan } from '../components/tv/Guide';
+import InlineSet from '../components/tv/InlineSet';
 import { Ratings, WatchTogether, EmptyChannel } from '../components/tv/Extras';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
@@ -182,6 +183,7 @@ export default function TvPage() {
   const { channels: stations, error } = useSchedule();
   const mine = useMyChannel();
   const span = useGuideSpan();
+  const [open, setOpen] = useState(null); // the guide row playing under itself
   // The personal channel goes first, as channel 0, when it has anything on it
   const channels = useMemo(() => (mine && mine.lineup.length ? [mine, ...stations] : stations), [mine, stations]);
   // The channel in the link, else the one this browser watched last, else channel 1
@@ -242,7 +244,8 @@ export default function TvPage() {
               </div>
               <a href="/api/tv/playlist.m3u" className="nav-link shrink-0 hover:text-signal">M3U for your player →</a>
             </div>
-            <Guide channels={channels} current={current} now={now} onTune={tune} hours={span.hours} />
+            <Guide channels={channels} current={current} now={now} hours={span.hours} onTune={c => setOpen(o => (o === c.id ? null : c.id))}
+              open={open} renderOpen={c => <InlineSet channel={c} onClose={() => setOpen(null)} />} />
           </section>
         )}
       </main>
