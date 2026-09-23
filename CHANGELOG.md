@@ -10,6 +10,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- MCP clients can attach catalogue and film resources, and use a `movie_night` prompt for three picks suited to their mood and available time.
+
 - A "Wrong poster?" link on films whose poster came from the index, opening a pre-filled issue with the identifier, the upload title and our guess ([#221](https://github.com/amponce/archive-movie-browser/pull/221), closes #120).
 
 ### Fixed
