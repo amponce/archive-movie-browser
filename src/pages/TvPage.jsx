@@ -4,6 +4,7 @@ import { shortcutFor } from '../services/playback';
 import { track } from '../services/analytics';
 import useMyChannel from '../hooks/useMyChannel';
 import useWatchReport from '../hooks/useWatchReport';
+import PopOut from '../ui/PopOut';
 import { shareUrl } from '../services/myChannel';
 import { watchUrl } from '../services/reel';
 import Section, { CardGrid } from '../ui/Section';
@@ -12,7 +13,7 @@ import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import Guide, { useGuideSpan } from '../components/tv/Guide';
 import InlineSet from '../components/tv/InlineSet';
-import { Ratings, WatchTogether, EmptyChannel } from '../components/tv/Extras';
+import { WatchTogether, EmptyChannel } from '../components/tv/Extras';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
 // the same for everyone. The page keeps its own clock: /api/tv gives the lineups once, and the
@@ -22,7 +23,6 @@ const LAST_CHANNEL_KEY = 'tv-last-channel';
 const readLast = () => { try { return localStorage.getItem(LAST_CHANNEL_KEY); } catch { return null; } };
 const rememberLast = id => { try { localStorage.setItem(LAST_CHANNEL_KEY, id); } catch { /* private mode */ } };
 const clock = ms => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-const mins = s => `${Math.floor(s / 60)} min`;
 
 function useSchedule() {
   const [data, setData] = useState(null);
@@ -77,7 +77,7 @@ function useTuning(channel, onNext) {
   }, []);
 
   const play = () => videoRef.current?.play().then(() => setNeedsClick(false));
-  return { film, slot, start, fromStart, restart: () => setFromStart(true), needsClick, play, videoRef, next };
+  return { film, slot, start, fromStart, restart: () => setFromStart(true), live: () => setFromStart(false), needsClick, play, videoRef, next };
 }
 
 // Ten minutes of actual playback on one channel counts as someone staying, once per tune-in
@@ -101,7 +101,7 @@ function Screen({ tuning, channelId }) {
   const onTimeUpdate = useStayed(channelId);
   return (
     <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-      {film ? <video ref={videoRef} key={film.id} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} onTimeUpdate={onTimeUpdate} onPause={onTimeUpdate} />
+      {film ? <video ref={videoRef} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} onTimeUpdate={onTimeUpdate} onPause={onTimeUpdate} />
         : <div className="absolute inset-0 flex items-center justify-center text-muted">Nothing on this channel yet.</div>}
       {film && needsClick && (
         <button type="button" onClick={play} className="absolute inset-0 flex items-center justify-center bg-ink/60">
@@ -114,19 +114,30 @@ function Screen({ tuning, channelId }) {
 
 // One line under the screen: what this is, and the two things you can do about it
 function NowPlaying({ channel, tuning }) {
-  const { film, slot, start, fromStart, restart } = tuning;
+  const { film, slot, start, fromStart, restart, live, videoRef } = tuning;
   if (!film) return null;
+  const joined = !fromStart && start?.offset > 60 ? Math.floor(start.offset / 60) : 0;
+  const facts = [
+    slot && `On until ${clock(slot.endsAt)}`,
+    fromStart ? 'watching from the beginning' : joined ? `you joined ${joined} minutes in` : null,
+    film.rating > 0 && `TMDB ${film.rating.toFixed(1)}`,
+    film.critics != null && `Critics ${film.critics}%`,
+  ].filter(Boolean);
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-3 border-b border-line">
-      <div className="min-w-0 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <span className="font-display font-black text-xl text-signal tabular-nums shrink-0">{channel.number}</span>
-        <span className="display text-lg text-bone truncate">{film.title}{film.year ? <span className="text-dim font-sans font-normal normal-case text-sm"> {film.year}</span> : null}</span>
-        {slot && <span className="label">{clock(slot.startedAt)} – {clock(slot.endsAt)}{!fromStart && start?.offset ? ` · joined ${mins(start.offset)} in` : ''}</span>}
+    <div className="flex flex-col gap-4 py-4 border-b border-line">
+      <div className="min-w-0 flex flex-col gap-1">
+        <p className="flex items-baseline gap-3 min-w-0">
+          <span className="font-display font-black text-2xl text-signal tabular-nums shrink-0">{channel.number}</span>
+          <span className="display text-2xl text-bone truncate">{film.title}</span>
+          {film.year && <span className="text-dim shrink-0">{film.year}</span>}
+        </p>
+        <p className="text-sm text-muted">{facts.join(' · ')}</p>
       </div>
-      <div className="flex items-center gap-4">
-        {!fromStart && start?.offset > 0 && <button type="button" onClick={() => { track('TV', { action: 'from start', channel: channel.id }); restart(); }} className="nav-link hover:text-signal">From the start</button>}
-        <Ratings film={film} />
-        <a href={`/browse#${encodeURIComponent(film.id)}`} className="nav-link">Film page</a>
+      <div className="flex flex-wrap items-center gap-2">
+        {joined > 0 && <button type="button" onClick={() => { track('TV', { action: 'from start', channel: channel.id }); restart(); }} className="btn-ghost">Start from the beginning</button>}
+        {fromStart && <button type="button" onClick={live} className="btn-ghost">Back to live</button>}
+        <PopOut video={() => videoRef.current} />
+        <a href={`/browse#${encodeURIComponent(film.id)}`} className="btn-ghost">About this film</a>
       </div>
     </div>
   );
