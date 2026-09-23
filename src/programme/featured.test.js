@@ -14,3 +14,20 @@ test('every featured pick is in the poster index with a poster and a line of why
   }
   assert.ok(picks.length >= 14, 'two weeks without a repeat');
 });
+
+test('every front-page shelf is a real list with a button that goes deeper', async () => {
+  const { shelves } = JSON.parse(readFileSync(new URL('./shelves.json', import.meta.url), 'utf8'));
+  const { shelfOfDay } = await import('../services/programme.js');
+  const { readdirSync } = await import('node:fs');
+  const slugs = readdirSync(new URL('../lists/', import.meta.url)).filter(f => f.endsWith('.json')).map(f => f.replace('.json', ''));
+  for (const shelf of shelves) {
+    assert.ok(slugs.includes(shelf.list), `${shelf.list} is not a list`);
+    assert.ok(shelf.more.label && shelf.more.href.startsWith('/browse?'), `${shelf.list} needs a way deeper`);
+  }
+  assert.equal(new Set(shelves.map(s => s.list)).size, shelves.length, 'no list twice');
+  // One a day, in order, wrapping round
+  const day = new Date(Date.UTC(2026, 8, 22, 12));
+  const next = new Date(day.getTime() + 86400000);
+  const i = shelves.indexOf(shelfOfDay(shelves, day));
+  assert.equal(shelfOfDay(shelves, next), shelves[(i + 1) % shelves.length]);
+});

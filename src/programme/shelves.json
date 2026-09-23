@@ -1,0 +1,16 @@
+{
+  "note": "The list the front page leads with, one a day in this order, the same for everyone. `more` is the button that goes deeper than the list. Reorder by what gets watched once the stats say.",
+  "shelves": [
+    { "list": "eighties-action-straight-to-video", "more": { "label": "See all 80s action", "href": "/browse?genre=Action&decade=1980" } },
+    { "list": "noir-you-can-finish-tonight", "more": { "label": "See all film noir", "href": "/browse?genre=Film%20Noir" } },
+    { "list": "eighties-horror-nobody-renewed", "more": { "label": "See all 80s horror", "href": "/browse?genre=Horror&decade=1980" } },
+    { "list": "silent-but-not-quiet", "more": { "label": "See all silent films", "href": "/browse?collection=silent_films" } },
+    { "list": "creature-features", "more": { "label": "See all 50s horror", "href": "/browse?genre=Horror&decade=1950" } },
+    { "list": "before-the-code", "more": { "label": "See every 1930s film", "href": "/browse?genre=all&decade=1930" } },
+    { "list": "saturday-matinee-westerns", "more": { "label": "See all westerns", "href": "/browse?genre=Western" } },
+    { "list": "drive-in-double-features", "more": { "label": "See every 1960s film", "href": "/browse?genre=all&decade=1960" } },
+    { "list": "hitchcock-before-hollywood-and-after", "more": { "label": "See everything by Hitchcock", "href": "/browse?q=hitchcock" } },
+    { "list": "chaplin-two-reelers", "more": { "label": "See everything with Chaplin", "href": "/browse?q=chaplin" } },
+    { "list": "buster-keaton-in-an-evening", "more": { "label": "See everything with Keaton", "href": "/browse?q=keaton" } }
+  ]
+}

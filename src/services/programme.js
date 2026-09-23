@@ -48,6 +48,12 @@ export function featuredFor(index, now = new Date(), picks = []) {
 }
 
 // Time until the featured film changes (UTC midnight), as "09h 14m"
+// The shelf the front page leads with today: the next one in the rotation each day, the same
+// for everyone. ponytail: fixed order; rank by plays per list once the stats can say what's popular
+export function shelfOfDay(shelves, now = new Date()) {
+  return shelves.length ? shelves[dayOf(now) % shelves.length] : null;
+}
+
 export function changesIn(now = new Date()) {
   const minutes = Math.max(0, Math.ceil((86400000 - (now.getTime() % 86400000)) / 60000));
   return `${String(Math.floor(minutes / 60)).padStart(2, '0')}h ${String(minutes % 60).padStart(2, '0')}m`;
