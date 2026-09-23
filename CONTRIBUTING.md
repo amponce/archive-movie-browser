@@ -10,6 +10,10 @@ Thanks for being here. This project browses and plays public domain films from t
 
 Comment on an issue before you start so two people don't do the same work. No need to wait for a reply on a good first issue.
 
+- **One claimed issue at a time.** Finish or drop one before claiming the next.
+- **A claim lasts three days.** No draft PR by then and the issue is open to anyone again. Just say so if you need longer.
+- **Good first issues are for newcomers.** After your third merged PR here, leave them to people who are new and pick from help wanted instead.
+
 ## Set up
 
 ```bash
