@@ -54,6 +54,7 @@ export default function useBrowseFilters({ onOpenFilmLink, onReopenFilm } = {}) 
   const search = (text = searchQuery) => {
     // An Archive.org link opens what it points at instead of being searched for as words
     const link = parseArchiveUrl(text);
+    if (link?.type === 'film' && link.file) { setSearchQuery(''); window.location.hash = pathFor(link).split('#')[1]; return undefined; }
     if (link?.type === 'film') { setSearchQuery(''); track('Search', { kind: 'pasted link' }); return onOpenFilmLink?.(link.identifier); }
     if (link?.type === 'collection') return changeCategory(link.id);
     if (link?.type === 'list') { window.location.href = pathFor(link); return undefined; }

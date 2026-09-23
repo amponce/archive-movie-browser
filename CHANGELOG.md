@@ -6,7 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
-- Any Archive.org address works on this site: swap `archive.org` for `orphanedfilms.com` (`/details/hexziasmovies`, `/details/@someone/lists/1/…`). Someone's Archive.org list opens as a page of its films, read from Archive.org each visit and not kept here, with Add to my channel on each film and Watch this list as a channel.
+- Any Archive.org address works on this site: swap `archive.org` for `orphanedfilms.com` (`/details/hexziasmovies`, `/details/@someone/lists/1/…`). A link to one file inside an upload (`/details/hexziasmovies/Annabelle+Comes+Home.mp4`) plays that film. Someone's Archive.org list opens as a page of its films, read from Archive.org each visit and not kept here, with Add to my channel on each film and Watch this list as a channel.
 - Pasting an Archive.org upload that holds many films (some people keep a list of films in one upload) shows each film with its poster, and picking one plays that file. Read from Archive.org each time; nothing is kept on our side.
 - MCP clients can attach catalogue and film resources, and use a `movie_night` prompt for three picks suited to their mood and available time.
 - The front page's lead changes category every week (Westerns, Cult 80s, Noir, Horror, Silent and early, Drive-in sci-fi, Mystery), with a different list from that category each day.

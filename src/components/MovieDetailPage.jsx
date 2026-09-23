@@ -13,7 +13,8 @@ import UploadFilms from './film/UploadFilms';
 // The film page: a full-screen <dialog> over the browser. What the page knows comes from
 // useFilmDetails, how the dialog behaves from useFilmDialog, and the pieces are in
 // components/film. Escape, Back and the close button all go through history.
-function MovieDetailContent({ movie, onClose, allMovies = [], onPlayRelated, onSearch, onPickGenre, onPickCollection }) {
+// startFile: a file inside the upload to play straight away (a link to .../upload/file.mp4)
+function MovieDetailContent({ movie, startFile, onClose, allMovies = [], onPlayRelated, onSearch, onPickGenre, onPickCollection }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [pick, setPick] = useState(null); // a film inside an upload that holds several
   const dialogRef = useRef(null);
@@ -27,6 +28,11 @@ function MovieDetailContent({ movie, onClose, allMovies = [], onPlayRelated, onS
 
   // A new film starts on its page, not in the player
   useEffect(() => { setIsPlaying(false); setPick(null); }, [movie]);
+  useEffect(() => {
+    if (!startFile) return;
+    setPick({ key: startFile.replace(/\.[^.]+$/, ''), title: startFile.replace(/\.[^.]+$/, '').replace(/[._]+/g, ' '), files: [startFile] });
+    setIsPlaying(true);
+  }, [movie, startFile]);
   useEffect(() => {
     if (isPlaying && playerRef.current) playerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [isPlaying, pick]);

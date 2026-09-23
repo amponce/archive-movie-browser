@@ -8,7 +8,7 @@ test('a film link opens that film, however it was copied', () => {
   assert.deepEqual(parseArchiveUrl('  http://www.archive.org/details/night_of_the_living_dead/  '), film);
   assert.deepEqual(parseArchiveUrl('archive.org/details/night_of_the_living_dead?start=12#reviews'), film);
   assert.deepEqual(parseArchiveUrl('https://archive.org/embed/night_of_the_living_dead'), film);
-  assert.deepEqual(parseArchiveUrl('https://archive.org/download/night_of_the_living_dead/night_of_the_living_dead_512kb.mp4'), film);
+  assert.deepEqual(parseArchiveUrl('https://archive.org/download/night_of_the_living_dead/night_of_the_living_dead_512kb.mp4'), { ...film, file: 'night_of_the_living_dead_512kb.mp4' });
   assert.deepEqual(parseArchiveUrl('https://archive.org/details/Cops1922'), { type: 'film', identifier: 'Cops1922' });
 });
 
@@ -60,4 +60,17 @@ test('Archive.org addresses on this site, and links that arrived as search text,
   assert.equal(redirectFor('/browse', '?q=https%3A%2F%2Farchive.org%2Fdetails%2F%40jason_scott%2Flists%2F1'), '/details/@jason_scott/lists/1');
   assert.equal(redirectFor('/browse', '?q=nosferatu'), null);
   assert.equal(redirectFor('/tv'), null);
+});
+
+test('a link to one file inside an upload plays that file', async () => {
+  const { pathFor, parseSitePath, redirectFor, filmFromHash } = await import('./archiveUrl.js');
+  const annabelle = { type: 'film', identifier: 'hexziasmovies', file: 'Annabelle Comes Home.mp4' };
+  assert.deepEqual(parseArchiveUrl('https://archive.org/details/hexziasmovies/Annabelle+Comes+Home.mp4'), annabelle);
+  assert.deepEqual(parseArchiveUrl('https://archive.org/download/hexziasmovies/Annabelle%20Comes%20Home.mp4'), annabelle);
+  assert.deepEqual(parseSitePath('/details/hexziasmovies/Annabelle+Comes+Home.mp4'), annabelle);
+  assert.equal(pathFor(annabelle), '/browse#hexziasmovies/Annabelle%20Comes%20Home.mp4');
+  assert.equal(redirectFor('/details/hexziasmovies/Annabelle+Comes+Home.mp4'), '/browse#hexziasmovies/Annabelle%20Comes%20Home.mp4');
+  assert.deepEqual(filmFromHash('#hexziasmovies/Annabelle%20Comes%20Home.mp4'), { identifier: 'hexziasmovies', file: 'Annabelle Comes Home.mp4' });
+  assert.deepEqual(filmFromHash('#Cops1922'), { identifier: 'Cops1922', file: null });
+  assert.equal(filmFromHash(''), null);
 });

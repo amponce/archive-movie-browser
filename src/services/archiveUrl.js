@@ -24,7 +24,10 @@ export function parseArchiveUrl(text) {
   }
   if (!['details', 'embed', 'download'].includes(section) || !IDENTIFIER.test(identifier || '')) return null;
   if (VIDEO_CATEGORIES.some(c => c.id === identifier)) return { type: 'collection', id: identifier };
-  return { type: 'film', identifier };
+  // .../hexziasmovies/Annabelle+Comes+Home.mp4: one file inside the upload ('+' is a space there)
+  const rest = url.pathname.split('/').filter(Boolean).slice(2).join('/');
+  const file = rest && safeDecode(rest.replace(/\+/g, ' '));
+  return file ? { type: 'film', identifier, file } : { type: 'film', identifier };
 }
 
 // /details/@someone/lists/1/any-name: a list someone keeps on Archive.org
@@ -42,9 +45,11 @@ export function parseSitePath(pathname) {
   return listFromPath(pathname) || parseArchiveUrl(`https://archive.org${pathname}`);
 }
 
-// Where a link leads on this site
+const safeDecode = (text) => { try { return decodeURIComponent(text); } catch { return text; } };
+
+// Where a link leads on this site. A file inside an upload rides in the hash: #upload/file name
 export function pathFor(link) {
-  if (link.type === 'film') return `/browse#${encodeURIComponent(link.identifier)}`;
+  if (link.type === 'film') return `/browse#${encodeURIComponent(link.identifier)}${link.file ? `/${encodeURIComponent(link.file)}` : ''}`;
   if (link.type === 'list') return `/details/@${link.user}/lists/${link.id}`;
   if (link.type === 'collection') return `/browse?collection=${encodeURIComponent(link.id)}`;
   return `/browse?q=${encodeURIComponent(link.query)}`;
@@ -59,4 +64,12 @@ export function redirectFor(pathname, search = '') {
   const q = new URLSearchParams(search).get('q');
   const pasted = q && parseArchiveUrl(q);
   return pasted ? pathFor(pasted) : null;
+}
+
+// The film a /browse#... hash opens: '#upload' or '#upload/file name'
+export function filmFromHash(hash) {
+  const text = String(hash || '').replace(/^#/, '');
+  if (!text) return null;
+  const [identifier, ...file] = text.split('/');
+  return { identifier: safeDecode(identifier), file: file.length ? safeDecode(file.join('/')) : null };
 }
