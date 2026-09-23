@@ -51,7 +51,8 @@ const safeDecode = (text) => { try { return decodeURIComponent(text); } catch { 
 export function pathFor(link) {
   if (link.type === 'film') return `/browse#${encodeURIComponent(link.identifier)}${link.file ? `/${encodeURIComponent(link.file)}` : ''}`;
   if (link.type === 'list') return `/details/@${link.user}/lists/${link.id}`;
-  if (link.type === 'collection') return `/browse?collection=${encodeURIComponent(link.id)}`;
+  // A collection opens on all its films, unless it stands for a genre (Film_Noir opens that pill)
+  if (link.type === 'collection') return `/browse?collection=${encodeURIComponent(link.id)}${VIDEO_CATEGORIES.some(c => c.id === link.id && c.asGenre) ? '' : '&genre=all'}`;
   return `/browse?q=${encodeURIComponent(link.query)}`;
 }
 

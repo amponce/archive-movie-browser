@@ -71,7 +71,9 @@ test('All Films is the default, so it stays out of the URL; a named collection i
   assert.equal(filtersToQuery({ collection: 'all', genre: 'Comedy' }), 'genre=Comedy');
   assert.equal(filtersToQuery({ collection: 'feature_films' }), 'collection=feature_films');
   assert.equal(parseFilters('?collection=feature_films').collection, 'feature_films');
-  assert.equal(parseFilters('?collection=nonsense').collection, 'all');
+  // Anything shaped like an identifier is a collection someone may have linked to; junk is not
+  assert.equal(parseFilters('?collection=nonsense').collection, 'nonsense');
+  assert.equal(parseFilters('?collection=%3Cjunk%3E').collection, 'all');
 });
 
 test('an old link to a genre-named collection opens All Films with that genre selected', () => {
@@ -92,4 +94,11 @@ test('the site lands on Horror in All Films (the best covers), and All Genres is
   assert.equal(parseFilters('?q=keaton').genre, 'all');
   assert.equal(filtersToQuery({ q: 'keaton', genre: 'all' }), 'q=keaton');
   assert.equal(filtersToQuery({ q: 'keaton', genre: 'Horror' }), 'genre=Horror&q=keaton');
+});
+
+test('a collection the app does not list is still accepted when it looks like an identifier', async () => {
+  const { parseFilters } = await import('./urlFilters.js');
+  assert.equal(parseFilters('?collection=prelinger_home_movies').collection, 'prelinger_home_movies');
+  assert.equal(parseFilters('?collection=movies').collection, 'movies');
+  assert.equal(parseFilters('?collection=bad%20id%3Cscript%3E').collection, 'all');
 });

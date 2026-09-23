@@ -14,7 +14,7 @@ import SiteFooter from '../layout/SiteFooter';
 import FilterBar from './browse/FilterBar';
 import GenrePills from './browse/GenrePills';
 import FilmGrid from './browse/FilmGrid';
-import { filmFromHash } from '../services/archiveUrl';
+import { filmFromHash, pathFor } from '../services/archiveUrl';
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
 
 // The browse page. The filters live in useBrowseFilters (and the URL), the films in useFilms,
@@ -37,7 +37,8 @@ export default function ArchiveMovieBrowser() {
     setLinkError(null);
     archiveService.getMovieByIdentifier(identifier)
       .then(setSelectedMovie)
-      .catch(() => setLinkError(`Couldn't open that Archive.org link. Check the address: nothing was found at "${identifier}".`));
+      .catch((err) => (err.collection ? window.location.assign(pathFor({ type: 'collection', id: err.collection }))
+        : setLinkError(`Couldn't open that Archive.org link. Check the address: nothing was found at "${identifier}".`)));
   };
 
   // A pick from the type-ahead can be a full film or just an identifier from the index
@@ -67,7 +68,11 @@ export default function ArchiveMovieBrowser() {
       if (selectedRef.current?.identifier === decoded) return;
       archiveService.getMovieByIdentifier(decoded)
         .then((movie) => { if (!cancelled) setSelectedMovie(movie); })
-        .catch((err) => { if (!cancelled) console.error('Failed to open movie from URL hash:', err); })
+        .catch((err) => {
+          if (cancelled) return;
+          if (err.collection) window.location.replace(pathFor({ type: 'collection', id: err.collection })); // #movies: browse it
+          else console.error('Failed to open movie from URL hash:', err);
+        })
         .finally(() => { if (!cancelled) setOpening(false); });
     };
     openFromHash();

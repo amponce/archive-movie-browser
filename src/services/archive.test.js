@@ -796,3 +796,19 @@ test('fetchMovies respects an already aborted caller even on a cache hit', async
   await assert.rejects(() => archiveService.fetchMovies({ signal: controller.signal }), { name: 'AbortError' });
   assert.equal(calls, 1);
 });
+
+test('any Archive.org collection can be browsed, and movies means all of its video', async () => {
+  const { EVERYTHING, defaultMinRuntime, collectionName } = await import('./archive.js');
+  const all = archiveService.buildQuery({ collection: EVERYTHING });
+  assert.ok(all.startsWith('mediatype:movies AND NOT collection:(tvnews OR tvarchive)'), all);
+  assert.equal(defaultMinRuntime(EVERYTHING), 40, 'everything starts on feature length, or it is mostly clips');
+  assert.ok(archiveService.buildQuery({ collection: 'prelinger_home_movies' }).startsWith('collection:"prelinger_home_movies"'));
+  assert.equal(collectionName(EVERYTHING), 'All of Archive.org');
+  assert.equal(collectionName('feature_films'), 'Feature Films');
+  assert.equal(collectionName('prelinger_home_movies'), 'prelinger_home_movies');
+});
+
+test('opening a collection as if it were a film says so, so the page can browse it instead', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => ({ ok: true, json: async () => ({ metadata: { identifier: 'movies', mediatype: 'collection', title: 'Moving Image Archive' }, files: [] }) }));
+  await assert.rejects(() => archiveService.getMovieByIdentifier('movies-test-collection'), err => err.collection === 'movies-test-collection');
+});
