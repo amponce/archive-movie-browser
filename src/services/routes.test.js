@@ -15,3 +15,9 @@ for (const page of ['mcp', 'stats', 'tv', 'browse', 'lists']) {
     }
   })
 }
+
+test('any /details/ address (an Archive.org path on this site) serves the SPA, with or without a trailing slash', () => {
+  for (const path of ['/details/hexziasmovies', '/details/hexziasmovies/', '/details/hexziasmovies/Annabelle+Comes+Home.mp4', '/details/@jason_scott/lists/1/', '/details/@jason_scott/lists/1/ballyhoo-reliquary']) {
+    assert.ok(pageRewrites.some(route => new RegExp(`^${route.source}$`).test(path)), path)
+  }
+})
