@@ -2,11 +2,14 @@
 // a link (`/tv?mine=a,b,c`) so anyone who opens it gets the same channel on the same clock.
 // No account, no server. Pure functions plus two storage helpers.
 
+import { isTakenDown } from './policy.js';
 export const MY_CHANNEL_KEY = 'tv-my-channel';
 export const MY_CHANNEL_ID = 'mine';
 const MAX = 40;
 
-const clean = ids => [...new Set((ids || []).map(id => String(id).trim()).filter(id => /^[\w.-]+$/.test(id)))].slice(0, MAX);
+// Every way into a personal channel (a link, the saved list, Add) passes through here, so a
+// taken-down upload (services/policy.js) can never be on one
+const clean = ids => [...new Set((ids || []).map(id => String(id).trim()).filter(id => /^[\w.-]+$/.test(id) && !isTakenDown(id)))].slice(0, MAX);
 
 export function readMyChannel() {
   try { return clean(JSON.parse(localStorage.getItem(MY_CHANNEL_KEY) || '[]')); } catch { return []; }
