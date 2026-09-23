@@ -100,12 +100,12 @@ export default function OnAir({ skip } = {}) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <Button href={tuneHref} size="lg"><span className="inline-block w-2 h-2 rounded-full bg-ink" aria-hidden="true" /> Tune in</Button>
-            <Button href="/tv#mine" variant="ghost" size="lg">Start your own channel</Button>
+            <Button href={tuneHref} size="lg" data-track="home-tune-in"><span className="inline-block w-2 h-2 rounded-full bg-ink" aria-hidden="true" /> Tune in</Button>
+            <Button href="/tv#mine" variant="ghost" size="lg" data-track="home-start-channel">Start your own channel</Button>
           </div>
         </div>
 
-        <a ref={screenRef} href={tuneHref} aria-label={`Tune in to ${channel.name}, now showing ${film.title}`} className="lg:col-span-6 order-1 lg:order-2 relative block aspect-video rounded-lg overflow-hidden border border-white/[0.06] bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal">
+        <a ref={screenRef} href={tuneHref} data-track="home-tv-picture" aria-label={`Tune in to ${channel.name}, now showing ${film.title}`} className="lg:col-span-6 order-1 lg:order-2 relative block aspect-video rounded-lg overflow-hidden border border-white/[0.06] bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal">
           {film.poster && <img src={film.poster.replace('/w342/', '/w780/')} alt="" className="absolute inset-0 w-full h-full object-cover object-[50%_25%] opacity-60" />}
           {visible && <Picture key={`${channel.id}:${film.id}`} slot={slot} />}
           <span className="absolute inset-0 bg-gradient-to-t from-ink via-ink/10 to-ink/40" />
@@ -125,9 +125,9 @@ export default function OnAir({ skip } = {}) {
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-3">
           <p className="text-muted">Channels {first + 1} to {first + shown.length} of {channels.length}, {span.label}</p>
           <div className="flex items-center gap-2">
-            <button type="button" onClick={() => turn(-1)} className="btn-ghost">Channel up</button>
-            <button type="button" onClick={() => turn(1)} className="btn-ghost">Channel down</button>
-            <a href="/tv" className="nav-link px-2 whitespace-nowrap hover:text-signal">Full guide</a>
+            <button type="button" onClick={() => turn(-1)} className="btn-ghost" data-track="home-channel-up">Channel up</button>
+            <button type="button" onClick={() => turn(1)} className="btn-ghost" data-track="home-channel-down">Channel down</button>
+            <a href="/tv" data-track="home-full-guide" className="nav-link px-2 whitespace-nowrap hover:text-signal">Full guide</a>
           </div>
         </div>
         <div className="rounded-lg border border-line px-2">

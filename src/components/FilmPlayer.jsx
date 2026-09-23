@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import archiveService from '../services/archive';
 import { playableFiles, videoUrl, shortcutFor, resumeTime, rememberPosition, readPositions, POSITIONS_KEY, previewFrames, frameAt } from '../services/playback';
 import { track } from '../services/analytics';
+import useWatchReport from '../hooks/useWatchReport';
 
 
 const clock = (seconds) => {
@@ -23,6 +24,7 @@ export default function FilmPlayer({ movie }) {
   const queue = useRef([]); // files still to try, best first, after the one playing
   const lastSaved = useRef(0);
   const watched = useRef({ seconds: 0, lastTick: 0, reported: false });
+  const minutes = useWatchReport('film', { film: movie.identifier }, movie.identifier);
 
   // Which player ended up showing the film: ours, or Archive.org's as the fallback
   useEffect(() => {
@@ -82,7 +84,11 @@ export default function FilmPlayer({ movie }) {
   const countWatching = () => {
     const now = Date.now();
     const w = watched.current;
-    if (!videoRef.current.paused && w.lastTick) w.seconds += Math.min((now - w.lastTick) / 1000, 1);
+    if (!videoRef.current.paused && w.lastTick) {
+      const played = Math.min((now - w.lastTick) / 1000, 1);
+      w.seconds += played;
+      minutes.current.add(played);
+    }
     w.lastTick = now;
     if (w.seconds >= 600 && !w.reported) {
       w.reported = true;
@@ -143,6 +149,7 @@ export default function FilmPlayer({ movie }) {
         aria-label={movie.title}
         onLoadedMetadata={loaded}
         onTimeUpdate={() => { countWatching(); savePosition(); }}
+        onPause={() => minutes.current.flush()}
         onError={nextFile}
       />
       {frames.length > 0 && (

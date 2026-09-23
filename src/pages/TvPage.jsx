@@ -3,6 +3,7 @@ import { onAirAt, tuneIn } from '../services/schedule';
 import { shortcutFor } from '../services/playback';
 import { track } from '../services/analytics';
 import useMyChannel from '../hooks/useMyChannel';
+import useWatchReport from '../hooks/useWatchReport';
 import { shareUrl } from '../services/myChannel';
 import { watchUrl } from '../services/reel';
 import Section, { CardGrid } from '../ui/Section';
@@ -79,13 +80,16 @@ function useTuning(channel, onNext) {
 }
 
 // Ten minutes of actual playback on one channel counts as someone staying, once per tune-in
+// Every second played also goes to the minutes-watched report for this channel
 function useStayed(channelId) {
   const played = useRef({ seconds: 0, last: null, sent: false });
+  const minutes = useWatchReport('tv', { channel: channelId }, channelId);
   useEffect(() => { played.current = { seconds: 0, last: null, sent: false }; }, [channelId]);
   return (event) => {
     const p = played.current;
     const t = event.currentTarget.currentTime;
-    if (p.last !== null && t > p.last && t - p.last < 2) p.seconds += t - p.last; // skip seeks
+    if (event.type === 'pause') { minutes.current.flush(); return; }
+    if (p.last !== null && t > p.last && t - p.last < 2) { p.seconds += t - p.last; minutes.current.add(t - p.last); } // skip seeks
     p.last = t;
     if (!p.sent && p.seconds >= 600) { p.sent = true; track('TV', { action: 'watched 10 minutes', channel: channelId }); }
   };
@@ -96,7 +100,7 @@ function Screen({ tuning, channelId }) {
   const onTimeUpdate = useStayed(channelId);
   return (
     <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-      {film ? <video ref={videoRef} key={film.id} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} onTimeUpdate={onTimeUpdate} />
+      {film ? <video ref={videoRef} key={film.id} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} onTimeUpdate={onTimeUpdate} onPause={onTimeUpdate} />
         : <div className="absolute inset-0 flex items-center justify-center text-muted">Nothing on this channel yet.</div>}
       {film && needsClick && (
         <button type="button" onClick={play} className="absolute inset-0 flex items-center justify-center bg-ink/60">
