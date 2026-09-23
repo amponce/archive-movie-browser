@@ -4,6 +4,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added
+
+- Subtitles. The film player loads the subtitle files an uploader included, through `/api/subtitles` (Archive.org won't serve them to other sites), converted to WebVTT with old Windows-1252 files read correctly. Labelled by language from the file name, English on by default, the rest and Archive.org's auto captions in the player's captions menu. Most foreign films on Archive.org have their subtitles burned into the picture or none at all; about one in ten has a file.
+
 ## [2.2.0] - 2026-09-23
 
 ### Added
