@@ -2,7 +2,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { redis } from './_redis.js';
 
-const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'banner'];
+const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'banner', 'tv', 'tuned', 'stayed'];
 const FILM_BOARDS = ['opened', 'played', 'watched'];
 const DAYS = 30;
 

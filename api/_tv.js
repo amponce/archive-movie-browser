@@ -34,6 +34,8 @@ function record(id) {
     poster: entry?.p ? `${TMDB_IMAGE}${entry.p}` : null,
     seconds: known.seconds,
     url: videoUrl(id, known.file),
+    rating: entry?.v ? Math.round(entry.v * 10) / 10 : null, // TMDB, out of 10
+    critics: entry?.rt ?? null, // Rotten Tomatoes (or Metacritic) percent, from scripts/backfill-critics.mjs
   };
 }
 

@@ -6,32 +6,29 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- The TV page shows what audiences (TMDB) and critics (Rotten Tomatoes, or Metacritic) made of the film on now. `scripts/backfill-critics.mjs` adds the critics' score (`rt`) to the index for every film on a channel; 144 of 296 have one.
 - The front page leads with a list, face out like a video store's new-releases wall, and a button that goes deeper (all 80s action, all westerns). A different list each day from `src/programme/shelves.json`, the same for everyone.
 - Television is the second thing on the front page: the selected channel playing silently at the scheduled minute, over the guide grid, six channels at a time with Channel up and Channel down. The picture only streams while it is on screen, pauses in a hidden tab, and stays a poster for reduced motion or Data Saver.
 - Watch together on the TV page copies a link that puts whoever opens it on the same frame.
 - Channel 0 explains itself when it is empty.
+- The TV page shows your channel's lineup as cards, each with a remove button, so a film can come off without finding its page again.
+- Browsing a genre now lists every film the index knows in that genre, not only the uploads whose uploader typed a genre tag on Archive.org. Comedy in the 1980s goes from 37 films to 128, horror from 51 to 163. Archive.org's own tagged uploads follow after the index runs out. Most Popular sorts by how many people rated a film.
+- A "Wrong poster?" link on films whose poster came from the index, opening a pre-filled issue with the identifier, the upload title and our guess ([#221](https://github.com/amponce/archive-movie-browser/pull/221), closes #120).
 
 ### Changed
 
+- Watch together moves under the channel list on the TV page.
 - Tonight's orphan moves down the front page, between the category rows.
 - The guide shows 90 minutes on a phone, times on the half hour, and tints what is on air up to now. It works out programmes from the lineups, so a page left open does not go stale. Guide rows show keyboard focus.
-
-### Changed
-
 - More like this on a film page only shows films matched to TMDB. It used to fill up with unidentified uploads when the index ran short.
 - The index records how long each upload actually runs (`d`), measured from its Archive.org file list, alongside the film's length from TMDB. Browse, the length filter and the front page use it, so a one-minute upload of The Shining no longer shows as a 144-minute feature, and of two uploads of a film the full-length one is shown. Uploads not yet measured are taken at their name (trailer, teaser, turner_video, tv spot).
 - The player moves to the next file when the first one plays sound over a black picture. Archive.org labels every uploaded mp4 "MPEG4" whatever its codec, and some originals are DivX-era video browsers cannot decode; the 512kb derivative always plays.
 - Reuse successful Archive.org search responses for five minutes, keeping at most 100 in memory, so returning to a filter avoids another network request ([#217](https://github.com/amponce/archive-movie-browser/pull/217)).
 - The front page's shelf, Under 90 minutes row and hero fallback now need a film's TMDB rating to come from at least 50 people. The index stores the vote count as `k`.
 
-### Added
-
-- The TV page shows your channel's lineup as cards, each with a remove button, so a film can come off without finding its page again.
-- Browsing a genre now lists every film the index knows in that genre, not only the uploads whose uploader typed a genre tag on Archive.org. Comedy in the 1980s goes from 37 films to 128, horror from 51 to 163. Archive.org's own tagged uploads follow after the index runs out. Most Popular sorts by how many people rated a film.
-- A "Wrong poster?" link on films whose poster came from the index, opening a pre-filled issue with the identifier, the upload title and our guess ([#221](https://github.com/amponce/archive-movie-browser/pull/221), closes #120).
-
 ### Fixed
 
+- TV events were being dropped by the analytics endpoint, which only accepted a fixed list of event names. Tune-ins, Watch together and channel edits are counted now, with tune-ins and ten minutes watched per channel.
 - `/mcp/`, `/stats/`, `/tv/`, `/browse/` and `/lists/` with a trailing slash reach the app instead of a hosting 404 ([#215](https://github.com/amponce/archive-movie-browser/pull/215), closes #166).
 - Show a recovery message after a render error instead of a blank page; a broken film page closes without taking down the catalogue ([#219](https://github.com/amponce/archive-movie-browser/pull/219), closes #32).
 - Search text is capped at 200 characters and twelve words, so a pasted paragraph no longer breaks the Archive.org query ([#216](https://github.com/amponce/archive-movie-browser/pull/216), closes #165).
