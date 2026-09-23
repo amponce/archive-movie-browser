@@ -4,6 +4,7 @@
 import archiveService, { ALL_FILMS, runtimeFilter } from './archive';
 import tmdbService from './tmdb';
 import { indexedMatch } from './posterIndex';
+import { isRecent } from './policy';
 
 export const cardFromIndex = ({ id, entry }) => ({ id, title: entry.t, year: entry.y, poster: tmdbService.getPosterUrl(entry.p, 'medium') });
 
@@ -22,7 +23,7 @@ async function withIndexedPosters(movies, limit) {
   const cards = [];
   movies.forEach((movie, i) => {
     const match = matches[i];
-    if (!match?.posterPath || seen.has(match.id)) return;
+    if (!match?.posterPath || seen.has(match.id) || isRecent(match.releaseDate)) return;
     seen.add(match.id);
     cards.push(cardFromArchive(movie, match.posterPath));
   });
@@ -49,7 +50,7 @@ export async function newestRow({ limit = 6 } = {}) {
     const found = await Promise.all(batch.map(m => tmdbService.searchMovie(m.title, m.year, m.identifier).catch(() => null)));
     batch.forEach((movie, j) => {
       const hit = found[j];
-      if (!hit?.posterPath || seen.has(hit.id) || cards.length >= limit) return;
+      if (!hit?.posterPath || seen.has(hit.id) || cards.length >= limit || isRecent(String(hit.releaseDate || '').slice(0, 4))) return;
       seen.add(hit.id);
       cards.push(cardFromArchive(movie, hit.posterPath));
     });

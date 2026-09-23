@@ -3,6 +3,7 @@ import archiveService, { ALL_FILMS, runtimeFilter } from '../services/archive';
 import { indexedMatch, loadPosterIndex } from '../services/posterIndex';
 import { sameShelf } from '../services/programme';
 import tmdbService from '../services/tmdb';
+import { isRecent } from '../services/policy';
 
 // "More like this" for a film: the most-watched films that share its first real genre. Only
 // films the index identified (a TMDB match with a poster): the site never puts an unidentified
@@ -29,7 +30,7 @@ export default function useRelated(movie, hints = []) {
         const identified = [];
         pool.forEach((m, i) => {
           const match = matches[i];
-          if (match?.posterPath && !seen.has(match.id)) { seen.add(match.id); identified.push(m); }
+          if (match?.posterPath && !seen.has(match.id) && !isRecent(match.releaseDate)) { seen.add(match.id); identified.push(m); }
         });
         if (!cancelled) setFilms(identified.slice(0, 12));
       })

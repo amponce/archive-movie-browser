@@ -14,6 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadLineups, saveLineups, measure, isFeature } from './measure.mjs';
+import { isTakenDown, isRecent } from '../src/services/policy.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const index = JSON.parse(fs.readFileSync(path.join(root, 'public/poster-index.json'), 'utf8')).films;
@@ -61,7 +62,7 @@ for (const station of STATIONS) {
   for (const [id, e] of Object.entries(index)) {
     const wanted = station.genres || [station.genre];
     if (!e.p || e.c < 0.8 || !e.g?.some(g => wanted.includes(g)) || !e.y || e.y < station.decades[0] || e.y >= station.decades[1] + 10) continue;
-    if (!(e.l >= 55) || (e.v || 0) < 5.5 || /trailer/i.test(id) || pool.has(e.i)) continue;
+    if (!(e.l >= 55) || (e.v || 0) < 5.5 || /trailer/i.test(id) || pool.has(e.i) || isTakenDown(id) || isRecent(e.y)) continue;
     pool.set(e.i, id);
   }
   // Walk the shuffled pool and keep the first `count` uploads whose file is really a feature

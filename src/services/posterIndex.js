@@ -11,13 +11,20 @@
 
 // Every wrong poster seen so far was at 0.66 or below (80-upload pilot, then a read-through of the
 // first 471 indexed posters), so 0.7 keeps unattended refreshes from adding wrong ones.
+import { isTakenDown } from './policy.js';
 export const CONFIDENCE_THRESHOLD = 0.7;
 
 let films = null; // identifier -> entry
 let loading = null;
 
 export function setPosterIndex(entries) {
-  films = entries || {};
+  films = withoutTakedowns(entries || {});
+}
+
+// Taken-down uploads (services/policy.js) are dropped as the index is read, so nothing built on it shows them
+function withoutTakedowns(entries) {
+  for (const id of Object.keys(entries)) if (isTakenDown(id)) delete entries[id];
+  return entries;
 }
 
 // The whole index, loaded once per page. Pages that read it directly (the front page, the reel)
@@ -28,7 +35,7 @@ function load() {
   if (films) return Promise.resolve(films);
   loading = loading || fetch(`${import.meta.env?.BASE_URL || '/'}poster-index.json`)
     .then(response => (response.ok ? response.json() : {}))
-    .then(index => { films = index.films || {}; return films; })
+    .then(index => { films = withoutTakedowns(index.films || {}); return films; })
     .catch(() => { films = {}; return films; }); // the index is an optimisation; the app works without it
   return loading;
 }

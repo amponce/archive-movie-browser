@@ -41,6 +41,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/takedown(/)?",
+      "destination": "/index.html"
+    },
+    {
       "source": "/lists/:slug",
       "destination": "/index.html"
     },

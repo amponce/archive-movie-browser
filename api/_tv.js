@@ -6,6 +6,7 @@ import { collectLists } from '../src/services/lists.js';
 import { videoUrl } from '../src/services/playback.js';
 import { onAirAt, programmesBetween, airable } from '../src/services/schedule.js';
 import { pickPlayableFile } from '../src/services/playback.js';
+import { isTakenDown, isRecent } from '../src/services/policy.js';
 
 const SITE = 'https://www.orphanedfilms.com';
 const TMDB_IMAGE = 'https://image.tmdb.org/t/p/w342';
@@ -26,7 +27,7 @@ const lineups = JSON.parse(readFileSync(new URL('../public/tv-lineups.json', imp
 function record(id) {
   const known = lineups[id];
   const entry = index[id];
-  if (!known?.seconds) return null;
+  if (!known?.seconds || isTakenDown(id) || isRecent(entry?.y)) return null;
   return {
     id,
     title: entry?.t || id,
