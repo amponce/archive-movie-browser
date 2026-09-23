@@ -97,3 +97,22 @@ test('previewFrames finds the per-minute frames Archive.org keeps and frameAt pi
   assert.equal(frameAt(frames, 999).seconds, 120);
   assert.equal(frameAt([], 10), null);
 });
+
+test('filmsInUpload finds the separate films in one upload, one entry per film', async () => {
+  const { filmsInUpload } = await import('./playback.js');
+  const files = [
+    { name: 'Aladdin 2019.mp4', source: 'original', format: 'MPEG4', length: '7678.98', size: '900000000' },
+    { name: 'Aladdin 2019.ia.mp4', source: 'derivative', format: 'h.264 IA', length: '7678.9', size: '800000000' },
+    { name: 'Alita_Battle_Angel.mp4', source: 'original', format: 'MPEG4', length: '7317.4', size: '900000000' },
+    { name: 'Some trailer.mp4', source: 'original', format: 'MPEG4', length: '130', size: '9000000' },
+    { name: 'Aladdin 2019.thumbs/Aladdin 2019_000060.jpg', source: 'derivative', format: 'Thumbnail' },
+    { name: 'hexziasmovies_meta.xml', source: 'original', format: 'Metadata' },
+  ];
+  const films = filmsInUpload(files);
+  assert.deepEqual(films.map(f => [f.title, f.year]), [['Aladdin', 2019], ['Alita Battle Angel', null]]);
+  assert.equal(films[0].files[0], 'Aladdin 2019.ia.mp4', "Archive.org's streaming copy first");
+  assert.equal(Math.round(films[0].seconds / 60), 128);
+  // One film with its derivatives is an ordinary upload, not a list
+  assert.equal(filmsInUpload(files.filter(f => f.name.startsWith('Aladdin'))), null);
+  assert.equal(filmsInUpload([]), null);
+});

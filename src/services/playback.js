@@ -20,6 +20,33 @@ export function playableFiles(files) {
   return [...mp4s].sort((a, b) => rank(a) - rank(b));
 }
 
+// An upload that is really several films (one item holding many feature-length videos, as some
+// people use Archive.org to keep a list): one entry per film, named from its file, with the files
+// that can play it best first. Fewer than two films: null, it's an ordinary upload.
+const VIDEO = /\.(mp4|m4v|mkv|avi|ogv|mpeg|mpg|mov|wmv)$/i;
+const stem = name => name.replace(/\.ia\.mp4$/i, '').replace(VIDEO, '');
+// "Aladdin 2019" or "Aladdin (2019)" -> { title: 'Aladdin', year: 2019 }
+const titleAndYear = (name) => {
+  const match = name.match(/^(.+?)\s*\(?((?:19|20)\d{2})\)?$/);
+  return match ? { title: match[1], year: Number(match[2]) } : { title: name, year: null };
+};
+export function filmsInUpload(files, minSeconds = 40 * 60) {
+  const groups = new Map();
+  for (const file of files || []) {
+    if (!VIDEO.test(file.name || '')) continue;
+    const key = stem(file.name);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(file);
+  }
+  const films = [...groups].map(([key, group]) => ({
+    key,
+    ...titleAndYear(key.split('/').pop().replace(/[._]+/g, ' ').replace(/\s+/g, ' ').trim()),
+    seconds: Math.max(0, ...group.map(file => Number(file.length) || 0)),
+    files: playableFiles(group).map(file => file.name),
+  })).filter(film => film.files.length && (!film.seconds || film.seconds >= minSeconds));
+  return films.length >= 2 ? films.sort((a, b) => a.title.localeCompare(b.title)) : null;
+}
+
 // The first choice, or null to fall back to the embedded player
 export function pickPlayableFile(files) {
   return playableFiles(files)[0] || null;

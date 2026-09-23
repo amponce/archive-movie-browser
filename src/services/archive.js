@@ -626,14 +626,16 @@ class ArchiveService {
   }
 
   // Get detailed metadata for a single item
-  async getMetadata(identifier) {
-    const response = await fetch(`${ARCHIVE_METADATA_API}/${identifier}`);
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch metadata: ${response.status}`);
+  // One request per item per visit: the film page, its player and its list of films all ask
+  getMetadata(identifier) {
+    this.metadata ||= new Map();
+    if (!this.metadata.has(identifier)) {
+      this.metadata.set(identifier, fetch(`${ARCHIVE_METADATA_API}/${identifier}`).then((response) => {
+        if (!response.ok) throw new Error(`Failed to fetch metadata: ${response.status}`);
+        return response.json();
+      }).catch((error) => { this.metadata.delete(identifier); throw error; })); // a failure is asked again
     }
-
-    return response.json();
+    return this.metadata.get(identifier);
   }
 
   // Fetch and normalize one item's metadata for direct, hash-based links.

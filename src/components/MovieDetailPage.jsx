@@ -8,12 +8,14 @@ import FilmPoster from './film/FilmPoster';
 import FilmDetails from './film/FilmDetails';
 import NowPlaying from './film/NowPlaying';
 import RelatedShelf from './film/RelatedShelf';
+import UploadFilms from './film/UploadFilms';
 
 // The film page: a full-screen <dialog> over the browser. What the page knows comes from
 // useFilmDetails, how the dialog behaves from useFilmDialog, and the pieces are in
 // components/film. Escape, Back and the close button all go through history.
 function MovieDetailContent({ movie, onClose, allMovies = [], onPlayRelated, onSearch, onPickGenre, onPickCollection }) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [pick, setPick] = useState(null); // a film inside an upload that holds several
   const dialogRef = useRef(null);
   const backButtonRef = useRef(null);
   const playerRef = useRef(null);
@@ -24,10 +26,10 @@ function MovieDetailContent({ movie, onClose, allMovies = [], onPlayRelated, onS
   const related = useRelated(movie, (details.tmdbDetails?.genres || []).map(g => g.name));
 
   // A new film starts on its page, not in the player
-  useEffect(() => { setIsPlaying(false); }, [movie]);
+  useEffect(() => { setIsPlaying(false); setPick(null); }, [movie]);
   useEffect(() => {
     if (isPlaying && playerRef.current) playerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [isPlaying]);
+  }, [isPlaying, pick]);
 
   if (!movie) return null;
   const play = () => setIsPlaying(true);
@@ -50,11 +52,12 @@ function MovieDetailContent({ movie, onClose, allMovies = [], onPlayRelated, onS
       <FilmTopBar movie={movie} backButtonRef={backButtonRef} allMovies={allMovies} onSearch={onSearch} onOpen={onPlayRelated} onPickGenre={onPickGenre} onPickCollection={onPickCollection} />
 
       <div className="relative gutter max-w-7xl mx-auto py-8 lg:py-10">
-        {isPlaying && <NowPlaying movie={movie} onClose={() => setIsPlaying(false)} playerRef={playerRef} />}
+        {isPlaying && <NowPlaying movie={movie} pick={pick} onClose={() => setIsPlaying(false)} playerRef={playerRef} />}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           <FilmPoster movie={movie} details={details} playing={isPlaying} onPlay={play} />
           <FilmDetails movie={movie} details={details} titleId={titleId} playing={isPlaying} onPlay={play} onSearch={onSearch} />
         </div>
+        <UploadFilms movie={movie} playing={isPlaying ? pick : null} onPlay={(film) => { setPick(film); setIsPlaying(true); }} />
         <RelatedShelf films={related.films} genre={related.genre} onOpen={onPlayRelated} />
       </div>
     </dialog>
