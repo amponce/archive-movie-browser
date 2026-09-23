@@ -204,7 +204,7 @@ test('buildQuery limits search to the first twelve words', () => {
 });
 
 test('buildQuery ignores a search made only of punctuation', () => {
-  assert.equal(archiveService.buildQuery({ searchQuery: '"" ()', collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection AND NOT collection:(movie_trailers_unsorted OR iicadom OR home_movies OR 35mmstockfootage OR stock_footage OR prelinger_mashups OR laserdiscs)');
+  assert.equal(archiveService.buildQuery({ searchQuery: '"" ()', collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection AND NOT collection:(movie_trailers_unsorted OR iicadom OR home_movies OR 35mmstockfootage OR stock_footage OR prelinger_mashups OR laserdiscs) AND NOT subject:(trailer* OR teaser*)');
 });
 
 test('fetchMovies throws when Archive.org returns an error body with HTTP 200', async () => {
@@ -296,7 +296,7 @@ test('buildQuery searches every app collection, but browses only the selected on
   assert.ok(search.startsWith('collection:(feature_films OR '), search);
   assert.ok(search.includes(' OR Film_Noir OR ') && !search.includes('collection:"SciFi_Horror"'), search);
 
-  assert.equal(archiveService.buildQuery({ collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection AND NOT collection:(movie_trailers_unsorted OR iicadom OR home_movies OR 35mmstockfootage OR stock_footage OR prelinger_mashups OR laserdiscs)');
+  assert.equal(archiveService.buildQuery({ collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection AND NOT collection:(movie_trailers_unsorted OR iicadom OR home_movies OR 35mmstockfootage OR stock_footage OR prelinger_mashups OR laserdiscs) AND NOT subject:(trailer* OR teaser*)');
 });
 
 function mockDocs(docs) {
@@ -811,4 +811,17 @@ test('any Archive.org collection can be browsed, and movies means all of its vid
 test('opening a collection as if it were a film says so, so the page can browse it instead', async (t) => {
   t.mock.method(globalThis, 'fetch', async () => ({ ok: true, json: async () => ({ metadata: { identifier: 'movies', mediatype: 'collection', title: 'Moving Image Archive' }, files: [] }) }));
   await assert.rejects(() => archiveService.getMovieByIdentifier('movies-test-collection'), err => err.collection === 'movies-test-collection');
+});
+
+test('Archive.org query syntax in the search box runs as written; titles with colons stay plain searches', async () => {
+  const { isArchiveQuery } = await import('./archive.js');
+  const q = 'mediatype:movies AND subject:horror AND year:[1980 TO 1989]';
+  assert.ok(isArchiveQuery(q));
+  assert.ok(isArchiveQuery('title:(nosferatu)'));
+  for (const text of ['2001: A Space Odyssey', 'Star Wars: A New Hope', 'nosferatu', 'Mission: Impossible', 'http://x']) assert.ok(!isArchiveQuery(text), text);
+  const query = archiveService.buildQuery({ searchQuery: q, collection: 'all' });
+  assert.ok(query.startsWith(`(${q}) AND NOT mediatype:collection`), query);
+  assert.ok(!query.includes('title:(mediatype'), 'not broken into words');
+  // our filters still narrow it
+  assert.ok(archiveService.buildQuery({ searchQuery: q, decade: 1980 }).includes(' AND ((date:[1980-01-01'));
 });

@@ -70,6 +70,14 @@ export function defaultMinRuntime(collectionId) {
 // A trailer rarely has a runtime either, so among films of unknown length the title decides:
 // "Psycho trailer" is one, "Wheels On Meals (1984) with Trailers" is a film with extras.
 const TRAILER = /\b(trailers?|teasers?|tv spots?)\b/i;
+// Uploads tagged as trailers, left out at the source outside Shorts. About a third of a genre and
+// decade search; of 6,000 so tagged, none was a feature-length film in the index (2026-09-23).
+const NOT_TRAILERS = ' AND NOT subject:(trailer* OR teaser*)'; // short: the longest query we build is 2,183 characters encoded, and Archive.org truncates past about 2,200
+// Archive.org's own query syntax typed into the search box (subject:horror AND year:[1980 TO 1989]):
+// a known field name straight before a colon and a value, so "2001: A Space Odyssey" stays a title
+const FIELDS = 'mediatype|subject|year|date|title|creator|collection|identifier|description|language|publicdate|addeddate|downloads|format|licenseurl|avg_rating|num_reviews|runtime|publisher|contributor|coverage|source';
+const QUERY_SYNTAX = new RegExp(`(^|[\\s(])(${FIELDS}):[^\\s]`, 'i');
+export const isArchiveQuery = text => QUERY_SYNTAX.test(String(text || ''));
 const MIN_MB_PER_MINUTE = 2.5;
 const FILM_WITH_TRAILERS = /(\b(with|and|plus)|[&+])\s+(\w+\s+)?trailers?\b/i;
 
@@ -379,7 +387,8 @@ class ArchiveService {
 
     // Match every search word (a phrase match finds nothing for "night living").
     // Only letters and digits survive - Archive.org's backend errors on escaped quotes.
-    const words = this.searchWords(searchQuery);
+    const words = isArchiveQuery(searchQuery) ? null : this.searchWords(searchQuery);
+    if (isArchiveQuery(searchQuery)) query = `(${searchQuery.slice(0, 300)})`; // their query, as written
     if (words) {
       // A search looks in every collection the app offers, not just the selected one
       query = `collection:(${VIDEO_CATEGORIES.map(c => c.id).join(' OR ')})`;
@@ -420,6 +429,7 @@ class ArchiveService {
     // Never exclude the collection itself when someone opened it (home_movies, from a link)
     const notFilms = (shorts ? NOT_FILMS.filter(c => c !== 'movie_trailers_unsorted') : NOT_FILMS).filter(c => c !== collection);
     query += ` AND NOT collection:(${notFilms.join(' OR ')})`;
+    if (!shorts) query += NOT_TRAILERS;
 
     return query;
   }

@@ -83,3 +83,8 @@ test("an Archive.org collection RSS feed opens that collection, newest first", a
   assert.equal(pathFor(link), '/browse?collection=classic_tv_1980s&genre=all&sort=publicdate+desc');
   assert.equal(parseArchiveUrl('https://archive.org/services/collection-rss.php?collection=bad%20id'), null);
 });
+
+test('an Archive.org page with a query in its address runs that query here', () => {
+  const link = parseArchiveUrl('https://archive.org/details/movies?tab=collection&query=mediatype%3Amovies++AND+subject%3Ahorror++AND+year%3A%5B1980+TO+1989%5D&page=7&and%5B%5D=mediatype%3A%22movies%22');
+  assert.deepEqual(link, { type: 'search', query: 'mediatype:movies AND subject:horror AND year:[1980 TO 1989]' });
+});
