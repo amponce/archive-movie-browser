@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import archiveService from '../services/archive';
-import { playableFiles, subtitleTracks, videoUrl, shortcutFor, resumeTime, rememberPosition, readPositions, POSITIONS_KEY, previewFrames, frameAt } from '../services/playback';
+import { playableFiles, videoUrl, shortcutFor, resumeTime, rememberPosition, readPositions, POSITIONS_KEY, previewFrames, frameAt } from '../services/playback';
 import { track } from '../services/analytics';
 import useWatchReport from '../hooks/useWatchReport';
+import useSubtitles, { SubtitleTracks, subtitleNote } from '../hooks/useSubtitles';
 
 
 const clock = (seconds) => {
@@ -20,13 +21,13 @@ export default function FilmPlayer({ movie, files }) {
   const [source, setSource] = useState(undefined); // undefined = looking, null = use the embed
   const [resumedAt, setResumedAt] = useState(0);
   const [frames, setFrames] = useState([]);
-  const [uploadFiles, setUploadFiles] = useState([]); // for the subtitle files that go with the video
   const [hover, setHover] = useState(null); // { x (0..1), seconds } while the pointer is on the scrub strip
   const videoRef = useRef(null);
   const queue = useRef([]); // files still to try, best first, after the one playing
   const lastSaved = useRef(0);
   const watched = useRef({ seconds: 0, lastTick: 0, reported: false });
   const minutes = useWatchReport('film', { film: movie.identifier }, movie.identifier);
+  const subtitles = useSubtitles(movie.identifier, source);
 
   // Which player ended up showing the film: ours, or Archive.org's as the fallback
   useEffect(() => {
@@ -44,7 +45,6 @@ export default function FilmPlayer({ movie, files }) {
         queue.current = rest;
         setSource(first || null);
         setFrames(previewFrames(movie.identifier, data.files));
-        setUploadFiles(data.files || []);
       })
       .catch(() => { if (!cancelled) setSource(null); });
     return () => { cancelled = true; };
@@ -156,13 +156,9 @@ export default function FilmPlayer({ movie, files }) {
         onPause={() => minutes.current.flush()}
         onError={nextFile}
       >
-        {/* Subtitles the uploader included, through /api/subtitles (Archive.org won't serve them to
-            other sites): English on by default, the rest in the player's captions menu */}
-        {source && subtitleTracks(uploadFiles, decodeURIComponent(source.split('/').slice(5).join('/'))).map((t, i) => (
-          <track key={t.file} kind="subtitles" label={t.label} srcLang={t.lang || undefined} default={i === 0 && t.lang === 'en'}
-            src={`/api/subtitles?id=${encodeURIComponent(movie.identifier)}&file=${encodeURIComponent(t.file)}`} />
-        ))}
+        <SubtitleTracks identifier={movie.identifier} tracks={subtitles} />
       </video>
+      {subtitleNote(subtitles) && <p className="absolute left-3 top-3 font-mono text-[10px] tracking-[0.1em] uppercase text-bone/80 bg-ink/70 px-2 py-1 rounded-sm pointer-events-none">{subtitleNote(subtitles)}</p>}
       {frames.length > 0 && (
         <div
           className="absolute left-0 right-0 bottom-[52px] h-7 cursor-pointer"

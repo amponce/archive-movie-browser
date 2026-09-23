@@ -134,6 +134,9 @@ export function selectMovieMatch(results, title, year = null, { strict = false }
   // A strict query is already a guess at the real title, so it gets no fallback at all.
   if (strict || !results[0].poster_path) return null;
   const [shorter, longer] = [searchTitle, titled[0].title].sort((a, b) => a.length - b.length);
+  // The other way round, the upload's short title inside a longer film title, only for a film
+  // people know: "Silver Stars" (a city TV gala) is not "Silver Stars on Red Velvet" (1 vote)
+  if (shorter === searchTitle && shorter !== longer && (results[0].vote_count || 0) < 10) return null;
   return shorter.length >= 4 && wholeWords(shorter, longer) ? results[0] : null;
 }
 

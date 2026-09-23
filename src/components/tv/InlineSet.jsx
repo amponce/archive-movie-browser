@@ -3,6 +3,7 @@ import { onAirAt } from '../../services/schedule';
 import { track } from '../../services/analytics';
 import useWatchReport from '../../hooks/useWatchReport';
 import PopOut from '../../ui/PopOut';
+import useSubtitles, { SubtitleTracks, subtitleNote } from '../../hooks/useSubtitles';
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const minutes = s => Math.floor(s / 60);
@@ -19,6 +20,7 @@ export default function InlineSet({ channel, onClose }) {
   const [tuning, setTuning] = useState(true); // Archive.org can take seconds to start streaming
   const report = useWatchReport('tv', { channel: channel.id }, channel.id);
   const last = useRef(null);
+  const subtitles = useSubtitles(slot?.film.id, slot?.film.url);
 
   useEffect(() => {
     track('TV', { action: 'tune', channel: channel.id });
@@ -44,7 +46,9 @@ export default function InlineSet({ channel, onClose }) {
     <div ref={box} className="flex flex-col gap-3 px-2 w-full max-w-[calc(70vh*16/9)]">
       <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
         <video ref={video} key={film.id} src={`${film.url}#t=${slot.offset}`} controls playsInline className="absolute inset-0 w-full h-full" poster={film.poster || undefined}
-          onPlaying={() => setTuning(false)} onWaiting={() => setTuning(true)} onEnded={next} onError={next} onTimeUpdate={played} onPause={() => report.current.flush()} />
+          onPlaying={() => setTuning(false)} onWaiting={() => setTuning(true)} onEnded={next} onError={next} onTimeUpdate={played} onPause={() => report.current.flush()}>
+          <SubtitleTracks identifier={film.id} tracks={subtitles} />
+        </video>
         {tuning && !blocked && (
           <span role="status" className="absolute left-4 bottom-16 flex items-center gap-2 font-mono text-xs tracking-[0.12em] uppercase text-bone bg-ink/80 px-3 py-2 rounded-full pointer-events-none">
             <span className="inline-block w-2 h-2 rounded-full bg-signal animate-pulse motion-reduce:animate-none" aria-hidden="true" />Tuning in to channel {channel.number}
@@ -59,7 +63,7 @@ export default function InlineSet({ channel, onClose }) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
         <p className="text-bone min-w-0">
           <span className="font-display font-black text-signal tabular-nums mr-2">{channel.number}</span>
-          {film.title}{film.year ? ` (${film.year})` : ''} <span className="text-muted">joined {minutes(slot.offset)} min in, on {channel.name}</span>
+          {film.title}{film.year ? ` (${film.year})` : ''} <span className="text-muted">joined {minutes(slot.offset)} min in, on {channel.name}{subtitleNote(subtitles) ? `. ${subtitleNote(subtitles)}` : ''}</span>
         </p>
         <div className="flex items-center gap-4">
           <PopOut video={() => video.current} className="nav-link flex items-center gap-2 hover:text-signal" />

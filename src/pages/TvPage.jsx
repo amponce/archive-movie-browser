@@ -5,6 +5,7 @@ import { track } from '../services/analytics';
 import useMyChannel from '../hooks/useMyChannel';
 import useWatchReport from '../hooks/useWatchReport';
 import PopOut from '../ui/PopOut';
+import useSubtitles, { SubtitleTracks, subtitleNote } from '../hooks/useSubtitles';
 import { shareUrl } from '../services/myChannel';
 import { watchUrl } from '../services/reel';
 import Section, { CardGrid } from '../ui/Section';
@@ -96,12 +97,14 @@ function useStayed(channelId) {
   };
 }
 
-function Screen({ tuning, channelId }) {
+function Screen({ tuning, channelId, subtitles }) {
   const { film, needsClick, play, videoRef, next } = tuning;
   const onTimeUpdate = useStayed(channelId);
   return (
     <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-      {film ? <video ref={videoRef} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} onTimeUpdate={onTimeUpdate} onPause={onTimeUpdate} />
+      {film ? <video ref={videoRef} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} onTimeUpdate={onTimeUpdate} onPause={onTimeUpdate}>
+          <SubtitleTracks identifier={film.id} tracks={subtitles} />
+        </video>
         : <div className="absolute inset-0 flex items-center justify-center text-muted">Nothing on this channel yet.</div>}
       {film && needsClick && (
         <button type="button" onClick={play} className="absolute inset-0 flex items-center justify-center bg-ink/60">
@@ -113,7 +116,7 @@ function Screen({ tuning, channelId }) {
 }
 
 // One line under the screen: what this is, and the two things you can do about it
-function NowPlaying({ channel, tuning }) {
+function NowPlaying({ channel, tuning, subtitles }) {
   const { film, slot, start, fromStart, restart, live, videoRef } = tuning;
   if (!film) return null;
   const joined = !fromStart && start?.offset > 60 ? Math.floor(start.offset / 60) : 0;
@@ -122,6 +125,7 @@ function NowPlaying({ channel, tuning }) {
     fromStart ? 'watching from the beginning' : joined ? `you joined ${joined} minutes in` : null,
     film.rating > 0 && `TMDB ${film.rating.toFixed(1)}`,
     film.critics != null && `Critics ${film.critics}%`,
+    subtitleNote(subtitles),
   ].filter(Boolean);
   return (
     <div className="flex flex-col gap-4 py-4 border-b border-line">
@@ -149,15 +153,16 @@ function NowPlaying({ channel, tuning }) {
 // now-playing line under the screen
 function Stage({ channel, channels, onTune, onNext }) {
   const tuning = useTuning(channel, onNext);
+  const subtitles = useSubtitles(tuning.film?.id, tuning.film?.url);
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-4">
-      <div className="lg:col-span-8"><Screen tuning={tuning} channelId={channel.id} /></div>
+      <div className="lg:col-span-8"><Screen tuning={tuning} channelId={channel.id} subtitles={subtitles} /></div>
       <aside className="lg:col-span-4 flex flex-col gap-3" aria-label="Channels">
         <span className="label lg:hidden">Channels</span>
         <div className="relative lg:flex-1"><Rail channels={channels} current={channel} onTune={onTune} /></div>
         <WatchTogether channel={channel} />
       </aside>
-      <div className="lg:col-span-8"><NowPlaying channel={channel} tuning={tuning} /></div>
+      <div className="lg:col-span-8"><NowPlaying channel={channel} tuning={tuning} subtitles={subtitles} /></div>
     </div>
   );
 }
