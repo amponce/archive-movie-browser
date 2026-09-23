@@ -33,6 +33,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- MCP genre browsing across All Films now uses the same poster index as the site, including decade, upload length, ordering and duplicate-upload filtering. Recent uploads and collection-specific browsing still use Archive.org.
 - Opening a film from a card no longer flashes the browse page and its filters for a moment before the film appears.
 - TV events were being dropped by the analytics endpoint, which only accepted a fixed list of event names. Tune-ins, Watch together and channel edits are counted now, with tune-ins and ten minutes watched per channel.
 - `/mcp/`, `/stats/`, `/tv/`, `/browse/` and `/lists/` with a trailing slash reach the app instead of a hosting 404 ([#215](https://github.com/amponce/archive-movie-browser/pull/215), closes #166).

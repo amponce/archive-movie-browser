@@ -3,7 +3,8 @@
 // dependencies: search across collections, de-duplication of re-uploads, runtime parsing, retries.
 import { readFileSync } from 'node:fs';
 import archiveService, { VIDEO_CATEGORIES, STANDARD_GENRES, DECADES, ALL_FILMS, runtimeFilter, defaultMinRuntime } from '../src/services/archive.js';
-import { setPosterIndex, indexedMatch } from '../src/services/posterIndex.js';
+import { setPosterIndex, indexedMatch, loadPosterIndex } from '../src/services/posterIndex.js';
+import { browsesIndex, indexFilms } from '../src/services/indexBrowse.js';
 
 const index = JSON.parse(readFileSync(new URL('../public/poster-index.json', import.meta.url)));
 setPosterIndex(index.films);
@@ -38,15 +39,26 @@ async function list(options, limit) {
 export const searchFilms = ({ query, limit = 10 }) =>
   list({ searchQuery: query, filter: runtimeFilter({ minRuntime: 0 }) }, limit);
 
-export const browseFilms = ({ collection = 'feature_films', genre, decade, sort = 'downloads', minRuntime, limit = 10 }) =>
-  list({
+export const browseFilms = async ({ collection = 'feature_films', genre, decade, sort = 'downloads', minRuntime, limit = 10 }) => {
+  const minimum = minRuntime ?? defaultMinRuntime(collection);
+  if (browsesIndex({ collection, genre, sort })) {
+    const movies = indexFilms(await loadPosterIndex(), { genre, decade, sort, minRuntime: minimum });
+    if (movies.length) {
+      const films = await Promise.all(movies.slice(0, limit).map(movie => describe({
+        ...movie, archiveUrl: `https://archive.org/details/${movie.identifier}`,
+      })));
+      return { total: movies.length, films };
+    }
+  }
+  return list({
     collection,
     decade,
     genre: genre || null,
     sortBy: sort.split(' ')[0],
     sortOrder: sort.split(' ')[1] || 'desc',
-    filter: runtimeFilter({ minRuntime: minRuntime ?? defaultMinRuntime(collection) }),
+    filter: runtimeFilter({ minRuntime: minimum }),
   }, limit);
+};
 
 export async function getFilm({ identifier }) {
   const movie = await archiveService.getMovieByIdentifier(identifier);
