@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar, Globe, DollarSign, TrendingUp, Users, Play } from 'lucide-react';
 import tmdbService from '../../services/tmdb';
 import archiveService from '../../services/archive';
 import Button from '../../ui/Button';
 import { track } from '../../services/analytics';
-import { readMyChannel, writeMyChannel, toggleFilm, hasFilm } from '../../services/myChannel';
+import { readMyChannel, toggleSaved, hasFilm, MY_CHANNEL_KEY } from '../../services/myChannel';
 
 // The words about the film: what it is, what the upload was called, the facts, the overview,
 // who made it and who is in it (click a name to search for them), then Watch now and the
@@ -14,9 +14,15 @@ export default function FilmDetails({ movie, details, titleId, playing, onPlay, 
 
   const [myChannel, setMyChannel] = useState(readMyChannel);
   const onMyChannel = hasFilm(myChannel, movie.identifier);
+  // Keep the button right when another tab changes the channel, or Back restores this page
+  useEffect(() => {
+    const refresh = (event) => { if (!event.key || event.key === MY_CHANNEL_KEY) setMyChannel(readMyChannel()); };
+    window.addEventListener('storage', refresh);
+    window.addEventListener('pageshow', refresh);
+    return () => { window.removeEventListener('storage', refresh); window.removeEventListener('pageshow', refresh); };
+  }, []);
   const toggleMyChannel = () => {
-    const next = toggleFilm(myChannel, movie.identifier);
-    writeMyChannel(next); setMyChannel(next);
+    setMyChannel(toggleSaved(movie.identifier));
     track('TV', { action: onMyChannel ? 'remove from my channel' : 'add to my channel', film: movie.identifier });
   };
 
