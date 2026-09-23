@@ -18,3 +18,17 @@ test('a channel survives the round trip through a link, junk left out', () => {
   assert.deepEqual(channelFromUrl('?mine=a,<script>,b,,a'), ['a', 'b']);
   assert.equal(channelFromUrl('?genre=Horror'), null);
 });
+
+test('adding from a page that opened before other films were added keeps every film', async () => {
+  const store = {};
+  globalThis.localStorage = { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); } };
+  const { toggleSaved, removeSaved, readMyChannel } = await import('./myChannel.js');
+  // Two tabs are open. Tab B loaded while the channel was still empty.
+  toggleSaved('big-trouble-little-china'); // added in tab A
+  toggleSaved('uhf.-1989'); // added in tab B, which never saw tab A's film
+  assert.deepEqual(readMyChannel(), ['big-trouble-little-china', 'uhf.-1989']);
+  assert.deepEqual(toggleSaved('uhf.-1989'), ['big-trouble-little-china'], 'a second press takes it off again');
+  toggleSaved('alligator-1980');
+  assert.deepEqual(removeSaved('big-trouble-little-china'), ['alligator-1980']);
+  delete globalThis.localStorage;
+});

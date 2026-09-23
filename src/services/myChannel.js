@@ -18,6 +18,20 @@ export function writeMyChannel(ids) {
 export const hasFilm = (ids, id) => ids.includes(id);
 export const toggleFilm = (ids, id) => (hasFilm(ids, id) ? ids.filter(x => x !== id) : clean([...ids, id]));
 
+// Change the saved channel from what is saved right now, never from a copy a page read when it
+// opened: another tab, or a page brought back with Back, may have added films since. Both return
+// the channel as saved.
+export function toggleSaved(id) {
+  const next = toggleFilm(readMyChannel(), id);
+  writeMyChannel(next);
+  return next;
+}
+export function removeSaved(id) {
+  const next = readMyChannel().filter(x => x !== id);
+  writeMyChannel(next);
+  return next;
+}
+
 // The lineup a link carries, if any
 export function channelFromUrl(search) {
   const ids = new URLSearchParams(search).get('mine');

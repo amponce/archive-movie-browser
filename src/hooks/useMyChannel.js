@@ -4,7 +4,7 @@ import tmdbService from '../services/tmdb';
 import { indexedMatch } from '../services/posterIndex';
 import { pickPlayableFile, videoUrl } from '../services/playback';
 import { onAirAt, programmesBetween, airable } from '../services/schedule';
-import { readMyChannel, writeMyChannel, channelFromUrl, MY_CHANNEL_ID } from '../services/myChannel';
+import { readMyChannel, removeSaved, channelFromUrl, MY_CHANNEL_ID, MY_CHANNEL_KEY } from '../services/myChannel';
 
 // The personal channel in the same shape as the channels from /api/tv, so the TV page treats it
 // like any other. Film lengths come from each item's own Archive.org record (one request per
@@ -30,10 +30,17 @@ export default function useMyChannel(hours = 6) {
   // Take a film off your own channel (a shared one is someone else's to edit)
   const remove = useCallback((id) => {
     if (fromLink) return;
-    const next = ids.filter(x => x !== id);
-    writeMyChannel(next);
-    setIds(next);
-  }, [ids, fromLink]);
+    setIds(removeSaved(id));
+  }, [fromLink]);
+
+  // Films added in another tab show up here without a reload
+  useEffect(() => {
+    if (fromLink) return undefined;
+    const refresh = (event) => { if (!event.key || event.key === MY_CHANNEL_KEY) setIds(readMyChannel()); };
+    window.addEventListener('storage', refresh);
+    window.addEventListener('pageshow', refresh);
+    return () => { window.removeEventListener('storage', refresh); window.removeEventListener('pageshow', refresh); };
+  }, [fromLink]);
 
   useEffect(() => {
     let cancelled = false;
