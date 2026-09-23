@@ -51,3 +51,23 @@ test('the TV schedule never airs a taken-down upload', async () => {
   const src = readFileSync(new URL('../../api/_tv.js', import.meta.url), 'utf8');
   assert.match(src, /isTakenDown\(id\)/, 'record() must check the takedown list');
 });
+
+test('a taken-down upload never gets into a personal channel, from a link or from the saved list', async (t) => {
+  const { channelFromUrl, shareUrl, toggleFilm } = await import('./myChannel.js');
+  assert.deepEqual(channelFromUrl(`?mine=Detour,${FIXTURE},Cops1922`), ['Detour', 'Cops1922']);
+  assert.ok(!shareUrl(['Detour', FIXTURE]).includes(FIXTURE));
+  assert.deepEqual(toggleFilm([], FIXTURE), []);
+  // The server's shared channel must not fetch it live either (the fall-through the review found)
+  const { personalChannel } = await import('../../api/_tv.js');
+  const fetches = [];
+  t.mock.method(globalThis, 'fetch', async (url) => { fetches.push(String(url)); throw new Error('no network in tests'); });
+  const channel = await personalChannel([FIXTURE]);
+  assert.equal(channel.lineup.length, 0);
+  assert.ok(!fetches.some(u => u.includes(FIXTURE)), 'asked Archive.org for a taken-down upload');
+});
+
+test("a taken-down upload is left out of someone's Archive.org list shown here", async () => {
+  const { summarize } = await import('../../api/_archiveList.js');
+  const list = summarize({ success: true, value: { list_name: 'L', is_private: false, members: [{ identifier: FIXTURE }, { identifier: 'Cops1922' }] } });
+  assert.deepEqual(list.identifiers, ['Cops1922']);
+});

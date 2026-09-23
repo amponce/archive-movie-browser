@@ -59,7 +59,9 @@ async function recordLive(id) {
 }
 
 export async function personalChannel(ids, { now = Date.now(), hours = 6 } = {}) {
-  const clean = [...new Set(ids.map(String).filter(id => /^[\w.-]+$/.test(id)))].slice(0, 40);
+  // A taken-down upload is left out before anything is looked up: record() skips it, and the
+  // live lookup below would otherwise fetch and air it
+  const clean = [...new Set(ids.map(String).filter(id => /^[\w.-]+$/.test(id) && !isTakenDown(id)))].slice(0, 40);
   const films = await Promise.all(clean.map(id => record(id) || recordLive(id)));
   const lineup = airable(films.filter(Boolean));
   const slot = onAirAt(lineup, now);
