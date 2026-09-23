@@ -15,6 +15,21 @@ It reuses the web app's Archive.org logic (`../src/services`), so it searches ev
 
 Every film comes back with a `watchUrl` that plays on the site, a `sourceUrl` (the original Archive.org page) and, when the index knows the film, its real `title`, `year`, `posterUrl` and `tmdbId`. `get_film` adds `embedUrl` (for an iframe).
 
+## Resources and prompts
+
+Clients that support attached resources can read `archive://collections` for the
+same catalogue filters as `list_collections`, or `archive://film/{identifier}` for
+the same JSON details as `get_film` (for example, `archive://film/Cops1922`). Film
+resources are advertised as a URI template rather than listing every upload.
+
+The `movie_night` prompt accepts optional `mood` and `time` strings, such as
+`comedy` and `90 minutes`. It asks the assistant to search or browse for three
+distinct picks, explain their fit, check their runtimes and include watch/source
+links. Getting the prompt itself does not fetch films or make model calls.
+
+These capabilities share the local and hosted server registration. Film resource
+reads use the same hosted cache as the `get_film` tool.
+
 ## Try it without installing anything
 
 The same tools are hosted at **`https://www.orphanedfilms.com/api/mcp`** (Streamable HTTP, no key, read-only).
