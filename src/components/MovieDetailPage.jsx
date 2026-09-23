@@ -21,7 +21,7 @@ function MovieDetailContent({ movie, onClose, allMovies = [], onPlayRelated, onS
 
   useFilmDialog({ dialogRef, backButtonRef, identifier: movie.identifier, onClose });
   const details = useFilmDetails(movie);
-  const related = useRelated(movie, allMovies, (details.tmdbDetails?.genres || []).map(g => g.name));
+  const related = useRelated(movie, (details.tmdbDetails?.genres || []).map(g => g.name));
 
   // A new film starts on its page, not in the player
   useEffect(() => { setIsPlaying(false); }, [movie]);

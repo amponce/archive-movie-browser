@@ -4,14 +4,14 @@ import { indexedMatch, loadPosterIndex } from '../services/posterIndex';
 import { sameShelf } from '../services/programme';
 import tmdbService from '../services/tmdb';
 
-// "More like this" for a film: the most-watched films that share its first real genre, with
-// the ones the index has a poster for first. Its own request, so it works however the film
-// was opened (browse, a list, a link) and does not depend on what the browser has loaded.
-// `fallback` (the browser's current list) fills in while it loads or if Archive.org is down.
+// "More like this" for a film: the most-watched films that share its first real genre. Only
+// films the index identified (a TMDB match with a poster): the site never puts an unidentified
+// upload in front of people on its own. Its own request, so it works however the film was
+// opened (browse, a list, a link) and does not depend on what the browser has loaded.
 // `hints` are genre names from elsewhere (TMDB) for uploads Archive.org tagged with nothing.
 // A film the index knows (with genres) gets its shelf from the index, no request. The rest ask
 // Archive.org for the genre's most-watched, which is only as good as the uploader's tag.
-export default function useRelated(movie, fallback = [], hints = []) {
+export default function useRelated(movie, hints = []) {
   const genre = movie?.genres?.find(g => g !== 'Uncategorized')
     || hints.map(name => archiveService.normalizeGenre(name)).find(Boolean)
     || null;
@@ -26,16 +26,14 @@ export default function useRelated(movie, fallback = [], hints = []) {
         const pool = movies.filter(m => m.identifier !== movie.identifier).filter(runtimeFilter({ minRuntime: 40 }));
         const matches = await Promise.all(pool.map(m => indexedMatch(m.identifier)));
         const seen = new Set();
-        const withPoster = [];
-        const without = [];
+        const identified = [];
         pool.forEach((m, i) => {
           const match = matches[i];
-          if (match?.posterPath) { if (!seen.has(match.id)) { seen.add(match.id); withPoster.push(m); } }
-          else if (match !== null) without.push(m); // undefined = unknown, may still find one live
+          if (match?.posterPath && !seen.has(match.id)) { seen.add(match.id); identified.push(m); }
         });
-        if (!cancelled) setFilms([...withPoster, ...without].slice(0, 12));
+        if (!cancelled) setFilms(identified.slice(0, 12));
       })
-      .catch(() => { /* keep the fallback */ });
+      .catch(() => { /* no shelf */ });
     loadPosterIndex().then(index => {
       if (cancelled) return;
       const shelf = sameShelf(index, movie.identifier);
@@ -48,6 +46,5 @@ export default function useRelated(movie, fallback = [], hints = []) {
     return () => { cancelled = true; };
   }, [movie?.identifier, genre]);
 
-  if (films.length) return { films, genre };
-  return { films: fallback.filter(m => m.identifier !== movie?.identifier && (!genre || m.genres?.includes(genre))).slice(0, 12), genre };
+  return { films, genre };
 }
