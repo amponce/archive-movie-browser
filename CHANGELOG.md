@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- Pop out: the TV set, a channel opened in the guide, and the film player can float in their own picture-in-picture window over other apps. On TV the window stays open when the next film starts.
 - Any Archive.org collection opens as a browse of that collection, from a pasted link or `/details/<collection>` (Community Video, Home Movies, thousands more), on all genres and with its own name in the dropdown. `archive.org/details/movies`, the whole Moving Image Archive, opens as All of Archive.org, without the TV news clips; it's mostly not films, so it isn't in the dropdown.
 - Any Archive.org address works on this site: swap `archive.org` for `orphanedfilms.com` (`/details/hexziasmovies`, `/details/@someone/lists/1/…`). A link to one file inside an upload (`/details/hexziasmovies/Annabelle+Comes+Home.mp4`) plays that film. Someone's Archive.org list opens as a page of its films, read from Archive.org each visit and not kept here, with Add to my channel on each film and Watch this list as a channel.
 - Pasting an Archive.org upload that holds many films (some people keep a list of films in one upload) shows each film with its poster, and picking one plays that file. Read from Archive.org each time; nothing is kept on our side.
@@ -24,6 +25,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Changed
 
+- The line under the TV set is tidier: the film's title in full, one line of facts (on until, how far in you joined, TMDB and critics), and real buttons for Start from the beginning (then Back to live), Pop out and About this film.
 - Picking a channel in the guide (front page and TV page) plays it right under the row, with sound, from the scheduled minute. It shows the poster and "Tuning in" while Archive.org starts the stream, and Tap to play if a phone blocks autoplay. Pick the row again to close it. Only one film plays with sound at a time.
 - Watch together moves under the channel list on the TV page.
 - Tonight's orphan moves down the front page, between the category rows.

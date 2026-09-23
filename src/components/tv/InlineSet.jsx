@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { onAirAt } from '../../services/schedule';
 import { track } from '../../services/analytics';
 import useWatchReport from '../../hooks/useWatchReport';
+import PopOut from '../../ui/PopOut';
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const minutes = s => Math.floor(s / 60);
@@ -61,6 +62,7 @@ export default function InlineSet({ channel, onClose }) {
           {film.title}{film.year ? ` (${film.year})` : ''} <span className="text-muted">joined {minutes(slot.offset)} min in, on {channel.name}</span>
         </p>
         <div className="flex items-center gap-4">
+          <PopOut video={() => video.current} className="nav-link flex items-center gap-2 hover:text-signal" />
           <a href={`/tv#${channel.id}`} className="nav-link hover:text-signal" data-track="inline-open-tv">Open on TV</a>
           <button type="button" onClick={onClose} className="nav-link hover:text-signal">Close</button>
         </div>

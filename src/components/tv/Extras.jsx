@@ -4,17 +4,6 @@ import { track } from '../../services/analytics';
 
 // Small pieces of the TV page that don't need the set's state
 
-// What audiences (TMDB) and critics (Rotten Tomatoes) made of the film on now
-export function Ratings({ film }) {
-  if (!film.rating && film.critics == null) return null;
-  return (
-    <dl className="flex items-center gap-4">
-      {film.rating > 0 && <div className="flex items-baseline gap-1.5"><dt className="label">TMDB</dt><dd className="font-display font-extrabold text-lg tabular-nums text-bone">{film.rating.toFixed(1)}</dd></div>}
-      {film.critics != null && <div className="flex items-baseline gap-1.5"><dt className="label">Critics</dt><dd className="font-display font-extrabold text-lg tabular-nums text-bone">{film.critics}%</dd></div>}
-    </dl>
-  );
-}
-
 // Everyone who opens a channel's link lands on the same frame, so a link is a watch party
 export function WatchTogether({ channel }) {
   const [copied, setCopied] = useState(false);
