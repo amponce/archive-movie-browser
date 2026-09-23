@@ -48,10 +48,16 @@ export function featuredFor(index, now = new Date(), picks = []) {
 }
 
 // Time until the featured film changes (UTC midnight), as "09h 14m"
-// The shelf the front page leads with today: the next one in the rotation each day, the same
-// for everyone. ponytail: fixed order; rank by plays per list once the stats can say what's popular
-export function shelfOfDay(shelves, now = new Date()) {
-  return shelves.length ? shelves[dayOf(now) % shelves.length] : null;
+// The shelf the front page leads with: one category a week, in order from the week of 21 September
+// 2026, and within it a different list each day. The same for everyone.
+// ponytail: fixed order; rank categories by minutes watched once the stats can say what's popular
+const FIRST_WEEK = Date.UTC(2026, 8, 21) / 86400000; // a Monday, as a day number
+export function shelfOfDay(categories, now = new Date()) {
+  if (!categories.length) return null;
+  const day = dayOf(now);
+  const week = Math.floor((day - FIRST_WEEK) / 7);
+  const category = categories[((week % categories.length) + categories.length) % categories.length];
+  return { ...category.shelves[day % category.shelves.length], category: category.name };
 }
 
 export function changesIn(now = new Date()) {
