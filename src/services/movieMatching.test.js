@@ -39,7 +39,8 @@ test('fallback requires a poster and empty results return null', () => {
   assert.equal(selectMovieMatch(undefined, 'Example'), null);
   assert.equal(selectMovieMatch([{ title: 'Other' }], 'Example'), null);
   assert.equal(selectMovieMatch([movie(1, 'Other')], 'Example'), null); // an unrelated first result is not a match
-  assert.equal(selectMovieMatch([movie(1, 'Example Film')], 'Example').id, 1);
+  assert.equal(selectMovieMatch([{ ...movie(1, 'Example Film'), vote_count: 50 }], 'Example').id, 1); // a known film with a longer title
+  assert.equal(selectMovieMatch([movie(1, 'Example Film')], 'Example'), null, 'an obscure one is not'); 
   assert.equal(selectMovieMatch([movie(1, 'Other'), { id: 2, title: 'Example' }], 'Example').id, 2);
 });
 
@@ -160,4 +161,16 @@ test('omdbQuery picks the one title guess a strict search can find, plus the yea
   assert.deepEqual(omdbQuery('Brain That Wouldn\'t Die Upgrade'), { title: 'Brain That Wouldn\'t Die', year: null });
   assert.deepEqual(omdbQuery('House On Haunted Hill-hd'), { title: 'House On Haunted Hill', year: null });
   assert.deepEqual(omdbQuery(''), null);
+});
+
+test("an upload's short title inside an obscure film's longer title is not a match", async () => {
+  const { selectMovieMatch } = await import('./movieMatching.js');
+  // Tallahassee's Silver Stars Gala (city TV) was shown as "Silver Stars on Red Velvet", a film with 1 vote
+  assert.equal(selectMovieMatch([{ id: 1, title: 'Silver Stars on Red Velvet', poster_path: '/p.jpg', vote_count: 1 }], 'Silver Stars'), null);
+  // A well-known film still matches its short upload title
+  const strangelove = { id: 2, title: 'Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb', poster_path: '/p.jpg', vote_count: 6000 };
+  assert.equal(selectMovieMatch([strangelove], 'Dr. Strangelove'), strangelove);
+  // And the other direction, the film's title inside a longer upload title, is unchanged
+  const pawnshop = { id: 3, title: 'The Pawnshop', poster_path: '/p.jpg', vote_count: 2 };
+  assert.equal(selectMovieMatch([pawnshop], "Charlie Chaplin's The Pawnshop"), pawnshop);
 });

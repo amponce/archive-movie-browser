@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- Subtitles play on TV and on a channel opened in the guide, not only on the film page, and every player says what there is: "Subtitles: English (on) · Arabic", or "No subtitle file with this upload", so a film without them doesn't look broken.
 - Archive.org's query syntax works in the search box (`subject:horror AND year:[1980 TO 1989]`), and an Archive.org search or collection link carrying a query (`archive.org/details/movies?query=…`) runs that query here. Our filters still apply; plain searches, and titles with a colon, are unchanged.
 - An Archive.org collection RSS feed (`archive.org/services/collection-rss.php?collection=…`) pasted or swapped onto this site opens that collection, newest first, which is what the feed lists.
 - Subtitles. The film player loads the subtitle files an uploader included, through `/api/subtitles` (Archive.org won't serve them to other sites), converted to WebVTT with old Windows-1252 files read correctly. Labelled by language from the file name, English on by default, the rest and Archive.org's auto captions in the player's captions menu. Most foreign films on Archive.org have their subtitles burned into the picture or none at all; about one in ten has a file.
@@ -13,6 +14,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ### Changed
 
 - Uploads tagged as trailers or teasers are left out at the source outside Shorts. About a third of a genre and decade search was trailers; of 6,000 uploads so tagged, none was a feature-length film in the index. Pages fill with films instead of being thinned out in the browser.
+
+### Fixed
+
+- An upload whose short title sits inside an obscure film's longer title is no longer given that film. Tallahassee's Silver Stars Gala (city TV) showed as Silver Stars on Red Velvet, a film with one vote, with its plot, genre and tagline. The longer-title match now needs a film at least ten people have rated; cached matches are looked up again.
 
 ## [2.2.0] - 2026-09-23
 
