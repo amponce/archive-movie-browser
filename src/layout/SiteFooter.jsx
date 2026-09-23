@@ -32,9 +32,9 @@ export default function SiteFooter({ children, counts }) {
         This is an independent, open-source viewer. It hosts no video: every film is stored and streamed by the{' '}
         <a href="https://archive.org" {...ext}>Internet Archive</a>{' '}
         and appears here as its uploader published it there. We are not affiliated with or endorsed by the Internet Archive.
-        For rights questions or to have a film removed, contact the Internet Archive under its{' '}
-        <a href="https://archive.org/about/terms.php" {...ext}>terms of use and copyright policy</a>;
-        once it is gone there, it is gone here. Posters and film details come from{' '}
+        To have a film removed, see <a href="/takedown" className="underline hover:text-bone">removing a film</a>: from archive.org
+        itself under the Internet Archive's{' '}
+        <a href="https://archive.org/about/terms.php" {...ext}>terms of use and copyright policy</a>, or from this site on request. Posters and film details come from{' '}
         <a href="https://www.themoviedb.org" {...ext}>TMDB</a>.
         This product uses the TMDB API but is not endorsed or certified by TMDB.
       </p>

@@ -1,4 +1,5 @@
 import { matchRanges, suggestTags } from './suggest.js';
+import { isTakenDown } from './policy.js';
 // Archive.org API Service
 
 const ARCHIVE_API = 'https://archive.org/advancedsearch.php';
@@ -124,7 +125,7 @@ function isBlockedContent(movie) {
 
   // Handle title being string or array
   const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
-  return BLOCKED_TITLE_PATTERNS.some(pattern => pattern.test(String(title || ''))) ||
+  return isTakenDown(movie.identifier) || BLOCKED_TITLE_PATTERNS.some(pattern => pattern.test(String(title || ''))) ||
     BLOCKED_IDENTIFIER_PATTERNS.some(pattern => pattern.test(String(movie.identifier || '')));
 }
 

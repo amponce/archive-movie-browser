@@ -4,8 +4,10 @@
 
 // Identified, with a poster, and not a known trailer or clip (d is the upload's length in minutes)
 import { betterUpload } from './indexBrowse.js';
+import { isRecent } from './policy.js';
 
-const usable = ([, entry]) => entry.i && entry.p && entry.c >= 0.8 && !(entry.d > 0 && entry.d < 40);
+// Identified, not a clip, and not from the last 25 years (services/policy.js)
+const usable = ([, entry]) => entry.i && entry.p && entry.c >= 0.8 && !(entry.d > 0 && entry.d < 40) && !isRecent(entry.y);
 // The index is keyed by upload and Archive.org often has several of one film. One per film
 // for the rows, keeping the full-length upload Jev was surest about.
 function oneCopyPerFilm(index) {

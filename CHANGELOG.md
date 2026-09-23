@@ -6,6 +6,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- A clear path for removal requests. `/takedown` explains that files are the Internet Archive's to remove and how to have an upload taken off this site, with a removal request form. Every surface (search, film pages, rows, More like this, TV, lists, stations, the MCP server) honours one list, `src/services/policy.js`, with a test fixture proving each one does.
+- Films from the last 25 years stay off what the site shows on its own: the front page, TV, lists, stations and More like this. Search and browse still find everything the Archive hosts.
 - Subtitles play on TV and on a channel opened in the guide, not only on the film page, and every player says what there is: "Subtitles: English (on) · Arabic", or "No subtitle file with this upload", so a film without them doesn't look broken.
 - Archive.org's query syntax works in the search box (`subject:horror AND year:[1980 TO 1989]`), and an Archive.org search or collection link carrying a query (`archive.org/details/movies?query=…`) runs that query here. Our filters still apply; plain searches, and titles with a colon, are unchanged.
 - An Archive.org collection RSS feed (`archive.org/services/collection-rss.php?collection=…`) pasted or swapped onto this site opens that collection, newest first, which is what the feed lists.

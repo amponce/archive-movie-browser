@@ -10,6 +10,7 @@ const PAGES = {
   '/mcp': lazy(() => import('./pages/McpPage')),
   '/stats': lazy(() => import('./pages/StatsPage')),
   '/lists': lazy(() => import('./pages/ListsPage')),
+  '/takedown': lazy(() => import('./pages/TakedownPage')),
   '/details': lazy(() => import('./pages/ArchiveListPage')),
 };
 
