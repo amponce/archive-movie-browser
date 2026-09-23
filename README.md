@@ -8,8 +8,8 @@ Live at **[orphanedfilms.com](https://www.orphanedfilms.com)**. [![films identif
 
 <table><tbody>
 <tr>
-<td align="center" width="25%"><a href="https://www.orphanedfilms.com"><img src="docs/screenshots/home.jpg" width="220" alt="The front page: tonight's film, what is on the channels, horror, lists"></a><br><sub><b>Tonight</b><br>One hand-picked cult film a day, what is on the channels, and rows with a reason.</sub></td>
-<td align="center" width="25%"><a href="https://www.orphanedfilms.com/tv"><img src="docs/screenshots/tv.jpg" width="220" alt="Television: the set, the channels, the guide"></a><br><sub><b>Television</b><br>Twenty-seven channels playing their lineups from a fixed moment, so the same film is on for everyone.</sub></td>
+<td align="center" width="25%"><a href="https://www.orphanedfilms.com"><img src="docs/screenshots/home.jpg" width="220" alt="The front page: a list of westerns face out, then television playing over the guide"></a><br><sub><b>Tonight</b><br>A list to start with, a different category each week, then what is on television right now.</sub></td>
+<td align="center" width="25%"><a href="https://www.orphanedfilms.com/tv"><img src="docs/screenshots/tv.jpg" width="220" alt="Television: the set playing, the channels beside it, the guide below"></a><br><sub><b>Television</b><br>Twenty-eight channels and a guide, playing from a fixed moment, so the same film is on for everyone.</sub></td>
 <td align="center" width="25%"><a href="https://www.orphanedfilms.com/browse?genre=Horror"><img src="docs/screenshots/browse.jpg" width="220" alt="Browse: every filter, one card per film"></a><br><sub><b>Browse</b><br>Collection, genre, decade, length and sort, in the URL so any view is a link.</sub></td>
 <td align="center" width="25%"><a href="https://www.orphanedfilms.com/browse#CarnivalOfSouls1962"><img src="docs/screenshots/film.jpg" width="220" alt="A film: the real title behind the upload, cast, the player, more like this"></a><br><sub><b>A film</b><br>The film the upload really is, with cast, director, and a shelf of films like it.</sub></td>
 </tr>
