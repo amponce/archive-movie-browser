@@ -4,6 +4,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-09-23
+
 ### Added
 
 - Pop out: the TV set, a channel opened in the guide, and the film player can float in their own picture-in-picture window over other apps. On TV the window stays open when the next film starts.
