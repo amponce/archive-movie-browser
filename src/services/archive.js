@@ -15,6 +15,8 @@ const BLOCKED_IDENTIFIER_PATTERNS = [/(^|[^a-z])thechild([^a-z]|$)/i];
 // `films: true` marks collections of narrative films; genre pills browse across all of them.
 // `features: true` marks collections of feature-length films, which default to a 40+ minute
 // filter. Everything else is mostly shorts or has no runtime recorded, so it defaults to any length.
+// `offTopic: true` collections (game footage, vlogs, local news and sports) are left out of a
+// search unless picked in the dropdown: "nosferatu" found Street Fighter matches there.
 export const VIDEO_CATEGORIES = [
   { id: 'feature_films', films: true, features: true, name: 'Feature Films', description: 'Classic feature-length movies' },
   { id: 'moviesandfilms', films: true, features: true, name: 'Movies & Films', description: 'Full-length films from the Archive' },
@@ -28,13 +30,13 @@ export const VIDEO_CATEGORIES = [
   { id: 'prelinger', name: 'Prelinger Archives', description: 'Educational and ephemeral films' },
   { id: 'opensource_movies', name: 'Community Video', description: 'Community contributed films' },
   { id: 'artsandmusicvideos', name: 'Arts & Music', description: 'Music videos and art films' },
-  { id: 'computersandtechvideos', name: 'Tech Videos', description: 'Technology and computer content' },
-  { id: 'newsandpublicaffairs', name: 'News & Public Affairs', description: 'News broadcasts and documentaries' },
-  { id: 'spiritualityandreligion', name: 'Spirituality & Religion', description: 'Religious and spiritual content' },
-  { id: 'sports', name: 'Sports Videos', description: 'Sports footage and broadcasts' },
-  { id: 'gamevideos', name: 'Video Games', description: 'Video game related content' },
-  { id: 'vlogs', name: 'Vlogs', description: 'Video blogs and personal content' },
-  { id: 'youth_media', name: 'Youth Media', description: 'Content created by youth' }
+  { id: 'computersandtechvideos', offTopic: true, name: 'Tech Videos', description: 'Technology and computer content' },
+  { id: 'newsandpublicaffairs', offTopic: true, name: 'News & Public Affairs', description: 'News broadcasts and documentaries' },
+  { id: 'spiritualityandreligion', offTopic: true, name: 'Spirituality & Religion', description: 'Religious and spiritual content' },
+  { id: 'sports', offTopic: true, name: 'Sports Videos', description: 'Sports footage and broadcasts' },
+  { id: 'gamevideos', offTopic: true, name: 'Video Games', description: 'Video game related content' },
+  { id: 'vlogs', offTopic: true, name: 'Vlogs', description: 'Video blogs and personal content' },
+  { id: 'youth_media', offTopic: true, name: 'Youth Media', description: 'Content created by youth' }
 ];
 
 // Minimum runtime (minutes) a collection should start with
@@ -370,8 +372,10 @@ class ArchiveService {
     // Only letters and digits survive - Archive.org's backend errors on escaped quotes.
     const words = this.searchWords(searchQuery);
     if (words) {
-      // A search looks in every collection the app offers, not just the selected one
-      query = `collection:(${VIDEO_CATEGORIES.map(c => c.id).join(' OR ')})`;
+      // A search looks in every collection the app offers except the off-topic ones, unless the
+      // dropdown picked one of those
+      const offTopic = VIDEO_CATEGORIES.some(c => c.offTopic && c.id === collection);
+      query = offTopic ? `collection:"${collection}"` : `collection:(${VIDEO_CATEGORIES.filter(c => !c.offTopic).map(c => c.id).join(' OR ')})`;
       // Search in title, subject, and creator
       const all = `(${words.join(' AND ')})`;
       query += ` AND (title:${all} OR subject:${all} OR creator:${all})`;

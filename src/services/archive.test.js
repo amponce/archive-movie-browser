@@ -299,6 +299,16 @@ test('buildQuery searches every app collection, but browses only the selected on
   assert.equal(archiveService.buildQuery({ collection: 'SciFi_Horror' }), 'collection:"SciFi_Horror" AND NOT mediatype:collection AND NOT collection:(movie_trailers_unsorted OR iicadom OR home_movies OR 35mmstockfootage OR stock_footage OR prelinger_mashups OR laserdiscs)');
 });
 
+test('buildQuery leaves game footage, vlogs and local news out of a search unless that collection is picked', () => {
+  // "nosferatu" used to bring back Street Fighter matches and SNES speedruns
+  const search = archiveService.buildQuery({ searchQuery: 'nosferatu', collection: 'all' });
+  for (const id of ['gamevideos', 'vlogs', 'sports', 'newsandpublicaffairs']) assert.ok(!search.includes(id), id);
+  for (const id of ['opensource_movies', 'television', 'animationandcartoons']) assert.ok(search.includes(id), id);
+
+  const picked = archiveService.buildQuery({ searchQuery: 'nosferatu', collection: 'gamevideos' });
+  assert.ok(picked.startsWith('collection:"gamevideos" AND (title:(nosferatu)'), picked);
+});
+
 function mockDocs(docs) {
   globalThis.fetch = async () => ({ ok: true, json: async () => ({ response: { docs, numFound: docs.length } }) });
 }
