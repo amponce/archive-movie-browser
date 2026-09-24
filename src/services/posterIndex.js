@@ -11,7 +11,7 @@
 
 // Every wrong poster seen so far was at 0.66 or below (80-upload pilot, then a read-through of the
 // first 471 indexed posters), so 0.7 keeps unattended refreshes from adding wrong ones.
-import { isTakenDown } from './policy.js';
+import { isTakenDown, isForbidden } from './policy.js';
 export const CONFIDENCE_THRESHOLD = 0.7;
 
 let films = null; // identifier -> entry
@@ -21,9 +21,10 @@ export function setPosterIndex(entries) {
   films = withoutTakedowns(entries || {});
 }
 
-// Taken-down uploads (services/policy.js) are dropped as the index is read, so nothing built on it shows them
+// Taken-down uploads, and films whose title is something that never appears here (both in
+// services/policy.js), are dropped as the index is read, so nothing built on it shows them
 function withoutTakedowns(entries) {
-  for (const id of Object.keys(entries)) if (isTakenDown(id)) delete entries[id];
+  for (const id of Object.keys(entries)) if (isTakenDown(id) || isForbidden({ title: entries[id]?.t })) delete entries[id];
   return entries;
 }
 

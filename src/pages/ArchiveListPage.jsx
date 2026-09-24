@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { indexedMatch } from '../services/posterIndex';
-import { isTakenDown } from '../services/policy';
+import { isTakenDown, isForbidden } from '../services/policy';
 import { identifierQueries } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import { watchUrl } from '../services/reel';
@@ -17,13 +17,13 @@ const SEARCH = 'https://archive.org/advancedsearch.php';
 // Archive.org's search, for title, year and kind
 export async function searchDocs(q, rows) {
   const params = new URLSearchParams({ q, rows: String(rows), output: 'json' });
-  for (const field of ['identifier', 'title', 'year', 'mediatype']) params.append('fl[]', field);
+  for (const field of ['identifier', 'title', 'year', 'mediatype', 'subject', 'description']) params.append('fl[]', field);
   return (await (await fetch(`${SEARCH}?${params}`)).json()).response?.docs || [];
 }
 
 // Each search result as a card, with the poster and title from the index where it has them.
 // A taken-down upload (src/services/policy.js) is left out.
-export const withPosters = (docs) => Promise.all(docs.filter(doc => !isTakenDown(doc.identifier)).map(async (doc) => {
+export const withPosters = (docs) => Promise.all(docs.filter(doc => !isTakenDown(doc.identifier) && !isForbidden(doc)).map(async (doc) => {
   const match = await indexedMatch(doc.identifier);
   return {
     id: doc.identifier,
