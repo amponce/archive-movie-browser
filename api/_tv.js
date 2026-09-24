@@ -108,6 +108,25 @@ export function toM3U({ channels }) {
   return `${lines.join('\n')}\n`;
 }
 
+// An M3U for IPTV apps (Jellyfin, TiviMate, Kodi): one entry per channel, matched to the XMLTV
+// guide by tvg-id, each pointing at /api/tv/live/<id>, which sends the app to the film on now
+export function toChannelsM3U({ channels }) {
+  const lines = ['#EXTM3U', `#PLAYLIST:Orphaned Films`, `#EXTENC:UTF-8`, `# Guide: ${SITE}/api/tv/guide.xml`];
+  for (const channel of channels) {
+    const logo = channel.lineup.find(film => film.poster)?.poster || '';
+    lines.push(`#EXTINF:-1 tvg-id="${channel.id}" tvg-chno="${channel.number}" tvg-name="${escapeAttr(channel.name)}" tvg-logo="${logo}" group-title="Orphaned Films",${channel.number} ${channel.name}`);
+    lines.push(`${SITE}/api/tv/live/${channel.id}`);
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+// Where a channel's live address leads: the stream of the film on air now, or null.
+// ponytail: the app starts that film from its beginning (a plain file cannot be told to start
+// mid-way) and asks again when it ends; true mid-film joins need a server that restreams.
+export function liveStream({ channels }, id) {
+  return channels.find(channel => channel.id === id)?.now?.film?.url || null;
+}
+
 // XMLTV for the next window, one <channel> per list and one <programme> per airing
 export function toXMLTV({ channels }) {
   const stamp = ms => new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g, '').replace('T', '').replace('Z', ' +0000');

@@ -1,20 +1,34 @@
 // GET /api/tv            JSON: channels, what is on, the next hours
 // GET /api/tv?format=m3u the lineups as an M3U playlist for other players
 // GET /api/tv?format=xml the guide as XMLTV
+// GET /api/tv?format=channels one entry per channel for IPTV apps (/api/tv/channels.m3u)
+// GET /api/tv?live=<channel> a redirect to the film on that channel now (/api/tv/live/<channel>)
 // Add &mine=a,b,c (the identifiers from a shared channel link) to get just that channel.
 // Same schedule for everyone, so the whole thing is cached at the edge for a minute.
-import { schedule, personalChannel, toM3U, toXMLTV } from './_tv.js';
+import { schedule, personalChannel, toM3U, toChannelsM3U, liveStream, toXMLTV } from './_tv.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') { res.status(405).end(); return; }
   const format = String(req.query?.format || 'json');
   try {
+    if (req.query?.live) {
+      const url = liveStream(schedule({ hours: 1 }), String(req.query.live));
+      if (!url) { res.status(404).json({ error: 'No such channel, or nothing on it now.' }); return; }
+      res.setHeader('Cache-Control', 'no-store'); // what is on changes; every tune asks again
+      res.setHeader('Location', url);
+      res.status(302).end();
+      return;
+    }
     const mine = String(req.query?.mine || '');
     const hours = format === 'xml' ? 24 : 6;
     const data = mine ? { now: Date.now(), channels: [await personalChannel(mine.split(','), { hours })] } : schedule({ hours });
     res.setHeader('Cache-Control', mine ? 'public, s-maxage=300' : 'public, s-maxage=60, stale-while-revalidate=300');
     res.setHeader('Access-Control-Allow-Origin', '*');
-    if (format === 'm3u') {
+    if (format === 'channels') {
+      res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline; filename="orphaned-films-channels.m3u"');
+      res.status(200).send(toChannelsM3U(data));
+    } else if (format === 'm3u') {
       res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');
       res.setHeader('Content-Disposition', 'inline; filename="orphaned-films.m3u"');
       res.status(200).send(toM3U(data));
