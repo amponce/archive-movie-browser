@@ -5,7 +5,7 @@
 // GET /api/tv?live=<channel> a redirect to the film on that channel now (/api/tv/live/<channel>)
 // Add &mine=a,b,c (the identifiers from a shared channel link) to get just that channel.
 // Same schedule for everyone, so the whole thing is cached at the edge for a minute.
-import { schedule, personalChannel, toM3U, toChannelsM3U, liveStreams, toXMLTV } from './_tv.js';
+import { schedule, personalChannel, toM3U, toChannelsM3U, liveStreams, toXMLTV, siteOf } from './_tv.js';
 
 // Whether a stream still answers (an Archive.org file can be removed mid-week), remembered for
 // ten minutes. Unsure (slow, network trouble) counts as yes: better a try than dead air.
@@ -21,10 +21,6 @@ async function answers(url) {
   alive.set(url, { ok, at: Date.now() });
   return ok;
 }
-const siteOf = req => {
-  const host = String(req.headers?.host || 'www.orphanedfilms.com');
-  return `${/^(localhost|127\.|192\.168\.)/.test(host) ? 'http' : 'https'}://${host}`;
-};
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') { res.status(405).end(); return; }
@@ -50,7 +46,7 @@ export default async function handler(req, res) {
     if (format === 'channels') {
       res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');
       res.setHeader('Content-Disposition', 'inline; filename="orphaned-films-channels.m3u"');
-      res.status(200).send(toChannelsM3U(data, siteOf(req)));
+      res.status(200).send(toChannelsM3U(data, siteOf(req.headers?.host)));
     } else if (format === 'm3u') {
       res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');
       res.setHeader('Content-Disposition', 'inline; filename="orphaned-films.m3u"');

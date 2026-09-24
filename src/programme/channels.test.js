@@ -47,3 +47,15 @@ test('IPTV apps get one entry per channel, matched to the guide, each leading to
   assert.ok(progs.some(p => p.includes('Yuen Woo-ping')), 'a hand-picked list note becomes the description');
   assert.ok(CHANNELS.length >= entries.length);
 });
+
+test("the channel playlist's addresses only ever name a host that is ours", async () => {
+  const { siteOf } = await import('../../api/_tv.js');
+  assert.equal(siteOf('www.orphanedfilms.com'), 'https://www.orphanedfilms.com');
+  assert.equal(siteOf('orphanedfilms.com'), 'https://orphanedfilms.com');
+  assert.equal(siteOf('archive-movie-browser-git-fix-x-amponce.vercel.app'), 'https://archive-movie-browser-git-fix-x-amponce.vercel.app');
+  assert.equal(siteOf('localhost:5183'), 'http://localhost:5183');
+  assert.equal(siteOf('192.168.4.37:5184'), 'http://192.168.4.37:5184');
+  for (const forged of ['evil.example', 'orphanedfilms.com.evil.example', 'evil.example/orphanedfilms.com', 'www.orphanedfilms.com@evil.example', '"><script>', '', undefined]) {
+    assert.equal(siteOf(forged), 'https://www.orphanedfilms.com', String(forged));
+  }
+});
