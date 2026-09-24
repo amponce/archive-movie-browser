@@ -8,8 +8,10 @@ import Button from '../../ui/Button';
 // from src/programme/shelves.json. The page's lead is its h1; `lead={false}` for one further down,
 // and `last` for one right above the footer, which has a rule of its own. The lead also says
 // when it changes (`next`: { at, title }) and, under the films, the `range` of everything else,
-// so nobody takes one shelf for the whole site.
-export default function Shelf({ list, index, more, lead = true, last = false, next = null, range = [] }) {
+// so nobody takes one shelf for the whole site. A shelf that is not one of our lists (the best of
+// an Archive.org collection) passes its own `note` for the count line and `second` for the ghost
+// button, instead of "picked by" and "Open the list".
+export default function Shelf({ list, index, more, lead = true, last = false, next = null, range = [], note = null, second = null }) {
   const Title = lead ? 'h1' : 'h2';
   const track = lead ? 'lead' : 'shelf';
   // Ten posters, like the westerns, or two rows of ten when the list has twenty or more (a
@@ -28,10 +30,10 @@ export default function Shelf({ list, index, more, lead = true, last = false, ne
         <div className="lg:col-span-5 lg:row-start-1 lg:pb-3 flex flex-col gap-5 order-4 lg:order-none">
           {next && <p className="label">Until {next.at.toLocaleTimeString([], { hour: 'numeric' })} · Next: {next.title}</p>}
           <p className="text-lg text-muted leading-relaxed max-w-[52ch]">{list.blurb}</p>
-          <p className="text-bone">{films.length} films{hours ? `, about ${hours} hours` : ''}, picked by {list.curator}.</p>
+          <p className="text-bone">{note || `${films.length} films${hours ? `, about ${hours} hours` : ''}, picked by ${list.curator}.`}</p>
           <div className="flex flex-wrap items-center gap-3">
             <Button href={more.href} size="lg" data-track={`${track}-more`}>{more.label}</Button>
-            <Button href={`/lists/${list.slug}`} variant="ghost" size="lg" data-track={`${track}-list`}>Open the list</Button>
+            <Button href={second?.href || `/lists/${list.slug}`} variant="ghost" size="lg" data-track={`${track}-list`}>{second?.label || 'Open the list'}</Button>
           </div>
         </div>
         {range.length > 0 && (
