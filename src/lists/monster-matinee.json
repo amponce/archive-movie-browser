@@ -1,0 +1,64 @@
+{
+  "slug": "monster-matinee",
+  "title": "Monster matinee",
+  "blurb": "Godzilla, Gamera and every rubber-suited monster Tokyo could build, plus Santo, the silver-masked wrestler who fought all of them and more.",
+  "curator": "amponce",
+  "films": [
+    {
+      "id": "invasion.of.astro.monster.1965",
+      "note": "Godzilla goes to space to fight King Ghidorah."
+    },
+    {
+      "id": "y-2-mate.is-santo-vs.-la-hija-de-frankestein-1971-ex-yz-tw-4t-qru-720p-1642274373490",
+      "note": "Santo, the silver-masked wrestler, against Frankenstein's daughter."
+    },
+    {
+      "id": "Yongary-MonsterFromTheDeep",
+      "note": "South Korea's answer to Godzilla."
+    },
+    {
+      "id": "CozzillaRestoredGenoCuddy",
+      "note": "The 1954 Godzilla, recut and coloured in Italy in 1977. Fans call it Cozzilla."
+    },
+    {
+      "id": "DestroyAllPlanets1968"
+    },
+    {
+      "id": "the-x-from-outer-space",
+      "note": "Shochiku's monster: a space chicken, more or less."
+    },
+    {
+      "id": "y-2-mate.is-santo-en-el-museo-de-cera-1963-w-6ww-fmsdon-8-720p-1642296719251"
+    },
+    {
+      "id": "MonsterFromAPrehistoricPlanet",
+      "note": "Gappa, from Nikkatsu, the only giant monster film that studio made."
+    },
+    {
+      "id": "WarningFromSpaceImproved1",
+      "note": "Japan's first colour science fiction film, with giant starfish aliens."
+    },
+    {
+      "id": "el-santo-vs-la-invasion-de-los-marcianos-1967-pelicula-completa"
+    },
+    {
+      "id": "gammera",
+      "note": "Gamera's first film, cut up and dubbed for American television."
+    },
+    {
+      "id": "monster-that-challenged-the-world-1957-colorized"
+    },
+    {
+      "id": "genocide_202102"
+    },
+    {
+      "id": "y-2-mate.is-santo-en-la-venganza-de-la-momia-1970-u-ru-uqp-tymh-i-720p-1642274259429"
+    },
+    {
+      "id": "HorrorsOfSpiderIsland"
+    },
+    {
+      "id": "NightOfTheBloodBeast1958"
+    }
+  ]
+}

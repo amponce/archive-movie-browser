@@ -1,0 +1,64 @@
+{
+  "slug": "kung-fu-theater",
+  "title": "Kung Fu Theater",
+  "blurb": "Saturday afternoon on a UHF channel: Hong Kong kung fu and the ninja boom of the 80s. Dubbed badly, fought brilliantly.",
+  "curator": "amponce",
+  "films": [
+    {
+      "id": "dreadnaught_202203",
+      "note": "Yuen Woo-ping directs Yuen Biao as a cowardly laundryman who has to fight a killer. The lion dance alone is worth it."
+    },
+    {
+      "id": "the-mystery-of-chess-boxing-1979-wu-tang",
+      "note": "The one the Wu-Tang Clan named a song after. A student learns to fight like he plays chess."
+    },
+    {
+      "id": "LADYWHIRLWIND1973_1",
+      "note": "Angela Mao, Golden Harvest's fiercest fighter, taking on a gang single-handed."
+    },
+    {
+      "id": "crying-freeman-the-dragon-from-russia-1990-480p-dvdrip",
+      "note": "Sam Hui as a brainwashed assassin, from the manga that became Crying Freeman."
+    },
+    {
+      "id": "enter.-the.-ninja.-1981.1080p.-blu-ray.-h-264.-aac-rarbg",
+      "note": "The film that started America's ninja craze."
+    },
+    {
+      "id": "we-are-going-to-eat-you",
+      "note": "Early Tsui Hark: a kung fu comedy set in a village of cannibals."
+    },
+    {
+      "id": "revenge.of.the.-ninja.-1983.1080p.-blu-ray.-h-264.-aac-rarbg",
+      "note": "Sho Kosugi takes the lead, and Salt Lake City gets a ninja war."
+    },
+    {
+      "id": "ninja.-iii.-the.-domination.-1984.1080p.-blu-ray.-h-264.-aac-rarbg",
+      "note": "An aerobics instructor is possessed by a ninja's spirit. That is the plot."
+    },
+    {
+      "id": "T.n.t.Jackson",
+      "note": "Blaxploitation meets kung fu, shot in Manila by Cirio Santiago."
+    },
+    {
+      "id": "NinjaClassic",
+      "note": "Godfrey Ho's cut-and-paste ninja film. Golden ninja figurines, a pink ninja suit, and no sense at all."
+    },
+    {
+      "id": "BruceLeeFightsBackFromTheGrave1976",
+      "note": "Bruceploitation at its most shameless. The poster promises far more than the film delivers."
+    },
+    {
+      "id": "brotherhood-of-the-wolf",
+      "note": "A French period mystery with Mark Dacascos doing kung fu in 18th-century France."
+    },
+    {
+      "id": "DeathMachines",
+      "note": "Three killers made into martial arts weapons by a mad scientist. Made in LA, cheaply."
+    },
+    {
+      "id": "SonzOfWuTang",
+      "note": "Swordplay, flying leaps and a stolen treasure, dubbed with total confidence."
+    }
+  ]
+}

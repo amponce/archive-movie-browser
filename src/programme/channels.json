@@ -2,6 +2,10 @@
   "note": "The channel lineup: a channel's number is its place here, so it keeps that number in the guide and in IPTV players when lists are added. The loud, easy-to-surf channels come first, like the low numbers on a cable box. Each has a call sign of up to four letters, shown where the guide has no room for the name. A new list goes on the end; moving one renumbers everything after it.",
   "lineup": [
     [
+      "kung-fu-theater",
+      "KUNG"
+    ],
+    [
       "eighties-action-straight-to-video",
       "VHS"
     ],
@@ -10,12 +14,36 @@
       "80H"
     ],
     [
+      "the-way-of-the-sword",
+      "SWRD"
+    ],
+    [
+      "the-war-room",
+      "FRNT"
+    ],
+    [
+      "fists-swords-and-tanks",
+      "FIST"
+    ],
+    [
+      "monster-matinee",
+      "MNST"
+    ],
+    [
       "cult-80s",
       "CULT"
     ],
     [
+      "spaghetti-westerns",
+      "SPAG"
+    ],
+    [
       "seventies-horror",
       "70H"
+    ],
+    [
+      "swords-and-sandals",
+      "HERC"
     ],
     [
       "drive-in-double-features",

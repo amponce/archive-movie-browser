@@ -1,0 +1,52 @@
+{
+  "slug": "swords-and-sandals",
+  "title": "Swords and sandals",
+  "blurb": "Hercules, Maciste and every muscleman Italy could find, in the Technicolor epics of the early 60s. Cardboard columns, real biceps.",
+  "curator": "amponce",
+  "films": [
+    {
+      "id": "the.-colossus.-of.-rhodes.-1961.272p",
+      "note": "Sergio Leone's first film as director, years before the westerns."
+    },
+    {
+      "id": "hercules.-in.-the.-haunted.-world.-1961",
+      "note": "Mario Bava directs, and Christopher Lee rules the underworld."
+    },
+    {
+      "id": "HerculesUnchained",
+      "note": "Steve Reeves again, in the sequel to the film that started the craze."
+    },
+    {
+      "id": "cco__HerculesandtheCaptiveWomen",
+      "note": "Hercules in Atlantis."
+    },
+    {
+      "id": "the-trojan-horse-1961"
+    },
+    {
+      "id": "Hercules_and_the_Tyrants_of_Babylon"
+    },
+    {
+      "id": "EstherAndTheKing"
+    },
+    {
+      "id": "SonofHerculesTheLandofDarkness"
+    },
+    {
+      "id": "CaesartheConqueror1962Guidorip"
+    },
+    {
+      "id": "Colossus_and_the_Amazon_Queen"
+    },
+    {
+      "id": "TheGiantOfMetropolis1961",
+      "note": "A muscleman against the scientists of Atlantis. Science fiction in sandals."
+    },
+    {
+      "id": "TheWhiteWarrior1961"
+    },
+    {
+      "id": "RevengeOfTheBarbarians"
+    }
+  ]
+}

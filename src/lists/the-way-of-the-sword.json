@@ -1,0 +1,81 @@
+{
+  "slug": "the-way-of-the-sword",
+  "title": "The way of the sword",
+  "blurb": "Samurai films, from Kurosawa's wandering swordsmen to a father pushing a baby cart full of blades, and a few ghosts along the way.",
+  "curator": "amponce",
+  "films": [
+    {
+      "id": "yojimbo_202012",
+      "note": "Kurosawa and Mifune: one swordsman plays two gangs against each other. Leone remade it as A Fistful of Dollars."
+    },
+    {
+      "id": "harakiri-1962_202510",
+      "note": "A ronin asks to die in a lord's courtyard, and takes the samurai code apart as he does."
+    },
+    {
+      "id": "throne-of-blood",
+      "note": "Kurosawa turns Macbeth into a samurai film. The arrows at the end were real."
+    },
+    {
+      "id": "sanjuro_202012",
+      "note": "Mifune's swordsman again, and one of the most famous duels ever filmed."
+    },
+    {
+      "id": "lone-wolf-and-cub-1-sword-of-vengeance",
+      "note": "A disgraced executioner, his infant son and a baby cart full of blades."
+    },
+    {
+      "id": "samurai-rebellion",
+      "note": "Mifune against his own clan, to keep the family he has made."
+    },
+    {
+      "id": "kagemusha.-1980",
+      "note": "A thief is made to stand in for a dead warlord. Lucas and Coppola helped Kurosawa find the money."
+    },
+    {
+      "id": "lone-wolf-and-cub-2-baby-cart-at-the-river-styx",
+      "note": "Most of it was recut into Shogun Assassin for American audiences."
+    },
+    {
+      "id": "23-zatoichi-at-large",
+      "note": "Shintaro Katsu as the blind swordsman nobody sees coming."
+    },
+    {
+      "id": "kuroneko-1968_202510",
+      "note": "Two women murdered by samurai come back as cat spirits for revenge."
+    },
+    {
+      "id": "lone-wolf-and-cub-3-baby-cart-to-hades"
+    },
+    {
+      "id": "gate-of-hell",
+      "note": "A samurai's obsession, in colour so rich it won the top prize at Cannes."
+    },
+    {
+      "id": "The47Ronin",
+      "note": "Mizoguchi's wartime telling of the most famous revenge in Japanese history."
+    },
+    {
+      "id": "kwaidan_202103",
+      "note": "Four ghost stories, painted rather than shot."
+    },
+    {
+      "id": "onibaba.-1964_202511",
+      "note": "Two women in the reeds kill stray samurai for their armour."
+    },
+    {
+      "id": "lone-wolf-and-cub-4-baby-cart-in-peril"
+    },
+    {
+      "id": "heaven-and-earth",
+      "note": "Two warlords, thousands of extras in red and black."
+    },
+    {
+      "id": "lone-wolf-and-cub-5-baby-cart-in-the-land-of-demons"
+    },
+    {
+      "id": "lone-wolf-and-cub-6-white-heaven-in-hell",
+      "note": "The last one, on skis."
+    }
+  ]
+}
