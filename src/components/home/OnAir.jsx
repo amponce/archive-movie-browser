@@ -42,8 +42,8 @@ function Picture({ slot }) {
 // Television on the front page, laid out like the old Prevue channel: the selected channel playing
 // over the guide grid, six channels at a time. Choosing a row plays it right under the row, with
 // sound; Tune in opens the set.
-// `skip`: a channel id not to open on (the list the page already leads with).
-export default function OnAir({ skip } = {}) {
+// `skip`: channel ids not to open on (the lists the page already shows as shelves).
+export default function OnAir({ skip = [] } = {}) {
   const [channels, setChannels] = useState(null);
   const [selected, setSelected] = useState(0);
   const [page, setPage] = useState(0);
@@ -56,7 +56,7 @@ export default function OnAir({ skip } = {}) {
   useEffect(() => {
     fetch('/api/tv').then(r => (r.ok ? r.json() : { channels: [] })).then(({ channels: all }) => {
       const on = all.filter(c => onAirAt(c.lineup));
-      const first = Math.max(0, on.findIndex(c => c.id !== skip));
+      const first = Math.max(0, on.findIndex(c => !skip.includes(c.id)));
       setChannels(on);
       setSelected(first);
       setPage(Math.floor(first / PAGE));
@@ -127,7 +127,7 @@ export default function OnAir({ skip } = {}) {
       <div className="gutter pb-10">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mb-3">
           <p className="text-muted">Channels {first + 1} to {first + shown.length} of {channels.length}, {span.label}</p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => turn(-1)} className="btn-ghost" data-track="home-channel-up">Channel up</button>
             <button type="button" onClick={() => turn(1)} className="btn-ghost" data-track="home-channel-down">Channel down</button>
             <a href="/tv" data-track="home-full-guide" className="nav-link px-2 whitespace-nowrap hover:text-signal">Full guide</a>

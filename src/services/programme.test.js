@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { featuredFor, rowFor, wantedFrom, countsOf, changesIn, shelfFor, wallFor, shortRow, sameShelf } from './programme.js';
+import { featuredFor, rowFor, wantedFrom, countsOf, changesIn, shelfFor, wallFor, shortRow, sameShelf, heardOfRow } from './programme.js';
 
 const index = {
   loved_unseen: { i: 1, t: 'Messiah of Evil', y: 1975, p: '/a.jpg', v: 7.9, k: 200, c: 0.95 },
@@ -121,4 +121,16 @@ test('sameShelf finds films that share a genre, same decade first, one card per 
   assert.deepEqual(sameShelf(idx, 'me').map(f => f.id), ['same', 'later']);
   assert.equal(sameShelf(idx, 'nogenre'), null, 'no genre in the index means ask Archive.org');
   assert.equal(sameShelf(idx, 'missing'), null);
+});
+
+test("heardOfRow shows only films old enough to be out of US copyright, best known first", () => {
+  const idx = {
+    metropolis: { i: 1, t: 'Metropolis', y: 1927, p: '/a.jpg', v: 8, k: 3200, c: 1 },
+    obscure: { i: 2, t: 'Obscure', y: 1925, p: '/b.jpg', v: 6, k: 3, c: 1 },
+    thirties: { i: 3, t: 'Scarface', y: 1932, p: '/c.jpg', v: 7.5, k: 900, c: 1 },
+  };
+  const row = heardOfRow(idx, new Date('2026-09-23T12:00:00Z'));
+  assert.equal(row.lastYear, 1930);
+  assert.deepEqual(row.films.map(f => f.id).sort(), ['metropolis', 'obscure']);
+  assert.ok(heardOfRow(idx, new Date('2029-02-01T12:00:00Z')).films.some(f => f.id === 'thirties'), '1932 comes in on 1 January 2028');
 });

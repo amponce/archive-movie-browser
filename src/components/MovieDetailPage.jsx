@@ -1,5 +1,6 @@
 import ErrorBoundary from './ErrorBoundary';
 import React, { useState, useEffect, useRef, useId } from 'react';
+import { takePlayOnArrival } from '../services/reel';
 import useFilmDetails from '../hooks/useFilmDetails';
 import useFilmDialog from '../hooks/useFilmDialog';
 import useRelated from '../hooks/useRelated';
@@ -26,8 +27,9 @@ function MovieDetailContent({ movie, startFile, onClose, allMovies = [], onPlayR
   const details = useFilmDetails(movie);
   const related = useRelated(movie, (details.tmdbDetails?.genres || []).map(g => g.name));
 
-  // A new film starts on its page, not in the player
-  useEffect(() => { setIsPlaying(false); setPick(null); }, [movie]);
+  // A new film starts on its page, not in the player, unless a play button sent it here
+  // (keyed on the identifier: the same film arriving again with more detail keeps playing)
+  useEffect(() => { setIsPlaying(!!movie && takePlayOnArrival(movie.identifier)); setPick(null); }, [movie?.identifier]);
   useEffect(() => {
     if (!startFile) return;
     setPick({ key: startFile.replace(/\.[^.]+$/, ''), title: startFile.replace(/\.[^.]+$/, '').replace(/[._]+/g, ' '), files: [startFile] });
