@@ -6,7 +6,7 @@ import { collectLists } from '../src/services/lists.js';
 import { videoUrl } from '../src/services/playback.js';
 import { onAirAt, programmesBetween, airable } from '../src/services/schedule.js';
 import { pickPlayableFile } from '../src/services/playback.js';
-import { isTakenDown, isRecent } from '../src/services/policy.js';
+import { isTakenDown, isRecent, isForbidden } from '../src/services/policy.js';
 
 const SITE = 'https://www.orphanedfilms.com';
 const TMDB_IMAGE = 'https://image.tmdb.org/t/p/w342';
@@ -32,7 +32,7 @@ const lineups = JSON.parse(readFileSync(new URL('../public/tv-lineups.json', imp
 function record(id) {
   const known = lineups[id];
   const entry = index[id];
-  if (!known?.seconds || isTakenDown(id) || isRecent(entry?.y)) return null;
+  if (!known?.seconds || isTakenDown(id) || isRecent(entry?.y) || isForbidden({ title: entry?.t })) return null;
   return {
     id,
     title: entry?.t || id,
@@ -59,6 +59,8 @@ async function recordLive(id) {
     const data = await fetch(`https://archive.org/metadata/${encodeURIComponent(id)}`).then(r => (r.ok ? r.json() : null));
     const file = data?.files ? pickPlayableFile(data.files) : null;
     const entry = index[id];
+    // An identifier from a shared link can be anything: the same rules as everywhere else
+    if (isForbidden({ title: data?.metadata?.title, description: data?.metadata?.description, subject: data?.metadata?.subject }) || isForbidden({ title: entry?.t })) throw new Error('not shown here');
     if (file?.length) value = { id, title: entry?.t || data.metadata?.title || id, year: entry?.y || null, poster: entry?.p ? `${TMDB_IMAGE}${entry.p}` : null, seconds: Math.round(Number(file.length)), url: videoUrl(id, file.name) };
   } catch { /* the film just does not air */ }
   measured.set(id, value);

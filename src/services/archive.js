@@ -1,5 +1,5 @@
 import { matchRanges, suggestTags } from './suggest.js';
-import { isTakenDown } from './policy.js';
+import { isTakenDown, isForbidden, isForbiddenSearch } from './policy.js';
 // Archive.org API Service
 
 const ARCHIVE_API = 'https://archive.org/advancedsearch.php';
@@ -128,7 +128,9 @@ function isBlockedContent(movie) {
   // Handle title being string or array
   const title = Array.isArray(movie.title) ? movie.title[0] : movie.title;
   return isTakenDown(movie.identifier) || BLOCKED_TITLE_PATTERNS.some(pattern => pattern.test(String(title || ''))) ||
-    BLOCKED_IDENTIFIER_PATTERNS.some(pattern => pattern.test(String(movie.identifier || '')));
+    BLOCKED_IDENTIFIER_PATTERNS.some(pattern => pattern.test(String(movie.identifier || ''))) ||
+    // What never appears here (src/services/policy.js): a raw result has `subject`, a normalised film `tags`
+    isForbidden({ title, description: movie.description, subject: movie.subject, tags: movie.tags });
 }
 
 // Standard movie genre categories for normalization
@@ -480,6 +482,7 @@ class ArchiveService {
   // and the tags uploaders use that match. Archive.org takes 1.5-4 s, so callers debounce, pass
   // an AbortSignal, and show local matches first.
   async suggest(text, { signal, limit = 6 } = {}) {
+    if (isForbiddenSearch(text)) return { films: [], tags: [] };
     const query = this.buildSuggestQuery(text);
     if (!query) return { films: [], tags: [] };
     const { movies } = await this.fetchMovies({ query, rowsPerPage: 60, signal });
@@ -630,6 +633,8 @@ class ArchiveService {
       ...fetchOptions
     } = options;
 
+    // A search for what never appears here gets nothing, and Archive.org is never asked
+    if (isForbiddenSearch(fetchOptions.searchQuery)) return { movies: [], total: 0, nextPage: null };
     const movies = [];
     let nextPage = startPage;
     let total = 0;

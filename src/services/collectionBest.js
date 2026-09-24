@@ -3,7 +3,7 @@
 // taste; this is what it holds that we can put a name and a poster to. Follows the rules for
 // what the site shows on its own (src/services/policy.js): no recent film, nothing taken down.
 import { betterUpload, isFeature } from './indexBrowse.js';
-import { isRecent, isTakenDown } from './policy.js';
+import { isRecent, isTakenDown, isForbidden } from './policy.js';
 
 const SCRAPE = 'https://archive.org/services/search/v1/scrape';
 
@@ -18,7 +18,7 @@ export async function collectionUploads(id) {
 }
 
 // An upload the site may show as a film of the collection
-export const showable = (id, e, now = new Date()) => !!e?.i && !!e.p && e.c >= 0.8 && isFeature([id, e]) && !isRecent(e.y, now) && !isTakenDown(id);
+export const showable = (id, e, now = new Date()) => !!e?.i && !!e.p && e.c >= 0.8 && isFeature([id, e]) && !isRecent(e.y, now) && !isTakenDown(id) && !isForbidden({ title: e.t });
 
 // identifiers -> { identified: films we know in it, films: the best of them, best first }
 export function bestOfCollection(index, identifiers, { limit = 20, now = new Date() } = {}) {

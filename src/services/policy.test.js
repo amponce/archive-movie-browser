@@ -71,3 +71,41 @@ test("a taken-down upload is left out of someone's Archive.org list shown here",
   const list = summarize({ success: true, value: { list_name: 'L', is_private: false, members: [{ identifier: FIXTURE }, { identifier: 'Cops1922' }] } });
   assert.deepEqual(list.identifiers, ['Cops1922']);
 });
+
+test('what never appears: children in a sexual context, sexual violence, real killing, hate', async () => {
+  const { isForbidden, isForbiddenSearch } = await import('./policy.js');
+  // Children and sex, in any field, however it is spelled
+  for (const item of [
+    { title: 'Some Lolicon Collection' },
+    { title: 'Anime OVA', tags: ['shotacon'] },
+    { title: 'Maladolescenza (1977)' },
+    { title: 'Schoolgirl hentai episode 3' },
+    { title: 'Home video', description: 'nude kids at the beach' },
+    { title: 'Clip', description: 'a 12 yo in an erotic scene' },
+  ]) assert.equal(isForbidden(item), true, JSON.stringify(item));
+  // Sexual violence, real killing, hate: in a title, or with adult content
+  for (const item of [
+    { title: 'Please R*pe Me! All Episodes' },
+    { title: 'Real Beheading Video' },
+    { title: 'Race War rally 1993' },
+    { title: 'Landser Ran an den Feind', tags: ['Landser', 'White Power', 'Rac', 'Oi!', 'Skinhead'] },
+    { title: 'RAC, WPWW, nazi skinhead music', subject: 'Nazi Skinhead; WPWW; RAC; white power bands' },
+    { title: 'Hentai OVA', tags: ['rape', 'hentai'] },
+    { title: 'Episode 4', description: 'Uncensored. Contains non-consensual scenes.' },
+  ]) assert.equal(isForbidden(item), true, JSON.stringify(item));
+  // Serious films and ordinary adult films stay
+  for (const item of [
+    { title: 'The Virgin Spring', description: "Bergman's medieval tale of a girl's rape and her father's revenge.", tags: ['drama'] },
+    { title: 'Nuremberg: Its Lesson for Today', description: 'Footage of the executions of war criminals', tags: ['documentary', 'history'] },
+    { title: 'Kids', tags: ['comedy'] },
+    { title: 'Kakutou Ryouri Densetsu Bistro Recipe', tags: ['anime', 'fighting foodons', 'bistro recipe', 'uncut anime', 'vhs rip'] },
+    { title: 'Skinheads: a documentary', description: 'How the white power movement recruited teenagers in the 1980s.', tags: ['documentary'] },
+    { title: 'Emmanuelle', tags: ['erotic', 'adults only'] },
+    { title: 'Children of the Corn', tags: ['horror'] },
+    { title: 'Lolita (1962)', tags: ['drama'] },
+    { title: 'Night of the Living Dead', tags: ['horror', 'zombies', 'gore'] },
+  ]) assert.equal(isForbidden(item), false, JSON.stringify(item));
+  // Searches
+  for (const q of ['lolicon', 'loli hentai', 'schoolgirl sex', 'r*pe', 'rape', 'snuff film', 'beheading', 'white power', 'child porn', '13 years old nude']) assert.equal(isForbiddenSearch(q), true, q);
+  for (const q of ['kids', 'the virgin spring', 'playboy', 'adults only', 'children of the corn', 'lolita', 'war crimes documentary', 'grapes of wrath']) assert.equal(isForbiddenSearch(q), false, q);
+});
