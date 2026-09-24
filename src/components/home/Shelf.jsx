@@ -10,7 +10,7 @@ import Button from '../../ui/Button';
 // when it changes (`next`: { at, title }) and, under the films, the `range` of everything else,
 // so nobody takes one shelf for the whole site. A shelf that is not one of our lists (the best of
 // an Archive.org collection) passes its own `note` for the count line and `second` for the ghost
-// button, instead of "picked by" and "Open the list".
+// button (false for none), instead of "picked by" and "Open the list".
 export default function Shelf({ list, index, more, lead = true, last = false, next = null, range = [], note = null, second = null }) {
   const Title = lead ? 'h1' : 'h2';
   const track = lead ? 'lead' : 'shelf';
@@ -33,7 +33,7 @@ export default function Shelf({ list, index, more, lead = true, last = false, ne
           <p className="text-bone">{note || `${films.length} films${hours ? `, about ${hours} hours` : ''}, picked by ${list.curator}.`}</p>
           <div className="flex flex-wrap items-center gap-3">
             <Button href={more.href} size="lg" data-track={`${track}-more`}>{more.label}</Button>
-            <Button href={second?.href || `/lists/${list.slug}`} variant="ghost" size="lg" data-track={`${track}-list`}>{second?.label || 'Open the list'}</Button>
+            {second !== false && <Button href={second?.href || `/lists/${list.slug}`} variant="ghost" size="lg" data-track={`${track}-list`}>{second?.label || 'Open the list'}</Button>}
           </div>
         </div>
         {range.length > 0 && (
