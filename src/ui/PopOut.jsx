@@ -2,26 +2,31 @@ import React, { useEffect, useState } from 'react';
 
 // Picture-in-picture: the video floats in its own small window over every other app, so it keeps
 // playing while you do something else. `video` returns the <video> element (it can change).
-// Chrome, Edge and Safari (Mac and iPhone) do it from this button. Chrome on Android does it its
-// own way: a video playing full screen shrinks into a floating window when you leave the app. So
-// there the button says so, then goes full screen (within the few seconds a tap allows). Hidden
-// where neither works (Firefox on a computer).
+// Chrome and Edge do it from this button with the standard API. iPhone and iPad (every browser
+// there is Safari underneath) have Apple's own switch, webkitSetPresentationMode. Chrome on
+// Android does it its own way: a video playing full screen shrinks into a floating window when
+// you leave the app, so there the button says so, then goes full screen (within the few seconds a
+// tap allows). Hidden where none of these works (Firefox on a computer).
 const android = typeof navigator !== 'undefined' && /Android/i.test(navigator.userAgent);
+const apple = v => typeof v?.webkitSupportsPresentationMode === 'function' && v.webkitSupportsPresentationMode('picture-in-picture');
+const appleMayHave = () => typeof HTMLVideoElement !== 'undefined' && 'webkitSetPresentationMode' in HTMLVideoElement.prototype;
 const HINT_MS = 1500;
 
 export default function PopOut({ video, className = 'btn-ghost' }) {
   const [out, setOut] = useState(false);
   const [hint, setHint] = useState(false);
   useEffect(() => {
-    const sync = () => setOut(Boolean(document.pictureInPictureElement));
+    const sync = (event) => setOut(Boolean(document.pictureInPictureElement) || event?.target?.webkitPresentationMode === 'picture-in-picture');
     document.addEventListener('enterpictureinpicture', sync, true);
     document.addEventListener('leavepictureinpicture', sync, true);
+    document.addEventListener('webkitpresentationmodechanged', sync, true);
     return () => {
       document.removeEventListener('enterpictureinpicture', sync, true);
       document.removeEventListener('leavepictureinpicture', sync, true);
+      document.removeEventListener('webkitpresentationmodechanged', sync, true);
     };
   }, []);
-  if (typeof document === 'undefined' || (!document.pictureInPictureEnabled && !android)) return null;
+  if (typeof document === 'undefined' || (!document.pictureInPictureEnabled && !appleMayHave() && !android)) return null;
 
   // Android: say what happens next, then full screen and playing; leaving the app floats it
   const fullScreenThenLeave = () => {
@@ -36,10 +41,19 @@ export default function PopOut({ video, className = 'btn-ghost' }) {
     }, HINT_MS);
   };
   const toggle = async () => {
+    const v = video();
     try {
-      if (document.pictureInPictureElement) await document.exitPictureInPicture();
-      else if (document.pictureInPictureEnabled) await video()?.requestPictureInPicture();
-      else fullScreenThenLeave();
+      if (document.pictureInPictureElement) { await document.exitPictureInPicture(); return; }
+      if (v?.webkitPresentationMode === 'picture-in-picture') { v.webkitSetPresentationMode('inline'); return; }
+      if (apple(v)) {
+        // Apple's switch: straight from the tap, and the film must be playing to float
+        if (v.paused) v.play().catch(() => {});
+        v.webkitSetPresentationMode('picture-in-picture');
+        return;
+      }
+      if (document.pictureInPictureEnabled) await v?.requestPictureInPicture();
+      else if (android) fullScreenThenLeave();
+      else v?.webkitEnterFullscreen?.(); // an iPhone without either switch: its own player has the button
     } catch {
       if (android) fullScreenThenLeave(); // an Android browser that has the button but refuses it
     }
