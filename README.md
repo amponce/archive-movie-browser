@@ -119,7 +119,22 @@ In the order we mean to do them. Open an issue if you want one.
 
 ## Privacy
 
-The live site counts usage with its own small endpoint (`api/event.js`): no cookies, no third party, no visitor identifiers, nothing sold or shared. It stores **counts only** in a Redis database: events per day, and monthly leaderboards of films opened and played, searches, filters and referring sites. IP addresses are never stored; distinct visitors are estimated with a HyperLogLog fed by a hash that changes every day, so days cannot be linked. Search text is lowercased, cut to 60 characters, and anything shaped like an email address is removed before it leaves the browser. Bots are not counted, and everything expires after 400 days. The rulebook is `api/_stats.js` and it is tested.
+No accounts, no cookies, no ads, and nothing is sold or shared. Here is everything the site keeps, and who else your browser talks to.
+
+**Our own counts** (`api/event.js`; the rules are in `api/_stats.js`, and they are tested). A Redis database holds counts: events per day, and monthly leaderboards of films opened and played, searches, filters, channels tuned and referring sites. It also keeps the last 50 events (what happened and to which film or page, nothing about who) for the private `/stats` page. Distinct visitors are estimated with a HyperLogLog fed by a hash of the day, your IP address and your browser name; the hash changes every day, so days cannot be linked, and neither the hash nor the IP address is stored. For the funnel (visited → played → watched), each browser tab gets a random id that lives in `sessionStorage` and disappears when the tab closes; it only ever goes into a HyperLogLog, which keeps an estimate of how many ids it saw and none of the ids. Search text is lowercased, cut to 60 characters, and anything shaped like an email address is removed before it leaves your browser. Your IP address is used, in memory for one minute, only to slow down anything sending too many events. Bots are not counted, and everything expires after 400 days.
+
+**Vercel Web Analytics** counts page views and visitors for the project's Vercel dashboard. It uses no cookies ([Vercel's privacy policy](https://vercel.com/legal/privacy-policy)).
+
+**Your browser talks directly to:**
+- the [Internet Archive](https://archive.org), for search, film details and the video itself, as when you visit archive.org;
+- [TMDB](https://www.themoviedb.org), for posters and film details;
+- Google Fonts, for the typefaces.
+
+Someone's Archive.org lists and a film's subtitle files come through our server instead (`/api/archive-list`, `/api/subtitles`), because Archive.org only lets its own pages read them; nothing is kept on the way through. The site is hosted on Vercel, which keeps ordinary request logs.
+
+**Kept only in your browser** (`localStorage`), never sent anywhere: your own channel, where you stopped in each film, recent searches, grid or list view, cached TMDB lookups, a dismissed banner, and your own TMDB key if you add one. Clearing the site's data removes all of it.
+
+**Jev**, the model that identifies films and ranks collections, runs offline on our side against Archive.org's metadata and never sees visitors.
 
 A fork collects nothing unless its owner connects an Upstash Redis database (`vercel integration add upstash/upstash-kv`) and sets a `STATS_TOKEN` for the private `/stats` page.
 
