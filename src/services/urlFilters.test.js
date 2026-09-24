@@ -77,10 +77,10 @@ test('All Films is the default, so it stays out of the URL; a named collection i
 });
 
 test('an old link to a genre-named collection opens All Films with that genre selected', () => {
-  assert.deepEqual([parseFilters('?collection=SciFi_Horror').collection, parseFilters('?collection=SciFi_Horror').genre], ['all', 'Horror']);
+  assert.deepEqual([parseFilters('?collection=SciFi_Horror&genre=all').collection, parseFilters('?collection=SciFi_Horror&genre=all').genre], ['SciFi_Horror', 'all'], 'a mixed collection opens as itself');
   assert.deepEqual([parseFilters('?collection=Film_Noir&decade=1940').collection, parseFilters('?collection=Film_Noir&decade=1940').genre], ['all', 'Film Noir']);
   assert.equal(parseFilters('?collection=SciFi_Horror&genre=Comedy').genre, 'Comedy', 'an explicit genre wins');
-  assert.equal(filtersToQuery(parseFilters('?collection=SciFi_Horror')), '', 'Horror in All Films is now the landing view');
+  assert.equal(filtersToQuery(parseFilters('?collection=SciFi_Horror&genre=all')), 'collection=SciFi_Horror&genre=all');
   assert.equal(filtersToQuery(parseFilters('?collection=Film_Noir')), 'genre=Film+Noir');
 });
 

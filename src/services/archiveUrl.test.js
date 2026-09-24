@@ -52,6 +52,7 @@ test('pathFor sends each kind of link to its place on this site', async () => {
   assert.equal(pathFor({ type: 'film', identifier: 'hexziasmovies' }), '/browse#hexziasmovies');
   assert.equal(pathFor({ type: 'list', user: 'jason_scott', id: 1 }), '/details/@jason_scott/lists/1');
   assert.equal(pathFor({ type: 'collection', id: 'Film_Noir' }), '/browse?collection=Film_Noir');
+  assert.equal(redirectFor('/details/SciFi_Horror', '?page=2'), '/browse?collection=SciFi_Horror&genre=all', 'a mixed genre collection opens as itself, not as the Horror pill');
   assert.equal(pathFor({ type: 'collection', id: 'home_movies' }), '/browse?collection=home_movies&genre=all');
   assert.equal(pathFor({ type: 'search', query: 'buster keaton' }), '/browse?q=buster%20keaton');
   // archive.org/details/... with our host in front works the same
