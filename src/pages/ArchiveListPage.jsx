@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { indexedMatch } from '../services/posterIndex';
+import { isTakenDown } from '../services/policy';
 import tmdbService from '../services/tmdb';
 import { watchUrl } from '../services/reel';
 import { readMyChannel, toggleSaved, hasFilm, shareUrl } from '../services/myChannel';
@@ -12,27 +13,53 @@ import SiteFooter from '../layout/SiteFooter';
 
 const SEARCH = 'https://archive.org/advancedsearch.php';
 
-// Title, year and kind for each item, from Archive.org's search, a hundred at a time
+// Archive.org's search, for title, year and kind
+export async function searchDocs(q, rows) {
+  const params = new URLSearchParams({ q, rows: String(rows), output: 'json' });
+  for (const field of ['identifier', 'title', 'year', 'mediatype']) params.append('fl[]', field);
+  return (await (await fetch(`${SEARCH}?${params}`)).json()).response?.docs || [];
+}
+
+// Each search result as a card, with the poster and title from the index where it has them.
+// A taken-down upload (src/services/policy.js) is left out.
+export const withPosters = (docs) => Promise.all(docs.filter(doc => !isTakenDown(doc.identifier)).map(async (doc) => {
+  const match = await indexedMatch(doc.identifier);
+  return {
+    id: doc.identifier,
+    film: doc.mediatype === 'movies',
+    title: match?.title || String(doc.title || doc.identifier),
+    year: Number(match?.releaseDate) || Number(String(doc.year || '').slice(0, 4)) || null,
+    poster: match?.posterPath ? tmdbService.getPosterUrl(match.posterPath, 'medium') : null,
+  };
+}));
+
+// The items of a list in the list's order, a hundred at a time
 async function describe(identifiers) {
   const items = [];
   for (let i = 0; i < identifiers.length; i += 100) {
     const ids = identifiers.slice(i, i + 100);
-    const params = new URLSearchParams({ q: `identifier:(${ids.map(id => `"${id}"`).join(' OR ')})`, rows: String(ids.length), output: 'json' });
-    for (const field of ['identifier', 'title', 'year', 'mediatype']) params.append('fl[]', field);
-    const docs = (await (await fetch(`${SEARCH}?${params}`)).json()).response?.docs || [];
-    const byId = new Map(docs.map(doc => [doc.identifier, doc]));
+    const byId = new Map((await searchDocs(`identifier:(${ids.map(id => `"${id}"`).join(' OR ')})`, ids.length)).map(doc => [doc.identifier, doc]));
     items.push(...ids.map(id => byId.get(id)).filter(Boolean));
   }
-  return Promise.all(items.map(async (doc) => {
-    const match = await indexedMatch(doc.identifier);
-    return {
-      id: doc.identifier,
-      film: doc.mediatype === 'movies',
-      title: match?.title || String(doc.title || doc.identifier),
-      year: Number(match?.releaseDate) || Number(String(doc.year || '').slice(0, 4)) || null,
-      poster: match?.posterPath ? tmdbService.getPosterUrl(match.posterPath, 'medium') : null,
-    };
-  }));
+  return withPosters(items);
+}
+
+// Film cards that can each go on your own channel, which stays in this browser
+export function FilmGrid({ films, track: from }) {
+  const [mine, setMine] = useState(readMyChannel);
+  const toggle = (filmId) => { setMine(toggleSaved(filmId)); track('TV', { action: hasFilm(mine, filmId) ? 'remove from my channel' : 'add to my channel', film: filmId }); };
+  return (
+    <CardGrid>
+      {films.map(film => (
+        <div key={film.id} className="flex flex-col gap-2">
+          <FilmCard film={film} href={watchUrl(film.id)} track={from} />
+          <button type="button" onClick={() => toggle(film.id)} aria-pressed={hasFilm(mine, film.id)} className="nav-link text-left hover:text-signal">
+            {hasFilm(mine, film.id) ? 'On my channel' : 'Add to my channel'}
+          </button>
+        </div>
+      ))}
+    </CardGrid>
+  );
 }
 
 // /details/@someone/lists/1: a list someone keeps on Archive.org, read from Archive.org each visit
@@ -40,7 +67,6 @@ async function describe(identifiers) {
 export default function ArchiveListPage({ user, id }) {
   const [list, setList] = useState(null);
   const [error, setError] = useState(null);
-  const [mine, setMine] = useState(readMyChannel);
   const archiveUrl = `https://archive.org/details/@${user}/lists/${id}`;
 
   useEffect(() => {
@@ -52,7 +78,6 @@ export default function ArchiveListPage({ user, id }) {
 
   const films = list?.items?.filter(item => item.film) || [];
   const others = (list?.items?.length || 0) - films.length;
-  const toggle = (filmId) => { setMine(toggleSaved(filmId)); track('TV', { action: hasFilm(mine, filmId) ? 'remove from my channel' : 'add to my channel', film: filmId }); };
 
   return (
     <div className="min-h-screen">
@@ -91,16 +116,7 @@ export default function ArchiveListPage({ user, id }) {
                   <h2 id="list-films" className="display text-2xl">The films</h2>
                   <p className="text-muted mt-1">Add any of them to your own channel. It stays in this browser, private to you.</p>
                 </div>
-                <CardGrid>
-                  {films.map(film => (
-                    <div key={film.id} className="flex flex-col gap-2">
-                      <FilmCard film={film} href={watchUrl(film.id)} track="archive-list-film" />
-                      <button type="button" onClick={() => toggle(film.id)} aria-pressed={hasFilm(mine, film.id)} className="nav-link text-left hover:text-signal">
-                        {hasFilm(mine, film.id) ? 'On my channel' : 'Add to my channel'}
-                      </button>
-                    </div>
-                  ))}
-                </CardGrid>
+                <FilmGrid films={films} track="archive-list-film" />
               </section>
             )}
           </>

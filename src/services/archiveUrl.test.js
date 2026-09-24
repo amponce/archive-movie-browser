@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseArchiveUrl } from './archiveUrl.js';
+import { parseArchiveUrl, pathFor, redirectFor } from './archiveUrl.js';
 
 test('a film link opens that film, however it was copied', () => {
   const film = { type: 'film', identifier: 'night_of_the_living_dead' };
@@ -35,7 +35,13 @@ test("a link to someone's Archive.org list opens it as a list", async () => {
   const list = { type: 'list', user: 'jason_scott', id: 1 };
   assert.deepEqual(parseArchiveUrl('https://archive.org/details/@jason_scott/lists/1/ballyhoo-reliquary'), list);
   assert.deepEqual(parseArchiveUrl('archive.org/details/@jason_scott/lists/1'), list);
-  assert.equal(parseArchiveUrl('https://archive.org/details/@jason_scott'), null, "a person's page is not a list");
+  assert.deepEqual(parseArchiveUrl('https://archive.org/details/@jason_scott'), { type: 'profile', user: 'jason_scott' }, "a person's page opens their favourites and lists");
+  assert.deepEqual(parseArchiveUrl('https://archive.org/details/@jason_scott/lists'), { type: 'profile', user: 'jason_scott' });
+  assert.deepEqual(parseArchiveUrl('https://archive.org/details/@jason_scott?tab=uploads'), { type: 'profile', user: 'jason_scott' });
+  assert.equal(pathFor({ type: 'profile', user: 'jason_scott' }), '/details/@jason_scott');
+  assert.equal(redirectFor('/details/@jason_scott'), null, 'a profile is a page of its own');
+  assert.equal(redirectFor('/details/@jason_scott/'), null);
+  assert.equal(redirectFor('/details/@jason_scott/lists'), '/details/@jason_scott');
   assert.equal(parseArchiveUrl('https://archive.org/details/@bad<name>/lists/1'), null);
   assert.equal(parseArchiveUrl('https://archive.org/details/@jason_scott/lists/x'), null);
 });

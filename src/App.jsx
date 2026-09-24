@@ -13,6 +13,7 @@ const PAGES = {
   '/takedown': lazy(() => import('./pages/TakedownPage')),
   '/details': lazy(() => import('./pages/ArchiveListPage')),
 };
+const ProfilePage = lazy(() => import('./pages/ArchiveProfilePage'));
 
 // '/lists/noir-you-can-finish-tonight' -> the lists page with that slug.
 // The front page is the programme; '/browse', and '/' with filters or a #film link from before
@@ -31,8 +32,8 @@ export default function App() {
   const redirect = redirectFor(window.location.pathname, window.location.search);
   if (redirect) { window.location.replace(redirect); return null; }
   const list = parseSitePath(window.location.pathname);
-  if (list?.type === 'list') {
-    const Page = PAGES['/details'];
+  if (list?.type === 'list' || list?.type === 'profile') {
+    const Page = list.type === 'list' ? PAGES['/details'] : ProfilePage;
     return <Suspense fallback={<div className="min-h-screen bg-ink" />}><Page user={list.user} id={list.id} /></Suspense>;
   }
   const match = pageFor(window.location.pathname, window.location.search, window.location.hash);
