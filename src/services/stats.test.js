@@ -45,7 +45,7 @@ test('the funnel counts visits, not events, and keeps no visit ids anywhere else
   assert.deepEqual(stage({ name: 'Page view', data: { path: '/' } }), ['stats:funnel:visited:2026-09-23']);
   assert.deepEqual(stage({ name: 'Click', data: { target: 'tv-tune-in' } }), ['stats:funnel:clicked:2026-09-23']);
   assert.deepEqual(stage({ name: 'Play', data: { film: 'x', player: 'own' } }), ['stats:funnel:played:2026-09-23']);
-  assert.deepEqual(stage({ name: 'TV', data: { action: 'tune', channel: 'atomic-age' } }), ['stats:funnel:played:2026-09-23']);
+  assert.deepEqual(stage({ name: 'TV', data: { action: 'tune', channel: 'atomic-age' } }), ['stats:funnel:tuned in:2026-09-23'], 'surfing channels is not pressing play on a film');
   // A viewing moves the visit through every threshold its running total has passed
   assert.deepEqual(stage({ name: 'Watched', data: { where: 'film', film: 'x', seconds: 60, total: 700 } }),
     ['stats:funnel:watched 1+ min:2026-09-23', 'stats:funnel:watched 10+ min:2026-09-23']);

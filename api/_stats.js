@@ -58,7 +58,10 @@ export function validEvent(body) {
 function stagesOf({ name, data }) {
   if (name === 'Page view') return ['visited'];
   if (name === 'Click') return ['clicked'];
-  if (name === 'Play' || (name === 'TV' && data.action === 'tune')) return ['played'];
+  // A film pressed play; tuning in to a channel is its own stage: you join mid-film and surf, so
+  // counting it as a play made films look abandoned
+  if (name === 'Play') return ['played'];
+  if (name === 'TV' && data.action === 'tune') return ['tuned in'];
   if (name === 'Watched') return WATCHED.filter(([at]) => data.total >= at).map(([, stage]) => stage);
   return [];
 }
