@@ -42,6 +42,7 @@ test("a link to someone's Archive.org list opens it as a list", async () => {
   assert.equal(redirectFor('/details/@jason_scott'), null, 'a profile is a page of its own');
   assert.equal(redirectFor('/details/@jason_scott/'), null);
   assert.equal(redirectFor('/details/@jason_scott/lists'), '/details/@jason_scott');
+  assert.equal(redirectFor('/details/movies', '?query=subject:horror AND year:[1980 TO 1989]'), `/browse?q=${encodeURIComponent('subject:horror AND year:[1980 TO 1989]')}`, 'a search page on this site runs its search');
   assert.equal(parseArchiveUrl('https://archive.org/details/@bad<name>/lists/1'), null);
   assert.equal(parseArchiveUrl('https://archive.org/details/@jason_scott/lists/x'), null);
 });

@@ -11,6 +11,7 @@ const PAGES = {
   '/stats': lazy(() => import('./pages/StatsPage')),
   '/lists': lazy(() => import('./pages/ListsPage')),
   '/takedown': lazy(() => import('./pages/TakedownPage')),
+  '/from-archive': lazy(() => import('./pages/FromArchivePage')),
   '/details': lazy(() => import('./pages/ArchiveListPage')),
 };
 const ProfilePage = lazy(() => import('./pages/ArchiveProfilePage'));

@@ -53,9 +53,9 @@ function listFromPath(pathname) {
 }
 
 // The same path on this site: orphanedfilms.com/details/... is archive.org/details/... opened here
-export function parseSitePath(pathname) {
+export function parseSitePath(pathname, search = '') {
   if (!pathname.startsWith('/details/')) return null;
-  return listFromPath(pathname) || parseArchiveUrl(`https://archive.org${pathname}`);
+  return listFromPath(pathname) || parseArchiveUrl(`https://archive.org${pathname}${search}`);
 }
 
 const safeDecode = (text) => { try { return decodeURIComponent(text); } catch { return text; } };
@@ -74,7 +74,7 @@ export function pathFor(link) {
 // that arrived as search text (/browse?q=https://archive.org/...): where it should really go.
 // null when the address is already the right one.
 export function redirectFor(pathname, search = '') {
-  const link = parseSitePath(pathname);
+  const link = parseSitePath(pathname, search);
   if (link?.type === 'list') return null;
   // A profile's other tabs (/details/@name/lists, ?tab=uploads) all open the one profile page
   if (link) return pathFor(link) === pathname.replace(/\/+$/, '') ? null : pathFor(link);
