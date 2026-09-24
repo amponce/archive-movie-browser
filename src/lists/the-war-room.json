@@ -1,0 +1,88 @@
+{
+  "slug": "the-war-room",
+  "title": "The war room",
+  "blurb": "The great war films: submarines, beaches, bridges and the men who came home. Kubrick named it; the rest earned it.",
+  "curator": "amponce",
+  "films": [
+    {
+      "id": "das-boot-s-1981",
+      "note": "A U-boat crew, a hull that groans, and almost no daylight."
+    },
+    {
+      "id": "come.-and.-see.-1985",
+      "note": "A Belarusian boy's war in 1943. Often called the most harrowing war film ever made."
+    },
+    {
+      "id": "the-bridge-on-the-river-kwai-1957_202511",
+      "note": "Alec Guinness builds the enemy a bridge, out of pride."
+    },
+    {
+      "id": "dr-strangelove-or-how-i-learned-to-stop-worrying-and-love-the-bomb",
+      "note": "Kubrick's comedy about the end of the world. You can't fight in here, this is the War Room."
+    },
+    {
+      "id": "cross.-of.-iron.-1977",
+      "note": "Sam Peckinpah's only war film: the Eastern Front, from the German side."
+    },
+    {
+      "id": "the.-longest.-day.-1962",
+      "note": "D-Day from every side, with half of Hollywood in the cast."
+    },
+    {
+      "id": "the-guns-of-navarone-1961_202511",
+      "note": "Six commandos, two giant guns and one cliff."
+    },
+    {
+      "id": "all.-quiet.-on.-the.-western.-front.-1930",
+      "note": "The first great anti-war film, and a Best Picture winner."
+    },
+    {
+      "id": "the-enemy-below-1957_202511",
+      "note": "A destroyer captain and a U-boat captain outthink each other for ninety minutes."
+    },
+    {
+      "id": "train-1964",
+      "note": "Burt Lancaster tries to stop a train of stolen paintings leaving Paris. The wrecks are real."
+    },
+    {
+      "id": "a-bridge-too-far-1977",
+      "note": "Operation Market Garden, the Allied plan that went wrong."
+    },
+    {
+      "id": "stalingrad.-1993",
+      "note": "The battle from inside one German platoon."
+    },
+    {
+      "id": "the.-ascent.-1977",
+      "note": "Two Soviet partisans in the snow, and a choice."
+    },
+    {
+      "id": "the-hill-1965_202511",
+      "note": "Sean Connery in a British military prison in the desert."
+    },
+    {
+      "id": "forbidden-games-1952-colorized-movie-720p-hd",
+      "note": "Two children in 1940 France build a cemetery for animals."
+    },
+    {
+      "id": "tbyool435345435110",
+      "note": "Three men come home from the war and try to fit back in."
+    },
+    {
+      "id": "from-here-to-eternity-1953_202110",
+      "note": "Hawaii in the months before Pearl Harbor. The kiss on the beach."
+    },
+    {
+      "id": "the-caine-mutiny-1954_202511",
+      "note": "Bogart as Captain Queeg, and the strawberries."
+    },
+    {
+      "id": "the-sand-pebbles-1966",
+      "note": "Steve McQueen on an American gunboat in 1920s China."
+    },
+    {
+      "id": "LifeAndDeathOfColonelBlimp_the",
+      "note": "Powell and Pressburger follow one soldier through forty years and three wars."
+    }
+  ]
+}
