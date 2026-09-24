@@ -47,6 +47,13 @@ export function withIndexedLength(movie) {
   return movie.runtimeMinutes || !d ? movie : { ...movie, runtimeMinutes: d };
 }
 
+// Animated films belong under Animation and Family; anywhere else (The Lion King leading Drama,
+// Toy Story in Adventure) they crowd out what someone picked the genre for. Synchronous like
+// withIndexedLength; `genres` is a TMDB genre list, from the index or the upload's own entry.
+export const CARTOON_GENRES = ['Animation', 'Family'];
+export const cartoonOutOfPlace = (genres, genre) => !!genre && genre !== 'all' && !CARTOON_GENRES.includes(genre) && !!genres?.includes('Animation');
+export const isCartoonFor = (movie, genre) => cartoonOutOfPlace(films?.[movie.identifier]?.g, genre);
+
 // undefined = not indexed (fall back to live matching), null = decided there is no poster
 export async function indexedMatch(identifier) {
   if (!identifier) return undefined;

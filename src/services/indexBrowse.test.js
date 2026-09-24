@@ -78,3 +78,16 @@ test("of two copies of one film, the one Archive.org's visitors chose plays", ()
   assert.equal(pick(['loved', entry({ f: 774, bad: 1 })], ['plain', entry({ f: 5 })]), 'plain');
   assert.equal(pick(['loved-trailer', entry({ d: 2, f: 900 })], ['feature', entry({})]), 'feature', 'the full-length one still comes first');
 });
+
+test('animated films browse under Animation and Family, not Drama or Adventure', async () => {
+  const { cartoonOutOfPlace } = await import('./posterIndex.js');
+  const index = {
+    lion: { i: 1, t: 'The Lion King', y: 1994, g: ['Animation', 'Family', 'Drama'], d: 88, c: 1 },
+    bergman: { i: 2, t: 'Persona', y: 1966, g: ['Drama'], d: 83, c: 1 },
+  };
+  assert.deepEqual(indexFilms(index, { genre: 'Drama' }).map(m => m.title), ['Persona']);
+  assert.deepEqual(indexFilms(index, { genre: 'Family' }).map(m => m.title), ['The Lion King']);
+  assert.equal(cartoonOutOfPlace(['Animation', 'Drama'], 'all'), false, 'All genres keeps everything');
+  assert.equal(cartoonOutOfPlace(['Animation', 'Drama'], 'Animation'), false);
+  assert.equal(cartoonOutOfPlace(['Animation', 'Drama'], 'Drama'), true);
+});

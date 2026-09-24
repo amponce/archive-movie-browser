@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import archiveService, { runtimeFilter, betterCopy } from '../services/archive';
 import tmdbService from '../services/tmdb';
-import { postersFirst, oneCopyPerFilm, loadPosterIndex, withIndexedLength } from '../services/posterIndex';
+import { postersFirst, oneCopyPerFilm, loadPosterIndex, withIndexedLength, isCartoonFor } from '../services/posterIndex';
 import { apiSort, orderBatch } from '../services/sorting';
 import { browsesIndex, indexFilms, pageOf } from '../services/indexBrowse';
 
@@ -66,8 +66,9 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
         collection,
         decade,
         seenTitles: seenTitles.current,
-        // The server query already applied the genre, so only runtime is checked here
-        filter: movie => runtime(withIndexedLength(movie)),
+        // The server query already applied the genre, so only runtime is checked here, and
+        // cartoons stay under Animation and Family
+        filter: movie => runtime(withIndexedLength(movie)) && !isCartoonFor(movie, genre),
       });
       if (requestId !== latestRequest.current) return;
 

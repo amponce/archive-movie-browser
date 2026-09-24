@@ -3,6 +3,7 @@
 // where the index knows 130. So when a genre is picked the list comes from the index, which every
 // visitor already has, and Archive.org's own tagged results follow once the index is exhausted.
 import { ALL_FILMS, byAudience } from './archive.js';
+import { cartoonOutOfPlace } from './posterIndex.js';
 
 export const PAGE = 24;
 
@@ -45,7 +46,7 @@ export function indexFilms(index, { genre, decade, shorts = false, minRuntime = 
   const best = new Map();
   for (const pair of Object.entries(index)) {
     const e = pair[1];
-    if (!e.i || !e.g?.includes(genre)) continue;
+    if (!e.i || !e.g?.includes(genre) || cartoonOutOfPlace(e.g, genre)) continue;
     if (decade && !(e.y >= Number(decade) && e.y < Number(decade) + 10)) continue;
     if (shorts ? isFeature(pair) || e.d > 30 : (e.d > 0 ? e.d < minRuntime : !isFeature(pair))) continue;
     const kept = best.get(e.i);
