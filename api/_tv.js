@@ -112,6 +112,17 @@ export function toM3U({ channels }) {
   return `${lines.join('\n')}\n`;
 }
 
+// Where this copy is served, for the addresses in the channel playlist (which is cached at the
+// edge, so it must never carry an address a request made up): the request's host only when it is
+// ours (the domain, this project's Vercel previews, a local copy); otherwise SITE_URL (a fork sets
+// it) or the site's own address.
+const TRUSTED_HOST = /^((www\.)?orphanedfilms\.com|archive-movie-browser(-[a-z0-9-]+)?\.vercel\.app|(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3})(:\d{2,5})?)$/;
+export function siteOf(host) {
+  const h = String(host || '').toLowerCase();
+  if (!TRUSTED_HOST.test(h)) return (process.env.SITE_URL || SITE).replace(/\/+$/, '');
+  return `${/^(localhost|127\.|192\.168\.)/.test(h) ? 'http' : 'https'}://${h}`;
+}
+
 // An M3U for IPTV apps (Jellyfin, TiviMate, Kodi): one entry per channel, matched to the XMLTV
 // guide by tvg-id, each pointing at /api/tv/live/<id>, which sends the app to the film on now
 // `site`: where this copy is served (a preview, a fork, local), so its addresses work there too
