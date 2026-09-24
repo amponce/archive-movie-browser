@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import archiveService from '../../services/archive';
 import tmdbService from '../../services/tmdb';
 import { changesIn } from '../../services/programme';
-import { watchUrl } from '../../services/reel';
+import { watchUrl, playOnArrival } from '../../services/reel';
 import { Sprockets } from '../../ui/FilmCard';
 import Button from '../../ui/Button';
 import PosterWall from './PosterWall';
@@ -49,7 +49,7 @@ export default function Hero({ featured, fileNumber, wall }) {
           </div>
         </div>
 
-        <a href={href} aria-label={`Watch ${entry.t}`} className="lg:col-span-5 relative block aspect-square w-full rounded-lg overflow-hidden border border-white/[0.06] bg-[#3A1420] group">
+        <a href={href} onClick={() => playOnArrival(featured.id)} data-track="orphan-play" data-film={featured.id} aria-label={`Play ${entry.t}`} className="lg:col-span-5 relative block aspect-square w-full rounded-lg overflow-hidden border border-white/[0.06] bg-[#3A1420] group">
           <img src={tmdbService.getPosterUrl(entry.p, 'large')} alt="" className="absolute inset-0 w-full h-full object-cover" />
           <span className="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-ink/40" />
           <Sprockets />

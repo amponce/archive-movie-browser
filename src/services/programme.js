@@ -49,19 +49,40 @@ export function featuredFor(index, now = new Date(), picks = []) {
   return seededShuffle(candidates, dayOf(now))[0];
 }
 
-// Time until the featured film changes (UTC midnight), as "09h 14m"
-// The shelf the front page leads with: one category a week, in order from the week of 21 September
-// 2026, and within it a different list each day. The same for everyone.
-// ponytail: fixed order; rank categories by minutes watched once the stats can say what's popular
-const FIRST_WEEK = Date.UTC(2026, 8, 21) / 86400000; // a Monday, as a day number
-export function shelfOfDay(categories, now = new Date()) {
-  if (!categories.length) return null;
-  const day = dayOf(now);
-  const week = Math.floor((day - FIRST_WEEK) / 7);
-  const category = categories[((week % categories.length) + categories.length) % categories.length];
-  return { ...category.shelves[day % category.shelves.length], category: category.name };
+// The shelf the front page leads with, by the visitor's own day and hour like a TV schedule
+// (src/programme/shelves.json): the first slot that fits, and within it a different list each
+// day it airs. The day runs 4am to 4am, so 1am Saturday is still Friday night (hour 25).
+export function leadAt(slots, now = new Date()) {
+  const day = new Date(now.getTime() - 4 * 3600000);
+  const hour = day.getHours() + 4;
+  const slot = slots.find(s => s.days.includes(day.getDay()) && hour >= s.from && hour < s.to);
+  if (!slot) return null;
+  const n = Math.floor((day.getTime() - day.getTimezoneOffset() * 60000) / 86400000);
+  return { ...slot.shelves[n % slot.shelves.length], slot: slot.name };
 }
 
+// When the lead changes and what comes on then: { at: Date, lead }. Walks the week hour by hour
+// from now to the first hour with a different list.
+export function nextLead(slots, now = new Date()) {
+  const current = leadAt(slots, now);
+  const at = new Date(now);
+  at.setMinutes(0, 0, 0);
+  for (let h = 1; h <= 24 * 7; h++) {
+    at.setHours(at.getHours() + 1);
+    const lead = leadAt(slots, at);
+    if (lead && lead.list !== current?.list) return { at: new Date(at), lead };
+  }
+  return null;
+}
+
+// A shelf that is on the page every day: a different one of `shelves` each day, never the list
+// already leading (`skip`)
+export function shelfBesides(shelves, skip, now = new Date()) {
+  const n = dayOf(now);
+  return shelves.map((_, i) => shelves[(n + i) % shelves.length]).find(s => s.list !== skip) || null;
+}
+
+// Time until the featured film changes (UTC midnight), as "09h 14m"
 export function changesIn(now = new Date()) {
   const minutes = Math.max(0, Math.ceil((86400000 - (now.getTime() % 86400000)) / 60000));
   return `${String(Math.floor(minutes / 60)).padStart(2, '0')}h ${String(minutes % 60).padStart(2, '0')}m`;
@@ -97,6 +118,17 @@ export function shelfFor(index, now = new Date(), limit = 6, lastDecade = 1970) 
 export function shortRow(index, now = new Date(), limit = 12) {
   const fits = oneCopyPerFilm(index).filter(([, e]) => e.l >= 40 && e.l <= 90 && rated(e, 6.5)).map(film);
   return seededShuffle(fits, dayOf(now) + 11).slice(0, limit);
+}
+
+// The best-known films old enough that US copyright has run out on all of them: 95 years after
+// release, so through 1930 in 2026 and one more year each January. Best known is the most TMDB
+// ratings; a different dozen of the top 40 each day. Famous is not the same as worth putting on
+// the front page: The Birth of a Nation (TMDB 618) is Klan propaganda, so it stays in search only.
+const NOT_FEATURED = new Set([618]);
+export function heardOfRow(index, now = new Date(), limit = 12) {
+  const lastYear = now.getFullYear() - 96;
+  const famous = oneCopyPerFilm(index).filter(([, e]) => e.y && e.y <= lastYear && !NOT_FEATURED.has(e.i)).sort((a, b) => (b[1].k || 0) - (a[1].k || 0)).slice(0, 40).map(film);
+  return { lastYear, films: seededShuffle(famous, dayOf(now) + 5).slice(0, limit) };
 }
 
 // Films on the same shelf as one film, from the index alone: share a genre, prefer the same
