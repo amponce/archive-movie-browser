@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { indexedMatch } from '../services/posterIndex';
 import { isTakenDown } from '../services/policy';
+import { identifierQueries } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import { watchUrl } from '../services/reel';
 import { readMyChannel, toggleSaved, hasFilm, shareUrl } from '../services/myChannel';
@@ -33,12 +34,11 @@ export const withPosters = (docs) => Promise.all(docs.filter(doc => !isTakenDown
   };
 }));
 
-// The items of a list in the list's order, a hundred at a time
+// The items of a list in the list's order
 async function describe(identifiers) {
   const items = [];
-  for (let i = 0; i < identifiers.length; i += 100) {
-    const ids = identifiers.slice(i, i + 100);
-    const byId = new Map((await searchDocs(`identifier:(${ids.map(id => `"${id}"`).join(' OR ')})`, ids.length)).map(doc => [doc.identifier, doc]));
+  for (const { ids, q } of identifierQueries(identifiers)) {
+    const byId = new Map((await searchDocs(q, ids.length)).map(doc => [doc.identifier, doc]));
     items.push(...ids.map(id => byId.get(id)).filter(Boolean));
   }
   return withPosters(items);

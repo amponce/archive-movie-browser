@@ -2,7 +2,7 @@
 // genre when its uploader typed one in, and most did not: it returns 37 comedies from the 1980s
 // where the index knows 130. So when a genre is picked the list comes from the index, which every
 // visitor already has, and Archive.org's own tagged results follow once the index is exhausted.
-import { ALL_FILMS } from './archive.js';
+import { ALL_FILMS, byAudience } from './archive.js';
 
 export const PAGE = 24;
 
@@ -31,8 +31,11 @@ const toMovie = ([identifier, e]) => ({ identifier, title: e.t, year: e.y, runti
 const CLIP = /trailer|teaser|turner_video|tv[-_]?spot/i;
 // A feature-length upload: measured at 40 minutes or more, or unmeasured and not named as a clip
 export const isFeature = ([id, e]) => (e.d > 0 ? e.d >= 40 : !CLIP.test(id));
-// Of two uploads of one film, the full-length one, then the one Jev was surest about
-export const betterUpload = (a, b) => (isFeature(b) - isFeature(a)) || (b[1].c - a[1].c);
+// Of two uploads of one film, the full-length one, then the one Archive.org's visitors chose
+// (f: favourites, bad: panned by reviewers; scripts/backfill-favourites.mjs), then the one Jev
+// was surest about
+const audience = e => ({ favorites: e.f, panned: !!e.bad });
+export const betterUpload = (a, b) => (isFeature(b) - isFeature(a)) || -byAudience(audience(a[1]), audience(b[1])) || (b[1].c - a[1].c);
 
 // Every film of a genre the index knows, one upload per film, filtered like the Archive.org
 // list is and sorted the way the menu says.
