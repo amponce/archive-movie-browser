@@ -9,6 +9,7 @@ import { plainText } from '../services/plainText';
 const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) {
   const [tmdbData, setTmdbData] = useState(null);
   const [tmdbChecked, setTmdbChecked] = useState(false);
+  const [overview, setOverview] = useState(null); // TMDB's, for an upload with no description of its own
   const [posterLoaded, setPosterLoaded] = useState(false);
   const [posterError, setPosterError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -27,6 +28,16 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
 
     return () => { cancelled = true; };
   }, [movie.title, movie.year, movie.identifier, tmdbChecked]);
+
+  // No description on Archive.org (and films browsed from the index never carry one): TMDB's
+  // overview instead. A live match already has it; an index match asks once, cached for a week.
+  useEffect(() => {
+    if (movie.description || !tmdbData?.id) return undefined;
+    if (tmdbData.overview) { setOverview(tmdbData.overview); return undefined; }
+    let cancelled = false;
+    tmdbService.getMovieDetails(tmdbData.id).then(d => { if (!cancelled && d?.overview) setOverview(d.overview); });
+    return () => { cancelled = true; };
+  }, [movie.description, tmdbData]);
 
   // Determine which poster to use
   const tmdbPosterUrl = tmdbData?.posterPath
@@ -186,9 +197,9 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
           </div>
         )}
 
-        {movie.description && (
+        {(movie.description || overview) && (
           <p className="text-sm text-muted mt-2 line-clamp-2">
-            {plainText(movie.description).slice(0, 200)}
+            {plainText(movie.description || overview).slice(0, 400)}
           </p>
         )}
       </div>
