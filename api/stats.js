@@ -3,7 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { redis } from './_redis.js';
 
 const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'banner', 'tv', 'tuned', 'stayed', 'minutes', 'channel-minutes', 'clicks'];
-const STAGES = ['visited', 'clicked', 'played', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
+const STAGES = ['visited', 'clicked', 'played', 'tuned in', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
 const FUNNEL_DAYS = 14;
 const FILM_BOARDS = ['opened', 'played', 'watched', 'minutes'];
 const DAYS = 30;

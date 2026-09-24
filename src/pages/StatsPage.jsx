@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 const KEY = 'stats-key';
 const MARK = '#c08a10'; // single series; passes the dark-surface lightness and contrast checks
 const EVENTS = ['Page view', 'Click', 'Film opened', 'Play', 'Watched 10 minutes', 'Seconds watched', 'Search', 'Filter', 'Load more'];
-const STAGES = ['visited', 'clicked', 'played', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
+const STAGES = ['visited', 'clicked', 'played', 'tuned in', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
 const FILM_BOARDS = ['played', 'watched', 'opened', 'minutes'];
 const BOARDS = [
   ['minutes', 'Minutes watched, by film'], ['channel-minutes', 'Minutes watched, by channel'], ['clicks', 'What people click'],
