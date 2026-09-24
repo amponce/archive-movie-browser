@@ -4,45 +4,105 @@
   "blurb": "Animation and family films the whole room can watch.",
   "curator": "the station",
   "generated": {
-    "rule": "Animation 1920s–1990s",
+    "rule": "Family 1920s–1990s",
     "week": 202639
   },
   "films": [
     {
-      "id": "dtv-monster-hits-2018-hd-rebuild"
+      "id": "LittleLordFauntleroy1936JohnCromwellfullMovieHD"
+    },
+    {
+      "id": "Bill_and_Coo"
+    },
+    {
+      "id": "TheGreatBrain"
+    },
+    {
+      "id": "laputa.-castle.in.the.-sky.-1986.1080p.-bdrip.-dual.-audio.-10bits.x-265-rapta"
     },
     {
       "id": "747AS"
     },
     {
-      "id": "ID5298PA"
+      "id": "hum-saath-saath-hain-1999-dvdrip"
     },
     {
-      "id": "8847CS"
+      "id": "ElephantBoy"
     },
     {
-      "id": "the-gate-to-the-minds-eye-1994-laserdisc"
+      "id": "jason-and-the-argonauts-1963"
+    },
+    {
+      "id": "AChristmasWithoutSnow"
+    },
+    {
+      "id": "Jackie_Robinson_Story_The"
+    },
+    {
+      "id": "un-elefante-color-ilusion-1970"
+    },
+    {
+      "id": "trouble-in-store"
+    },
+    {
+      "id": "9871AS"
+    },
+    {
+      "id": "theDoubleLottiedasDoppelteLottchen1950"
+    },
+    {
+      "id": "5552442"
+    },
+    {
+      "id": "the-worst-witch-1986_202304"
+    },
+    {
+      "id": "TheElectricGrandmotherByRayBradburyShortStoryFilm1981"
+    },
+    {
+      "id": "tcotma66099811"
+    },
+    {
+      "id": "Slideshow_201806"
+    },
+    {
+      "id": "OliverHardyTheWizardOfOz1925"
+    },
+    {
+      "id": "TomBrownsSchoolDays_461"
+    },
+    {
+      "id": "bc4445782"
+    },
+    {
+      "id": "heidi-1968-family-drama-adventure"
     },
     {
       "id": "aladdin-and-the-king-of-thieves-1997-laserdisc"
     },
     {
-      "id": "yellow-submarine-1968-usa"
+      "id": "8847CS"
     },
     {
-      "id": "Tarzoon1975"
+      "id": "o-saci-1953"
     },
     {
-      "id": "4964CS"
+      "id": "DestroyAllPlanets1968"
     },
     {
-      "id": "fantastic-planet__1973"
+      "id": "LifeWithFather"
     },
     {
-      "id": "PILA-3004"
+      "id": "Pollyanna_275"
     },
     {
-      "id": "hoppity-goes-to-town-nta-reprint"
+      "id": "Missouri_Traveler_1958"
+    },
+    {
+      "id": "nv8845354388"
+    },
+    {
+      "id": "the-boy-who-turned-yellow"
     }
   ]
 }

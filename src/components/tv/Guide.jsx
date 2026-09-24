@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { programmesBetween } from '../../services/schedule';
+import CHANNEL_LINEUP from '../../programme/channels.json';
 
 const NARROW = '(max-width: 639px)';
+// The channel's call sign (src/programme/channels.json), or its initials
+const CALLS = Object.fromEntries(CHANNEL_LINEUP.lineup);
+export const callSign = channel => CALLS[channel.id] || String(channel.name || '').split(/\s+/).map(w => w[0]).join('').replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase();
 const clock = ms => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
 // How much of the future the guide shows: three hours, or ninety minutes on a phone, where three
@@ -39,7 +43,7 @@ export default function Guide({ channels, current, now, onTune, hours = 3, lead 
 
   return (
     <div className="flex flex-col">
-      <div className="hidden sm:grid grid-cols-[200px_1fr] gap-4 mb-2">
+      <div className="grid grid-cols-[52px_1fr] sm:grid-cols-[200px_1fr] gap-2 sm:gap-4 mb-2">
         <span />
         <div className="relative h-5">
           {ticks.map(t => <span key={t} className="absolute label -translate-x-1/2" style={{ left: left(t) }}>{clock(t)}</span>)}
@@ -49,10 +53,12 @@ export default function Guide({ channels, current, now, onTune, hours = 3, lead 
       {channels.map(channel => (
         <React.Fragment key={channel.id}>
         <button type="button" data-track="guide-row" onClick={() => onTune(channel)} aria-current={channel.id === current?.id ? 'true' : undefined} aria-expanded={renderOpen ? open === channel.id : undefined}
-          className={`group grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-2 sm:gap-4 py-3 border-t border-line text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal ${channel.id === current?.id ? 'bg-panel shadow-[inset_3px_0_0_#FF5A2E]' : 'hover:bg-panel/40'}`}>
-          <span className="flex items-baseline gap-3 px-2 min-w-0">
-            <span className="font-display font-black text-2xl tabular-nums text-dim group-aria-[current]:text-signal">{channel.number}</span>
-            <span className="font-medium text-sm text-bone truncate">{channel.name}</span>
+          className={`group grid grid-cols-[52px_1fr] sm:grid-cols-[200px_1fr] gap-2 sm:gap-4 py-3 border-t border-line text-left focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-signal ${channel.id === current?.id ? 'bg-panel shadow-[inset_3px_0_0_#FF5A2E]' : 'hover:bg-panel/40'}`}>
+          {/* On a phone the number and call sign stand in for the name, so each channel is one line */}
+          <span className="flex flex-col sm:flex-row items-center sm:items-baseline justify-center sm:justify-start gap-0.5 sm:gap-3 sm:px-2 min-w-0">
+            <span className="font-display font-black text-2xl tabular-nums text-dim group-aria-[current]:text-signal leading-none">{channel.number}</span>
+            <span className="sm:hidden label text-bone" aria-hidden="true">{callSign(channel)}</span>
+            <span className="font-medium text-sm text-bone truncate sr-only sm:not-sr-only">{channel.name}</span>
           </span>
           <span className="relative h-14 overflow-hidden">
             {programmesOf(channel).map(p => (

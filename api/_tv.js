@@ -15,8 +15,11 @@ const listsDir = new URL('../src/lists/', import.meta.url);
 const LISTS = collectLists(readdirSync(listsDir).filter(f => f.endsWith('.json')).map(f => JSON.parse(readFileSync(new URL(f, listsDir), 'utf8'))));
 const index = JSON.parse(readFileSync(new URL('../public/poster-index.json', import.meta.url), 'utf8')).films;
 
-// Every list is a channel, numbered in file order so a channel keeps its number
-export const CHANNELS = LISTS.map((list, i) => ({ number: i + 1, id: list.slug, name: list.title, blurb: list.blurb, films: list.films.map(f => f.id) }));
+// Every list is a channel, numbered by its place in src/programme/channels.json so a channel
+// keeps its number when lists are added; a list not placed there yet goes on the end
+const { lineup } = JSON.parse(readFileSync(new URL('../src/programme/channels.json', import.meta.url), 'utf8'));
+const place = slug => { const i = lineup.findIndex(([s]) => s === slug); return i < 0 ? Infinity : i; };
+export const CHANNELS = [...LISTS].sort((a, b) => place(a.slug) - place(b.slug)).map((list, i) => ({ number: i + 1, id: list.slug, name: list.title, blurb: list.blurb, films: list.films.map(f => f.id) }));
 
 // Film lengths and streams come from public/tv-lineups.json (npm run tv), built ahead of time
 // because asking Archive.org for fifty records at request time takes longer than a request may.

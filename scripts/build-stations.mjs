@@ -15,30 +15,42 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadLineups, saveLineups, measure, isFeature } from './measure.mjs';
 import { isTakenDown, isRecent } from '../src/services/policy.js';
+import { CARTOON_GENRES } from '../src/services/posterIndex.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const index = JSON.parse(fs.readFileSync(path.join(root, 'public/poster-index.json'), 'utf8')).films;
 const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
 
 // The rules. `genre` (or `genres`, any of) in our names; `decades` are inclusive starts; `count`
-// is how many films air per week.
+// is how many films air per week: 32 is about two days before a film comes round again. A small
+// pool gives what it has; under 6 and the station is not written.
+const EVERY_GENRE = ['Action', 'Adventure', 'Animation', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy', 'History', 'Horror', 'Music', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western'];
 const STATIONS = [
-  { slug: 'horror-all-night', title: 'Horror all night', blurb: 'Whatever the collections have that goes bump. Different every week.', genre: 'Horror', decades: [1920, 1990], count: 14 },
-  { slug: 'universal-years', title: 'The Universal years', blurb: 'Horror and mystery from the 1930s and 40s, when the monsters wore suits.', genre: 'Horror', decades: [1930, 1940], count: 12 },
-  { slug: 'atomic-age', title: 'Atomic age', blurb: 'Science fiction from the 1950s. Saucers, mutations, and a lot of desert.', genre: 'Sci-Fi', decades: [1950, 1950], count: 12 },
-  { slug: 'space-and-after', title: 'Space and after', blurb: 'Science fiction from the 60s onward. Cheaper, weirder, occasionally brilliant.', genre: 'Sci-Fi', decades: [1960, 1990], count: 12 },
-  { slug: 'noir-after-dark', title: 'Noir after dark', blurb: 'Shadows, cigarettes and bad decisions. Crime, thrillers and mysteries from the 40s and 50s.', genres: ['Crime', 'Thriller', 'Mystery'], decades: [1940, 1950], count: 12 },
-  { slug: 'crime-and-punishment', title: 'Crime and punishment', blurb: 'Gangsters, heists and the police who catch up with them.', genre: 'Crime', decades: [1930, 1970], count: 12 },
-  { slug: 'mystery-hour', title: 'Mystery hour', blurb: 'Whodunits and locked rooms from the golden age.', genre: 'Mystery', decades: [1930, 1960], count: 12 },
-  { slug: 'thrills-and-spills', title: 'Thrills and spills', blurb: 'Thrillers from the 1970s and 80s. Paranoia, car chases, one last job.', genre: 'Thriller', decades: [1970, 1980], count: 12 },
-  { slug: 'the-comedy-channel', title: 'The comedy channel', blurb: 'Screwball, slapstick and everything that still gets a laugh.', genre: 'Comedy', decades: [1930, 1960], count: 12 },
-  { slug: 'sunday-serials', title: 'Sunday adventures', blurb: 'Swashbucklers, jungle pictures and cliffhangers.', genre: 'Adventure', decades: [1920, 1960], count: 12 },
-  { slug: 'the-back-forty', title: 'The back forty', blurb: 'Westerns, round the clock. Republic, Monogram and the occasional major.', genre: 'Western', decades: [1930, 1970], count: 14 },
-  { slug: 'war-stories', title: 'War stories', blurb: 'Combat, home front, and the films made while it was happening.', genre: 'War', decades: [1930, 1970], count: 12 },
-  { slug: 'love-in-black-and-white', title: 'Love in black and white', blurb: 'Romance and melodrama, 1930 to 1960.', genre: 'Romance', decades: [1930, 1960], count: 12 },
-  { slug: 'the-drama-department', title: 'The drama department', blurb: 'The serious ones. Courtrooms, families, second acts.', genre: 'Drama', decades: [1930, 1970], count: 12 },
-  { slug: 'the-projection-booth', title: 'The projection booth', blurb: 'Documentaries and the real world on film.', genre: 'Documentary', decades: [1920, 1990], count: 12 },
-  { slug: 'family-matinee', title: 'Family matinee', blurb: 'Animation and family films the whole room can watch.', genre: 'Animation', decades: [1920, 1990], count: 12 },
+  { slug: 'horror-all-night', title: 'Horror all night', blurb: 'Whatever the collections have that goes bump. Different every week.', genre: 'Horror', decades: [1920, 1990], count: 32 },
+  { slug: 'universal-years', title: 'The Universal years', blurb: 'Horror and mystery from the 1930s and 40s, when the monsters wore suits.', genre: 'Horror', decades: [1930, 1940], count: 32 },
+  { slug: 'atomic-age', title: 'Atomic age', blurb: 'Science fiction from the 1950s. Saucers, mutations, and a lot of desert.', genre: 'Sci-Fi', decades: [1950, 1950], count: 32 },
+  { slug: 'space-and-after', title: 'Space and after', blurb: 'Science fiction from the 60s onward. Cheaper, weirder, occasionally brilliant.', genre: 'Sci-Fi', decades: [1960, 1990], count: 32 },
+  { slug: 'noir-after-dark', title: 'Noir after dark', blurb: 'Shadows, cigarettes and bad decisions. Crime, thrillers and mysteries from the 40s and 50s.', genres: ['Crime', 'Thriller', 'Mystery'], decades: [1940, 1950], count: 32 },
+  { slug: 'crime-and-punishment', title: 'Crime and punishment', blurb: 'Gangsters, heists and the police who catch up with them.', genre: 'Crime', decades: [1930, 1970], count: 32 },
+  { slug: 'mystery-hour', title: 'Mystery hour', blurb: 'Whodunits and locked rooms from the golden age.', genre: 'Mystery', decades: [1930, 1960], count: 32 },
+  { slug: 'thrills-and-spills', title: 'Thrills and spills', blurb: 'Thrillers from the 1970s and 80s. Paranoia, car chases, one last job.', genre: 'Thriller', decades: [1970, 1980], count: 32 },
+  { slug: 'the-comedy-channel', title: 'The comedy channel', blurb: 'Screwball, slapstick and everything that still gets a laugh.', genre: 'Comedy', decades: [1930, 1960], count: 32 },
+  { slug: 'sunday-serials', title: 'Sunday adventures', blurb: 'Swashbucklers, jungle pictures and cliffhangers.', genre: 'Adventure', decades: [1920, 1960], count: 32 },
+  { slug: 'the-back-forty', title: 'The back forty', blurb: 'Westerns, round the clock. Republic, Monogram and the occasional major.', genre: 'Western', decades: [1930, 1970], count: 32 },
+  { slug: 'war-stories', title: 'War stories', blurb: 'Combat, home front, and the films made while it was happening.', genre: 'War', decades: [1930, 1970], count: 32 },
+  { slug: 'love-in-black-and-white', title: 'Love in black and white', blurb: 'Romance and melodrama, 1930 to 1960.', genre: 'Romance', decades: [1930, 1960], count: 32 },
+  { slug: 'the-drama-department', title: 'The drama department', blurb: 'The serious ones. Courtrooms, families, second acts.', genre: 'Drama', decades: [1930, 1970], count: 32 },
+  { slug: 'the-projection-booth', title: 'The projection booth', blurb: 'Documentaries and the real world on film.', genre: 'Documentary', decades: [1920, 1990], count: 32 },
+  { slug: 'where-horror-started', title: 'Where horror started', blurb: 'Horror before sound: Caligari, Nosferatu, Lon Chaney, and the first old dark houses.', genre: 'Horror', decades: [1910, 1920], count: 32 },
+  { slug: 'seventies-horror', title: 'Seventies horror', blurb: 'Italian gialli, British folk horror and the American nightmares that started the slasher.', genre: 'Horror', decades: [1970, 1970], count: 32 },
+  { slug: 'nineties-after-dark', title: '90s after dark', blurb: 'Horror, thrillers and science fiction from the rental-shop years, up to 2001.', genres: ['Horror', 'Thriller', 'Sci-Fi'], decades: [1990, 2000], count: 32 },
+  { slug: 'song-and-dance', title: 'Song and dance', blurb: 'Musicals, big bands and the numbers people still hum.', genre: 'Music', decades: [1920, 1960], count: 32 },
+  { slug: 'full-throttle', title: 'Full throttle', blurb: 'Action from any decade: fistfights, car chases and things blowing up.', genre: 'Action', decades: [1920, 1990], count: 32 },
+  { slug: 'once-upon-a-time', title: 'Once upon a time', blurb: 'Fantasy and fairy tales: genies, wizards and stop-motion monsters.', genre: 'Fantasy', decades: [1920, 1990], count: 32 },
+  { slug: 'epics-and-history', title: 'Epics and history', blurb: 'Kings, empires and the famous battles, on the biggest sets anyone could afford.', genre: 'History', decades: [1920, 1990], count: 32 },
+  { slug: 'the-thirties', title: 'The 1930s', blurb: 'The first decade of sound, every kind of picture.', genres: EVERY_GENRE, decades: [1930, 1930], count: 32 },
+  { slug: 'the-forties', title: 'The 1940s', blurb: 'Wartime and after, every kind of picture.', genres: EVERY_GENRE, decades: [1940, 1940], count: 32 },
+  { slug: 'family-matinee', title: 'Family matinee', blurb: 'Animation and family films the whole room can watch.', genre: 'Family', decades: [1920, 1990], count: 32 },
 ];
 
 function seed() { // the ISO week, so every run in a week agrees
@@ -61,6 +73,8 @@ for (const station of STATIONS) {
   const pool = new Map(); // film id -> upload identifier, one per film
   for (const [id, e] of Object.entries(index)) {
     const wanted = station.genres || [station.genre];
+    // Cartoons only on a station that asks for Animation or Family (or every genre)
+    if (e.g?.includes('Animation') && !wanted.some(g => CARTOON_GENRES.includes(g))) continue;
     if (!e.p || e.c < 0.8 || !e.g?.some(g => wanted.includes(g)) || !e.y || e.y < station.decades[0] || e.y >= station.decades[1] + 10) continue;
     if (!(e.l >= 55) || (e.v || 0) < 5.5 || /trailer/i.test(id) || pool.has(e.i) || isTakenDown(id) || isRecent(e.y)) continue;
     pool.set(e.i, id);
