@@ -106,6 +106,16 @@ Archive.org titles are messy (`H 2 House On Haunted Hill ( 1959) Classic Vincent
 - A scheduled workflow refreshes it weekly and pushes the result to a branch for review.
 - **Found a wrong poster?** Edit that identifier's entry in `public/poster-index.json` and open a PR. Setting it to `{ "n": 1, "c": 1, "m": 1 }` means "show the generated cover"; `"m": 1` marks an entry as corrected by hand, and the build script never overwrites those.
 
+### How collections get ranked
+
+Jev also picks the front of every "The best of" shelf: on a collection's page (`/details/SciFi_Horror`) and on Browse's All Films, for each genre. For each of the 200 most-downloaded collections in Archive.org's Movies, and for every genre, `scripts/build-collections.mjs` takes the films in it that the index has identified (a confident match with a poster, feature length, rated 6 or better, one copy per film, nothing from the last 25 years or taken down), up to 40 of them, best known first. For each one it asks Jev a single multiple-choice question, with the collection's title and description and the film's title, year, genres and TMDB rating in front of it: is this film a **highlight** of the collection (one of the first things someone opening it should watch), does it **belong**, or is it a **stray** (a recent studio film, or something off-topic that happened to be uploaded into it)? Jev answers with one of the three and how sure it is; it cannot answer anything else.
+
+- Highlights lead the shelf, most certain first; the rest keep the best-known-first order, because Jev is seldom sure between them.
+- A stray is left out only when Jev is at least 0.8 sure. In one run of Film Noir, *It Happened One Night* (0.99) and *The Grapes of Wrath* (0.99) go, while noir neighbours it was unsure about, like *Breathless* (0.76) and *Le Cercle Rouge* (0.56), stay. Every film left out is listed in `public/collections.json` with Jev's confidence, so a wrong call is easy to spot.
+- The difference: ranked by TMDB popularity alone, Feature Films opened on *The Silence of the Lambs*, *Dr. Strangelove* and *RoboCop*; with Jev it opens on *Metropolis*, *Nosferatu*, *The Cabinet of Dr. Caligari* and *Frankenstein*.
+- A collection without a ranking yet is ranked live, best known first, and picking a decade ranks that decade live the same way.
+- The whole run, 14 collections, 18 genres and all films together, is about 1,300 decisions and cost under 3 cents. A workflow reruns it every Monday and opens a pull request with the new rankings. **Disagree with a call?** Open an issue with the collection and the film.
+
 ## MCP server
 
 `mcp/` is a [Model Context Protocol](https://modelcontextprotocol.io) server built on the same Archive.org code as the site, so an AI assistant can search the films, browse collections and hand back links that play. Four tools, no API keys. Hosted at `https://www.orphanedfilms.com/api/mcp`; setup for Claude Code, Claude Desktop and Cursor is in [mcp/README.md](mcp/README.md).
