@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collectionUploads, bestOfCollection } from '../../services/collectionBest';
+import { collectionUploads, bestOfCollection, loadRankedCollections, showable } from '../../services/collectionBest';
 import { loadPosterIndex } from '../../services/posterIndex';
 import { shareUrl } from '../../services/myChannel';
 import { collectionName, VIDEO_CATEGORIES } from '../../services/archive';
@@ -16,14 +16,27 @@ async function titleOf(id) {
 }
 
 // At the top of a collection's page: the best films in it that the poster index has identified,
-// as a shelf, read from Archive.org each visit. Nothing shows until there are at least six.
+// as a shelf. Jev's ranking when the collection is in public/collections.json (every film checked
+// again against the site's rules), otherwise ranked live, best known first, from Archive.org.
+// Nothing shows until there are at least six.
+async function bestFor(id) {
+  const [rankings, index] = await Promise.all([loadRankedCollections(), loadPosterIndex()]);
+  const judged = rankings[id];
+  if (judged) {
+    const films = judged.films.filter(fid => showable(fid, index[fid])).map(fid => ({ id: fid, entry: index[fid] }));
+    return { films, identified: judged.identified, total: judged.total, title: judged.title, byJev: true };
+  }
+  const [{ identifiers, total }, title] = await Promise.all([collectionUploads(id), titleOf(id)]);
+  return { ...bestOfCollection(index, identifiers), total, title, byJev: false };
+}
+
 export default function CollectionBest({ id }) {
   const [best, setBest] = useState(null);
   useEffect(() => {
     let cancelled = false;
     setBest(null);
-    Promise.all([collectionUploads(id), loadPosterIndex(), titleOf(id)])
-      .then(([{ identifiers, total }, index, title]) => { if (!cancelled) setBest({ ...bestOfCollection(index, identifiers), total, title }); })
+    bestFor(id)
+      .then(found => { if (!cancelled) setBest(found); })
       .catch(() => { /* Archive.org did not answer: the collection's page still works without it */ });
     return () => { cancelled = true; };
   }, [id]);
@@ -33,7 +46,7 @@ export default function CollectionBest({ id }) {
   const list = {
     slug: `collection-${id}`,
     title: `The best of ${best.title}`,
-    blurb: `${best.identified.toLocaleString('en-US')} of the ${best.total.toLocaleString('en-US')} uploads in this collection are films we have identified. These are the best known of them.`,
+    blurb: `${best.identified.toLocaleString('en-US')} of the ${best.total.toLocaleString('en-US')} uploads in this collection are films we have identified. ${best.byJev ? 'These are its highlights, then the best known of the rest.' : 'These are the best known of them.'}`,
     films: best.films.map(f => ({ id: f.id })),
   };
   return (

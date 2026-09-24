@@ -1,0 +1,47 @@
+name: Collections
+
+# Every Monday, after the poster index, Jev ranks the best films in Archive.org's most-downloaded
+# film collections (scripts/build-collections.mjs) and the result goes to a branch as a pull
+# request for a maintainer to merge. About $0.15 of Jev a week. Never runs on pull requests.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '31 7 * * 1' # Mondays 07:31 UTC, after the poster index run
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    if: github.repository == 'amponce/archive-movie-browser'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - run: npm ci
+      - name: Rank the best of each film collection
+        env:
+          OPEN_ROUTER_API_KEY: ${{ secrets.OPEN_ROUTER_API_KEY }}
+        run: node scripts/build-collections.mjs --collections 200
+      - run: npm test
+      - name: Open a pull request with the week's rankings
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- public/collections.json; then
+            echo "Nothing changed this week." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -C collections-weekly
+          git add public/collections.json
+          git commit -m "Collections: this week's rankings"
+          git push --force origin collections-weekly
+          gh pr create --base main --head collections-weekly --title "Collections: this week's rankings" \
+            --body "Jev ranked the best films in the most-downloaded film collections (\`node scripts/build-collections.mjs\`). Each collection lists the films it left out as strays, with Jev's confidence. Merge to update the collections' best-of shelves." \
+            || gh pr edit collections-weekly --title "Collections: this week's rankings"

@@ -17,3 +17,16 @@ test("a collection's best films: identified, one per film, well rated, best know
   assert.deepEqual(best.films.map(f => f.id), ['carrie', 'nosferatu_b'], 'best known first; the copy people favourite');
   assert.equal(best.identified, 3, 'Nosferatu, Carrie and the dud; not the recent remake, the clip, the unsure match or a taken-down upload');
 });
+
+test("Jev's judgement: highlights lead by confidence, the rest stay best known first, sure strays go", async () => {
+  const { rankByJudgement } = await import('./collectionBest.js');
+  const films = ['lambs', 'strangelove', 'robocop', 'metropolis', 'breathless', 'nosferatu'].map(id => ({ id }));
+  const verdicts = {
+    lambs: { choice: 'stray', confidence: 0.99 },
+    breathless: { choice: 'stray', confidence: 0.76 },
+    strangelove: { choice: 'highlight', confidence: 0.56 },
+    robocop: { choice: 'belongs', confidence: 0.38 },
+    metropolis: { choice: 'highlight', confidence: 0.92 },
+  };
+  assert.deepEqual(rankByJudgement(films, verdicts).map(f => f.id), ['metropolis', 'strangelove', 'robocop', 'breathless', 'nosferatu'], 'an unsure stray and an unjudged film stay with the rest');
+});
