@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import archiveService from '../services/archive';
+import archiveService, { ALL_FILMS, EVERYTHING } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import { track } from '../services/analytics';
 import useFilms from '../hooks/useFilms';
@@ -14,6 +14,7 @@ import SiteFooter from '../layout/SiteFooter';
 import FilterBar from './browse/FilterBar';
 import GenrePills from './browse/GenrePills';
 import FilmGrid from './browse/FilmGrid';
+import CollectionBest from './browse/CollectionBest';
 import { filmFromHash, pathFor } from '../services/archiveUrl';
 const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
 
@@ -118,6 +119,8 @@ export default function ArchiveMovieBrowser() {
         <FilterBar browse={browse} viewMode={viewMode} onViewMode={changeViewMode} onOpenSettings={() => setSettingsOpen(true)} />
       </SiteHeader>
 
+      {/* A collection opens on the best films in it, then everything in it below */}
+      {filters.category !== ALL_FILMS && filters.category !== EVERYTHING && !filters.activeSearch && <CollectionBest id={filters.category} />}
       <main className="gutter py-6">
         <GenrePills genre={filters.genre} onChange={browse.changeGenre} />
         <FilmGrid films={films} browse={browse} viewMode={viewMode} onOpen={setSelectedMovie} linkError={linkError} />
