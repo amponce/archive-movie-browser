@@ -5,7 +5,7 @@ import SiteFooter from '../layout/SiteFooter';
 const SITE = 'https://www.orphanedfilms.com';
 const FEEDS = [
   { what: 'Channels', url: `${SITE}/api/tv/channels.m3u`, for: 'IPTV apps: Jellyfin, TiviMate, Kodi, Channels DVR. One entry per channel; each plays what is on it now.' },
-  { what: 'TV guide (XMLTV)', url: `${SITE}/api/tv/guide.xml`, for: 'The schedule for the next 24 hours, matched to the channels above.' },
+  { what: 'TV guide (XMLTV)', url: `${SITE}/api/tv/guide.xml`, for: 'The schedule for the next three days, with a description and genre for every film, matched to the channels above.' },
   { what: 'Every film as a playlist', url: `${SITE}/api/tv/playlist.m3u`, for: 'VLC and other players: every channel’s films in order, to play straight through.' },
 ];
 const APPS = [
