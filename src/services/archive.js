@@ -55,10 +55,12 @@ export function collectionName(id) {
 // What the collection dropdown offers
 export const BROWSABLE_COLLECTIONS = VIDEO_CATEGORIES.filter(c => !c.asGenre);
 
-// Where a collection id leads: itself, or for a genre-named collection (an old link, a pasted
-// Archive.org link) All Films with that genre's pill selected
+// Where a collection id leads: itself, or for a collection that is wholly one genre (an old link,
+// a pasted Archive.org link to Film_Noir) All Films with that genre's pill selected. A mixed one
+// (SciFi_Horror is science fiction and horror) opens as itself: the pill would lose half of it.
 export function collectionChoice(id) {
-  const genre = VIDEO_CATEGORIES.find(c => c.id === id)?.asGenre;
+  const category = VIDEO_CATEGORIES.find(c => c.id === id);
+  const genre = category?.wholly && category.asGenre;
   return genre ? { collection: ALL_FILMS, genre } : { collection: id, genre: null };
 }
 

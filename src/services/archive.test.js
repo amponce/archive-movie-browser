@@ -659,9 +659,10 @@ test('genre lives in the pills only: genre-named collections are not offered in 
   assert.ok(!offered.includes('Film_Noir') && !offered.includes('SciFi_Horror'), 'a "Sci-Fi & Horror" dropdown beside an "All Genres" pill contradicts itself');
   assert.ok(offered.includes('feature_films') && offered.includes('silent_films') && offered.includes('animationandcartoons'));
   assert.ok(VIDEO_CATEGORIES.some(c => c.id === 'Film_Noir'), 'still a real collection: searches and the MCP tools use it');
-  // Old links, pasted Archive.org links and suggestions for those collections become All Films + the pill
+  // Old links, pasted Archive.org links and suggestions for a collection that is wholly one genre
+  // become All Films + the pill; a mixed one (science fiction and horror) opens as itself
   assert.deepEqual(collectionChoice('Film_Noir'), { collection: ALL_FILMS, genre: 'Film Noir' });
-  assert.deepEqual(collectionChoice('SciFi_Horror'), { collection: ALL_FILMS, genre: 'Horror' });
+  assert.deepEqual(collectionChoice('SciFi_Horror'), { collection: 'SciFi_Horror', genre: null });
   assert.deepEqual(collectionChoice('silent_films'), { collection: 'silent_films', genre: null });
   assert.deepEqual(collectionChoice(ALL_FILMS), { collection: ALL_FILMS, genre: null });
 });
