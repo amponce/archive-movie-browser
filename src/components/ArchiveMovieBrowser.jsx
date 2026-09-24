@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import archiveService, { ALL_FILMS, EVERYTHING } from '../services/archive';
+import archiveService, { ALL_FILMS, EVERYTHING, VIDEO_CATEGORIES } from '../services/archive';
+
+// The ranking behind a genre pill: the collection that is wholly that genre (the Film Noir pill is
+// the Film_Noir collection; noir is not a TMDB genre), otherwise the genre itself
+const genreShelf = genre => VIDEO_CATEGORIES.find(c => c.wholly && c.asGenre === genre)?.id || `genre:${genre || 'all'}`;
 import tmdbService from '../services/tmdb';
 import { track } from '../services/analytics';
 import useFilms from '../hooks/useFilms';
@@ -119,8 +123,10 @@ export default function ArchiveMovieBrowser() {
         <FilterBar browse={browse} viewMode={viewMode} onViewMode={changeViewMode} onOpenSettings={() => setSettingsOpen(true)} />
       </SiteHeader>
 
-      {/* A collection opens on the best films in it, then everything in it below */}
-      {filters.category !== ALL_FILMS && filters.category !== EVERYTHING && !filters.activeSearch && <CollectionBest id={filters.category} />}
+      {/* A collection opens on the best films in it, then everything in it below; All Films on the
+          best of the genre picked in the pills. Both follow the decade filter. */}
+      {filters.category !== ALL_FILMS && filters.category !== EVERYTHING && !filters.activeSearch && <CollectionBest key={`${filters.category}-${filters.decade}`} id={filters.category} decade={filters.decade} />}
+      {filters.category === ALL_FILMS && !filters.activeSearch && <CollectionBest key={`${filters.genre}-${filters.decade}`} id={genreShelf(filters.genre)} decade={filters.decade} />}
       <main className="gutter py-6">
         <GenrePills genre={filters.genre} onChange={browse.changeGenre} />
         <FilmGrid films={films} browse={browse} viewMode={viewMode} onOpen={setSelectedMovie} linkError={linkError} />

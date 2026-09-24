@@ -8,15 +8,19 @@
 //   node scripts/build-collections.mjs                      the most-downloaded film collections
 //   node scripts/build-collections.mjs --only SciFi_Horror,vhsvault
 //   node scripts/build-collections.mjs --collections 50     how many to walk (default 200)
+//   node scripts/build-collections.mjs --genres-only        just the genres (browse's All Films)
+// Genres are ranked too, as 'genre:Horror' ... and 'genre:all', for the shelf on All Films.
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { collectionUploads, bestOfCollection, rankByJudgement, SURE_STRAY } from '../src/services/collectionBest.js';
+import { cartoonOutOfPlace } from '../src/services/posterIndex.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(root, 'public/collections.json');
 const MODEL = 'typesafe/jev-1.13';
 const arg = name => (process.argv.includes(`--${name}`) ? process.argv[process.argv.indexOf(`--${name}`) + 1] : null);
+const flag = name => process.argv.includes(`--${name}`);
 
 function readKey(...names) {
   for (const name of names) if (process.env[name]) return process.env[name];
@@ -79,27 +83,53 @@ async function judge(collection, e) {
 }
 
 const previous = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')).collections || {} : {};
-const out = arg('only') ? { ...previous } : {};
-for (const collection of await collections()) {
-  const { identifiers, total } = await collectionUploads(collection.id);
+// A partial run (--only, --genres-only) keeps what the file already has for the rest
+const out = arg('only') || flag('genres-only') ? { ...previous } : {};
+
+// Jev's ranking of one set of uploads, or null when it holds fewer than six films we know
+async function rank(collection, identifiers, total) {
   const { identified, films } = bestOfCollection(index, identifiers, { limit: 40 });
-  if (films.length < 6) { console.log(`${collection.id}: ${films.length} films, skipped`); continue; }
+  if (films.length < 6) { console.log(`${collection.id}: ${films.length} films, skipped`); return null; }
   const verdicts = {};
   for (let i = 0; i < films.length; i += 6) {
     await Promise.all(films.slice(i, i + 6).map(async f => { const v = await judge(collection, f.entry); if (v) verdicts[f.id] = v; }));
   }
   const ranked = rankByJudgement(films, verdicts);
-  const count = choice => Object.values(verdicts).filter(v => v.choice === choice).length;
-  out[collection.id] = {
+  const entry = {
     title: collection.title,
     total,
     identified,
-    highlights: count('highlight'),
+    highlights: Object.values(verdicts).filter(v => v.choice === 'highlight').length,
     films: ranked.slice(0, 20).map(f => f.id),
     // Left out, with how sure Jev was, so a wrong call is easy to spot and correct
     strays: films.filter(f => verdicts[f.id]?.choice === 'stray' && verdicts[f.id].confidence >= SURE_STRAY).map(f => [f.id, Math.round(verdicts[f.id].confidence * 100) / 100]),
   };
-  console.log(`${collection.id}: ${identified} of ${total} identified, ${count('highlight')} highlights, ${out[collection.id].strays.length} strays left out | ${ranked.slice(0, 5).map(f => f.entry.t).join('; ')}`);
+  console.log(`${collection.id}: ${identified} of ${total} identified, ${entry.highlights} highlights, ${entry.strays.length} strays left out | ${ranked.slice(0, 5).map(f => f.entry.t).join('; ')}`);
+  return entry;
+}
+
+if (!flag('genres-only')) {
+  for (const collection of await collections()) {
+    const { identifiers, total } = await collectionUploads(collection.id);
+    const entry = await rank(collection, identifiers, total);
+    if (entry) out[collection.id] = entry;
+  }
+}
+
+// Browse's All Films: every genre the index knows, and all of them together ('genre:all'), ranked
+// the same way, as if each were a collection of everything we have identified in it. Cartoons
+// only count under Animation and Family, as in browse.
+if (!arg('only')) {
+  const genres = [...new Set(Object.values(index).flatMap(e => e.g || []))].sort();
+  for (const genre of ['all', ...genres]) {
+    const ids = Object.keys(index).filter(id => genre === 'all' || (index[id].g?.includes(genre) && !cartoonOutOfPlace(index[id].g, genre)));
+    const title = genre === 'all' ? 'everything we have found' : genre;
+    const description = genre === 'all'
+      ? 'Every film on the Internet Archive that this site has identified: public domain classics, orphan works, cult films and whatever else uploaders kept.'
+      : `${genre} films on the Internet Archive that this site has identified: public domain classics, orphan works and cult films.`;
+    const entry = await rank({ id: `genre:${genre}`, title, description }, ids, ids.length);
+    if (entry) out[`genre:${genre}`] = entry;
+  }
 }
 fs.writeFileSync(OUT, `${JSON.stringify({ model: MODEL, builtAt: new Date().toISOString().slice(0, 10), collections: out })}\n`);
 console.log(`\n${Object.keys(out).length} collections in public/collections.json, Jev cost $${cost.toFixed(4)}`);
