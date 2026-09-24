@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { browsesIndex, indexFilms, pageOf, PAGE } from './indexBrowse.js';
-import { ALL_FILMS } from './archive.js';
+import { browsesIndex, indexFilms, pageOf, PAGE, betterUpload } from './indexBrowse.js';
+import { ALL_FILMS, betterCopy } from './archive.js';
 
 const index = {
   peewee: { i: 1, t: "Pee-wee's Big Adventure", y: 1985, p: '/a.jpg', v: 7.0, k: 900, c: 0.95, g: ['Comedy', 'Adventure'], l: 91, d: 90 },
@@ -59,4 +59,22 @@ test('pageOf slices 24 at a time and says when more remain', () => {
   const second = pageOf(list, 2);
   assert.deepEqual(second.movies.map(m => m.identifier), ['f24', 'f25', 'f26']);
   assert.ok(!second.more);
+});
+
+test("of two copies of one film, the one Archive.org's visitors chose plays", () => {
+  // Night of the Living Dead on Archive.org: the DVD copy has 774 favourites, the iPod one 10
+  const dvd = { title: 'Night of the Living Dead', favorites: 774, sizeMB: 5003 };
+  const ipod = { title: 'Night of the Living Dead', favorites: 10, sizeMB: 9000 };
+  assert.equal(betterCopy(ipod, dvd), dvd, 'twice the favourites beats a bigger file');
+  const hd = { title: 'Night of the Living Dead 1080p', favorites: 579, sizeMB: 62255 };
+  assert.equal(betterCopy(dvd, hd), hd, 'close on favourites, so the title saying 1080p decides');
+  const panned = { ...hd, favorites: 2000, reviews: 4, rating: 1.5 };
+  assert.equal(betterCopy(panned, dvd), dvd, 'several reviewers panning a copy outweighs its favourites');
+  assert.equal(betterCopy({ favorites: 3, sizeMB: 1 }, { favorites: 0, sizeMB: 2 }).sizeMB, 2, 'a handful of favourites says nothing');
+
+  const entry = (e) => ({ c: 0.9, d: 90, i: 10331, ...e });
+  const pick = (...pairs) => pairs.sort(betterUpload)[0][0];
+  assert.equal(pick(['surest', entry({ c: 0.99, f: 12 })], ['loved', entry({ c: 0.9, f: 774 })]), 'loved');
+  assert.equal(pick(['loved', entry({ f: 774, bad: 1 })], ['plain', entry({ f: 5 })]), 'plain');
+  assert.equal(pick(['loved-trailer', entry({ d: 2, f: 900 })], ['feature', entry({})]), 'feature', 'the full-length one still comes first');
 });

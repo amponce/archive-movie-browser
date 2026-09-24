@@ -27,7 +27,7 @@ test('getMovieByIdentifier normalizes Archive.org metadata', async () => {
     assert.deepEqual(movie, {
       id: 'example-film', identifier: 'example-film', title: 'Example Film',
       year: 1954, runtimeMinutes: 90, runtime: '1:30:00', genres: ['Drama', 'Sci-Fi'], tags: ['science fiction', 'Drama'],
-      downloads: 42, sizeMB: null, rating: null, description: 'A test movie.', creator: 'Test Director',
+      downloads: 42, sizeMB: null, rating: null, reviews: 0, favorites: 0, description: 'A test movie.', creator: 'Test Director',
       archiveUrl: 'https://archive.org/details/example-film',
       thumbnailUrl: 'https://archive.org/services/img/example-film',
       embedUrl: 'https://archive.org/embed/example-film', date: '1954-01-01', publicDate: undefined
@@ -824,4 +824,14 @@ test('Archive.org query syntax in the search box runs as written; titles with co
   assert.ok(!query.includes('title:(mediatype'), 'not broken into words');
   // our filters still narrow it
   assert.ok(archiveService.buildQuery({ searchQuery: q, decade: 1980 }).includes(' AND ((date:[1980-01-01'));
+});
+
+test('identifierQueries keeps every search under the length Archive.org takes, in order', async () => {
+  const { identifierQueries } = await import('./archive.js');
+  const ids = Array.from({ length: 300 }, (_, i) => `a_rather_long_upload_identifier_${i}`);
+  const queries = identifierQueries(ids);
+  assert.ok(queries.length > 1);
+  assert.ok(queries.every(({ q }) => q.length <= 2000));
+  assert.deepEqual(queries.flatMap(({ ids: batch }) => batch), ids);
+  assert.equal(queries[0].q.slice(0, 51), 'identifier:("a_rather_long_upload_identifier_0" OR ');
 });

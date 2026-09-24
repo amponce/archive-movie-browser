@@ -222,7 +222,33 @@ function qualityScore(movie) {
   return (title.match(HIGH_QUALITY)?.length || 0) - (title.match(LOW_QUALITY)?.length || 0);
 }
 
+// What Archive.org's visitors say about two copies of one film: a copy several reviewers panned
+// (usually the picture or the sound) loses, then one with at least twice the favourites wins.
+// Takes { favorites, panned }; above 0 when a is the one people chose, 0 when they say nothing.
+export const panned = ({ reviews, rating }) => reviews >= 3 && rating > 0 && rating <= 2;
+export function byAudience(a, b) {
+  if (a.panned !== b.panned) return a.panned ? -1 : 1;
+  const [fa, fb] = [a.favorites || 0, b.favorites || 0];
+  return Math.max(fa, fb) >= 10 && (fa >= 2 * fb || fb >= 2 * fa) ? Math.sign(fa - fb) : 0;
+}
+
+// Identifiers split into searches Archive.org will take: identifier:("a" OR "b" ...), each
+// under the ~2,200 characters a query can run to before Archive.org refuses it
+export function identifierQueries(ids, max = 2000) {
+  const queries = [];
+  let batch = [];
+  const query = list => `identifier:(${list.map(id => `"${id}"`).join(' OR ')})`;
+  for (const id of ids) {
+    if (batch.length && query([...batch, id]).length > max) { queries.push({ ids: batch, q: query(batch) }); batch = []; }
+    batch.push(id);
+  }
+  if (batch.length) queries.push({ ids: batch, q: query(batch) });
+  return queries;
+}
+
 export function betterCopy(a, b) {
+  const audience = byAudience({ favorites: a.favorites, panned: panned(a) }, { favorites: b.favorites, panned: panned(b) });
+  if (audience !== 0) return audience > 0 ? a : b;
   const quality = qualityScore(a) - qualityScore(b);
   if (quality !== 0) return quality > 0 ? a : b;
   const size = (a.sizeMB || 0) - (b.sizeMB || 0);
@@ -261,6 +287,8 @@ class ArchiveService {
       downloads: movie.downloads || 0,
       sizeMB: movie.item_size ? Math.round(movie.item_size / 1e6) : null,
       rating: movie.avg_rating || null,
+      reviews: movie.num_reviews || 0,
+      favorites: movie.num_favorites || 0,
       description: movie.description,
       creator: Array.isArray(movie.creator) ? movie.creator[0] : movie.creator,
       archiveUrl: `https://archive.org/details/${movie.identifier}`,
@@ -557,6 +585,8 @@ class ArchiveService {
       'description',
       'creator',
       'avg_rating',
+      'num_reviews',
+      'num_favorites',
       'date',
       'publicdate',
       'item_size'

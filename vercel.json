@@ -45,6 +45,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/from-archive(/)?",
+      "destination": "/index.html"
+    },
+    {
       "source": "/lists/:slug",
       "destination": "/index.html"
     },

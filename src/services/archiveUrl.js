@@ -39,19 +39,23 @@ export function parseArchiveUrl(text) {
   return file ? { type: 'film', identifier, file } : { type: 'film', identifier };
 }
 
-// /details/@someone/lists/1/any-name: a list someone keeps on Archive.org
+// /details/@someone/lists/1/any-name: a list someone keeps on Archive.org.
+// /details/@someone (or any other tab of their page): that person's favourites and lists.
 const USER = /^[A-Za-z0-9._-]{1,64}$/;
 function listFromPath(pathname) {
-  const [section, user, lists, id] = pathname.split('/').filter(Boolean);
-  if (section !== 'details' || !user?.startsWith('@') || lists !== 'lists') return null;
+  const [section, user, tab, id] = pathname.split('/').filter(Boolean);
+  if (section !== 'details' || !user?.startsWith('@')) return null;
   const name = user.slice(1);
-  return USER.test(name) && /^\d{1,6}$/.test(id || '') ? { type: 'list', user: name, id: Number(id) } : null;
+  if (!USER.test(name)) return null;
+  if (tab !== 'lists') return { type: 'profile', user: name };
+  if (id === undefined) return { type: 'profile', user: name };
+  return /^\d{1,6}$/.test(id) ? { type: 'list', user: name, id: Number(id) } : null;
 }
 
 // The same path on this site: orphanedfilms.com/details/... is archive.org/details/... opened here
-export function parseSitePath(pathname) {
+export function parseSitePath(pathname, search = '') {
   if (!pathname.startsWith('/details/')) return null;
-  return listFromPath(pathname) || parseArchiveUrl(`https://archive.org${pathname}`);
+  return listFromPath(pathname) || parseArchiveUrl(`https://archive.org${pathname}${search}`);
 }
 
 const safeDecode = (text) => { try { return decodeURIComponent(text); } catch { return text; } };
@@ -60,6 +64,7 @@ const safeDecode = (text) => { try { return decodeURIComponent(text); } catch { 
 export function pathFor(link) {
   if (link.type === 'film') return `/browse#${encodeURIComponent(link.identifier)}${link.file ? `/${encodeURIComponent(link.file)}` : ''}`;
   if (link.type === 'list') return `/details/@${link.user}/lists/${link.id}`;
+  if (link.type === 'profile') return `/details/@${link.user}`;
   // A collection opens on all its films, unless it stands for a genre (Film_Noir opens that pill)
   if (link.type === 'collection') return `/browse?collection=${encodeURIComponent(link.id)}${VIDEO_CATEGORIES.some(c => c.id === link.id && c.asGenre) ? '' : '&genre=all'}${link.newest ? '&sort=publicdate+desc' : ''}`;
   return `/browse?q=${encodeURIComponent(link.query)}`;
@@ -69,8 +74,10 @@ export function pathFor(link) {
 // that arrived as search text (/browse?q=https://archive.org/...): where it should really go.
 // null when the address is already the right one.
 export function redirectFor(pathname, search = '') {
-  const link = parseSitePath(pathname);
-  if (link) return link.type === 'list' ? null : pathFor(link);
+  const link = parseSitePath(pathname, search);
+  if (link?.type === 'list') return null;
+  // A profile's other tabs (/details/@name/lists, ?tab=uploads) all open the one profile page
+  if (link) return pathFor(link) === pathname.replace(/\/+$/, '') ? null : pathFor(link);
   const q = new URLSearchParams(search).get('q');
   const pasted = q && parseArchiveUrl(q);
   return pasted ? pathFor(pasted) : null;
