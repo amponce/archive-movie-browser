@@ -14,6 +14,8 @@ const TMDB_IMAGE = 'https://image.tmdb.org/t/p/w342';
 const listsDir = new URL('../src/lists/', import.meta.url);
 const LISTS = collectLists(readdirSync(listsDir).filter(f => f.endsWith('.json')).map(f => JSON.parse(readFileSync(new URL(f, listsDir), 'utf8'))));
 const index = JSON.parse(readFileSync(new URL('../public/poster-index.json', import.meta.url), 'utf8')).films;
+// A film's one-line note from a hand-picked list, for the guide's description
+const NOTES = Object.fromEntries(LISTS.flatMap(list => list.films.filter(f => f.note).map(f => [f.id, f.note])));
 
 // Every list is a channel, numbered by its place in src/programme/channels.json so a channel
 // keeps its number when lists are added; a list not placed there yet goes on the end
@@ -40,6 +42,8 @@ function record(id) {
     url: videoUrl(id, known.file),
     rating: entry?.v ? Math.round(entry.v * 10) / 10 : null, // TMDB, out of 10
     critics: entry?.rt ?? null, // Rotten Tomatoes (or Metacritic) percent, from scripts/backfill-critics.mjs
+    genres: entry?.g || [],
+    note: NOTES[id] || null,
   };
 }
 
@@ -72,7 +76,7 @@ export async function personalChannel(ids, { now = Date.now(), hours = 6 } = {})
   return {
     number: 0, id: 'mine', name: 'A shared channel', blurb: 'A channel someone made and shared.', lineup,
     now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
-    programmes: programmesBetween(lineup, now, to).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, startsAt: p.startsAt, endsAt: p.endsAt })),
+    programmes: programmesBetween(lineup, now, to).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, genres: p.film.genres || [], note: p.film.note || null, startsAt: p.startsAt, endsAt: p.endsAt })),
   };
 }
 
@@ -90,7 +94,7 @@ export function schedule({ now = Date.now(), hours = 6 } = {}) {
       blurb: channel.blurb,
       lineup,
       now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
-      programmes: programmesBetween(lineup, now, to).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, startsAt: p.startsAt, endsAt: p.endsAt })),
+      programmes: programmesBetween(lineup, now, to).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, genres: p.film.genres || [], note: p.film.note || null, startsAt: p.startsAt, endsAt: p.endsAt })),
     };
   });
   return { now, epochNote: 'Every channel plays its lineup in order from a fixed moment, so this guide is the same for everyone.', channels: channels.filter(c => c.lineup.length) };
@@ -108,6 +112,31 @@ export function toM3U({ channels }) {
   return `${lines.join('\n')}\n`;
 }
 
+// An M3U for IPTV apps (Jellyfin, TiviMate, Kodi): one entry per channel, matched to the XMLTV
+// guide by tvg-id, each pointing at /api/tv/live/<id>, which sends the app to the film on now
+// `site`: where this copy is served (a preview, a fork, local), so its addresses work there too
+export function toChannelsM3U({ channels }, site = SITE) {
+  const lines = [`#EXTM3U x-tvg-url="${site}/api/tv/guide.xml" url-tvg="${site}/api/tv/guide.xml"`, `#PLAYLIST:Orphaned Films`, `#EXTENC:UTF-8`];
+  for (const channel of channels) {
+    const logo = channel.lineup.find(film => film.poster)?.poster || '';
+    lines.push(`#EXTINF:-1 tvg-id="${channel.id}" tvg-chno="${channel.number}" tvg-name="${escapeAttr(channel.name)}" tvg-logo="${logo}" group-title="Orphaned Films",${channel.number} ${channel.name}`);
+    lines.push(`${site}/api/tv/live/${channel.id}`);
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+// Where a channel's live address leads: the stream of the film on air now, and after it the next
+// few, for when a file has gone from the Archive mid-week (api/tv.js tries them in order).
+// ponytail: the app starts that film from its beginning (a plain file cannot be told to start
+// mid-way) and asks again when it ends; true mid-film joins need a server that restreams.
+// The streams to try, the film on now first, then the next few on that channel
+export function liveStreams({ channels }, id) {
+  const channel = channels.find(c => c.id === id);
+  if (!channel?.now) return [];
+  const later = channel.programmes.filter(p => p.startsAt >= channel.now.endsAt).map(p => channel.lineup.find(f => f.id === p.id)?.url);
+  return [...new Set([channel.now.film.url, ...later].filter(Boolean))].slice(0, 4);
+}
+
 // XMLTV for the next window, one <channel> per list and one <programme> per airing
 export function toXMLTV({ channels }) {
   const stamp = ms => new Date(ms).toISOString().replace(/[-:]|\.\d{3}/g, '').replace('T', '').replace('Z', ' +0000');
@@ -115,7 +144,10 @@ export function toXMLTV({ channels }) {
   for (const c of channels) out.push(`  <channel id="${c.id}"><display-name>${esc(c.name)}</display-name><display-name>${c.number}</display-name><url>${SITE}/tv#${c.id}</url></channel>`);
   for (const c of channels) {
     for (const p of c.programmes) {
-      out.push(`  <programme start="${stamp(p.startsAt)}" stop="${stamp(p.endsAt)}" channel="${c.id}"><title>${esc(p.title)}</title>${p.year ? `<date>${p.year}</date>` : ''}${p.poster ? `<icon src="${p.poster}"/>` : ''}<url>${SITE}/browse#${encodeURIComponent(p.id)}</url></programme>`);
+      // Children in the DTD's order: title, desc, date, category, length, icon, url
+      const minutes = Math.round((p.endsAt - p.startsAt) / 60000);
+      const desc = p.note || [p.year, p.genres.join(', '), `${minutes} min`].filter(Boolean).join(' · ');
+      out.push(`  <programme start="${stamp(p.startsAt)}" stop="${stamp(p.endsAt)}" channel="${c.id}"><title>${esc(p.title)}</title><desc>${esc(desc)}</desc>${p.year ? `<date>${p.year}</date>` : ''}${p.genres.map(g => `<category lang="en">${esc(g)}</category>`).join('')}<length units="minutes">${minutes}</length>${p.poster ? `<icon src="${p.poster}"/>` : ''}<url>${SITE}/browse#${encodeURIComponent(p.id)}</url></programme>`);
     }
   }
   out.push('</tv>');

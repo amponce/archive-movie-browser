@@ -25,6 +25,14 @@
       "destination": "/api/tv?format=xml"
     },
     {
+      "source": "/api/tv/channels.m3u",
+      "destination": "/api/tv?format=channels"
+    },
+    {
+      "source": "/api/tv/live/:channel",
+      "destination": "/api/tv?live=:channel"
+    },
+    {
       "source": "/browse(/)?",
       "destination": "/index.html"
     },
@@ -46,6 +54,10 @@
     },
     {
       "source": "/from-archive(/)?",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/iptv(/)?",
       "destination": "/index.html"
     },
     {
