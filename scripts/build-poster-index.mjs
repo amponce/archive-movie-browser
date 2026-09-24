@@ -12,6 +12,9 @@
 //   npm run index -- --cross Horror       also that genre in every decade (a genre pill plus a
 //                                        decade is a common view, and its tail is never in the
 //                                        genre walk or the decade walk alone)
+//   npm run index -- --query "subject:horror AND year:[1980 TO 1989]"   also the top uploads of any
+//                                        Archive.org query (outside our film collections too; trailers
+//                                        are left out, as on the site)
 //   npm run index -- --retry-none        decide again the uploads marked 'none', with OMDb as a
 //   npm run index -- --retry-none --only a,b  (just those identifiers: a dry run)
 //                                        second candidate source (needs OMDB_API_KEY); a
@@ -39,11 +42,12 @@ const collections = args.collections ? String(args.collections).split(',') : VID
 
 // What to walk: each collection on its own, and with --views every genre pill and every decade
 // across All Films, since those are the lists visitors see first. Each walk takes its top LIMIT.
-const walks = collections.map(collection => ({ name: collection, options: { collection } }));
+const walks = args['only-query'] ? [] : collections.map(collection => ({ name: collection, options: { collection } })); // --only-query: just the --query walk
 if (args.views) {
   for (const genre of STANDARD_GENRES) walks.push({ name: `genre ${genre}`, options: { collection: ALL_FILMS, genre } });
   for (const decade of DECADES) walks.push({ name: `${decade}s`, options: { collection: ALL_FILMS, decade } });
 }
+if (args.query) walks.push({ name: `query ${args.query}`, options: { searchQuery: `mediatype:movies AND (${String(args.query)})` } });
 if (args.cross) {
   for (const genre of String(args.cross).split(',').map(g => g.trim())) {
     for (const decade of DECADES) walks.push({ name: `${genre} ${decade}s`, options: { collection: ALL_FILMS, genre, decade } });
