@@ -13,6 +13,6 @@ Useful things to include: what you found, how to reproduce it, and what an attac
 
 ## What isn't
 
-- The TMDB key in the site's JavaScript bundle. Any `VITE_` variable is public by design; it is a free, read-only key. (Keys that must stay private, like the one used to build the poster index, live only in GitHub's encrypted secrets and never reach the browser.)
+- A TMDB key a visitor adds in the site's settings, which stays in that visitor's browser. (The site's own TMDB key is read only on the server by `/api/tmdb`; keys used to build the poster index live only in GitHub's encrypted secrets.)
 - Content hosted on Archive.org itself: report that to the [Internet Archive](https://archive.org/about/contact).
 - Vulnerabilities in dependencies with no impact here. Dependabot already watches them.
