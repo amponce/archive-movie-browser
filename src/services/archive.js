@@ -80,7 +80,25 @@ const NOT_TRAILERS = ' AND NOT subject:(trailer* OR teaser*)'; // short: the lon
 // a known field name straight before a colon and a value, so "2001: A Space Odyssey" stays a title
 const FIELDS = 'mediatype|subject|year|date|title|creator|collection|identifier|description|language|publicdate|addeddate|downloads|format|licenseurl|avg_rating|num_reviews|runtime|publisher|contributor|coverage|source';
 const QUERY_SYNTAX = new RegExp(`(^|[\\s(])(${FIELDS}):[^\\s]`, 'i');
-export const isArchiveQuery = text => QUERY_SYNTAX.test(String(text || ''));
+// Only when its brackets and quotes close within it: the query runs wrapped in brackets with our
+// filters after it, so it must stay inside them. Backslashes and /regex/ are not taken (they hide
+// brackets from this count), nor ? and ~ (one-letter wildcards and fuzzy terms, which the word
+// check in policy.js cannot read). Anything else is searched as plain words.
+function balanced(text) {
+  if (/[\\/?~]/.test(text)) return false;
+  let groups = 0, ranges = 0, quoted = false;
+  for (const ch of text) {
+    if (ch === '"') quoted = !quoted;
+    else if (quoted) continue;
+    else if (ch === '(') groups++;
+    else if (ch === ')' && --groups < 0) return false;
+    else if (ch === '[' || ch === '{') ranges++;
+    else if ((ch === ']' || ch === '}') && --ranges < 0) return false;
+  }
+  return !quoted && groups === 0 && ranges === 0;
+}
+const RAW_MAX = 300;
+export const isArchiveQuery = text => QUERY_SYNTAX.test(String(text || '')) && balanced(String(text || '').slice(0, RAW_MAX));
 const MIN_MB_PER_MINUTE = 2.5;
 const FILM_WITH_TRAILERS = /(\b(with|and|plus)|[&+])\s+(\w+\s+)?trailers?\b/i;
 
@@ -397,8 +415,9 @@ class ArchiveService {
   searchWords(searchQuery) {
     // Keep apostrophes inside a word (bernie's, wasn't) so we can search both spellings.
     // Quotes and backslashes are still dropped: they are not letters, digits, or apostrophes.
-    // A phone types the curly ’ (and some keyboards ʼ): the same mark
-    return String(searchQuery || '').toLowerCase().replace(/[\u2018\u2019\u02bc]/g, "'").match(/[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)*/gu)?.slice(0, 12);
+    // A phone types the curly ’ (and some keyboards ʼ, ´, ` or ′): the same mark. Combining
+    // marks belong to their word: Hindi vowel signs ("शोले"), accents typed as two characters.
+    return String(searchQuery || '').toLowerCase().replace(/[\u2018\u2019\u02bc\u00b4\u0060\u2032]/g, "'").match(/[\p{L}\p{N}][\p{L}\p{M}\p{N}]*(?:'[\p{L}\p{N}][\p{L}\p{M}\p{N}]*)*/gu)?.slice(0, 12);
   }
 
   // A word with an apostrophe must match both spellings: Archive titles often omit it.
@@ -431,7 +450,7 @@ class ArchiveService {
     // Match every search word (a phrase match finds nothing for "night living").
     // Only letters and digits survive - Archive.org's backend errors on escaped quotes.
     const words = isArchiveQuery(searchQuery) ? null : this.searchWords(searchQuery);
-    if (isArchiveQuery(searchQuery)) query = `(${searchQuery.slice(0, 300)})`; // their query, as written
+    if (isArchiveQuery(searchQuery)) query = `(${searchQuery.slice(0, RAW_MAX)})`; // their query, as written
     if (words) {
       // A search looks in every collection the app offers, not just the selected one
       query = `collection:(${VIDEO_CATEGORIES.map(c => c.id).join(' OR ')})`;

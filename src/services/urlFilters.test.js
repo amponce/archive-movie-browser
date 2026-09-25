@@ -102,3 +102,7 @@ test('a collection the app does not list is still accepted when it looks like an
   assert.equal(parseFilters('?collection=movies').collection, 'movies');
   assert.equal(parseFilters('?collection=bad%20id%3Cscript%3E').collection, 'all');
 });
+
+test('a search in the address is cut to what the search box takes', () => {
+  assert.equal(parseFilters(`?q=${'a'.repeat(5000)}`).q.length, 200);
+});

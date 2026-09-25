@@ -851,3 +851,20 @@ test('an uploader subject named like an object property is not a genre', () => {
     assert.deepEqual(archiveService.normalizeMovie({ identifier: 'x', title: 'x', subject: [subject] }).genres, ['Uncategorized'], subject);
   }
 });
+
+test('Archive.org query syntax cannot close its brackets early and step past our filters', async () => {
+  const { isArchiveQuery } = await import('./archive.js');
+  for (const text of ['subject:horror) OR (mediatype:texts', 'title:x) OR identifier:*', 'title:(dead', 'title:"dead', 'year:[1980 TO',
+    'title:/(/) OR (x:/)/', 'title:\\) OR (mediatype:texts', 'title:")" x) OR (y "("', 'title:ca?t', 'title:cat~1']) {
+    assert.ok(!isArchiveQuery(text), text);
+    const query = archiveService.buildQuery({ searchQuery: text, collection: 'all' });
+    assert.ok(query.startsWith('collection:('), `${text} -> ${query.slice(0, 60)}`); // searched as words instead
+  }
+  for (const text of ['title:(night OR day) AND year:[1980 TO 1989]', 'title:"a (b"', 'subject:(kung fu) AND date:{1970 TO 1980}']) assert.ok(isArchiveQuery(text), text);
+});
+
+test('search words keep their combining marks and every apostrophe a keyboard types', () => {
+  assert.deepEqual(archiveService.searchWords('शोले'), ['शोले']);
+  assert.deepEqual(archiveService.searchWords('café noir'), ['café', 'noir']);
+  for (const mark of ['´', '`', '′', '’']) assert.deepEqual(archiveService.searchWords(`o${mark}brien`), ["o'brien"], mark);
+});
