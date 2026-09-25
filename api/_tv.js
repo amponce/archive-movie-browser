@@ -63,6 +63,7 @@ async function recordLive(id) {
     if (isForbidden({ title: data?.metadata?.title, description: data?.metadata?.description, subject: data?.metadata?.subject }) || isForbidden({ title: entry?.t })) throw new Error('not shown here');
     if (file?.length) value = { id, title: entry?.t || data.metadata?.title || id, year: entry?.y || null, poster: entry?.p ? `${TMDB_IMAGE}${entry.p}` : null, seconds: Math.round(Number(file.length)), url: videoUrl(id, file.name) };
   } catch { /* the film just does not air */ }
+  if (measured.size > 2000) measured.clear(); // ponytail: a whole reset, not LRU; lists are what repeat
   measured.set(id, value);
   return value;
 }
@@ -108,7 +109,7 @@ export function toM3U({ channels }) {
   const lines = ['#EXTM3U', `#PLAYLIST:Orphaned Films`, `#EXTENC:UTF-8`, `# Guide: ${SITE}/api/tv/guide.xml`];
   for (const channel of channels) {
     for (const film of channel.lineup) {
-      lines.push(`#EXTINF:${Math.round(film.seconds)} tvg-id="${channel.id}" tvg-chno="${channel.number}" tvg-name="${escapeAttr(channel.name)}" tvg-logo="${film.poster || ''}" group-title="${escapeAttr(channel.name)}",${film.title}${film.year ? ` (${film.year})` : ''}`);
+      lines.push(`#EXTINF:${Math.round(film.seconds)} tvg-id="${channel.id}" tvg-chno="${channel.number}" tvg-name="${escapeAttr(channel.name)}" tvg-logo="${film.poster || ''}" group-title="${escapeAttr(channel.name)}",${oneLine(film.title)}${film.year ? ` (${film.year})` : ''}`);
       lines.push(film.url);
     }
   }
@@ -168,5 +169,9 @@ export function toXMLTV({ channels }) {
   return `${out.join('\n')}\n`;
 }
 
-const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const escapeAttr = s => String(s).replace(/"/g, "'");
+// Titles and names on one line, with no control characters: the playlist is one entry per line,
+// and XML takes none of them
+// eslint-disable-next-line no-control-regex -- control characters are the point
+const oneLine = s => String(s).replace(/[\u0000-\u001f\u007f]+/g, ' ');
+const esc = s => oneLine(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const escapeAttr = s => oneLine(s).replace(/"/g, "'");

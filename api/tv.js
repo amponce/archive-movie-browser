@@ -22,6 +22,19 @@ async function answers(url) {
   return ok;
 }
 
+// A shared channel is looked up on Archive.org, film by film, so it is limited per address per
+// minute (the rest of the service is cached at the edge). Addresses are forgotten each minute.
+const SHARED_PER_MINUTE = 30;
+const hits = new Map();
+let minute = 0;
+function overLimit(ip) {
+  const now = Math.floor(Date.now() / 60_000);
+  if (now !== minute || hits.size > 5000) { hits.clear(); minute = now; }
+  const count = (hits.get(ip) || 0) + 1;
+  hits.set(ip, count);
+  return count > SHARED_PER_MINUTE;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') { res.status(405).end(); return; }
   const format = String(req.query?.format || 'json');
@@ -38,6 +51,7 @@ export default async function handler(req, res) {
       return;
     }
     const mine = String(req.query?.mine || '');
+    if (mine && overLimit(String(req.headers?.['x-forwarded-for'] || 'unknown').split(',')[0].trim())) { res.status(429).json({ error: 'Too many shared channels at once. Try again in a minute.' }); return; }
     // Three days of guide: apps refresh it every 6 to 24 hours and show about two days. It starts
     // six hours back, since an app keeps it for hours and draws a blank before its first entry.
     const hours = format === 'xml' ? 72 : 6;
