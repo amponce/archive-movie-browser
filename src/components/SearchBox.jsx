@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useId } from 'react';
 import { Search, RefreshCw, Loader2, Film, Filter, Library, Clock, Link2, Tag, Trash2 } from 'lucide-react';
 import archiveService, { STANDARD_GENRES, BROWSABLE_COLLECTIONS, isArchiveQuery } from '../services/archive';
-import { matchRanges, localSuggestions, rememberSearch, indexSuggestions } from '../services/suggest';
+import { matchRanges, localSuggestions, rememberSearch, indexSuggestions, closeTitles } from '../services/suggest';
 import { loadPosterIndex } from '../services/posterIndex';
 import { parseArchiveUrl } from '../services/archiveUrl';
 
@@ -101,11 +101,19 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
     const films = local.filter(s => s.type === 'film');
     const listed = new Set(films.map(s => archiveService.dedupeKey(s.label)));
     // Films the index knows by their real title: the upload may be called something else entirely
-    indexSuggestions(text, index).forEach(hit => {
+    const indexed = indexSuggestions(text, index);
+    indexed.forEach(hit => {
       const key = archiveService.dedupeKey(hit.title);
       if (listed.has(key)) return;
       listed.add(key);
       films.push({ type: 'film', label: hit.title, ranges: hit.ranges, movie: { identifier: hit.identifier, title: hit.title, year: hit.year, fromIndex: true } });
+    });
+    // Nothing by word: the real titles closest to what was typed ("sleep away camp", "nosferato")
+    if (!indexed.length) closeTitles(text, index).forEach(hit => {
+      const key = archiveService.dedupeKey(hit.title);
+      if (listed.has(key)) return;
+      listed.add(key);
+      films.push({ type: 'film', label: hit.title, ranges: [], movie: { identifier: hit.identifier, title: hit.title, year: hit.year, fromIndex: true } });
     });
     remote.films.forEach(movie => {
       const key = archiveService.dedupeKey(movie.title);

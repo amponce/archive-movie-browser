@@ -2,6 +2,8 @@
 // in the text, in any order: "haun hou" matches "House on Haunted Hill".
 // Pure functions; the component decides where the data comes from.
 
+import { isRecent } from './policy.js';
+
 const WORD = /[\p{L}\p{N}]+/gu;
 const words = text => String(text || '').toLowerCase().match(WORD) || [];
 
@@ -63,6 +65,54 @@ export function indexSuggestions(query, index, limit = 6) {
   return hits
     .sort((a, b) => Number(words(b.title)[0]?.startsWith(first)) - Number(words(a.title)[0]?.startsWith(first)) || b.rating - a.rating)
     .slice(0, limit);
+}
+
+// Letters and digits only, no spaces or accents: "Sleep Away Camp" and "Sleepaway Camp" compare equal
+const compact = text => String(text || '').toLowerCase().normalize('NFD').replace(/[^\p{L}\p{N}]/gu, '');
+
+// Edits between two strings (a swapped pair of letters is one), or limit + 1 once it is clearly more
+function edits(a, b, limit) {
+  if (Math.abs(a.length - b.length) > limit) return limit + 1;
+  let before = null;
+  let previous = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const row = [i];
+    let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      row[j] = Math.min(previous[j] + 1, row[j - 1] + 1, previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (before && i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) row[j] = Math.min(row[j], before[j - 2] + 1);
+      best = Math.min(best, row[j]);
+    }
+    if (best > limit) return limit + 1;
+    before = previous;
+    previous = row;
+  }
+  return previous[b.length];
+}
+
+// Films the index knows whose real title is what was typed, give or take spaces and a typo or two:
+// "sleep away camp" is Sleepaway Camp, "nosferato" is Nosferatu. For the type-ahead when word
+// matching finds nothing, and for "Did you mean" when a search does. Best first, one per title.
+export function closeTitles(query, index, limit = 3) {
+  const typed = compact(query);
+  if (typed.length < 4 || !index) return [];
+  const allowed = typed.length >= 9 ? 2 : 1;
+  const best = new Map(); // title -> hit
+  for (const identifier in index) {
+    const entry = index[identifier];
+    if (!entry.t || !entry.p || isRecent(entry.y)) continue; // the site suggests nothing from the last 25 years
+    const title = compact(entry.t);
+    // The whole title, or (for longer searches) the start of it: "nosferatu eine" is Nosferatu, eine Symphonie...
+    let distance = edits(typed, title, allowed);
+    let whole = true;
+    if (distance > allowed && typed.length >= 6 && title.length > typed.length) { distance = edits(typed, title.slice(0, typed.length), allowed); whole = false; }
+    if (distance > allowed) continue;
+    const hit = { identifier, title: entry.t, year: entry.y, distance, whole, rating: entry.v || 0 };
+    const seen = best.get(entry.t);
+    if (!seen || hit.distance < seen.distance || (hit.distance === seen.distance && hit.rating > seen.rating)) best.set(entry.t, hit);
+  }
+  // Fewest edits first, then a whole title before one that only starts that way, then the better rated
+  return [...best.values()].sort((a, b) => a.distance - b.distance || Number(b.whole) - Number(a.whole) || b.rating - a.rating).slice(0, limit);
 }
 
 // Tags uploaders have put on the films in a search response, for the type-ahead. Counted from

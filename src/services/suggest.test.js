@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { matchRanges, localSuggestions, rememberSearch, indexSuggestions } from './suggest.js';
+import { closeTitles } from './suggest.js';
 
 test('matchRanges: every typed word must start some word of the text, in any order', () => {
   assert.deepEqual(matchRanges('House on Haunted Hill', 'haun hou'), [[0, 3], [9, 13]]);
@@ -86,4 +87,21 @@ test('indexSuggestions finds a film by its real title, not the upload name, titl
   assert.equal(hits[0].year, 1980);
   assert.deepEqual(indexSuggestions('messiah evil', index).map(h => h.title), ['Messiah of Evil']);
   assert.deepEqual(indexSuggestions('', index), []);
+});
+
+test('closeTitles finds the real title despite spaces and typos, whole titles first, nothing recent', () => {
+  const index = {
+    camp: { i: 1, t: 'Sleepaway Camp', y: 1983, p: '/a.jpg', v: 6 },
+    nos: { i: 2, t: 'Nosferatu', y: 1922, p: '/b.jpg', v: 8 },
+    cat: { i: 3, t: "Frankenstein's Cat", y: 1942, p: '/c.jpg', v: 7 },
+    frank: { i: 4, t: 'Frankenstein', y: 1931, p: '/d.jpg', v: 6 },
+    recent: { i: 5, t: 'Nosferatu', y: 2024, p: '/e.jpg', v: 9 },
+    noposter: { i: 6, t: 'Sleepaway Camp II', y: 1988 },
+  };
+  assert.deepEqual(closeTitles('sleep away camp', index).map(h => h.title), ['Sleepaway Camp']);
+  assert.deepEqual(closeTitles('sleepawya camp', index).map(h => h.title), ['Sleepaway Camp']);
+  assert.deepEqual(closeTitles('nosferato', index).map(h => [h.title, h.year]), [['Nosferatu', 1922]]);
+  assert.equal(closeTitles('frankenstien', index)[0].title, 'Frankenstein');
+  assert.deepEqual(closeTitles('zzz', index), [], 'too short to guess');
+  assert.deepEqual(closeTitles('citizen kane', index), []);
 });

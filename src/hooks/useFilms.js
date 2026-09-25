@@ -16,6 +16,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [nextPage, setNextPage] = useState(null); // { from: 'index' | 'archive', page }, null when exhausted
+  const [closeSpellings, setCloseSpellings] = useState(false); // nothing matched as typed; these are near spellings
 
   // Only the latest request may update state (older responses can arrive last)
   const latestRequest = useRef(0);
@@ -34,6 +35,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
       seenTitles.current = new Set();
       seenFilms.current = new Set();
       setMovies([]);
+      setCloseSpellings(false);
     }
     setLoading(true);
     setError(null);
@@ -66,6 +68,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
         collection,
         decade,
         seenTitles: seenTitles.current,
+        fuzzy: Boolean(target.fuzzy), // Load more after a close-spellings answer keeps to close spellings
         // The server query already applied the genre, so only runtime is checked here, and
         // cartoons stay under Animation and Family
         filter: movie => runtime(withIndexedLength(movie)) && !isCartoonFor(movie, genre),
@@ -82,7 +85,9 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
       if (requestId !== latestRequest.current) return;
 
       setMovies(prev => (append ? [...prev, ...batch] : batch));
-      setNextPage(result.nextPage ? { from: 'archive', page: result.nextPage } : null);
+      const fuzzy = Boolean(target.fuzzy || result.closeSpellings);
+      if (result.closeSpellings) setCloseSpellings(true);
+      setNextPage(result.nextPage ? { from: 'archive', page: result.nextPage, fuzzy } : null);
     } catch (err) {
       if (requestId !== latestRequest.current) return;
       setError(err.message);
@@ -100,5 +105,5 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
   // After an error: carry on from where the list stopped, or start over if there is nothing yet
   const retry = useCallback(() => fetchPage(movies.length > 0 && nextPage ? nextPage : FIRST), [fetchPage, movies.length, nextPage]);
 
-  return { movies, loading, error, nextPage, loadMore, retry };
+  return { movies, loading, error, nextPage, loadMore, retry, closeSpellings };
 }

@@ -3,13 +3,15 @@ import { Film, Loader2 } from 'lucide-react';
 import MovieCard from '../MovieCard';
 import tmdbService from '../../services/tmdb';
 import { track } from '../../services/analytics';
+import { loadPosterIndex } from '../../services/posterIndex';
+import { closeTitles } from '../../services/suggest';
 
 // The films, and every state around them: the line that says what is showing, errors, the
 // first-batch spinner, the grid or list, the empty state, the end of the list, and Load more.
 // `films` is what useFilms returns; `browse` is useBrowseFilters.
 export default function FilmGrid({ films, browse, viewMode, onOpen, linkError }) {
-  const { movies, loading, error, nextPage, loadMore, retry } = films;
-  const { filters, currentCategory, canWiden, widen } = browse;
+  const { movies, loading, error, nextPage, loadMore, retry, closeSpellings } = films;
+  const { filters, currentCategory, canWiden, widen, search, typeSearch } = browse;
   const { activeSearch, genre, contentType, minRuntime, decade, sort } = filters;
 
   // Load more keeps focus on the button and tells a screen reader how many arrived (#177)
@@ -29,6 +31,42 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
     loadMore();
   };
 
+  // "Did you mean": films the index knows whose real title is close to what was searched. Offered
+  // when nothing matched as typed, or when the closest title is a correction ("nosferato" can match
+  // one stray upload, and Nosferatu is still what was meant); not when the search names a title.
+  const [didYouMean, setDidYouMean] = useState([]);
+  const settled = activeSearch && !loading;
+  const empty = movies.length === 0;
+  useEffect(() => {
+    if (!settled) { setDidYouMean([]); return undefined; }
+    let current = true;
+    loadPosterIndex().then(index => {
+      if (!current) return;
+      // Not a title already at the top of the results: then it was found, spelled either way
+      const letters = text => String(text).toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+      const top = movies.slice(0, 6).map(movie => letters(movie.title));
+      const found = hit => letters(hit.title) === letters(activeSearch) || top.some(title => title.includes(letters(hit.title)));
+      const hits = closeTitles(activeSearch, index);
+      // Nothing matched as typed: the closest few. Results already: only the one closest title,
+      // when it is a correction and not among them ("nosferato" found one stray upload)
+      if (empty || closeSpellings) setDidYouMean(hits.filter(hit => !found(hit)));
+      else setDidYouMean(hits[0] && hits[0].distance > 0 && !found(hits[0]) ? [hits[0]] : []);
+    });
+    return () => { current = false; };
+  }, [settled, activeSearch, empty, closeSpellings, movies]);
+  const suggestion = didYouMean.length > 0 && (
+    <p className="text-sm text-muted">
+      Did you mean{' '}
+      {didYouMean.map((hit, i) => (
+        <React.Fragment key={hit.identifier}>
+          {i > 0 && (i === didYouMean.length - 1 ? ' or ' : ', ')}
+          <button type="button" data-track="did-you-mean" className="text-bone underline hover:text-signal" onClick={() => { typeSearch(hit.title); search(hit.title); }}>{hit.title}</button>
+          {hit.year && ` (${hit.year})`}
+        </React.Fragment>
+      ))}?
+    </p>
+  );
+
   // A single collection can be small, so offer the wider look with the same filters
   const widenButton = <button onClick={widen} className="btn-ghost mt-3">Look in All Films instead</button>;
 
@@ -41,6 +79,7 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
           {genre !== 'all' && ` in ${genre}`}
           {!activeSearch && ` from ${currentCategory.name}`}
           {activeSearch && ` for "${activeSearch}" across all collections`}
+          {closeSpellings && ' (nothing matched as typed; these are close spellings)'}
         </span>
         {contentType !== 'trailers' && minRuntime > 0 && (
           <>
@@ -74,6 +113,8 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
         </div>
       )}
 
+      {movies.length > 0 && suggestion && <div className="mb-4">{suggestion}</div>}
+
       {movies.length > 0 && (
         <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4' : 'space-y-3'}>
           {movies.map((movie) => <MovieCard key={movie.identifier} movie={movie} viewMode={viewMode} onPlay={onOpen} />)}
@@ -85,6 +126,7 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
           <Film className="w-16 h-16 mx-auto mb-4 opacity-30" />
           <p className="text-lg">No movies found matching your criteria</p>
           <p className="text-sm mt-2">Try adjusting the filters or search query</p>
+          {suggestion && <div className="mt-4">{suggestion}</div>}
           {canWiden && widenButton}
         </div>
       )}
