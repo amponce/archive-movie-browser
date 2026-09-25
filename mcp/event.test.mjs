@@ -55,6 +55,8 @@ test('one address cannot flood the counters', async t => {
 
 test('a database failure is a 503, never an exception', async t => {
   t.mock.method(globalThis, 'fetch', async () => ({ ok: false, status: 500 }));
+  const later = Date.now() + 3600_000; // past the batch interval, so this event is the one that writes
+  t.mock.method(Date, 'now', () => later);
   t.mock.method(console, 'error', () => {});
   assert.equal((await post({ name: 'Load more', data: {} }, { 'x-forwarded-for': '198.51.100.21' })).status, 503);
 });
