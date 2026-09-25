@@ -88,6 +88,11 @@ export async function visitorToken(ip, userAgent, day) {
 const PACIFIC = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' });
 export const statsDay = (now = new Date()) => PACIFIC.format(now);
 
+// Five-minute windows for "active now"; /stats counts this one and the one before
+const ONLINE_WINDOW = 5 * 60_000;
+const ONLINE_KEEP = 15 * 60;
+export const onlineKey = (now = new Date(), windowsBack = 0) => `stats:online:${Math.floor(now.getTime() / ONLINE_WINDOW) - windowsBack}`;
+
 // The Redis commands for one event. Days and months are Pacific time.
 export function commandsFor({ name, data, visit }, { now = new Date(), visitor } = {}) {
   const day = statsDay(now);
@@ -130,6 +135,9 @@ export function commandsFor({ name, data, visit }, { now = new Date(), visitor }
   commands.push(['LPUSH', 'stats:recent', JSON.stringify({ at: now.toISOString(), name, data })], ['LTRIM', 'stats:recent', 0, RECENT - 1]);
 
   for (const key of new Set(commands.map(command => command[1]))) commands.push(['EXPIRE', key, KEEP_DAYS * 86400]);
+  // Who is here now: every visit that does anything goes into this five minutes' estimate (a
+  // HyperLogLog keeps no ids), gone after fifteen
+  if (visit) commands.push(['PFADD', onlineKey(now), visit], ['EXPIRE', onlineKey(now), ONLINE_KEEP]);
   return commands;
 }
 

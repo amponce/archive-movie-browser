@@ -1,7 +1,7 @@
 // GET /api/stats  (Authorization: Bearer <STATS_TOKEN>): the numbers behind the /stats page.
 import { timingSafeEqual } from 'node:crypto';
 import { redis } from './_redis.js';
-import { statsDay } from './_stats.js';
+import { statsDay, onlineKey } from './_stats.js';
 
 const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'banner', 'tv', 'tuned', 'stayed', 'minutes', 'channel-minutes', 'clicks'];
 const STAGES = ['visited', 'clicked', 'played', 'tuned in', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
@@ -45,6 +45,8 @@ async function read(days, month) {
       ...days.map(day => ['PFCOUNT', `stats:visitors:${day}`]), ['PFCOUNT', `stats:visitors:${month}`],
       // The funnel: how many visits reached each stage, per day
       ...days.slice(-FUNNEL_DAYS).flatMap(day => STAGES.map(stage => ['PFCOUNT', `stats:funnel:${stage}:${day}`])),
+      // Active now: distinct visits in this five-minute window and the last one (5 to 10 minutes)
+      ['PFCOUNT', onlineKey(new Date()), onlineKey(new Date(), 1)],
     ]),
   ]);
 
@@ -60,6 +62,7 @@ async function read(days, month) {
     month,
     days: days.map((day, i) => ({ day, visitors: visitors[i] || 0, events: Object.fromEntries(pairs(reads[i])) })),
     visitorsThisMonth: visitors[DAYS] || 0,
+    activeNow: visitors.at(-1) || 0,
     funnel: days.slice(-FUNNEL_DAYS).map((day, i) => ({ day, ...Object.fromEntries(STAGES.map((stage, j) => [stage, visitors[DAYS + 1 + i * STAGES.length + j] || 0])) })),
     boards,
     titles,

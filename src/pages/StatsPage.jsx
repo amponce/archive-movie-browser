@@ -149,7 +149,7 @@ export default function StatsPage() {
   const forget = () => { try { localStorage.removeItem(KEY); } catch { /* private mode */ } setData(null); setEntered(''); };
   const week = data?.days.slice(-7) || [];
   const tiles = data && [
-    [data.days.at(-1).visitors, 'visitors today'], [data.visitorsThisMonth, 'visitors this month'], [sum(week, 'Page view'), 'page views, 7 days'],
+    [data.activeNow ?? 0, 'active in the last 10 minutes'], [data.days.at(-1).visitors, 'visitors today'], [data.visitorsThisMonth, 'visitors this month'], [sum(week, 'Page view'), 'page views, 7 days'],
     [sum(week, 'Film opened'), 'films opened, 7 days'], [sum(week, 'Seconds watched') / 60, 'minutes watched, 7 days'], [sum(week, 'Play'), 'plays, 7 days'], [sum(week, 'Watched 10 minutes'), 'watched 10+ min, 7 days'], [sum(week, 'Search'), 'searches, 7 days'],
   ];
 
