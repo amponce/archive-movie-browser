@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import { TAKEN_DOWN } from '../services/policy';
+import ContactEmail from '../ui/ContactEmail';
 
 const REQUEST = 'https://github.com/amponce/archive-movie-browser/issues/new?template=removal_request.md&labels=removal&title=Removal+request';
 const ARCHIVE_POLICY = 'https://archive.org/about/terms.php';
@@ -10,7 +11,11 @@ const AGENT = null; // { name, email, address }
 
 // /takedown: how to have a film removed, and what happens when you ask
 export default function TakedownPage() {
-  useEffect(() => { document.title = 'Removing a film | Orphaned Films'; }, []);
+  useEffect(() => {
+    document.title = 'Removing a film | Orphaned Films';
+    // /takedown#contact (linked from the code of conduct): the page draws after the browser's own jump
+    if (window.location.hash) document.getElementById(window.location.hash.slice(1))?.scrollIntoView();
+  }, []);
   const removed = TAKEN_DOWN.filter(t => !t.reason.startsWith('test fixture')).length;
   const ext = { target: '_blank', rel: 'noopener noreferrer', className: 'underline text-bone hover:text-signal' };
   return (
@@ -39,11 +44,21 @@ export default function TakedownPage() {
             or whom you represent, and why. We take it off every part of this site, including search, film pages,
             channels, lists and our MCP server, usually within two days, and tell you when it's done. The request form is public.
           </p>
+          <p className="text-muted leading-relaxed">
+            To ask privately instead, email the same details to <ContactEmail subject="Removal request" />.
+          </p>
           {AGENT && (
             <p className="text-muted leading-relaxed">
               Formal notices under the DMCA can also go to our designated agent: {AGENT.name}, <a href={`mailto:${AGENT.email}`} {...ext}>{AGENT.email}</a>, {AGENT.address}.
             </p>
           )}
+        </section>
+
+        <section id="contact" className="flex flex-col gap-3 scroll-mt-24">
+          <h2 className="display text-2xl">Contact</h2>
+          <p className="text-muted leading-relaxed">
+            For anything else, including a problem with someone's conduct in the project, email <ContactEmail />. Messages are read by the maintainer and kept private.
+          </p>
         </section>
 
         <p className="text-sm text-dim">
