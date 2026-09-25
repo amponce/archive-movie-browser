@@ -1,5 +1,5 @@
 // POST /api/event  { name, data }: one usage event from the site. Counts only; see _stats.js.
-import { validEvent, commandsFor, isBot, visitorToken } from './_stats.js';
+import { validEvent, commandsFor, isBot, visitorToken, statsDay } from './_stats.js';
 import { redis } from './_redis.js';
 
 const PER_MINUTE = 60;
@@ -37,7 +37,7 @@ export async function POST(request) {
   if (!event) return done(400);
 
   const now = new Date();
-  const visitor = event.name === 'Page view' ? await visitorToken(ip, userAgent, now.toISOString().slice(0, 10)) : undefined;
+  const visitor = event.name === 'Page view' ? await visitorToken(ip, userAgent, statsDay(now)) : undefined;
   try {
     await redis(commandsFor(event, { now, visitor }));
   } catch (error) {

@@ -188,11 +188,11 @@ export default function StatsPage() {
               ))}
             </div>
 
-            <Panel title="How far visits got" note="(distinct visits per stage, last 14 days, UTC)">
+            <Panel title="How far visits got" note="(distinct visits per stage, last 14 days, Pacific time)">
               <Funnel days={data.funnel} />
             </Panel>
 
-            <Panel title="Visitors per day" note="(estimated distinct people, last 30 days, UTC)">
+            <Panel title="Visitors per day" note="(estimated distinct people, last 30 days, Pacific time)">
               <DailyChart days={data.days} />
               <details className="mt-3">
                 <summary className="cursor-pointer text-gray-400">Daily numbers as a table</summary>

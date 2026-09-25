@@ -75,9 +75,14 @@ export async function visitorToken(ip, userAgent, day) {
   return [...new Uint8Array(bytes)].slice(0, 12).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// The Redis commands for one event. Days and months are UTC.
+// The day an event counts toward: the site's own day, in Pacific time, so "today" on /stats is
+// the owner's today (UTC turned over at 5 PM and split every evening in two)
+const PACIFIC = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' });
+export const statsDay = (now = new Date()) => PACIFIC.format(now);
+
+// The Redis commands for one event. Days and months are Pacific time.
 export function commandsFor({ name, data, visit }, { now = new Date(), visitor } = {}) {
-  const day = now.toISOString().slice(0, 10);
+  const day = statsDay(now);
   const month = day.slice(0, 7);
   const commands = [['HINCRBY', `stats:day:${day}`, name, 1]];
   const count = (key, member) => commands.push(['ZINCRBY', `stats:${key}:${month}`, 1, member]);
