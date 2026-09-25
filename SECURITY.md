@@ -8,7 +8,7 @@ Useful things to include: what you found, how to reproduce it, and what an attac
 
 ## What's in scope
 
-- The web app at https://archive-movie-browser.vercel.app and the code in this repository, including the MCP server in `mcp/` and the GitHub Actions workflows.
+- The web app at https://www.orphanedfilms.com and the code in this repository, including the MCP server in `mcp/` and the GitHub Actions workflows.
 - Examples: script injection through Archive.org metadata, a way around the Content-Security-Policy in `vercel.json`, anything that could expose the repository's Actions secrets.
 
 ## What isn't

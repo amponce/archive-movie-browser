@@ -1,4 +1,4 @@
-// Hosted MCP endpoint: https://archive-movie-browser.vercel.app/api/mcp (Streamable HTTP, stateless).
+// Hosted MCP endpoint: https://www.orphanedfilms.com/api/mcp (Streamable HTTP, stateless).
 // Same tools as the local server in ../mcp. Public and read-only, so two guards keep it from
 // being used to hammer Archive.org, which throttles busy clients.
 // ponytail: both guards live in this instance's memory. Good enough while traffic is small;
