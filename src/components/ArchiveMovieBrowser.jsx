@@ -20,7 +20,6 @@ import GenrePills from './browse/GenrePills';
 import FilmGrid from './browse/FilmGrid';
 import CollectionBest from './browse/CollectionBest';
 import { filmFromHash, pathFor } from '../services/archiveUrl';
-const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || '';
 
 // The browse page. The filters live in useBrowseFilters (and the URL), the films in useFilms,
 // the pieces of the page in components/browse. What is left here is opening and closing a
@@ -51,7 +50,7 @@ export default function ArchiveMovieBrowser() {
 
   // TMDB API key from localStorage or environment variable
   const [tmdbApiKey, setTmdbApiKey] = useState(
-    () => localStorage.getItem('tmdb-api-key') || TMDB_API_KEY
+    () => localStorage.getItem('tmdb-api-key') || '' // a visitor's own key; without one, lookups go through /api/tmdb
   );
 
   const browse = useBrowseFilters({
@@ -133,7 +132,7 @@ export default function ArchiveMovieBrowser() {
       </main>
       <SiteFooter />
 
-      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} currentApiKey={tmdbApiKey} onApiKeyChange={setTmdbApiKey} />
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} onApiKeyChange={setTmdbApiKey} />
 
 {selectedMovie && (
         <MovieDetailPage

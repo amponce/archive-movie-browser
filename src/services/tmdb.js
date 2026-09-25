@@ -97,15 +97,27 @@ function debouncedSave() {
 loadCacheFromStorage();
 
 class TMDBService {
-  constructor(apiKey) {
+  // apiKey: a visitor's own key, used straight from the browser. Without one, lookups go through
+  // /api/tmdb, which holds the site's key and caches each answer at the edge for everyone.
+  constructor(apiKey = '') {
     this.apiKey = apiKey;
-    this.enabled = !!apiKey;
+    this.enabled = true;
   }
 
   setApiKey(apiKey) {
-    this.apiKey = apiKey;
-    this.enabled = !!apiKey;
+    this.apiKey = apiKey || '';
     // Don't clear cache - poster data is valid regardless of API key
+  }
+
+  // Where a lookup goes. Search text is lowercased, so the same search is one cached answer.
+  lookupUrl(path, params = {}) {
+    const query = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, k === 'query' ? String(v).trim().toLowerCase() : String(v)]));
+    if (this.apiKey) {
+      query.set('api_key', this.apiKey);
+      if (path === 'search/movie') query.set('include_adult', 'false');
+      return `${TMDB_API_BASE}/${path}?${query}`;
+    }
+    return `/api/tmdb?${new URLSearchParams({ path, ...Object.fromEntries(query) })}`;
   }
 
 
@@ -209,15 +221,7 @@ let bestMatch = null;
 
 const guesses = [];
 for (const candidate of titleCandidates(title)) {
-  const params = new URLSearchParams({
-    api_key: this.apiKey,
-    query: candidate.query,
-    include_adult: false
-  });
-
-  const response = await this.throttledFetch(
-    `${TMDB_API_BASE}/search/movie?${params}`
-  );
+  const response = await this.throttledFetch(this.lookupUrl('search/movie', { query: candidate.query }));
 
   if (!response.ok) {
     // Not cached: an outage or rate limit must not hide this film's poster for a week
@@ -287,11 +291,7 @@ bestMatch = bestMatch || bestStrictMatch(guesses, filmYear);
 
   async _fetchMovieDetails(id, cacheKey) {
     try {
-      const params = new URLSearchParams({
-        api_key: this.apiKey,
-        append_to_response: 'credits'
-      });
-      const response = await this.throttledFetch(`${TMDB_API_BASE}/movie/${id}?${params}`);
+      const response = await this.throttledFetch(this.lookupUrl(`movie/${id}`, { append_to_response: 'credits' }));
       if (!response.ok) {
         console.warn('TMDB details failed:', response.status);
         return null;
@@ -360,9 +360,7 @@ bestMatch = bestMatch || bestStrictMatch(guesses, filmYear);
     }
 
     try {
-      const response = await this.throttledFetch(
-        `${TMDB_API_BASE}/genre/movie/list?api_key=${this.apiKey}`
-      );
+      const response = await this.throttledFetch(this.lookupUrl('genre/movie/list'));
 
       if (!response.ok) return {};
 
@@ -384,6 +382,6 @@ bestMatch = bestMatch || bestStrictMatch(guesses, filmYear);
 }
 
 // Export singleton instance
-export const tmdbService = new TMDBService(import.meta.env?.VITE_TMDB_API_KEY || '');
+export const tmdbService = new TMDBService();
 
 export default tmdbService;

@@ -60,7 +60,7 @@ test('movie details restore persisted data and refetch expired entries', async t
   assert.equal(fetchMock.mock.callCount(), 1);
 });
 
-test('failed movie details can be retried and a disabled service makes no request', async t => {
+test('failed movie details can be retried, and without a key of its own the browser asks /api/tmdb', async t => {
   const { service } = await makeService(t);
   t.mock.method(console, 'warn', () => {});
   t.mock.method(console, 'error', () => {});
@@ -74,8 +74,10 @@ test('failed movie details can be retried and a disabled service makes no reques
   assert.deepEqual(await service.getMovieDetails(44), { credits: { cast: [], crew: [] } });
   assert.equal(fetchMock.mock.callCount(), 3);
   service.setApiKey('');
-  assert.equal(await service.getMovieDetails(45), null);
-  assert.equal(fetchMock.mock.callCount(), 3);
+  await service.getMovieDetails(45);
+  const url = fetchMock.mock.calls.at(-1).arguments[0];
+  assert.equal(url, '/api/tmdb?path=movie%2F45&append_to_response=credits');
+  assert.ok(!url.includes('api_key'), 'the site key never leaves the server');
 });
 
 test('profile and backdrop URLs preserve image sizes and handle missing paths', async t => {
@@ -172,7 +174,7 @@ test('a failed request does not block later slots and an idle request starts imm
   assert.deepEqual(starts, [10000, 10000 + interval, 10000 + 6 * interval]);
 });
 
-test('searchMovie answers from the poster index without calling TMDB, even with no API key', async t => {
+test('searchMovie answers from the poster index without calling TMDB, and asks /api/tmdb for the rest', async t => {
   const { service } = await makeService(t);
   const { setPosterIndex } = await import('./posterIndex.js');
   setPosterIndex({ indexed_film: { i: 7, t: 'Indexed Film', y: 1950, p: '/i.jpg', v: 6, c: 0.9 }, indexed_none: { n: 1, c: 0.9 } });
@@ -180,8 +182,9 @@ test('searchMovie answers from the poster index without calling TMDB, even with 
   service.setApiKey('');
   assert.equal((await service.searchMovie('Whatever_upload_title', null, 'indexed_film')).posterPath, '/i.jpg');
   assert.equal(await service.searchMovie('Whatever', null, 'indexed_none'), null);
-  assert.equal(await service.searchMovie('Whatever', null, 'not_indexed'), null, 'no key and not indexed: nothing to show');
-  assert.equal(fetchMock.mock.callCount(), 0);
+  assert.equal(fetchMock.mock.callCount(), 0, 'indexed films never reach TMDB');
+  assert.equal(await service.searchMovie('Whatever', null, 'not_indexed'), null);
+  assert.ok(fetchMock.mock.calls.every(call => call.arguments[0].startsWith('/api/tmdb?path=search%2Fmovie&query=')), 'not indexed: asked through /api/tmdb, lowercased, no key');
   setPosterIndex({});
 });
 

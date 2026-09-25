@@ -55,7 +55,7 @@ Optional keys go in `.env.local` (see `.env.example`). Without any key the site 
 
 | Variable | For | Required |
 |---|---|---|
-| `VITE_TMDB_API_KEY` | Live matching and film details in the browser | No |
+| `VITE_TMDB_API_KEY` (or `TMDB_API_KEY`) | Film lookups through `/api/tmdb`, which keeps the key on the server and caches each answer at the edge | No |
 | `TMDB_API_KEY`, `OPEN_ROUTER_API_KEY` | Building the poster index (`npm run index`) | Only to build the index |
 | `OMDB_API_KEY` | A second candidate source when the index gives up (`--retry-none`) | No |
 | `KV_REST_API_*`, `STATS_TOKEN` | Own usage counts and the private `/stats` page | No |
@@ -137,10 +137,10 @@ No accounts, no cookies, no ads, and nothing is sold or shared. Here is everythi
 
 **Your browser talks directly to:**
 - the [Internet Archive](https://archive.org), for search, film details and the video itself, as when you visit archive.org;
-- [TMDB](https://www.themoviedb.org), for posters and film details;
+- [TMDB](https://www.themoviedb.org)'s image server, for posters (film details from TMDB come through our server, below; if you add your own TMDB key, your browser asks TMDB directly);
 - Google Fonts, for the typefaces.
 
-Someone's Archive.org lists and a film's subtitle files come through our server instead (`/api/archive-list`, `/api/subtitles`), because Archive.org only lets its own pages read them; so does a channel shared by link, whose films are looked up on Archive.org (`/api/tv`). Nothing is kept on the way through. The site is hosted on Vercel, which keeps ordinary request logs.
+Someone's Archive.org lists and a film's subtitle files come through our server instead (`/api/archive-list`, `/api/subtitles`), because Archive.org only lets its own pages read them; film details from TMDB do too (`/api/tmdb`), so the site's key stays private and each film is looked up once for everyone; so does a channel shared by link, whose films are looked up on Archive.org (`/api/tv`). Nothing is kept on the way through. The site is hosted on Vercel, which keeps ordinary request logs.
 
 **Kept in your browser** (`localStorage`, and `sessionStorage` for the tab's visit id and a film you pressed play on, so it starts on its page): your own channel, where you stopped in each film, recent searches, grid or list view, the last channel you watched, cached film lengths and TMDB lookups, a dismissed banner, your own TMDB key if you add one, and the `/stats` key if you use that page. None of it is sent to us. The films in your own channel are looked up on Archive.org, like any film you open. Clearing the site's data removes all of it.
 

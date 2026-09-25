@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Key, Check, AlertCircle } from 'lucide-react';
+import { X, Key, Check } from 'lucide-react';
 import tmdbService from '../services/tmdb';
 
 // "About the posters": where the artwork comes from, and your own TMDB key if you want live
 // matching for films outside the index (#44). A native <dialog> opened with showModal(), so
 // focus moves in, Tab stays inside, Escape closes and the page behind is inert, the same way
 // the film page works.
-export default function SettingsModal({ isOpen, onClose, currentApiKey, onApiKeyChange }) {
+export default function SettingsModal({ isOpen, onClose, onApiKeyChange }) {
   // Only a key the visitor saved here is ever shown; the site's own key (if any) stays out of the UI
   const [apiKey, setApiKey] = useState(() => { try { return localStorage.getItem('tmdb-api-key') || ''; } catch { return ''; } });
   const [error, setError] = useState('');
   const dialogRef = useRef(null);
-  const isEnabled = !!currentApiKey;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -79,25 +78,12 @@ export default function SettingsModal({ isOpen, onClose, currentApiKey, onApiKey
               TMDB API Status
             </label>
 
-            <div className={`flex items-center gap-2 p-3 rounded-lg ${isEnabled ? 'bg-nitrate/10 border border-nitrate/40' : 'bg-signal/10 border border-red-600/50'
-              }`}>
-              {isEnabled ? (
-                <>
-                  <Check className="w-5 h-5 text-nitrate" />
-                  <div>
-                    <p className="text-nitrate font-medium">TMDB Enabled</p>
-                    <p className="text-xs text-muted">High-quality posters and metadata are active</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="w-5 h-5 text-signal" />
-                  <div>
-                    <p className="text-signal font-medium">TMDB Disabled</p>
-                    <p className="text-xs text-muted">Add VITE_TMDB_API_KEY to your .env file</p>
-                  </div>
-                </>
-              )}
+            <div className="flex items-center gap-2 p-3 rounded-lg bg-nitrate/10 border border-nitrate/40">
+              <Check className="w-5 h-5 text-nitrate" />
+              <div>
+                <p className="text-nitrate font-medium">TMDB Enabled</p>
+                <p className="text-xs text-muted">The site looks films up for you. A key of your own is optional: with one, lookups go straight from this browser to TMDB.</p>
+              </div>
             </div>
 
           </div>
@@ -141,17 +127,6 @@ export default function SettingsModal({ isOpen, onClose, currentApiKey, onApiKey
             </ul>
           </div>
 
-          {!isEnabled && (
-            <div className="bg-ink rounded-lg p-3 text-xs">
-              <p className="text-muted font-medium mb-2">To enable TMDB:</p>
-              <ol className="list-decimal list-inside space-y-1 text-muted">
-                <li>Get a free API key at themoviedb.org/settings/api</li>
-                <li>Create a .env file in the project root</li>
-                <li>Add: VITE_TMDB_API_KEY=your_key_here</li>
-                <li>Restart the dev server</li>
-              </ol>
-            </div>
-          )}
         </div>
 
         {/* Footer */}
