@@ -191,6 +191,8 @@ test('buildQuery searches apostrophe words both with and without the mark', () =
   assert.ok(bernie.includes('title:(weekend AND at AND ("bernie\'s" OR bernies))'), bernie);
   const wasnt = archiveService.buildQuery({ searchQuery: "The Man Who Wasn't There", collection: 'SciFi_Horror' });
   assert.ok(wasnt.includes('("wasn\'t" OR wasnt)'), wasnt);
+  const phone = archiveService.buildQuery({ searchQuery: 'Weekend at Bernie\u2019s', collection: 'SciFi_Horror' });
+  assert.ok(phone.includes('("bernie\'s" OR bernies)'), `a phone's curly apostrophe is the same mark: ${phone}`);
 });
 
 test('buildQuery limits search to the first twelve words', () => {

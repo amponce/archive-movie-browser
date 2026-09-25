@@ -397,7 +397,8 @@ class ArchiveService {
   searchWords(searchQuery) {
     // Keep apostrophes inside a word (bernie's, wasn't) so we can search both spellings.
     // Quotes and backslashes are still dropped: they are not letters, digits, or apostrophes.
-    return String(searchQuery || '').toLowerCase().match(/[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)*/gu)?.slice(0, 12);
+    // A phone types the curly ’ (and some keyboards ʼ): the same mark
+    return String(searchQuery || '').toLowerCase().replace(/[\u2018\u2019\u02bc]/g, "'").match(/[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)*/gu)?.slice(0, 12);
   }
 
   // A word with an apostrophe must match both spellings: Archive titles often omit it.
