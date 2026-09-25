@@ -395,7 +395,16 @@ class ArchiveService {
   // Split user input into plain lowercase words (null if there are none).
   // Lowercased so typed "AND"/"OR" are plain words, not operators.
   searchWords(searchQuery) {
-    return String(searchQuery || '').toLowerCase().match(/[\p{L}\p{N}]+/gu)?.slice(0, 12);
+    // Keep apostrophes inside a word (bernie's, wasn't) so we can search both spellings.
+    // Quotes and backslashes are still dropped: they are not letters, digits, or apostrophes.
+    return String(searchQuery || '').toLowerCase().match(/[\p{L}\p{N}]+(?:'[\p{L}\p{N}]+)*/gu)?.slice(0, 12);
+  }
+
+  // A word with an apostrophe must match both spellings: Archive titles often omit it.
+  searchTerm(word) {
+    if (!word.includes("'")) return word;
+    const plain = word.replace(/'/g, '');
+    return plain ? `("${word}" OR ${plain})` : word;
   }
 
   // Build search query
@@ -426,7 +435,7 @@ class ArchiveService {
       // A search looks in every collection the app offers, not just the selected one
       query = `collection:(${VIDEO_CATEGORIES.map(c => c.id).join(' OR ')})`;
       // Search in title, subject, and creator
-      const all = `(${words.join(' AND ')})`;
+      const all = `(${words.map(word => this.searchTerm(word)).join(' AND ')})`;
       query += ` AND (title:${all} OR subject:${all} OR creator:${all})`;
     }
 
@@ -473,7 +482,11 @@ class ArchiveService {
     const words = (this.searchWords(text) || []).filter(word => word.length >= 2);
     if (!words.length || words.join('').length < 3) return null;
     const films = VIDEO_CATEGORIES.filter(c => c.films).map(c => c.id).join(' OR ');
-    const prefixes = `(${words.map(w => `${w}*`).join(' AND ')})`;
+    const prefixes = `(${words.map(w => {
+      if (!w.includes("'")) return `${w}*`;
+      const plain = w.replace(/'/g, '');
+      return plain ? `(${w}* OR ${plain}*)` : `${w}*`;
+    }).join(' AND ')})`;
     // Subjects ride along in the same request, so tag suggestions cost Archive.org nothing extra
     return `collection:(${films}) AND (title:${prefixes} OR subject:${prefixes}) AND NOT mediatype:collection`;
   }
@@ -678,7 +691,10 @@ class ArchiveService {
     // Popularity order ranks subject-only matches above the film itself, so list title matches first
     const words = this.searchWords(fetchOptions.searchQuery);
     if (words && (fetchOptions.sortBy ?? 'downloads') === 'downloads') {
-      const inTitle = (m) => words.every(w => String(m.title).toLowerCase().includes(w));
+      const inTitle = (m) => {
+        const title = String(m.title).toLowerCase();
+        return words.every(w => title.includes(w) || title.includes(w.replace(/'/g, '')));
+      };
       movies.sort((a, b) => inTitle(b) - inTitle(a));
     }
 

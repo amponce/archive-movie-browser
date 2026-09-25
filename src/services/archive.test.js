@@ -186,6 +186,13 @@ test('buildQuery matches all search words and drops query syntax characters', ()
   assert.ok(!/["\\]/.test(query.replace('collection:"SciFi_Horror"', '')), query);
 });
 
+test('buildQuery searches apostrophe words both with and without the mark', () => {
+  const bernie = archiveService.buildQuery({ searchQuery: "Weekend at Bernie's", collection: 'SciFi_Horror' });
+  assert.ok(bernie.includes('title:(weekend AND at AND ("bernie\'s" OR bernies))'), bernie);
+  const wasnt = archiveService.buildQuery({ searchQuery: "The Man Who Wasn't There", collection: 'SciFi_Horror' });
+  assert.ok(wasnt.includes('("wasn\'t" OR wasnt)'), wasnt);
+});
+
 test('buildQuery limits search to the first twelve words', () => {
   const query = archiveService.buildQuery({
     searchQuery:
