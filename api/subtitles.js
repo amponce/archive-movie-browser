@@ -9,6 +9,7 @@ export default async function handler(req, res) {
     const url = `https://archive.org/download/${encodeURIComponent(id)}/${file.split('/').map(encodeURIComponent).join('/')}`;
     const response = await fetch(url, { signal: AbortSignal.timeout(10000) });
     if (!response.ok) { res.status(404).send('No such subtitle file.'); return; }
+    if (Number(response.headers.get('content-length')) > MAX_BYTES) { res.status(413).send('That subtitle file is too large.'); return; }
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (bytes.length > MAX_BYTES) { res.status(413).send('That subtitle file is too large.'); return; }
     res.setHeader('Content-Type', 'text/vtt; charset=utf-8');
