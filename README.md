@@ -138,7 +138,6 @@ No accounts, no cookies, no ads, and nothing is sold or shared. Here is everythi
 **Your browser talks directly to:**
 - the [Internet Archive](https://archive.org), for search, film details and the video itself, as when you visit archive.org;
 - [TMDB](https://www.themoviedb.org)'s image server, for posters (film details from TMDB come through our server, below; if you add your own TMDB key, your browser asks TMDB directly);
-- Google Fonts, for the typefaces.
 
 Someone's Archive.org lists and a film's subtitle files come through our server instead (`/api/archive-list`, `/api/subtitles`), because Archive.org only lets its own pages read them; film details from TMDB do too (`/api/tmdb`), so the site's key stays private and each film is looked up once for everyone; so does a channel shared by link, whose films are looked up on Archive.org (`/api/tv`). Nothing is kept on the way through. The site is hosted on Vercel, which keeps ordinary request logs.
 
