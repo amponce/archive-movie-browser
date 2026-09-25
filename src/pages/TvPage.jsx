@@ -265,7 +265,7 @@ export default function TvPage() {
           </section>
         )}
       </main>
-      <SiteFooter><a href="/api/tv/guide.xml" className="label hover:text-bone">XMLTV guide</a></SiteFooter>
+      <SiteFooter><a href="/api/tv/guide.xml" className="label hover:text-bone inline-flex items-center min-h-[44px]">XMLTV guide</a></SiteFooter>
     </div>
   );
 }

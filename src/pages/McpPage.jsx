@@ -106,7 +106,7 @@ export default function McpPage() {
           </p>
         </main>
       </div>
-      <SiteFooter><a href={`${REPO}/tree/main/mcp`} className="label hover:text-bone">Source</a></SiteFooter>
+      <SiteFooter><a href={`${REPO}/tree/main/mcp`} className="label hover:text-bone inline-flex items-center min-h-[44px]">Source</a></SiteFooter>
     </div>
   );
 }
