@@ -53,7 +53,7 @@ export function parseFilters(search) {
   }
 
   const q = params.get('q');
-  if (q) filters.q = q;
+  if (q) filters.q = q.slice(0, 200); // as long as the search box takes: a longer one is refused by Archive.org
 
   const decade = Number(params.get('decade'));
   if (DECADES.includes(decade)) filters.decade = decade;

@@ -49,7 +49,8 @@ export function isForbidden({ title, description, tags, subject } = {}) {
   return false;
 }
 
-// A search asking for any of it: answered with nothing, and never sent to Archive.org
+// A search asking for any of it is answered with nothing and not sent to Archive.org. Whatever a
+// search does return still passes isForbidden, so a spelling this misses still finds nothing here.
 export function isForbiddenSearch(text) {
   const words = fold(text);
   return [CHILD_ABUSE, SEXUAL_VIOLENCE, REAL_KILLING, HATE].some(r => r.test(words)) || (CHILD.test(words) && SEXUAL.test(words));
