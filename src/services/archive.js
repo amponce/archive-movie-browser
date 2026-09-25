@@ -421,10 +421,29 @@ class ArchiveService {
   }
 
   // A word with an apostrophe must match both spellings: Archive titles often omit it.
-  searchTerm(word) {
-    if (!word.includes("'")) return word;
+  // fuzzy: allow a letter or two off in a longer word ("nosferato" finds Nosferatu)
+  searchTerm(word, fuzzy = false) {
+    if (!word.includes("'")) return fuzzy && word.length >= 5 ? `${word}~${word.length >= 10 ? 2 : 1}` : word;
     const plain = word.replace(/'/g, '');
     return plain ? `("${word}" OR ${plain})` : word;
+  }
+
+  // Every word must match, and each pair of neighbours may also be one word: "sleep away camp"
+  // finds Sleepaway Camp and "night mare" finds Nightmare. Up to six words (the query has a length
+  // limit, and longer searches are rarely split by mistake).
+  // With fuzzy, the last word may also be unfinished ("the missing piec" is The Missing Piece).
+  wordsQuery(words, fuzzy = false) {
+    const terms = words.map(word => this.searchTerm(word, fuzzy));
+    const last = words.at(-1);
+    if (fuzzy && last.length >= 3 && !last.includes("'")) terms[terms.length - 1] = `(${terms.at(-1)} OR ${last}*)`;
+    const variants = [terms];
+    if (words.length <= 6) {
+      for (let i = 0; i < words.length - 1; i++) {
+        if (words[i].includes("'") || words[i + 1].includes("'")) continue;
+        variants.push([...terms.slice(0, i), this.searchTerm(words[i] + words[i + 1], fuzzy), ...terms.slice(i + 2)]);
+      }
+    }
+    return variants.length === 1 ? `(${terms.join(' AND ')})` : `(${variants.map(v => `(${v.join(' AND ')})`).join(' OR ')})`;
   }
 
   // Build search query
@@ -437,7 +456,8 @@ class ArchiveService {
       genre = null,
       decade = null, // one of DECADES
       dated = false, // only films whose release date can be trusted (for sorting by it)
-      shorts = false
+      shorts = false,
+      fuzzy = false, // close spellings too (fetchFiltered's second try when nothing matched)
     } = options;
 
     // Just filter by collection - the collection itself defines content type
@@ -455,8 +475,10 @@ class ArchiveService {
       // A search looks in every collection the app offers, not just the selected one
       query = `collection:(${VIDEO_CATEGORIES.map(c => c.id).join(' OR ')})`;
       // Search in title, subject, and creator
-      const all = `(${words.map(word => this.searchTerm(word)).join(' AND ')})`;
-      query += ` AND (title:${all} OR subject:${all} OR creator:${all})`;
+      const all = this.wordsQuery(words, fuzzy);
+      // Close spellings are matched against titles only: across tags and uploader names they
+      // find whatever happens to be one letter away
+      query += fuzzy ? ` AND title:${all}` : ` AND (title:${all} OR subject:${all} OR creator:${all})`;
     }
 
     // Add genre filter to query for better results
@@ -608,10 +630,11 @@ class ArchiveService {
       retryDelayMs = 600,
       timeoutMs = 20000, // Archive.org usually answers in 1.5-4 s; a request that never answers must not spin forever
       signal,
-      query: queryOverride = null
+      query: queryOverride = null,
+      fuzzy = false,
     } = options;
 
-    const query = queryOverride || this.buildQuery({ searchQuery, genre, collection, decade, dated: sortBy === 'date' });
+    const query = queryOverride || this.buildQuery({ searchQuery, genre, collection, decade, dated: sortBy === 'date', fuzzy });
 
     const fields = [
       'identifier',
@@ -716,6 +739,12 @@ class ArchiveService {
         return words.every(w => title.includes(w) || title.includes(w.replace(/'/g, '')));
       };
       movies.sort((a, b) => inTitle(b) - inTitle(a));
+    }
+
+    // Nothing at all for a typed search: once more with close spellings, and say so
+    if (!movies.length && startPage === 1 && !fetchOptions.fuzzy && words && !isArchiveQuery(fetchOptions.searchQuery)) {
+      const closer = await this.fetchFiltered({ ...options, fuzzy: true });
+      return { ...closer, closeSpellings: closer.movies.length > 0 };
     }
 
     return { movies, total, nextPage };

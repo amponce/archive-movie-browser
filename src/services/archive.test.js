@@ -182,13 +182,13 @@ test('parseRuntime keeps the formats that already worked', () => {
 
 test('buildQuery matches all search words and drops query syntax characters', () => {
   const query = archiveService.buildQuery({ searchQuery: 'the "thing" \\ (1951)', collection: 'SciFi_Horror' });
-  assert.ok(query.includes('title:(the AND thing AND 1951)'), query);
+  assert.ok(query.includes('title:((the AND thing AND 1951) OR '), query);
   assert.ok(!/["\\]/.test(query.replace('collection:"SciFi_Horror"', '')), query);
 });
 
 test('buildQuery searches apostrophe words both with and without the mark', () => {
   const bernie = archiveService.buildQuery({ searchQuery: "Weekend at Bernie's", collection: 'SciFi_Horror' });
-  assert.ok(bernie.includes('title:(weekend AND at AND ("bernie\'s" OR bernies))'), bernie);
+  assert.ok(bernie.includes('title:((weekend AND at AND ("bernie\'s" OR bernies)) OR '), bernie);
   const wasnt = archiveService.buildQuery({ searchQuery: "The Man Who Wasn't There", collection: 'SciFi_Horror' });
   assert.ok(wasnt.includes('("wasn\'t" OR wasnt)'), wasnt);
   const phone = archiveService.buildQuery({ searchQuery: 'Weekend at Bernie\u2019s', collection: 'SciFi_Horror' });
@@ -297,7 +297,7 @@ test('fetchFiltered skips films an earlier batch already returned', async () => 
 
 test('buildQuery lowercases search words so AND/OR are not read as operators', () => {
   const query = archiveService.buildQuery({ searchQuery: 'AND OR', collection: 'SciFi_Horror' });
-  assert.ok(query.includes('title:(and AND or)'), query);
+  assert.ok(query.includes('title:((and AND or) OR (andor))'), query);
 });
 
 test('buildQuery searches every app collection, but browses only the selected one', () => {
@@ -867,4 +867,20 @@ test('search words keep their combining marks and every apostrophe a keyboard ty
   assert.deepEqual(archiveService.searchWords('शोले'), ['शोले']);
   assert.deepEqual(archiveService.searchWords('café noir'), ['café', 'noir']);
   for (const mark of ['´', '`', '′', '’']) assert.deepEqual(archiveService.searchWords(`o${mark}brien`), ["o'brien"], mark);
+});
+
+test('neighbouring words may also be one word: "sleep away camp" finds Sleepaway Camp', () => {
+  const query = archiveService.buildQuery({ searchQuery: 'sleep away camp' });
+  assert.ok(query.includes('title:((sleep AND away AND camp) OR (sleepaway AND camp) OR (sleep AND awaycamp))'), query);
+  assert.ok(!archiveService.buildQuery({ searchQuery: 'dracula' }).includes(' OR (dracula'), 'one word: nothing to join');
+  const long = archiveService.buildQuery({ searchQuery: 'a b c d e f g' });
+  assert.ok(long.includes('title:(a AND b AND c AND d AND e AND f AND g)'), 'past six words, as typed only');
+});
+
+test('close spellings allow a letter or two off in longer words only', () => {
+  const query = archiveService.buildQuery({ searchQuery: 'nosferato the frankenstien', fuzzy: true });
+  assert.ok(query.includes('(nosferato~1 AND the AND (frankenstien~2 OR frankenstien*))'), query);
+  assert.ok(archiveService.buildQuery({ searchQuery: 'the missing piec', fuzzy: true }).includes('(the AND missing~1 AND (piec OR piec*))'), 'an unfinished last word is a prefix too');
+  assert.ok(!archiveService.buildQuery({ searchQuery: 'wild bumch', fuzzy: true }).includes('wild~'), 'a word under five letters stays as typed');
+  assert.ok(!/subject:|creator:/.test(archiveService.buildQuery({ searchQuery: 'nosferato', fuzzy: true }).split('AND NOT')[0]), 'close spellings match titles only');
 });
