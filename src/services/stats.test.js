@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validEvent, commandsFor } from '../../api/_stats.js';
+import { validEvent, commandsFor, statsDay } from '../../api/_stats.js';
 
 test('TV events are accepted and counted per channel', () => {
   const tune = validEvent({ name: 'TV', data: { action: 'tune', channel: 'atomic-age' } });
@@ -55,4 +55,11 @@ test('the funnel counts visits, not events, and keeps no visit ids anywhere else
   // A malformed id is ignored, the event still counts
   assert.ok(validEvent({ name: 'Click', data: { target: 'spin' }, visit: 'nope' }));
   assert.equal(cmds({ name: 'Click', data: { target: 'spin' } }, 'nope').filter(c => c[0] === 'PFADD').length, 0);
+});
+
+test('a day is a Pacific day: 5 PM in California is still that day, not tomorrow in UTC', () => {
+  assert.equal(statsDay(new Date('2026-09-25T05:00:00Z')), '2026-09-24'); // 10 PM PDT
+  assert.equal(statsDay(new Date('2026-09-25T07:00:00Z')), '2026-09-25'); // midnight PDT
+  assert.equal(statsDay(new Date('2026-12-25T07:59:00Z')), '2026-12-24'); // 11:59 PM PST
+  assert.ok(commandsFor({ name: 'Page view', data: { path: '/' } }, { now: new Date('2026-09-25T05:00:00Z'), visitor: 'v' }).some(c => c.join(' ') === 'PFADD stats:visitors:2026-09-24 v'));
 });
