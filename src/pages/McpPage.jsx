@@ -26,13 +26,13 @@ const Aside = ({ children }) => <p className="text-muted text-[0.95rem] max-w-2x
 const link = 'text-signal underline underline-offset-4 hover:no-underline';
 
 export default function McpPage() {
-  useEffect(() => { document.title = 'MCP server: ask your assistant what to watch | Archive Movie Browser'; }, []);
+  useEffect(() => { document.title = 'MCP server: ask your assistant what to watch | Orphaned Films'; }, []);
 
   return (
     <div className="min-h-screen text-muted leading-relaxed">
       <SiteHeader current="/mcp" />
       <div className="max-w-5xl mx-auto px-5">
-        <main>
+        <main className="pb-12">
           <h1 className="display text-[clamp(2.75rem,9vw,5.5rem)] leading-[0.95] mt-10 mb-5 max-w-[12ch] text-bone">
             Ask your assistant what to watch.
           </h1>
@@ -106,7 +106,7 @@ export default function McpPage() {
           </p>
         </main>
       </div>
-      <SiteFooter><a href={`${REPO}/tree/main/mcp`} className="label hover:text-bone inline-flex items-center min-h-[44px]">Source</a></SiteFooter>
+      <SiteFooter />
     </div>
   );
 }
