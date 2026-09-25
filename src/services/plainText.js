@@ -15,7 +15,7 @@ export function plainText(value) {
         const code = name[1].toLowerCase() === 'x' ? parseInt(name.slice(2), 16) : Number(name.slice(1));
         return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : ''; // past Unicode: dropped, not thrown
       }
-      return ENTITIES[name.toLowerCase()] ?? all;
+      return Object.hasOwn(ENTITIES, name.toLowerCase()) ? ENTITIES[name.toLowerCase()] : all;
     })
     .replace(/[ \t\u00a0]+/g, ' ')
     .split('\n').map(line => line.trim()).filter(Boolean).join('\n');
