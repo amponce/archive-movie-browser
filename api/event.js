@@ -1,5 +1,5 @@
 // POST /api/event  { name, data }: one usage event from the site. Counts only; see _stats.js.
-import { validEvent, commandsFor, isBot, visitorToken, statsDay } from './_stats.js';
+import { validEvent, commandsFor, isBot, visitorToken, statsDay, mergeCommands } from './_stats.js';
 import { redis } from './_redis.js';
 
 const PER_MINUTE = 60;
@@ -16,6 +16,11 @@ function overLimit(ip) {
 }
 
 const done = (status) => new Response(null, { status });
+
+const FLUSH_MS = 30_000;
+const pending = [];
+let lastWrite = 0;
+let events = 0;
 
 // "null" (sandboxed frames, some redirects) and other non-URL values are real Origin headers
 const originHost = (origin) => { try { return new URL(origin).host; } catch { return null; } };
@@ -42,11 +47,20 @@ export async function POST(request) {
 
   const now = new Date();
   const visitor = event.name === 'Page view' ? await visitorToken(ip, userAgent, statsDay(now)) : undefined;
-  try {
-    await redis(commandsFor(event, { now, visitor }));
-  } catch (error) {
-    console.error('stats:', error.message);
-    return done(503);
+  pending.push(...commandsFor(event, { now, visitor }));
+  // Written together, at most every 30 seconds (or every 200 events) per server instance: the
+  // database bills per command, and one merged write replaces hundreds.
+  // ponytail: an instance that stops before its next write loses those seconds of counts
+  if (Date.now() - lastWrite >= FLUSH_MS || ++events >= 200) {
+    const batch = mergeCommands(pending.splice(0));
+    lastWrite = Date.now();
+    events = 0;
+    try {
+      await redis(batch);
+    } catch (error) {
+      console.error('stats:', error.message);
+      return done(503);
+    }
   }
   return done(204);
 }

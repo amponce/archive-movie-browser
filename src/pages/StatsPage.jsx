@@ -20,7 +20,10 @@ export const cleanKey = (text) => String(text || '').trim().replace(/^["']|["']$
 
 async function fetchStats(key) {
   const response = await fetch('/api/stats', { headers: { Authorization: `Bearer ${key}` }, cache: 'no-store' });
-  if (!response.ok) throw new Error(response.status === 404 ? 'That key does not match. It is the whole STATS_TOKEN value, no quotes around it.' : `The stats could not be loaded (${response.status}).`);
+  if (!response.ok) {
+    const said = await response.json().then(body => body.error, () => null);
+    throw new Error(response.status === 404 ? 'That key does not match. It is the whole STATS_TOKEN value, no quotes around it.' : said || `The stats could not be loaded (${response.status}).`);
+  }
   return response.json();
 }
 
@@ -139,7 +142,7 @@ export default function StatsPage() {
     document.title = 'Stats | Archive Movie Browser';
     if (readKey()) load(readKey());
     // Keep the numbers current while the page is open and in view
-    const timer = setInterval(() => { if (readKey() && !document.hidden) load(readKey()); }, 30_000);
+    const timer = setInterval(() => { if (readKey() && !document.hidden) load(readKey()); }, 300_000); // each read is ~175 database commands
     return () => clearInterval(timer);
   }, []);
 
@@ -212,7 +215,7 @@ export default function StatsPage() {
               </details>
             </Panel>
 
-            <Panel title="Latest events" note="(newest first; refreshes every 30 seconds)">
+            <Panel title="Latest events" note="(newest first; refreshes every 5 minutes)">
               <div className="max-h-72 overflow-y-auto"><Latest events={data.recent || []} titles={data.titles || {}} /></div>
             </Panel>
 

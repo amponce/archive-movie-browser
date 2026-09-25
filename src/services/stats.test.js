@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validEvent, commandsFor, statsDay } from '../../api/_stats.js';
+import { validEvent, commandsFor, statsDay, mergeCommands } from '../../api/_stats.js';
 
 test('TV events are accepted and counted per channel', () => {
   const tune = validEvent({ name: 'TV', data: { action: 'tune', channel: 'atomic-age' } });
@@ -68,4 +68,39 @@ test('a pasted link is counted without the link, and a refused search without it
   assert.deepEqual(validEvent({ name: 'Search', data: { query: 'https://archive.org/details/@someone', kind: 'pasted link' } }).data, { query: '', kind: 'pasted link' });
   assert.equal(validEvent({ name: 'Search', data: { query: 'snuff film', kind: 'typed' } }).data.query, '');
   assert.equal(validEvent({ name: 'Search', data: { query: 'Night of the Living Dead', kind: 'typed' } }).data.query, 'night of the living dead');
+});
+
+// The commands the stats use, applied to a plain object, to compare database states
+function apply(commands, db = {}) {
+  for (const [op, key, a, b, ...rest] of commands) {
+    if (op === 'HINCRBY') { db[key] ??= {}; db[key][a] = (db[key][a] || 0) + Number(b); }
+    if (op === 'ZINCRBY') { db[key] ??= {}; db[key][b] = Math.round(((db[key][b] || 0) + Number(a)) * 100) / 100; }
+    if (op === 'PFADD') { db[key] = [...new Set([...(db[key] || []), a, b, ...rest].filter(v => v !== undefined))].sort(); }
+    if (op === 'HSET') { db[key] ??= {}; const pairs = [a, b, ...rest]; for (let i = 0; i < pairs.length; i += 2) db[key][pairs[i]] = pairs[i + 1]; }
+    if (op === 'LPUSH') db[key] = [...[a, b, ...rest].filter(v => v !== undefined).reverse(), ...(db[key] || [])];
+    if (op === 'LTRIM') db[key] = (db[key] || []).slice(a, b + 1);
+    if (op === 'EXPIRE') { db.ttl ??= {}; if (db[key] !== undefined) db.ttl[key] = a; }
+  }
+  return db;
+}
+
+test('a merged write leaves the database exactly as writing every event one by one', () => {
+  const now = new Date('2026-09-25T18:00:00Z');
+  const events = [
+    [{ name: 'Page view', data: { path: '/', referrer: 'reddit.com' }, visit: 'aaaaaaaaaaaaaaaa' }, 'v1'],
+    [{ name: 'Page view', data: { path: '/browse', referrer: 'reddit.com' }, visit: 'bbbbbbbbbbbbbbbb' }, 'v2'],
+    [{ name: 'Page view', data: { path: '/', referrer: '' }, visit: 'aaaaaaaaaaaaaaaa' }, 'v1'],
+    [{ name: 'Film opened', data: { film: 'CarnivalOfSouls1962', title: 'Carnival of Souls' }, visit: 'aaaaaaaaaaaaaaaa' }],
+    [{ name: 'Play', data: { film: 'CarnivalOfSouls1962', player: 'own' }, visit: 'aaaaaaaaaaaaaaaa' }],
+    [{ name: 'Watched', data: { where: 'film', seconds: 90, total: 90, film: 'CarnivalOfSouls1962' }, visit: 'aaaaaaaaaaaaaaaa' }],
+    [{ name: 'Watched', data: { where: 'film', seconds: 700, total: 790, film: 'CarnivalOfSouls1962' }, visit: 'aaaaaaaaaaaaaaaa' }],
+    [{ name: 'TV', data: { action: 'tune', channel: 'kung-fu-theater' }, visit: 'bbbbbbbbbbbbbbbb' }],
+    [{ name: 'Search', data: { query: 'dracula', kind: 'typed' } }],
+    [{ name: 'Search', data: { query: 'dracula', kind: 'typed' } }],
+    [{ name: 'Click', data: { target: 'tv-tune-in' }, visit: 'bbbbbbbbbbbbbbbb' }],
+  ].map(([event, visitor]) => commandsFor(validEvent(event), { now, visitor }));
+  const oneByOne = events.reduce((db, commands) => apply(commands, db), {});
+  const merged = mergeCommands(events.flat());
+  assert.deepEqual(apply(merged), oneByOne);
+  assert.ok(merged.length < events.flat().length / 2, `${events.flat().length} commands became ${merged.length}`);
 });

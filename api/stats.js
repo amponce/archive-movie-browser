@@ -24,6 +24,15 @@ export async function GET(request) {
   const today = new Date(`${statsDay()}T12:00:00Z`);
   const days = Array.from({ length: DAYS }, (_, i) => new Date(today - i * 86400_000).toISOString().slice(0, 10)).reverse();
   const month = days.at(-1).slice(0, 7);
+  try {
+    return await read(days, month);
+  } catch (error) {
+    const full = /max requests limit/i.test(error.message);
+    return Response.json({ error: full ? 'The stats database has reached its monthly limit, so there is nothing to read until it resets or its plan is upgraded.' : `The stats database did not answer (${error.message}).` }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
+  }
+}
+
+async function read(days, month) {
   // Redis treats PFCOUNT as a write (it caches its answer in the key), so the read-only token
   // is refused for it. Visitor counts use the main token; everything else reads read-only.
   const [reads, visitors] = await Promise.all([

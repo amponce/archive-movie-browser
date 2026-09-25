@@ -132,3 +132,36 @@ export function commandsFor({ name, data, visit }, { now = new Date(), visitor }
   for (const key of new Set(commands.map(command => command[1]))) commands.push(['EXPIRE', key, KEEP_DAYS * 86400]);
   return commands;
 }
+
+// Many events' commands as few as possible, for one write: counts to the same place are summed,
+// visitor ids for the same estimate go in one PFADD, titles in one HSET, the latest events in one
+// LPUSH (in the order they happened) and each key's expiry is set once. Upstash bills per command.
+export function mergeCommands(commands) {
+  const out = new Map(); // key -> command, in first-seen order
+  const recent = [];
+  let trim = null;
+  for (const command of commands) {
+    const [op, key, a, b] = command;
+    if (op === 'HINCRBY' || op === 'ZINCRBY') {
+      const id = `${op} ${key} ${op === 'HINCRBY' ? a : b}`;
+      const amount = Number(op === 'HINCRBY' ? b : a);
+      const seen = out.get(id);
+      if (!seen) out.set(id, op === 'HINCRBY' ? [op, key, a, amount] : [op, key, amount, b]);
+      else if (op === 'HINCRBY') seen[3] += amount;
+      else seen[2] = Math.round((seen[2] + amount) * 100) / 100;
+    } else if (op === 'PFADD' || op === 'HSET') {
+      const id = `${op} ${key}`;
+      const seen = out.get(id);
+      if (!seen) out.set(id, [op, key]);
+      out.get(id).push(...command.slice(2));
+    } else if (op === 'LPUSH') recent.push(...command.slice(2));
+    else if (op === 'LTRIM') trim = command;
+    else if (op === 'EXPIRE') out.set(`EXPIRE ${key}`, command);
+    else out.set(`${out.size} ${op}`, command);
+  }
+  const merged = [...out.values()].filter(c => c[0] !== 'EXPIRE');
+  if (recent.length) merged.push(['LPUSH', 'stats:recent', ...recent], trim || ['LTRIM', 'stats:recent', 0, RECENT - 1]);
+  // Expiry last, once per key: a key must exist before EXPIRE can set its time
+  return [...merged, ...[...out.values()].filter(c => c[0] === 'EXPIRE')];
+}
+
