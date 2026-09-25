@@ -83,8 +83,9 @@ export async function personalChannel(ids, { now = Date.now(), hours = 6 } = {})
 }
 
 // The whole service in one call: every channel with its lineup, what is on now, and the
-// programmes for the next `hours`
-export function schedule({ now = Date.now(), hours = 6 } = {}) {
+// programmes for the next `hours` (and the last `hoursBack`, so a guide opened now has no gap
+// before the film on air)
+export function schedule({ now = Date.now(), hours = 6, hoursBack = 0 } = {}) {
   const to = now + hours * 3600_000;
   const channels = CHANNELS.map(channel => {
     const lineup = lineupOf(channel);
@@ -96,7 +97,7 @@ export function schedule({ now = Date.now(), hours = 6 } = {}) {
       blurb: channel.blurb,
       lineup,
       now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
-      programmes: programmesBetween(lineup, now, to).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, genres: p.film.genres || [], note: p.film.note || null, startsAt: p.startsAt, endsAt: p.endsAt })),
+      programmes: programmesBetween(lineup, now - hoursBack * 3600_000, to).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, genres: p.film.genres || [], note: p.film.note || null, startsAt: p.startsAt, endsAt: p.endsAt })),
     };
   });
   return { now, epochNote: 'Every channel plays its lineup in order from a fixed moment, so this guide is the same for everyone.', channels: channels.filter(c => c.lineup.length) };

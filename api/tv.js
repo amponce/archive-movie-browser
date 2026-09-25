@@ -38,9 +38,11 @@ export default async function handler(req, res) {
       return;
     }
     const mine = String(req.query?.mine || '');
-    // Three days of guide: apps refresh it every 6 to 24 hours and show about two days
+    // Three days of guide: apps refresh it every 6 to 24 hours and show about two days. It starts
+    // six hours back, since an app keeps it for hours and draws a blank before its first entry.
     const hours = format === 'xml' ? 72 : 6;
-    const data = mine ? { now: Date.now(), channels: [await personalChannel(mine.split(','), { hours })] } : schedule({ hours });
+    const hoursBack = format === 'xml' ? 6 : 0;
+    const data = mine ? { now: Date.now(), channels: [await personalChannel(mine.split(','), { hours })] } : schedule({ hours, hoursBack });
     res.setHeader('Cache-Control', mine ? 'public, s-maxage=300' : 'public, s-maxage=60, stale-while-revalidate=300');
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (format === 'channels') {
