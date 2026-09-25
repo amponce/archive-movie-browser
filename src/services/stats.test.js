@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validEvent, commandsFor, statsDay, mergeCommands } from '../../api/_stats.js';
+import { validEvent, commandsFor, statsDay, mergeCommands, onlineKey } from '../../api/_stats.js';
 
 test('TV events are accepted and counted per channel', () => {
   const tune = validEvent({ name: 'TV', data: { action: 'tune', channel: 'atomic-age' } });
@@ -41,7 +41,7 @@ test('clicks are counted by what was clicked', () => {
 
 test('the funnel counts visits, not events, and keeps no visit ids anywhere else', () => {
   const visit = 'a1b2c3d4e5f60718';
-  const stage = (event) => cmds(event, visit).filter(c => c[0] === 'PFADD').map(c => c[1]);
+  const stage = (event) => cmds(event, visit).filter(c => c[0] === 'PFADD' && c[1].startsWith('stats:funnel:')).map(c => c[1]);
   assert.deepEqual(stage({ name: 'Page view', data: { path: '/' } }), ['stats:funnel:visited:2026-09-23']);
   assert.deepEqual(stage({ name: 'Click', data: { target: 'tv-tune-in' } }), ['stats:funnel:clicked:2026-09-23']);
   assert.deepEqual(stage({ name: 'Play', data: { film: 'x', player: 'own' } }), ['stats:funnel:played:2026-09-23']);
@@ -103,4 +103,19 @@ test('a merged write leaves the database exactly as writing every event one by o
   const merged = mergeCommands(events.flat());
   assert.deepEqual(apply(merged), oneByOne);
   assert.ok(merged.length < events.flat().length / 2, `${events.flat().length} commands became ${merged.length}`);
+});
+
+test('a visit that does anything counts as active now, in a five-minute window that expires', () => {
+  const now = new Date('2026-09-25T18:02:00Z');
+  const commands = commandsFor(validEvent({ name: 'Click', data: { target: 'nav-tv' }, visit: 'aaaaaaaaaaaaaaaa' }), { now });
+  const key = onlineKey(now);
+  assert.ok(commands.some(c => c.join(' ') === `PFADD ${key} aaaaaaaaaaaaaaaa`));
+  assert.ok(commands.some(c => c.join(' ') === `EXPIRE ${key} 900`), 'gone after fifteen minutes');
+  assert.ok(!commands.some(c => c[0] === 'EXPIRE' && c[1] === key && c[2] !== 900), 'not kept for 400 days like the rest');
+  assert.equal(onlineKey(new Date('2026-09-25T18:04:59Z')), key, 'same window');
+  assert.notEqual(onlineKey(new Date('2026-09-25T18:05:00Z')), key, 'next window');
+  assert.equal(onlineKey(new Date('2026-09-25T18:07:00Z'), 1), key, 'one window back');
+  assert.ok(!commandsFor(validEvent({ name: 'Load more', data: {} }), { now }).some(c => c[1]?.startsWith('stats:online:')), 'no visit id, not counted');
+  const merged = mergeCommands([...commands, ...commandsFor(validEvent({ name: 'Page view', data: { path: '/' }, visit: 'bbbbbbbbbbbbbbbb' }), { now })]);
+  assert.ok(merged.some(c => c[0] === 'PFADD' && c[1] === key && c.includes('aaaaaaaaaaaaaaaa') && c.includes('bbbbbbbbbbbbbbbb')), 'batched into one PFADD');
 });
