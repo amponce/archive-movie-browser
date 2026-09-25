@@ -9,9 +9,20 @@ const FEEDS = [
   { what: 'Every film as a playlist', url: `${SITE}/api/tv/playlist.m3u`, for: 'VLC and other players: every channel’s films in order, to play straight through.' },
 ];
 const APPS = [
-  { name: 'Jellyfin', steps: 'Dashboard, then Live TV. Add a tuner device of type M3U and paste the channels address. Then add a TV guide data provider of type XMLTV and paste the guide address.' },
-  { name: 'TiviMate', steps: 'Add playlist, choose M3U playlist, paste the channels address. It finds the guide from the playlist; if not, add it under EPG sources.' },
-  { name: 'Kodi', steps: 'Install the PVR IPTV Simple Client add-on. In its settings, set the M3U playlist and the XMLTV guide to the two addresses.' },
+  { name: 'Jellyfin', steps: [
+    'Dashboard, then Live TV. Add a tuner device of type M3U and paste the channels address.',
+    'Add a TV guide data provider of type XMLTV and paste the guide address.',
+  ] },
+  { name: 'TiviMate', steps: [
+    'Add playlist, choose M3U playlist, and paste the channels address.',
+    'The guide comes with it. If it doesn’t show, add the guide address under EPG sources.',
+  ] },
+  { name: 'Kodi', steps: [
+    'Settings, then Add-ons, then Install from repository, then PVR clients. Install PVR IPTV Simple Client.',
+    'Open it again and choose Configure. Kodi lists one entry, Migrated Add-on Config: choose that one. Don’t choose Add; a second copy of the add-on makes Kodi crash.',
+    'Under General, put the channels address in M3U play list URL, then choose OK. The guide comes with it.',
+    'Restart Kodi. From then on, the channels are on the home screen: choose TV, then Channels, or Guide for the schedule. In the guide, choose a channel’s name to watch what is on.',
+  ], note: 'Crashing, or every channel twice? The add-on has extra copies. Choose Configure again and turn off every entry but one.' },
 ];
 
 function Copy({ text }) {
@@ -59,7 +70,10 @@ export default function IptvPage() {
             {APPS.map(app => (
               <div key={app.name}>
                 <dt className="text-bone font-semibold">{app.name}</dt>
-                <dd className="text-muted leading-relaxed">{app.steps}</dd>
+                <dd className="text-muted leading-relaxed">
+                  <ol className="list-decimal pl-5 flex flex-col gap-1">{app.steps.map(step => <li key={step}>{step}</li>)}</ol>
+                  {app.note && <p className="mt-2">{app.note}</p>}
+                </dd>
               </div>
             ))}
           </dl>
