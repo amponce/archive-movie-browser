@@ -13,6 +13,10 @@
   },
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
       "source": "/tv(/)?",
       "destination": "/index.html"
     },
