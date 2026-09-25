@@ -19,3 +19,7 @@ test('plainText survives hostile descriptions: impossible characters and endless
   plainText('<script>'.repeat(50000));
   assert.ok(Date.now() - started < 500, `took ${Date.now() - started} ms`);
 });
+
+test('an entity named like an object property stays as written', () => {
+  assert.equal(plainText('a &constructor; b &__proto__; c'), 'a &constructor; b &__proto__; c');
+});

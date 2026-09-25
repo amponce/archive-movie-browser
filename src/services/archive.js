@@ -346,8 +346,8 @@ class ArchiveService {
 
     const lowerGenre = genre.toLowerCase().trim();
 
-    // Check aliases first
-    if (lowerGenre in GENRE_ALIASES) {
+    // Check aliases first (the table's own names only, whatever an uploader tags)
+    if (Object.hasOwn(GENRE_ALIASES, lowerGenre)) {
       return GENRE_ALIASES[lowerGenre];
     }
 

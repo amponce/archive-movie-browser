@@ -845,3 +845,9 @@ test('identifierQueries keeps every search under the length Archive.org takes, i
   assert.deepEqual(queries.flatMap(({ ids: batch }) => batch), ids);
   assert.equal(queries[0].q.slice(0, 51), 'identifier:("a_rather_long_upload_identifier_0" OR ');
 });
+
+test('an uploader subject named like an object property is not a genre', () => {
+  for (const subject of ['__proto__', 'constructor', 'toString', 'hasOwnProperty']) {
+    assert.deepEqual(archiveService.normalizeMovie({ identifier: 'x', title: 'x', subject: [subject] }).genres, ['Uncategorized'], subject);
+  }
+});
