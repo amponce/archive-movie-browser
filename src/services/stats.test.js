@@ -63,3 +63,9 @@ test('a day is a Pacific day: 5 PM in California is still that day, not tomorrow
   assert.equal(statsDay(new Date('2026-12-25T07:59:00Z')), '2026-12-24'); // 11:59 PM PST
   assert.ok(commandsFor({ name: 'Page view', data: { path: '/' } }, { now: new Date('2026-09-25T05:00:00Z'), visitor: 'v' }).some(c => c.join(' ') === 'PFADD stats:visitors:2026-09-24 v'));
 });
+
+test('a pasted link is counted without the link, and a refused search without its words', () => {
+  assert.deepEqual(validEvent({ name: 'Search', data: { query: 'https://archive.org/details/@someone', kind: 'pasted link' } }).data, { query: '', kind: 'pasted link' });
+  assert.equal(validEvent({ name: 'Search', data: { query: 'snuff film', kind: 'typed' } }).data.query, '');
+  assert.equal(validEvent({ name: 'Search', data: { query: 'Night of the Living Dead', kind: 'typed' } }).data.query, 'night of the living dead');
+});

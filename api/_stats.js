@@ -4,6 +4,8 @@
 // which keeps an estimate of how many distinct ids it saw and none of the ids.
 // (The leading underscore keeps Vercel from treating this file as an endpoint.)
 
+import { isForbiddenSearch } from '../src/services/policy.js';
+
 const FILM = /^[A-Za-z0-9._-]{1,200}$/;
 const CHANNEL = /^[a-z0-9-]{1,60}$/; // a list slug, or 'mine'
 const TARGET = /^[a-z0-9-]{1,40}$/; // a data-track name
@@ -24,7 +26,13 @@ const EVENTS = {
   'Film opened': d => (FILM.test(d.film) ? { film: d.film, ...(clean(d.title, 80) && { title: clean(d.title, 80) }) } : null),
   'Play': d => (FILM.test(d.film) && ['own', 'archive'].includes(d.player) ? { film: d.film, player: d.player } : null),
   'Watched 10 minutes': d => (FILM.test(d.film) ? { film: d.film } : null),
-  'Search': d => ({ query: clean(d.query).toLowerCase(), kind: d.kind === 'pasted link' ? 'pasted link' : 'typed' }),
+  // A pasted link is counted as one, without the link (it can name someone's Archive.org page);
+  // a search the site refuses is counted without its words
+  'Search': d => {
+    if (d.kind === 'pasted link') return { query: '', kind: 'pasted link' };
+    const query = clean(d.query).toLowerCase();
+    return { query: isForbiddenSearch(query) ? '' : query, kind: 'typed' };
+  },
   'Filter': d => (['genre', 'decade', 'collection', 'sort'].includes(d.type) ? { type: d.type, value: clean(d.value, 40) } : null),
   'Load more': () => ({}),
   // What people do with television. channel and film are optional, but checked when present.

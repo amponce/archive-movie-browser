@@ -21,14 +21,14 @@ const wrap = (name, run) => async (args) => {
   return value;
 };
 
-const hits = new Map(); // ip -> timestamps within the last minute
+const hits = new Map(); // ip -> requests this clock minute; every address is forgotten when it ends
+let minute = 0;
 function overLimit(ip) {
-  const now = Date.now();
-  const recent = (hits.get(ip) || []).filter(at => now - at < 60_000);
-  recent.push(now);
-  hits.set(ip, recent);
-  if (hits.size > 5000) hits.clear();
-  return recent.length > REQUESTS_PER_MINUTE;
+  const now = Math.floor(Date.now() / 60_000);
+  if (now !== minute || hits.size > 5000) { hits.clear(); minute = now; }
+  const count = (hits.get(ip) || 0) + 1;
+  hits.set(ip, count);
+  return count > REQUESTS_PER_MINUTE;
 }
 
 const CORS = {

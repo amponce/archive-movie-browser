@@ -4,13 +4,15 @@ import { redis } from './_redis.js';
 
 const PER_MINUTE = 60;
 const hits = new Map(); // ponytail: per-instance memory, like api/mcp.js; enough to blunt a loop or a prank
+let minute = 0;
+// Counts per clock minute; every address is forgotten when the next minute's first event arrives
+// (an address is held for a minute at most)
 function overLimit(ip) {
-  const now = Date.now();
-  const recent = (hits.get(ip) || []).filter(at => now - at < 60_000);
-  recent.push(now);
-  hits.set(ip, recent);
-  if (hits.size > 5000) hits.clear();
-  return recent.length > PER_MINUTE;
+  const now = Math.floor(Date.now() / 60_000);
+  if (now !== minute || hits.size > 5000) { hits.clear(); minute = now; }
+  const count = (hits.get(ip) || 0) + 1;
+  hits.set(ip, count);
+  return count > PER_MINUTE;
 }
 
 const done = (status) => new Response(null, { status });
@@ -19,9 +21,11 @@ const done = (status) => new Response(null, { status });
 const originHost = (origin) => { try { return new URL(origin).host; } catch { return null; } };
 
 export async function POST(request) {
-  // Only our own pages report events: a browser sets these headers and a page cannot fake them
+  // Only our own pages report events: a browser sets these headers and a page cannot fake them.
+  // A request with neither is not from a browser page, so it is not counted.
   const site = request.headers.get('sec-fetch-site');
   const origin = request.headers.get('origin');
+  if (!site && !origin) return done(403);
   if (site && site !== 'same-origin') return done(403);
   if (origin && originHost(origin) !== new URL(request.url).host) return done(403);
 

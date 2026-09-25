@@ -20,7 +20,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
-    {/* Vercel Web Analytics: page views and visitors, cookieless, beside our own counts (api/_stats.js) */}
-    <Analytics />
+    {/* Vercel Web Analytics: page views and visitors, cookieless, beside our own counts (api/_stats.js).
+        The address goes without its query and hash: those carry search text (?q=) and films (#id). */}
+    <Analytics beforeSend={event => ({ ...event, url: event.url.split(/[?#]/)[0] })} />
   </React.StrictMode>
 );
