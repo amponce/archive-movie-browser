@@ -4,8 +4,17 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-09-25
+
 ### Added
 
+- **IPTV.** Every channel is a feed for Jellyfin, TiviMate, Kodi and anything that takes an M3U playlist: `/api/tv/channels.m3u`, one entry per channel that plays what is on now, with a three-day XMLTV guide (`/api/tv/guide.xml`, descriptions and genres, starting six hours back so apps show no gap). A setup page at [/iptv](https://www.orphanedfilms.com/iptv) has step-by-step instructions per app, including how to keep Kodi from making a second copy of its add-on (which crashes it).
+- **Nine new channels and lists:** Kung Fu Theater, samurai, war, action, monsters, spaghetti westerns, swords and sandals and more, with fixed channel numbers and call signs on phones.
+- **The best of a collection.** Every Archive.org collection opens on the best films in it; for the biggest film collections and every genre, Jev ranks what belongs and leaves out strays ([README](https://github.com/amponce/archive-movie-browser#how-collections-get-ranked)). All Films opens on the best of the genre picked, following the decade filter.
+- **Open someone's Archive.org page here:** `/details/@someone` shows their favourites and lists with posters, and a page, [/from-archive](https://www.orphanedfilms.com/from-archive), explains every kind of address. When a film has several uploads, the best copy plays.
+- **The front page leads by the day and the hour,** shows the range of what is here, and plays from the film of the day.
+- **Pop out on phones:** iPhone and iPad open their own player, which always has picture-in-picture (swipe home and the film keeps playing); Android goes full screen, then floats when you leave the app.
+- 340 more uploads identified, from a walk through 80s horror.
 - A clear path for removal requests. `/takedown` explains that files are the Internet Archive's to remove and how to have an upload taken off this site, with a removal request form. Every surface (search, film pages, rows, More like this, TV, lists, stations, the MCP server) honours one list, `src/services/policy.js`, with a test fixture proving each one does.
 - Films from the last 25 years stay off what the site shows on its own: the front page, TV, lists, stations and More like this. Search and browse still find everything the Archive hosts.
 - Subtitles play on TV and on a channel opened in the guide, not only on the film page, and every player says what there is: "Subtitles: English (on) · Arabic", or "No subtitle file with this upload", so a film without them doesn't look broken.
@@ -15,10 +24,19 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Changed
 
+- **What never appears here:** children in a sexual context, sexual violence, real killing and hate are kept off every search, result, link and surface, including TV and the IPTV feeds. Everything else from the Archive, adult films included, stays as it is.
+- Cartoons browse under Animation and Family only, not Drama or Comedy.
+- Browse cards fall back to TMDB's overview when an upload has no description.
+- Stats count days midnight to midnight Pacific time, so "today" on /stats is the site's today (UTC split every evening in two). The funnel counts TV tune-ins apart from film plays.
+- Privacy in the README says what the site keeps and who else your browser talks to, as it is now. Vercel Web Analytics is on (no cookies).
 - Uploads tagged as trailers or teasers are left out at the source outside Shorts. About a third of a genre and decade search was trailers; of 6,000 uploads so tagged, none was a feature-length film in the index. Pages fill with films instead of being thinned out in the browser.
 
 ### Fixed
 
+- Pop out on iPhone highlighted and did nothing; Safari ignores a page's own request to float a video.
+- The channel playlist only names our own hosts, whatever Host a request sends.
+- A mixed-genre collection opens as itself, not as a genre pill.
+- Takedowns also cover shared channels and someone's Archive.org list.
 - An upload whose short title sits inside an obscure film's longer title is no longer given that film. Tallahassee's Silver Stars Gala (city TV) showed as Silver Stars on Red Velvet, a film with one vote, with its plot, genre and tagline. The longer-title match now needs a film at least ten people have rated; cached matches are looked up again.
 
 ## [2.2.0] - 2026-09-23
