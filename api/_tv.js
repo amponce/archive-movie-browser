@@ -29,6 +29,7 @@ export const CHANNELS = [...LISTS].sort((a, b) => place(a.slug) - place(b.slug))
 // film has a lineup entry, or a CI step that runs the script, closes that.
 const lineups = JSON.parse(readFileSync(new URL('../public/tv-lineups.json', import.meta.url), 'utf8')).films;
 
+// One film as the channels air it, or null when it may not air
 function record(id) {
   const known = lineups[id];
   const entry = index[id];

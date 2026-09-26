@@ -87,6 +87,7 @@ for (const station of STATIONS) {
     // Cartoons only on a station that asks for Animation or Family (or every genre)
     if (e.g?.includes('Animation') && !wanted.some(g => CARTOON_GENRES.includes(g))) continue;
     if (!e.p || e.c < 0.8 || !e.g?.some(g => wanted.includes(g)) || !e.y || e.y < station.decades[0] || e.y >= station.decades[1] + 10) continue;
+    // Feature length, decently rated, one upload per film, and allowed on air
     if (!(e.l >= 55) || (e.v || 0) < 5.5 || /trailer/i.test(id) || pool.has(e.i) || isTakenDown(id) || isRecent(e.y) || neverOnAir(e.i)) continue;
     // Hidden gems: known to some (20+ votes, so the rating means something), known to few (under 1,000), and well liked
     if (station.gems && !(e.k >= 20 && e.k < 1000 && e.v >= 6.5)) continue;
