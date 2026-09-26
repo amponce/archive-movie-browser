@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadLineups, saveLineups, measure, isFeature } from './measure.mjs';
-import { isTakenDown, isRecent } from '../src/services/policy.js';
+import { isTakenDown, isRecent, neverOnAir } from '../src/services/policy.js';
 import { CARTOON_GENRES } from '../src/services/posterIndex.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -87,7 +87,7 @@ for (const station of STATIONS) {
     // Cartoons only on a station that asks for Animation or Family (or every genre)
     if (e.g?.includes('Animation') && !wanted.some(g => CARTOON_GENRES.includes(g))) continue;
     if (!e.p || e.c < 0.8 || !e.g?.some(g => wanted.includes(g)) || !e.y || e.y < station.decades[0] || e.y >= station.decades[1] + 10) continue;
-    if (!(e.l >= 55) || (e.v || 0) < 5.5 || /trailer/i.test(id) || pool.has(e.i) || isTakenDown(id) || isRecent(e.y)) continue;
+    if (!(e.l >= 55) || (e.v || 0) < 5.5 || /trailer/i.test(id) || pool.has(e.i) || isTakenDown(id) || isRecent(e.y) || neverOnAir(e.i)) continue;
     // Hidden gems: known to some (20+ votes, so the rating means something), known to few (under 1,000), and well liked
     if (station.gems && !(e.k >= 20 && e.k < 1000 && e.v >= 6.5)) continue;
     // A quality bar: rated at least `min` by at least 20 people, so a channel is well-liked films

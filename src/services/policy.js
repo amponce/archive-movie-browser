@@ -16,6 +16,12 @@ export const isTakenDown = id => taken.has(String(id || ''));
 export const RECENT_YEARS = 25;
 export const isRecent = (year, now = new Date()) => Number(year) > now.getFullYear() - RECENT_YEARS;
 
+// Films that never go on a TV channel, by TMDB id (every upload of the film). Still searchable.
+const NEVER_ON_AIR = new Set([
+  39266, // Triumph of the Will (1935), Nazi propaganda
+]);
+export const neverOnAir = tmdbId => NEVER_ON_AIR.has(Number(tmdbId));
+
 // 3. What never appears here, whoever searches for it and however it is linked. The site mirrors
 //    the Archive, adult films included, but not: anything sexual involving children; sexual
 //    violence; footage of real killing; hate material. Checked on every result (title, tags,
