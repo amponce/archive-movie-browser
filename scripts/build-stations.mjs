@@ -50,6 +50,7 @@ const STATIONS = [
   { slug: 'epics-and-history', title: 'Epics and history', blurb: 'Kings, empires and the famous battles, on the biggest sets anyone could afford.', genre: 'History', decades: [1920, 1990], count: 32 },
   { slug: 'the-thirties', title: 'The 1930s', blurb: 'The first decade of sound, every kind of picture.', genres: EVERY_GENRE, decades: [1930, 1930], count: 32 },
   { slug: 'the-forties', title: 'The 1940s', blurb: 'Wartime and after, every kind of picture.', genres: EVERY_GENRE, decades: [1940, 1940], count: 32 },
+  { slug: 'hidden-gems', title: 'Hidden gems', blurb: 'Films the few people who have seen them rate highly, and almost nobody else has heard of. Every genre, every decade, new picks every week.', genres: EVERY_GENRE, decades: [1910, 1990], count: 32, gems: true },
   { slug: 'family-matinee', title: 'Family matinee', blurb: 'Animation and family films the whole room can watch.', genre: 'Family', decades: [1920, 1990], count: 32 },
 ];
 
@@ -77,6 +78,8 @@ for (const station of STATIONS) {
     if (e.g?.includes('Animation') && !wanted.some(g => CARTOON_GENRES.includes(g))) continue;
     if (!e.p || e.c < 0.8 || !e.g?.some(g => wanted.includes(g)) || !e.y || e.y < station.decades[0] || e.y >= station.decades[1] + 10) continue;
     if (!(e.l >= 55) || (e.v || 0) < 5.5 || /trailer/i.test(id) || pool.has(e.i) || isTakenDown(id) || isRecent(e.y)) continue;
+    // Hidden gems: known to some (20+ votes, so the rating means something), known to few (under 1,000), and well liked
+    if (station.gems && !(e.k >= 20 && e.k < 1000 && e.v >= 6.5)) continue;
     pool.set(e.i, id);
   }
   // Walk the shuffled pool and keep the first `count` uploads whose file is really a feature
