@@ -55,7 +55,7 @@ const STATIONS = [
   { slug: 'late-fees', title: 'Late fees', blurb: '80s and 90s horror worth keeping out past the due date.', genre: 'Horror', decades: [1980, 1990], count: 32, quality: { min: 6.0, maxVotes: 5000 } },
   { slug: 'gothic-sixties', title: 'Gothic sixties', blurb: 'Horror from the 1960s: castles, curses, ghost stories from Japan and the first modern nightmares.', genre: 'Horror', decades: [1960, 1960], count: 32, quality: { min: 6.3, maxVotes: 5000 } },
   { slug: 'eighties-action-mixtape', title: '80s action mixtape', blurb: 'A decade of fists, fuel and one-liners, shuffled every week.', genre: 'Action', decades: [1980, 1980], count: 32, quality: { min: 6.0, maxVotes: 5000 } },
-  { slug: 'saturday-morning', title: 'Saturday morning', blurb: 'Animated features from the 80s and 90s, the ones that played after the cartoons.', genre: 'Animation', decades: [1980, 1990], count: 32, quality: { min: 6.0, maxVotes: 5000 } },
+  { slug: 'after-hours', title: 'After hours', blurb: '80s and 90s thrillers: stakeouts, double-crosses and long nights, and no monsters.', genre: 'Thriller', not: ['Horror'], decades: [1980, 1990], count: 32, quality: { min: 6.0, maxVotes: 5000 } },
   { slug: 'golden-age', title: 'Golden age', blurb: 'The best-loved films of the 1930s and 40s, every kind, rated 7 or better.', genres: EVERY_GENRE, decades: [1930, 1940], count: 32, quality: { min: 7.0, maxVotes: 5000 } },
   { slug: 'swords-and-sorcery', title: 'Swords and sorcery', blurb: '80s fantasy: barbarians, wizards, rubber monsters and matte-painted kingdoms.', genre: 'Fantasy', decades: [1980, 1980], count: 32, quality: { min: 6.0, maxVotes: 5000 } },
   { slug: 'seventies-heat', title: 'Seventies heat', blurb: 'Crime from the 1970s: cops, con men, samurai assassins and the Paris underworld.', genre: 'Crime', decades: [1970, 1970], count: 32, quality: { min: 6.3, maxVotes: 5000 } },
@@ -93,6 +93,8 @@ for (const station of STATIONS) {
     // A quality bar: rated at least `min` by at least 20 people, and not a blockbuster (under `maxVotes`),
     // so a channel is well-liked films rather than whatever fits the genre, or studio hits
     if (station.quality && !(e.k >= 20 && e.k < station.quality.maxVotes && e.v >= station.quality.min)) continue;
+    // No channel airs a blockbuster: 5,000 ratings and up is a studio hit, not something to discover
+    if ((e.k || 0) >= 5000) continue;
     if (station.not && e.g.some(g => station.not.includes(g))) continue;
     pool.set(e.i, id);
   }
