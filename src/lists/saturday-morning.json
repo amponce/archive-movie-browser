@@ -1,0 +1,36 @@
+{
+  "slug": "saturday-morning",
+  "title": "Saturday morning",
+  "blurb": "Animated features from the 80s and 90s, the ones that played after the cartoons.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Animation 1980s–1990s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "the-secret-of-nimh-1982_202511"
+    },
+    {
+      "id": "poohs-grand-adventure-1998-laserdisc"
+    },
+    {
+      "id": "vhs-tape-999-sayonara-ginga-tetsudo-999-andromeda-shuchakueki-adieu-galaxy-expre"
+    },
+    {
+      "id": "aladdin-and-the-king-of-thieves-1997-laserdisc"
+    },
+    {
+      "id": "laputa.-castle.in.the.-sky.-1986.1080p.-bdrip.-dual.-audio.-10bits.x-265-rapta"
+    },
+    {
+      "id": "PILA-1383"
+    },
+    {
+      "id": "Urotsukidoji"
+    },
+    {
+      "id": "wicked_city_1987_bd"
+    }
+  ]
+}

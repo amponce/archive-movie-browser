@@ -177,6 +177,16 @@
       "the-projection-booth",
       "DOC"
     ],
-    ["hidden-gems", "GEMS"]
+    ["hidden-gems", "GEMS"],
+    ["rental-comedy", "LAFF"],
+    ["cassette-futures", "TAPE"],
+    ["late-fees", "LATE"],
+    ["gothic-sixties", "GOTH"],
+    ["eighties-action-mixtape", "MIX"],
+    ["saturday-morning", "TOON"],
+    ["golden-age", "GOLD"],
+    ["swords-and-sorcery", "MAGE"],
+    ["seventies-heat", "HEAT"],
+    ["spies-and-capers", "SPY"]
   ]
 }
