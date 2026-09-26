@@ -18,7 +18,7 @@ export const isRecent = (year, now = new Date()) => Number(year) > now.getFullYe
 
 // Films that never go on a TV channel, by TMDB id (every upload of the film). Still searchable.
 const NEVER_ON_AIR = new Set([
-  39266, // Triumph of the Will (1935), Nazi propaganda
+  39266,
 ]);
 export const neverOnAir = tmdbId => NEVER_ON_AIR.has(Number(tmdbId));
 
