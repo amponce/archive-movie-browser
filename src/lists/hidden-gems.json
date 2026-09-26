@@ -4,7 +4,7 @@
   "blurb": "Films the few people who have seen them rate highly, and almost nobody else has heard of. Every genre, every decade, new picks every week.",
   "curator": "the station",
   "generated": {
-    "rule": "Action or Adventure or Animation or Comedy or Crime or Documentary or Drama or Family or Fantasy or History or Horror or Music or Mystery or Romance or Sci-Fi or Thriller or War or Western 1910s–1990s",
+    "rule": "Action or Adventure or Animation or Comedy or Crime or Documentary or Drama or Family or Fantasy or History or Horror or Music or Mystery or Romance or Sci-Fi or Thriller or War or Western 1910s\u20131990s",
     "week": 202639
   },
   "films": [
@@ -61,9 +61,6 @@
     },
     {
       "id": "amoflad"
-    },
-    {
-      "id": "TriumphOfTheWillgermanTriumphDesWillens"
     },
     {
       "id": "the-scarlet-and-the-black-1983"

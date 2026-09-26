@@ -4,7 +4,7 @@
   "blurb": "Documentaries and the real world on film.",
   "curator": "the station",
   "generated": {
-    "rule": "Documentary 1920s–1990s",
+    "rule": "Documentary 1920s\u20131990s",
     "week": 202639
   },
   "films": [
@@ -49,9 +49,6 @@
     },
     {
       "id": "cure-in-orange-60fps-from-ld"
-    },
-    {
-      "id": "TriumphOfTheWillgermanTriumphDesWillens"
     },
     {
       "id": "esta-es-mi-argentina-1974-1080p"
