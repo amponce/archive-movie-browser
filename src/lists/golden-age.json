@@ -1,0 +1,108 @@
+{
+  "slug": "golden-age",
+  "title": "Golden age",
+  "blurb": "The best-loved films of the 1930s and 40s, every kind, rated 7 or better.",
+  "curator": "the station",
+  "generated": {
+    "rule": "Action or Adventure or Animation or Comedy or Crime or Documentary or Drama or Family or Fantasy or History or Horror or Music or Mystery or Romance or Sci-Fi or Thriller or War or Western 1930s–1940s",
+    "week": 202639
+  },
+  "films": [
+    {
+      "id": "the-blue-angel_1930"
+    },
+    {
+      "id": "the-snake-pit-1948"
+    },
+    {
+      "id": "1938-the-lady-vanishes-alarma-en-el-expreso-alfred-hitchcock-vose"
+    },
+    {
+      "id": "amoflad"
+    },
+    {
+      "id": "notorious-1946-restored-movie-720p-hd"
+    },
+    {
+      "id": "the-man-in-the-iron-mask-1939_202511"
+    },
+    {
+      "id": "shanghai-express"
+    },
+    {
+      "id": "jour-de-fete"
+    },
+    {
+      "id": "killers-1946"
+    },
+    {
+      "id": "1936-a-floresta-petrificada-archie-mayo"
+    },
+    {
+      "id": "the-lost-weekend-1945"
+    },
+    {
+      "id": "JohnWayneRedRiverRange193853mns_201605"
+    },
+    {
+      "id": "DarkMirrorCrime505"
+    },
+    {
+      "id": "gilda-1080p"
+    },
+    {
+      "id": "the.fallen.idol.1948"
+    },
+    {
+      "id": "went-the-day-well"
+    },
+    {
+      "id": "stagecoach-colorized"
+    },
+    {
+      "id": "all.-quiet.-on.-the.-western.-front.-1930"
+    },
+    {
+      "id": "TheScarletPimpernel"
+    },
+    {
+      "id": "MyManGodfrey1936"
+    },
+    {
+      "id": "StormInATeacup1937"
+    },
+    {
+      "id": "sahara-colorized"
+    },
+    {
+      "id": "aap44779882"
+    },
+    {
+      "id": "1949-the-third-man-el-tercer-hombre-carol-reed-vose"
+    },
+    {
+      "id": "Oh_Mr.Porter_1937"
+    },
+    {
+      "id": "thb445465887188"
+    },
+    {
+      "id": "Scarlet.Street.194517"
+    },
+    {
+      "id": "49thParallel"
+    },
+    {
+      "id": "this-gun-for-hire-1942"
+    },
+    {
+      "id": "CastleFilm"
+    },
+    {
+      "id": "stray-dog"
+    },
+    {
+      "id": "le-corbeau"
+    }
+  ]
+}

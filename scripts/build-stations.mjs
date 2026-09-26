@@ -50,6 +50,17 @@ const STATIONS = [
   { slug: 'epics-and-history', title: 'Epics and history', blurb: 'Kings, empires and the famous battles, on the biggest sets anyone could afford.', genre: 'History', decades: [1920, 1990], count: 32 },
   { slug: 'the-thirties', title: 'The 1930s', blurb: 'The first decade of sound, every kind of picture.', genres: EVERY_GENRE, decades: [1930, 1930], count: 32 },
   { slug: 'the-forties', title: 'The 1940s', blurb: 'Wartime and after, every kind of picture.', genres: EVERY_GENRE, decades: [1940, 1940], count: 32 },
+  { slug: 'rental-comedy', title: 'Rental comedy', blurb: 'The 80s comedies that wore out the tape at the video store.', genre: 'Comedy', decades: [1980, 1980], count: 32, quality: { min: 6.0 } },
+  { slug: 'cassette-futures', title: 'Cassette futures', blurb: '1980s science fiction on a VHS budget: mutants, machines and futures that went wrong.', genre: 'Sci-Fi', decades: [1980, 1980], count: 32, quality: { min: 6.0 } },
+  { slug: 'late-fees', title: 'Late fees', blurb: '80s and 90s horror worth keeping out past the due date.', genre: 'Horror', decades: [1980, 1990], count: 32, quality: { min: 6.0 } },
+  { slug: 'gothic-sixties', title: 'Gothic sixties', blurb: 'Horror from the 1960s: castles, curses, ghost stories from Japan and the first modern nightmares.', genre: 'Horror', decades: [1960, 1960], count: 32, quality: { min: 6.3 } },
+  { slug: 'eighties-action-mixtape', title: '80s action mixtape', blurb: 'A decade of fists, fuel and one-liners, shuffled every week.', genre: 'Action', decades: [1980, 1980], count: 32, quality: { min: 6.0 } },
+  { slug: 'after-hours', title: 'After hours', blurb: '80s and 90s thrillers: stakeouts, double-crosses and long nights, and no monsters.', genre: 'Thriller', not: ['Horror'], decades: [1980, 1990], count: 32, quality: { min: 6.0 } },
+  { slug: 'golden-age', title: 'Golden age', blurb: 'The best-loved films of the 1930s and 40s, every kind, rated 7 or better.', genres: EVERY_GENRE, decades: [1930, 1940], count: 32, quality: { min: 7.0 } },
+  { slug: 'swords-and-sorcery', title: 'Swords and sorcery', blurb: '80s fantasy: barbarians, wizards, rubber monsters and matte-painted kingdoms.', genre: 'Fantasy', decades: [1980, 1980], count: 32, quality: { min: 6.0 } },
+  { slug: 'seventies-heat', title: 'Seventies heat', blurb: 'Crime from the 1970s: cops, con men, samurai assassins and the Paris underworld.', genre: 'Crime', decades: [1970, 1970], count: 32, quality: { min: 6.3 } },
+  { slug: 'spies-and-capers', title: 'Spies and capers', blurb: 'Sixties thrillers and heists: kidnappings, double agents and one perfect plan.', genres: ['Thriller', 'Crime'], not: ['Horror'], decades: [1960, 1960], count: 32, quality: { min: 6.3 } },
+  { slug: 'hidden-gems', title: 'Hidden gems', blurb: 'Films the few people who have seen them rate highly, and almost nobody else has heard of. Every genre, every decade, new picks every week.', genres: EVERY_GENRE, decades: [1910, 1990], count: 32, gems: true },
   { slug: 'family-matinee', title: 'Family matinee', blurb: 'Animation and family films the whole room can watch.', genre: 'Family', decades: [1920, 1990], count: 32 },
 ];
 
@@ -77,6 +88,12 @@ for (const station of STATIONS) {
     if (e.g?.includes('Animation') && !wanted.some(g => CARTOON_GENRES.includes(g))) continue;
     if (!e.p || e.c < 0.8 || !e.g?.some(g => wanted.includes(g)) || !e.y || e.y < station.decades[0] || e.y >= station.decades[1] + 10) continue;
     if (!(e.l >= 55) || (e.v || 0) < 5.5 || /trailer/i.test(id) || pool.has(e.i) || isTakenDown(id) || isRecent(e.y)) continue;
+    // Hidden gems: known to some (20+ votes, so the rating means something), known to few (under 1,000), and well liked
+    if (station.gems && !(e.k >= 20 && e.k < 1000 && e.v >= 6.5)) continue;
+    // A quality bar: rated at least `min` by at least 20 people, so a channel is well-liked films
+    // rather than whatever fits the genre
+    if (station.quality && !(e.k >= 20 && e.v >= station.quality.min)) continue;
+    if (station.not && e.g.some(g => station.not.includes(g))) continue;
     pool.set(e.i, id);
   }
   // Walk the shuffled pool and keep the first `count` uploads whose file is really a feature
