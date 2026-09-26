@@ -1,7 +1,7 @@
 {
   "slug": "rental-comedy",
   "title": "Rental comedy",
-  "blurb": "The 80s comedies that wore out the tape at the video store. Well loved, not the blockbusters.",
+  "blurb": "The 80s comedies that wore out the tape at the video store.",
   "curator": "the station",
   "generated": {
     "rule": "Comedy 1980s–1980s",
@@ -9,31 +9,7 @@
   },
   "films": [
     {
-      "id": "atraccion-peculiar-1988"
-    },
-    {
-      "id": "dreadnaught_202203"
-    },
-    {
-      "id": "uhf.-1989"
-    },
-    {
-      "id": "the-return-of-the-living-dead-vhs-rip.-original-theatrical-audio"
-    },
-    {
-      "id": "monty-python__the-meaning-of-life__1983"
-    },
-    {
-      "id": "the-worst-witch-1986_202304"
-    },
-    {
-      "id": "throw.momma.from.the.train.1987"
-    },
-    {
-      "id": "paradis-pour-tous-1982-patrick-dewaaere-jacques-dutronc-fanny-cottencon-stephane"
-    },
-    {
-      "id": "re-animator-1985_202508"
+      "id": "the-toxic-avenger-1986-pal-vhs"
     },
     {
       "id": "bad-taste-1987-full-movie"
@@ -42,49 +18,73 @@
       "id": "we-are-going-to-eat-you"
     },
     {
-      "id": "creepshow-2-1983"
-    },
-    {
-      "id": "dead-heat-1988_202511"
-    },
-    {
-      "id": "vieni-avanti-cretino-1982-lino-banfi-adriana-russo-ramona-dell-abate-annabella-s"
-    },
-    {
       "id": "creepshow_202212"
-    },
-    {
-      "id": "dead-men-don-t-wear-plaid-1982"
-    },
-    {
-      "id": "the-lost-boys-1987-vhs-rip"
-    },
-    {
-      "id": "fright-night-1987-fox-32"
-    },
-    {
-      "id": "killer-klowns-from-outer-space-1988-1080p-blu-ray-x-264-aac-ozlem"
-    },
-    {
-      "id": "mysterious-castle-in-the-carpathians-the-1981"
     },
     {
       "id": "el-diablo-el-santo-y-el-tonto-1987-widescreen-version"
     },
     {
+      "id": "the-return-of-the-living-dead-vhs-rip.-original-theatrical-audio"
+    },
+    {
+      "id": "the-worst-witch-1986_202304"
+    },
+    {
+      "id": "mysterious-castle-in-the-carpathians-the-1981"
+    },
+    {
+      "id": "the-lost-boys-1987-vhs-rip"
+    },
+    {
+      "id": "paradis-pour-tous-1982-patrick-dewaaere-jacques-dutronc-fanny-cottencon-stephane"
+    },
+    {
+      "id": "dead-men-don-t-wear-plaid-1982"
+    },
+    {
+      "id": "atraccion-peculiar-1988"
+    },
+    {
+      "id": "creepshow-2-1983"
+    },
+    {
+      "id": "re-animator-1985_202508"
+    },
+    {
+      "id": "vieni-avanti-cretino-1982-lino-banfi-adriana-russo-ramona-dell-abate-annabella-s"
+    },
+    {
+      "id": "dreadnaught_202203"
+    },
+    {
+      "id": "killer-klowns-from-outer-space-1988-1080p-blu-ray-x-264-aac-ozlem"
+    },
+    {
       "id": "lavare-1980"
     },
     {
-      "id": "the-toxic-avenger-1986-pal-vhs"
+      "id": "fright-night-1987-fox-32"
     },
     {
       "id": "big-trouble-little-china"
     },
     {
-      "id": "aaahh-belinda_movie"
+      "id": "uhf.-1989"
+    },
+    {
+      "id": "monty-python__the-meaning-of-life__1983"
     },
     {
       "id": "LSOHWorkprint1986"
+    },
+    {
+      "id": "aaahh-belinda_movie"
+    },
+    {
+      "id": "dead-heat-1988_202511"
+    },
+    {
+      "id": "throw.momma.from.the.train.1987"
     }
   ]
 }
