@@ -110,7 +110,7 @@ test('what never appears: children in a sexual context, sexual violence, real ki
   for (const q of ['kids', 'the virgin spring', 'playboy', 'adults only', 'children of the corn', 'lolita', 'war crimes documentary', 'grapes of wrath']) assert.equal(isForbiddenSearch(q), false, q);
 });
 
-test('Triumph of the Will never goes on a channel', async () => {
+test('a listed film never goes on a channel', async () => {
   const { neverOnAir } = await import('./policy.js');
   assert.ok(neverOnAir(39266) && neverOnAir('39266'));
   assert.ok(!neverOnAir(10331) && !neverOnAir(undefined));
