@@ -4,6 +4,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added
+
+- **Install it on your phone.** Orphaned Films is now an installable web app: Add to Home Screen (Safari's Share menu on iPhone, Chrome's menu or install prompt on Android) puts the Orphaned Films icon on your home screen, and it opens full screen without the browser around it.
+
 ### Fixed
 
 - Films opened from curated lists reopen on reload, shared links, and browser Forward; subsequent film selections keep their own address.
