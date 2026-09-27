@@ -78,6 +78,16 @@ export async function handle(request) {
         { status: 408, headers: { ...CORS, 'Content-Type': 'application/json' } });
     }
   }
+  // subscriptions/listen holds a stream open for "the tools changed" notices. Ours never change,
+  // and on a serverless function the stream only hangs until it is cut off, after which Claude
+  // listens again (every 32 s). Say at once that there is nothing to listen to.
+  let method;
+  try { method = JSON.parse(text).method; } catch { /* not JSON: the handler says so */ }
+  if (method === 'subscriptions/listen') {
+    logLine(request, text, 200, 'listen declined', started);
+    return new Response(JSON.stringify({ jsonrpc: '2.0', error: { code: -32601, message: 'This server sends no notifications: nothing to listen to' }, id: JSON.parse(text).id ?? null }),
+      { status: 200, headers: { ...CORS, 'Content-Type': 'application/json' } });
+  }
   const forward = new Request(request.url, { method: request.method, headers: request.headers, body: request.method === 'POST' ? text : undefined });
   // A stateless answer is one message, so it is read whole: then it is known to be ready in time
   const answer = (async () => {

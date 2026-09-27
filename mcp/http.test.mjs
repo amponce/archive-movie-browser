@@ -75,3 +75,14 @@ test('a request is always answered before Vercel would cut it off', async t => {
   const list = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ jsonrpc: '2.0', id: 8, method: 'tools/list' }) });
   assert.match(await list.text(), /search_films/);
 });
+
+test('subscriptions/listen is declined at once instead of holding a stream open', async t => {
+  const url = await serve(t);
+  const started = Date.now();
+  const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'x-forwarded-for': '203.0.113.11' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'subscriptions/listen', params: { notifications: { toolsListChanged: true } } }) });
+  const answer = await response.json();
+  assert.equal(answer.id, 3);
+  assert.equal(answer.error.code, -32601);
+  assert.ok(Date.now() - started < 2000);
+});
