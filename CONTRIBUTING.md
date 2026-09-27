@@ -55,6 +55,8 @@ Changes to dependencies, `package.json`, build configuration, or anything under 
 
 Fine, and common. You are responsible for what you submit: run it, test it, and be able to explain it. PRs that were clearly never run get closed.
 
+**No fix farming.** Accounts or agents that open PRs in bulk across many repos get their PRs closed without review, however correct the change. A person has to be behind the work here. Notes for agents are in [AGENTS.md](AGENTS.md).
+
 ## Be decent
 
 Be kind and assume good intent. See the [Code of Conduct](CODE_OF_CONDUCT.md).
