@@ -50,7 +50,7 @@ export default function ArchiveMovieBrowser() {
 
   // TMDB API key from localStorage or environment variable
   const [tmdbApiKey, setTmdbApiKey] = useState(
-    () => localStorage.getItem('tmdb-api-key') || '' // a visitor's own key; without one, lookups go through /api/tmdb
+    () => { try { return localStorage.getItem('tmdb-api-key') || ''; } catch { return ''; } } // a visitor's own key; without one, lookups go through /api/tmdb; storage can be blocked
   );
 
   const browse = useBrowseFilters({

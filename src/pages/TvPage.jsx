@@ -213,7 +213,7 @@ export default function TvPage() {
   // The personal channel goes first, as channel 0, when it has anything on it
   const channels = useMemo(() => (mine && mine.lineup.length ? [mine, ...stations] : stations), [mine, stations]);
   // The channel in the link, else the one this browser watched last, else channel 1
-  const [currentId, setCurrentId] = useState(() => decodeURIComponent(window.location.hash.slice(1)) || readLast());
+  const [currentId, setCurrentId] = useState(() => { try { return decodeURIComponent(window.location.hash.slice(1)) || readLast(); } catch { return readLast(); } });
   const [now, setNow] = useState(Date.now);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(t); }, []);
   useEffect(() => { document.title = 'TV | Orphaned Films'; }, []);

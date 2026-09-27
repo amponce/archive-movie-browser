@@ -44,7 +44,7 @@ export default function HomePage() {
   const { featured, wall, shelf, short, heardOf, counts } = programme;
   // ponytail: the file number is the film's position in the index, which moves when the index is
   // rebuilt; a stable number needs a field in the index
-  const fileNumber = String(Object.keys(index).indexOf(featured.id) + 1).padStart(5, '0');
+  const fileNumber = featured && String(Object.keys(index).indexOf(featured.id) + 1).padStart(5, '0');
 
   return (
     <div className="min-h-screen">

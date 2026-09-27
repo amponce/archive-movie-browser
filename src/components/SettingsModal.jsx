@@ -30,7 +30,7 @@ export default function SettingsModal({ isOpen, onClose, onApiKeyChange }) {
     if (isValid) {
       const trimmedApiKey = apiKey.trim();
 
-      localStorage.setItem('tmdb-api-key', trimmedApiKey);
+      try { localStorage.setItem('tmdb-api-key', trimmedApiKey); } catch { /* storage blocked: the key lasts this visit */ }
       onApiKeyChange?.(trimmedApiKey);
     } else {
       setError('Invalid TMDB API key');
@@ -39,7 +39,7 @@ export default function SettingsModal({ isOpen, onClose, onApiKeyChange }) {
 
   // handle clear
   const handleClear = () => {
-    localStorage.removeItem('tmdb-api-key');
+    try { localStorage.removeItem('tmdb-api-key'); } catch { /* storage blocked */ }
     setApiKey('');
     setError('');
     onApiKeyChange?.('');
