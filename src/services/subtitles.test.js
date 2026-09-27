@@ -10,6 +10,7 @@ test('toVtt turns SubRip into WebVTT, including Archive.org\'s two-digit fractio
 
 test('subtitle requests only name a subtitle file inside one upload', () => {
   assert.ok(validSubtitleRequest('sex_madness', 'sex_madness.asr.srt'));
+  assert.ok(!validSubtitleRequest('.', 'x.srt') && !validSubtitleRequest('..', 'x.srt'), 'not a path out of the upload');
   assert.ok(validSubtitleRequest('rio', 'That.Man.from.Rio.1964_english.srt'));
   assert.ok(!validSubtitleRequest('rio', '../../etc/passwd.srt'));
   assert.ok(!validSubtitleRequest('rio', 'film.mp4'));

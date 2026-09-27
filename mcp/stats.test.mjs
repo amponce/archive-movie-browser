@@ -9,6 +9,7 @@ test('only known events with well-formed data are accepted', () => {
   assert.equal(validEvent({ name: 'Play', data: { film: 'Cops1922', player: 'vlc' } }), null);
   assert.equal(validEvent({ name: 'Film opened', data: { film: '../../etc/passwd' } }), null);
   assert.equal(validEvent({ name: 'Made up', data: {} }), null);
+  for (const name of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) assert.equal(validEvent({ name, data: { x: 1 } }), null, name);
   assert.equal(validEvent(null), null);
   assert.deepEqual(validEvent({ name: 'Search', data: { query: '  Buster KEATON\n' + 'x'.repeat(200) } }).data.query.length, 60);
   assert.deepEqual(validEvent({ name: 'Filter', data: { type: 'decade', value: 1980 } }), { name: 'Filter', data: { type: 'decade', value: '1980' } });

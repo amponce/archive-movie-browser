@@ -3,7 +3,7 @@
 const ID = /^[A-Za-z0-9._-]{1,200}$/;
 export const MAX_BYTES = 3 * 1024 * 1024;
 
-export const validSubtitleRequest = (id, file) => ID.test(String(id || ''))
+export const validSubtitleRequest = (id, file) => ID.test(String(id || '')) && !/^\.+$/.test(String(id))
   && typeof file === 'string' && file.length <= 300 && /\.(srt|vtt)$/i.test(file) && !file.split('/').some(part => part === '..' || part === '');
 
 // UTF-8 when it is valid UTF-8, else Windows-1252, which older subtitle files mostly are

@@ -19,9 +19,15 @@ function overLimit(ip) {
 }
 
 // The TMDB address for a request, or null when it is not one the site makes
+// Anything else in the address is refused rather than ignored, so every answer has one cache key.
+const ALLOWED = { 'search/movie': ['path', 'query'], movie: ['path', 'append_to_response'], 'genre/movie/list': ['path'] };
 export function tmdbUrl(query, key) {
   const path = String(query?.path || '');
   if (!key || !PATHS.test(path)) return null;
+  const allowed = ALLOWED[path.startsWith('movie/') ? 'movie' : path];
+  if (Object.keys(query).some(name => !allowed.includes(name))) return null;
+  if (query.append_to_response !== undefined && query.append_to_response !== 'credits') return null;
+  if (path === 'search/movie' && query.query !== String(query.query || '').trim().toLowerCase()) return null;
   const params = new URLSearchParams({ api_key: key });
   if (path === 'search/movie') {
     const text = String(query.query || '').trim().toLowerCase().slice(0, 200);

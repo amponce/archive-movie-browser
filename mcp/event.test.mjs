@@ -69,6 +69,7 @@ test('stats need the secret, read with the read-only token, and come back shaped
     : ['Cops1922', '7', 'Nosferatu', '2'] })));
   assert.equal((await get()).status, 404);
   assert.equal((await get('wrong-token-of-same-len!!')).status, 404);
+  assert.equal((await get('é'.repeat(25))).status, 404, 'same length in characters, not in bytes: a 404, never a 500');
   assert.equal(calls.length, 0, 'no database access without the secret');
   const response = await get('a-long-enough-stats-token');
   assert.equal(response.status, 200);

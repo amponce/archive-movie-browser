@@ -12,8 +12,9 @@ const DAYS = 30;
 function allowed(request) {
   const expected = process.env.STATS_TOKEN || '';
   const given = (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '');
-  if (expected.length < 16 || given.length !== expected.length) return false;
-  return timingSafeEqual(Buffer.from(given), Buffer.from(expected));
+  const a = Buffer.from(given), b = Buffer.from(expected);
+  if (expected.length < 16 || a.length !== b.length) return false; // bytes, not characters
+  return timingSafeEqual(a, b);
 }
 
 const pairs = (flat) => { const out = []; for (let i = 0; i < (flat || []).length; i += 2) out.push([flat[i], Number(flat[i + 1])]); return out; };

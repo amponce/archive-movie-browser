@@ -56,7 +56,7 @@ const EVENTS = {
 };
 
 export function validEvent(body) {
-  const check = EVENTS[body?.name];
+  const check = Object.hasOwn(EVENTS, body?.name ?? '') && EVENTS[body.name]; // not inherited names like toString
   if (!check) return null;
   const data = check(body.data && typeof body.data === 'object' ? body.data : {});
   return data && { name: body.name, data, ...(VISIT.test(body.visit) && { visit: body.visit }) };
