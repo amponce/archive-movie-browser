@@ -1,0 +1,32 @@
+{
+  "slug": "orphan-noir",
+  "title": "Orphan noir",
+  "blurb": "Fifties crime from the independents that made it and moved on: Ida Lupino's hitch-hiker, John Alton's shadows, and a heist half of Hollywood borrowed from.",
+  "curator": "amponce",
+  "films": [
+    {
+      "id": "KansasCityConfidential720p",
+      "note": "An armoured-car robbery by four masked men who never see each other's faces. The heist film a generation of heist films borrowed from."
+    },
+    {
+      "id": "The_Big_Combo_1955",
+      "note": "John Alton's lighting: faces cut out of black. Cornel Wilde against a mob boss who is always one step ahead."
+    },
+    {
+      "id": "Hitch_Hiker",
+      "note": "Ida Lupino directs: two friends on a fishing trip pick up the wrong man. In the National Film Registry."
+    },
+    {
+      "id": "bighouseu.s.a.1955_201909",
+      "note": "A kidnapping, a prison break and Broderick Crawford at his most menacing."
+    },
+    {
+      "id": "BeatTheDevil1953",
+      "note": "Bogart, John Huston and a Truman Capote script, made up on the day. A flop that became a cult comedy."
+    },
+    {
+      "id": "Please_Murder_Me_movie",
+      "note": "Raymond Burr as a lawyer who defends a woman he loves, then finds out what she did."
+    }
+  ]
+}

@@ -187,6 +187,8 @@
     ["golden-age", "GOLD"],
     ["swords-and-sorcery", "MAGE"],
     ["seventies-heat", "HEAT"],
-    ["spies-and-capers", "SPY"]
+    ["spies-and-capers", "SPY"],
+    ["orphan-noir", "ORPH"],
+    ["orphan-drive-in", "BACK"]
   ]
 }
