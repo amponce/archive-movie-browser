@@ -32,7 +32,8 @@ export async function describe(movie) {
 }
 
 async function list(options, limit) {
-  const { movies, total } = await archiveService.fetchFiltered({ ...options, count: limit, maxPages: 3, retryDelayMs: 600 });
+  // Vercel stops the function at 30 s: answer with what Archive.org gave by 22 s
+  const { movies, total } = await archiveService.fetchFiltered({ ...options, count: limit, maxPages: 3, retryDelayMs: 600, deadline: Date.now() + 22000 });
   return { total, films: await Promise.all(movies.slice(0, limit).map(describe)) };
 }
 

@@ -24,6 +24,11 @@ import { filmFromHash, pathFor } from '../services/archiveUrl';
 // The browse page. The filters live in useBrowseFilters (and the URL), the films in useFilms,
 // the pieces of the page in components/browse. What is left here is opening and closing a
 // film, which touches history and every way a film can be reached.
+// Why a film link didn't open: a wrong address, or Archive.org not answering
+const linkFailure = (err, identifier) => (/not found/i.test(err.message)
+  ? `Couldn't open that Archive.org link. Check the address: nothing was found at "${identifier}".`
+  : "Archive.org didn't answer in time. Try the link again in a moment.");
+
 export default function ArchiveMovieBrowser() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState(null);
@@ -42,7 +47,7 @@ export default function ArchiveMovieBrowser() {
     archiveService.getMovieByIdentifier(identifier)
       .then(setSelectedMovie)
       .catch((err) => (err.collection ? window.location.assign(pathFor({ type: 'collection', id: err.collection }))
-        : setLinkError(`Couldn't open that Archive.org link. Check the address: nothing was found at "${identifier}".`)));
+        : setLinkError(linkFailure(err, identifier))));
   };
 
   // A pick from the type-ahead can be a full film or just an identifier from the index
@@ -75,7 +80,7 @@ export default function ArchiveMovieBrowser() {
         .catch((err) => {
           if (cancelled) return;
           if (err.collection) window.location.replace(pathFor({ type: 'collection', id: err.collection })); // #movies: browse it
-          else console.error('Failed to open movie from URL hash:', err);
+          else setLinkError(linkFailure(err, decoded));
         })
         .finally(() => { if (!cancelled) setOpening(false); });
     };
@@ -99,7 +104,7 @@ export default function ArchiveMovieBrowser() {
   const afterClose = useRef(null);
   const closeFilmThen = (action) => { afterClose.current = action; window.history.back(); };
 
-  if (opening && !selectedMovie) return <div className="min-h-screen bg-ink" />;
+  if (opening && !selectedMovie) return <div role="status" className="min-h-screen bg-ink flex items-center justify-center text-muted">Opening the film…</div>;
 
   return (
     <div className="min-h-screen">

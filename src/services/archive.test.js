@@ -701,6 +701,21 @@ test('a hung Archive.org request times out into an error instead of loading fore
   }
 });
 
+test('retries stop at the deadline: a hung Archive.org fails within 25 s, not three full timeouts', async (t) => {
+  const realFetch = globalThis.fetch;
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  globalThis.fetch = (url, { signal } = {}) => new Promise((_, reject) => signal?.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))));
+  try {
+    const pending = archiveService.fetchMovies({ collection: 'silent_films', timeoutMs: 20000, retryDelayMs: 600 });
+    let settled = false; pending.then(() => { settled = true; }, () => { settled = true; });
+    for (let i = 0; i < 26; i++) { t.mock.timers.tick(1000); await new Promise(resolve => setImmediate(resolve)); }
+    assert.equal(settled, true, 'gave up by the 25 s deadline');
+    await assert.rejects(pending, /took too long/);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 test('buildQuery leaves out the sub-collections that are not films: trailer bins, stock footage, home movies', async () => {
   const { NOT_FILMS } = await import('./archive.js');
   assert.ok(NOT_FILMS.includes('movie_trailers_unsorted'), '60,246 of the 110,772 items in the film collections are in the trailer bin');

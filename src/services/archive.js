@@ -558,7 +558,8 @@ class ArchiveService {
   }
 
   // Store raw responses so each caller gets freshly normalized movies and its own runtime filter.
-  async fetchMovieResponse(url, { signal, timeoutMs, retryDelayMs }) {
+  // deadline: when to stop trying altogether (a server function has 30 s, a visitor less patience)
+  async fetchMovieResponse(url, { signal, timeoutMs, retryDelayMs, deadline = Date.now() + 25000 }) {
     signal?.throwIfAborted();
     const cached = this.movieResponses.get(url);
     if (cached && cached.expiresAt > Date.now()) return cached.data;
@@ -571,7 +572,9 @@ class ArchiveService {
       let failure;
       const timer = new AbortController();
       let timedOut = false;
-      const timeout = setTimeout(() => { timedOut = true; timer.abort(); }, timeoutMs);
+      const wait = Math.min(timeoutMs, deadline - Date.now());
+      if (wait <= 0) throw new Error('Archive.org took too long to answer');
+      const timeout = setTimeout(() => { timedOut = true; timer.abort(); }, wait);
       signal?.addEventListener('abort', () => timer.abort(), { once: true });
       try {
         response = await fetch(url, { signal: timer.signal });
@@ -589,7 +592,7 @@ class ArchiveService {
       } finally {
         clearTimeout(timeout);
       }
-      if (attempt === 3) throw failure;
+      if (attempt === 3 || Date.now() + retryDelayMs * attempt >= deadline) throw failure;
       await new Promise(resolve => setTimeout(resolve, retryDelayMs * attempt));
     }
 
@@ -630,6 +633,7 @@ class ArchiveService {
       retryDelayMs = 600,
       timeoutMs = 20000, // Archive.org usually answers in 1.5-4 s; a request that never answers must not spin forever
       signal,
+      deadline,
       query: queryOverride = null,
       fuzzy = false,
     } = options;
@@ -656,7 +660,7 @@ class ArchiveService {
     const fieldParams = fields.map(f => `fl[]=${f}`).join('&');
     const url = `${ARCHIVE_API}?q=${encodeURIComponent(query)}&${fieldParams}&sort[]=${sortBy}+${sortOrder}&rows=${rowsPerPage}&page=${page}&output=json`;
 
-    const data = await this.fetchMovieResponse(url, { signal, timeoutMs, retryDelayMs });
+    const data = await this.fetchMovieResponse(url, { signal, timeoutMs, retryDelayMs, deadline });
     if (!data.response || !data.response.docs) return { movies: [], total: 0 };
 
     const movies = data.response.docs
@@ -695,7 +699,9 @@ class ArchiveService {
     let nextPage = startPage;
     let total = 0;
 
-    while (movies.length < count && nextPage !== null && nextPage < startPage + maxPages) {
+    // Out of time with some films in hand: return those rather than lose them all
+    const late = () => movies.length && fetchOptions.deadline && Date.now() > fetchOptions.deadline - 5000;
+    while (movies.length < count && nextPage !== null && nextPage < startPage + maxPages && !late()) {
       const page = nextPage;
       const result = await this.fetchMovies({ ...fetchOptions, page, rowsPerPage });
       total = result.total;
@@ -755,7 +761,7 @@ class ArchiveService {
   getMetadata(identifier) {
     this.metadata ||= new Map();
     if (!this.metadata.has(identifier)) {
-      this.metadata.set(identifier, fetch(`${ARCHIVE_METADATA_API}/${identifier}`).then((response) => {
+      this.metadata.set(identifier, fetch(`${ARCHIVE_METADATA_API}/${identifier}`, { signal: AbortSignal.timeout(15000) }).then((response) => {
         if (!response.ok) throw new Error(`Failed to fetch metadata: ${response.status}`);
         return response.json();
       }).catch((error) => { this.metadata.delete(identifier); throw error; })); // a failure is asked again
