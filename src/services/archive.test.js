@@ -275,6 +275,9 @@ test('fetchFiltered stops at the end of results and at the page cap', async () =
     const capped = await archiveService.fetchFiltered({ count: 50, rowsPerPage: 4, maxPages: 3, filter: m => m.runtimeMinutes >= 40 });
     assert.deepEqual(calls, [1, 2, 3]);
     assert.equal(capped.nextPage, 4);
+    assert.equal(capped.checked, 12, 'three pages of four');
+    assert.equal(capped.total, 400);
+    assert.equal(ended.checked, ended.total, 'the end of the results: all of them');
   } finally {
     globalThis.fetch = realFetch;
   }

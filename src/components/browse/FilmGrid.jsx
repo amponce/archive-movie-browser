@@ -19,7 +19,8 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
   const [loadMoreStatus, setLoadMoreStatus] = useState('');
   useEffect(() => {
     if (!loading && loadMoreStart.current !== null) {
-      setLoadMoreStatus(`${movies.length - loadMoreStart.current} more films loaded`);
+      const added = movies.length - loadMoreStart.current;
+      setLoadMoreStatus(added ? `${added} more films loaded` : 'Still nothing that matches');
       loadMoreStart.current = null;
     }
   }, [loading, movies.length]);
@@ -105,8 +106,8 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
         </div>
       )}
 
-      {/* First batch only: Load more keeps the grid visible */}
-      {loading && movies.length === 0 && (
+      {/* First batch only: Load more keeps the grid visible, Keep looking its own message */}
+      {loading && movies.length === 0 && loadMoreStart.current === null && (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-8 h-8 animate-spin text-signal" />
           <span className="ml-3 text-lg">Loading movies from Archive.org...</span>
@@ -121,7 +122,27 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
         </div>
       )}
 
-      {!loading && movies.length === 0 && !error && (
+      {/* Nothing in the uploads checked so far, and Archive.org has more: say how far it looked,
+          so each Keep looking visibly moves on; it stays up while looking, keeping focus (#353) */}
+      {movies.length === 0 && !error && nextPage && (!loading || loadMoreStart.current !== null) && (
+        <div className="text-center py-16 text-muted">
+          <Film className="w-16 h-16 mx-auto mb-4 opacity-30" />
+          <p className="text-lg">Nothing that matches yet</p>
+          <p className="text-sm mt-2">
+            {nextPage.total ? `Checked ${nextPage.checked.toLocaleString()} of ${nextPage.total.toLocaleString()} uploads.` : 'Archive.org has more uploads to check.'}
+            {' '}The filters may be too narrow for this collection.
+          </p>
+          <button onClick={handleLoadMore} aria-disabled={loading} className="btn-primary mt-4 aria-disabled:opacity-50">
+            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {loading ? 'Looking...' : 'Keep looking'}
+          </button>
+          <span className="sr-only" aria-live="polite">{loadMoreStatus}</span>
+          {suggestion && <div className="mt-4">{suggestion}</div>}
+          {canWiden && <div>{widenButton}</div>}
+        </div>
+      )}
+
+      {!loading && movies.length === 0 && !error && !nextPage && (
         <div className="text-center py-16 text-muted">
           <Film className="w-16 h-16 mx-auto mb-4 opacity-30" />
           <p className="text-lg">No movies found matching your criteria</p>
@@ -139,7 +160,7 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
         </div>
       )}
 
-      {nextPage && !error && (movies.length > 0 || !loading) && (
+      {nextPage && !error && movies.length > 0 && (
         <div className="flex justify-center mt-8 pt-8 border-t border-line">
           <button onClick={handleLoadMore} aria-disabled={loading} className="btn-primary btn-lg aria-disabled:opacity-50">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}

@@ -15,7 +15,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [nextPage, setNextPage] = useState(null); // { from: 'index' | 'archive', page }, null when exhausted
+  const [nextPage, setNextPage] = useState(null); // { from: 'index' | 'archive', page, checked?, total? }, null when exhausted
   const [closeSpellings, setCloseSpellings] = useState(false); // nothing matched as typed; these are near spellings
 
   // Only the latest request may update state (older responses can arrive last)
@@ -35,6 +35,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
       seenTitles.current = new Set();
       seenFilms.current = new Set();
       setMovies([]);
+      setNextPage(null);
       setCloseSpellings(false);
     }
     setLoading(true);
@@ -87,7 +88,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
       setMovies(prev => (append ? [...prev, ...batch] : batch));
       const fuzzy = Boolean(target.fuzzy || result.closeSpellings);
       if (result.closeSpellings) setCloseSpellings(true);
-      setNextPage(result.nextPage ? { from: 'archive', page: result.nextPage, fuzzy } : null);
+      setNextPage(result.nextPage ? { from: 'archive', page: result.nextPage, fuzzy, checked: result.checked, total: result.total } : null);
     } catch (err) {
       if (requestId !== latestRequest.current) return;
       setError(err.message);

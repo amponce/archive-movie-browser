@@ -756,7 +756,9 @@ class ArchiveService {
       return { ...closer, closeSpellings: closer.movies.length > 0 };
     }
 
-    return { movies, total, nextPage };
+    // How many uploads the batches so far have looked at, for "nothing yet in the first N"
+    const checked = nextPage ? (nextPage - 1) * rowsPerPage : total;
+    return { movies, total, checked, nextPage };
   }
 
   // Get detailed metadata for a single item

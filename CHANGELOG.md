@@ -7,6 +7,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ### Fixed
 
 - Films opened from curated lists reopen on reload, shared links, and browser Forward; subsequent film selections keep their own address.
+- Browse no longer shows "No movies found" and Load more together when strict filters find nothing in the first uploads. It says how many uploads it has checked ("Checked 250 of 4,812") and offers Keep looking, which moves the count on each time.
 
 ## [2.3.0] - 2026-09-25
 
