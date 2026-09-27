@@ -104,7 +104,11 @@ test('what never appears: children in a sexual context, sexual violence, real ki
     { title: 'Children of the Corn', tags: ['horror'] },
     { title: 'Lolita (1962)', tags: ['drama'] },
     { title: 'Night of the Living Dead', tags: ['horror', 'zombies', 'gore'] },
+    { title: 'A martial arts film', description: 'He trained as a kid and sang opera as an adult.' },
+    { title: 'An action film', description: `A child actor had a small part. ${'Plot and production notes. '.repeat(40)} Rated for adult audiences.` },
   ]) assert.equal(isForbidden(item), false, JSON.stringify(item));
+  // In a description the two have to be close together
+  assert.equal(isForbidden({ title: 'Clip', description: `${'Filler words here. '.repeat(40)} explicit scenes with a child ${'more filler. '.repeat(40)}` }), true);
   // Searches
   for (const q of ['lolicon', 'loli hentai', 'schoolgirl sex', 'r*pe', 'rape', 'snuff film', 'beheading', 'white power', 'child porn', '13 years old nude']) assert.equal(isForbiddenSearch(q), true, q);
   for (const q of ['kids', 'the virgin spring', 'playboy', 'adults only', 'children of the corn', 'lolita', 'war crimes documentary', 'grapes of wrath']) assert.equal(isForbiddenSearch(q), false, q);

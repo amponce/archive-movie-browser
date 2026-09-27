@@ -34,12 +34,25 @@ const any = words => new RegExp(` (${words.join('|')}) `);
 const CHILD_ABUSE = any(['lolicon', 'loli', 'lolis', 'shotacon', 'shota', 'jailbait', 'underage', 'under age', 'preteens?', 'pre teens?', 'pedo\\w*', 'paedo\\w*', 'child porn\\w*', 'kiddie porn', 'kiddy porn', 'csam', 'maladolescenza']);
 const CHILD = any(['child', 'children', 'kids?', 'minors?', 'schoolgirls?', 'schoolboys?', 'little girls?', 'little boys?', 'young girls?', 'young boys?', '\\d{1,2} ?(yo|y o|years? old)']);
 // Adult or sexual context
-const SEXUAL = any(['sex', 'sexy', 'sexual', 'nude', 'nudes', 'nudity', 'naked', 'porn\\w*', 'xxx', 'erotic\\w*', 'hentai', 'nsfw', 'lewd', 'fetish\\w*', 'strip\\w*', 'adult', 'adults only', 'explicit', 'hardcore', 'softcore', 'uncensored']);
+const SEXUAL_WORDS = ['sex', 'sexy', 'sexual', 'nude', 'nudes', 'nudity', 'naked', 'porn\\w*', 'xxx', 'erotic\\w*', 'hentai', 'nsfw', 'lewd', 'fetish\\w*', 'strip\\w*', 'adults only', 'explicit', 'hardcore', 'softcore', 'uncensored'];
+const SEXUAL = any([...SEXUAL_WORDS, 'adult']);
+const SEXUAL_PROSE = any(SEXUAL_WORDS); // in running text "adult" is usually just a grown-up
 // Sexual violence, real killing, hate: forbidden in a title, the tags or a search, and in a
 // description when it comes with adult content (a drama's synopsis may name its subject)
 const SEXUAL_VIOLENCE = any(['rape', 'rapes', 'raped', 'raping', 'rapist', 'noncon', 'non con', 'non consensual', 'nonconsensual', 'forced sex', 'sex slave', 'sex slaves', 'molest\\w*']);
 const REAL_KILLING = any(['snuff', 'beheading', 'beheadings', 'beheaded', 'execution video', 'executions video', 'real death', 'real deaths', 'death footage', 'gore compilation', 'liveleak', 'murder video', 'suicide video', 'shooting video']);
 const HATE = any(['white power', 'white power bands?', 'white pride', 'white pride world wide', 'wpww', 'nazi skinheads?', 'rock against communism', 'blood and honour', 'combat 18', 'nsbm', 'race war', 'rahowa', '14 words', 'fourteen words', 'skrewdriver', 'holocaust hoax', 'jihadi nasheed', 'jihad nasheed', 'isis propaganda', 'islamic state video', 'niggers?', 'nigga', 'kikes?', 'faggots?', 'chinks?', 'wetbacks?']);
+
+// Both kinds of word within a few words of each other. A long description (a pasted
+// encyclopedia article) can hold both far apart without being about that.
+function near(text, a, b, span = 10) {
+  const words = text.trim().split(' ');
+  for (let i = 0; i < words.length; i += span) {
+    const window = ` ${words.slice(i, i + 2 * span).join(' ')} `;
+    if (a.test(window) && b.test(window)) return true;
+  }
+  return false;
+}
 
 export function isForbidden({ title, description, tags, subject } = {}) {
   // A title and its tags say what an upload is; a description may only be about it
@@ -47,7 +60,8 @@ export function isForbidden({ title, description, tags, subject } = {}) {
   const described = fold(description);
   const all = `${named}${described}`;
   if (CHILD_ABUSE.test(all)) return true;
-  if (CHILD.test(all) && SEXUAL.test(all)) return true;
+  if ((CHILD.test(named) && SEXUAL.test(all)) || (SEXUAL.test(named) && CHILD.test(all))) return true;
+  if (near(described, CHILD, SEXUAL_PROSE)) return true;
   for (const words of [SEXUAL_VIOLENCE, REAL_KILLING, HATE]) {
     if (words.test(named)) return true;
     if (words.test(described) && SEXUAL.test(all)) return true;
