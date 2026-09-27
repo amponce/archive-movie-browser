@@ -23,7 +23,7 @@ test('channels are numbered by their place in the lineup', async () => {
 test('IPTV apps get one entry per channel, matched to the guide, each leading to what is on now', async () => {
   const { schedule, toChannelsM3U, liveStreams, toXMLTV, CHANNELS } = await import('../../api/_tv.js');
   const now = Date.UTC(2026, 8, 24, 20);
-  const data = schedule({ now, hours: 1 });
+  const data = schedule({ now, hours: 6 }); // the window /api/tv/live/<channel> uses
   const m3u = toChannelsM3U(data);
   const entries = m3u.split('\n').filter(line => line.startsWith('#EXTINF'));
   assert.equal(entries.length, data.channels.length, 'one entry per channel, not per film');
