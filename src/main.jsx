@@ -9,11 +9,13 @@ import { startAnalytics } from './services/analytics';
 
 startAnalytics();
 
-// Each page is its own canonical address on the site's domain (index.html carries the home page's),
-// so /lists/... and /browse are indexed as themselves, never as a preview or vercel.app copy
+// Each page is its own canonical address on the site's domain, so /lists/... and /browse are
+// indexed as themselves, never as a preview or vercel.app copy. Set here, not in index.html,
+// which every page shares.
 const canonical = `https://www.orphanedfilms.com${location.pathname}`;
-document.querySelector('link[rel="canonical"]')?.setAttribute('href', canonical);
-document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonical);
+const tag = (name, attrs) => document.head.appendChild(Object.assign(document.createElement(name), attrs));
+tag('link', { rel: 'canonical', href: canonical });
+tag('meta', { content: canonical }).setAttribute('property', 'og:url');
 
 // One film with sound at a time: when a video starts, any other one playing with sound pauses
 // (the TV set, a channel opened in the guide, a film). The muted front-page preview is left alone.
