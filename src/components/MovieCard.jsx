@@ -31,13 +31,14 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
 
   // No description on Archive.org (and films browsed from the index never carry one): TMDB's
   // overview instead. A live match already has it; an index match asks once, cached for a week.
+  // Only the list shows it, so a grid card never asks (#339)
   useEffect(() => {
-    if (movie.description || !tmdbData?.id) return undefined;
+    if (viewMode !== 'list' || movie.description || !tmdbData?.id) return undefined;
     if (tmdbData.overview) { setOverview(tmdbData.overview); return undefined; }
     let cancelled = false;
     tmdbService.getMovieDetails(tmdbData.id).then(d => { if (!cancelled && d?.overview) setOverview(d.overview); });
     return () => { cancelled = true; };
-  }, [movie.description, tmdbData]);
+  }, [viewMode, movie.description, tmdbData]);
 
   // Determine which poster to use
   const tmdbPosterUrl = tmdbData?.posterPath
