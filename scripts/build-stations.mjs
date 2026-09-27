@@ -52,7 +52,7 @@ const STATIONS = [
   { slug: 'the-forties', title: 'The 1940s', blurb: 'Wartime and after, every kind of picture.', genres: EVERY_GENRE, decades: [1940, 1940], count: 32 },
   { slug: 'rental-comedy', title: 'Rental comedy', blurb: 'The 80s comedies that wore out the tape at the video store.', genre: 'Comedy', decades: [1980, 1980], count: 32, quality: { min: 6.0 } },
   { slug: 'cassette-futures', title: 'Cassette futures', blurb: '1980s science fiction on a VHS budget: mutants, machines and futures that went wrong.', genre: 'Sci-Fi', decades: [1980, 1980], count: 32, quality: { min: 6.0 } },
-  { slug: 'late-fees', title: 'Late fees', blurb: '80s and 90s horror worth keeping out past the due date.', genre: 'Horror', decades: [1980, 1990], count: 32, quality: { min: 6.0 } },
+  { slug: 'late-fees', title: 'Late fees', blurb: '80s and 90s horror worth keeping out past the due date.', genre: 'Horror', decades: [1980, 1990], count: 32, quality: { min: 6.0 }, keep: ['creature_202405'] },
   { slug: 'gothic-sixties', title: 'Gothic sixties', blurb: 'Horror from the 1960s: castles, curses, ghost stories from Japan and the first modern nightmares.', genre: 'Horror', decades: [1960, 1960], count: 32, quality: { min: 6.3 } },
   { slug: 'eighties-action-mixtape', title: '80s action mixtape', blurb: 'A decade of fists, fuel and one-liners, shuffled every week.', genre: 'Action', decades: [1980, 1980], count: 32, quality: { min: 6.0 } },
   { slug: 'after-hours', title: 'After hours', blurb: '80s and 90s thrillers: stakeouts, double-crosses and long nights, and no monsters.', genre: 'Thriller', not: ['Horror'], decades: [1980, 1990], count: 32, quality: { min: 6.0 } },
@@ -98,9 +98,15 @@ for (const station of STATIONS) {
     pool.set(e.i, id);
   }
   // Walk the shuffled pool and keep the first `count` uploads whose file is really a feature
+  // `keep`: uploads the owner wants on this channel every week, whatever the rule picks around them
   const picks = [];
+  for (const id of station.keep || []) {
+    if (isTakenDown(id) || neverOnAir(index[id]?.i) || isRecent(index[id]?.y)) continue;
+    try { if (isFeature(await measure(id, lineups))) picks.push(id); } catch { /* unreachable now, skip */ }
+  }
   for (const id of shuffle([...pool.values()], week * 31 + STATIONS.indexOf(station))) {
     if (picks.length >= station.count) break;
+    if (picks.includes(id)) continue;
     try { if (isFeature(await measure(id, lineups))) picks.push(id); } catch { /* unreachable now, skip */ }
   }
   saveLineups(lineups);
