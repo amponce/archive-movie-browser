@@ -94,7 +94,7 @@ export default function ArchiveListPage({ user, id }) {
           <>
             <div className="flex flex-col gap-4 max-w-[72ch]">
               <p className="text-muted">A list by <a href={`https://archive.org/details/@${user}`} className="underline text-bone">@{user}</a> on Archive.org</p>
-              <h1 className="font-display font-black uppercase leading-[0.9] text-[44px] sm:text-[72px]">{list.name}</h1>
+              <h1 className="font-display font-black uppercase leading-[0.9] text-[44px] sm:text-[72px] break-words">{list.name}</h1>
               {list.description && <p className="text-lg text-muted leading-relaxed">{list.description}</p>}
               {list.items && (
                 <p className="text-bone">

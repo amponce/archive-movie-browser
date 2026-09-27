@@ -30,7 +30,7 @@ export default function FilmDetails({ movie, details, titleId, playing, onPlay, 
   return (
     <div className="flex-1 min-w-0">
       <p className="eyebrow mb-3">Orphan file</p>
-      <h1 id={titleId} className="display text-[44px] sm:text-6xl lg:text-7xl mb-4">{tmdbDetails?.title || movie.title}</h1>
+      <h1 id={titleId} className="display text-[44px] sm:text-6xl lg:text-7xl mb-4 break-words">{tmdbDetails?.title || movie.title}</h1>
 
       {/* The upload was called something else; the poster index worked out which film it is */}
       {identified && (
@@ -64,7 +64,7 @@ export default function FilmDetails({ movie, details, titleId, playing, onPlay, 
 
       <div className="mb-6">
         <h3 className="label mb-2">Overview</h3>
-        <p className="text-muted text-[17px] leading-relaxed max-w-[64ch] whitespace-pre-line">{tmdbDetails?.overview || plainText(movie.description) || 'No description available.'}</p>
+        <p className="text-muted text-[17px] leading-relaxed max-w-[64ch] whitespace-pre-line break-words">{tmdbDetails?.overview || plainText(movie.description) || 'No description available.'}</p>
       </div>
 
       {director && <div className="mb-6"><h3 className="label mb-2">Director</h3><p className="text-bone">{director.name}</p></div>}

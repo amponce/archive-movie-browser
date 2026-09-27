@@ -11,6 +11,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ### Fixed
 
 - Films opened from curated lists reopen on reload, shared links, and browser Forward; subsequent film selections keep their own address.
+- Long one-word titles, list names and description links wrap on phones, and the "Watch their favourites as a channel" button fits the screen, so pages no longer scroll sideways.
 
 ## [2.3.0] - 2026-09-25
 
