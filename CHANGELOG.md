@@ -4,6 +4,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Fixed
+
+- Films opened from curated lists reopen on reload, shared links, and browser Forward; subsequent film selections keep their own address.
+
 ## [2.3.0] - 2026-09-25
 
 ### Added

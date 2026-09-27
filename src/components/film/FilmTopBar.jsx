@@ -10,7 +10,7 @@ export default function FilmTopBar({ movie, backButtonRef, allMovies, onSearch, 
   return (
     <div className="sticky top-0 z-10 bg-ink/90 backdrop-blur border-b border-line">
       <div className="gutter py-3 flex items-center justify-between gap-3">
-        <button ref={backButtonRef} onClick={() => window.history.back()} aria-label="Back to Browse" className="nav-link flex items-center gap-1 flex-shrink-0">
+        <button ref={backButtonRef} onClick={() => window.history.back()} aria-label="Back" className="nav-link flex items-center gap-1 flex-shrink-0">
           <ChevronLeft className="w-5 h-5" />
           <span className="hidden md:inline">Back</span>
         </button>

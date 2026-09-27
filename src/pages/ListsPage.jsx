@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { LISTS } from '../lists/index';
 import { listBySlug } from '../services/lists';
+import { filmFromHash } from '../services/archiveUrl';
 import archiveService from '../services/archive';
 import { indexedMatch } from '../services/posterIndex';
 import tmdbService from '../services/tmdb';
@@ -40,13 +41,38 @@ function ListFilm({ id, note, position, onOpen }) {
 export default function ListsPage({ slug }) {
   const list = slug ? listBySlug(LISTS, slug) : null;
   const [selected, setSelected] = useState(null);
+  const [startFile, setStartFile] = useState(null);
+  const request = useRef(0);
+
+  const close = useCallback(() => { request.current++; setSelected(null); }, []);
+  const open = useCallback((id, file = null) => {
+    const current = ++request.current;
+    archiveService.getMovieByIdentifier(id).then(movie => {
+      if (current !== request.current) return;
+      track('Film opened', { film: id, title: movie.title });
+      setStartFile(file);
+      setSelected(movie);
+    }).catch(() => {});
+  }, []);
+
+  // History traversal fires hashchange after the dialog's popstate close handler.
+  // Restore from the URL on arrival and Forward, without adding another history entry.
+  useEffect(() => {
+    const restore = () => {
+      const link = filmFromHash(window.location.hash);
+      if (link) open(link.identifier, link.file);
+      else close();
+    };
+    restore();
+    window.addEventListener('hashchange', restore);
+    return () => { request.current++; window.removeEventListener('hashchange', restore); };
+  }, [open, close]);
 
   useEffect(() => {
     document.title = list ? `${list.title} | Archive Movie Browser` : 'Lists | Archive Movie Browser';
     track('Page view', { path: location.pathname });
   }, [list]);
 
-  const open = (id) => archiveService.getMovieByIdentifier(id).then(movie => { track('Film opened', { film: id, title: movie.title }); setSelected(movie); }).catch(() => {});
 
   return (
     <div className="min-h-screen text-muted">
@@ -87,7 +113,7 @@ export default function ListsPage({ slug }) {
       </div>
 
       {selected && (
-        <MovieDetailPage movie={selected} onClose={() => setSelected(null)} allMovies={[]} onPlayRelated={setSelected} />
+        <MovieDetailPage movie={selected} startFile={startFile} onClose={close} allMovies={[]} onPlayRelated={movie => { request.current++; setStartFile(null); setSelected(movie); }} />
       )}
       <SiteFooter />
     </div>
