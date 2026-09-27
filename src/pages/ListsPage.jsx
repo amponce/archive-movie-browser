@@ -69,7 +69,7 @@ export default function ListsPage({ slug }) {
   }, [open, close]);
 
   useEffect(() => {
-    document.title = list ? `${list.title} | Archive Movie Browser` : 'Lists | Archive Movie Browser';
+    document.title = list ? `${list.title} | Orphaned Films` : 'Lists | Orphaned Films';
     track('Page view', { path: location.pathname });
   }, [list]);
 

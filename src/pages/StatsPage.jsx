@@ -139,7 +139,7 @@ export default function StatsPage() {
     .catch(problem => setError(problem.message));
 
   useEffect(() => {
-    document.title = 'Stats | Archive Movie Browser';
+    document.title = 'Stats | Orphaned Films';
     if (readKey()) load(readKey());
     // Keep the numbers current while the page is open and in view
     const timer = setInterval(() => { if (readKey() && !document.hidden) load(readKey()); }, 300_000); // each read is ~175 database commands
