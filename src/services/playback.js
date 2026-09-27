@@ -81,6 +81,14 @@ export function pickPlayableFile(files) {
   return playableFiles(files)[0] || null;
 }
 
+// The copies Archive.org makes of an uploaded mp4, to try when the original won't play: the
+// _512kb copy older uploads have, and the .ia.mp4 newer ones have. Both are H.264. A guess by
+// name, since a TV lineup keeps only one file; a copy that doesn't exist just fails too.
+export function streamCopies(url) {
+  if (!/\.(mp4|m4v)$/i.test(url || '') || /(_512kb|\.ia)\.mp4$/i.test(url)) return [];
+  return [url.replace(/\.(mp4|m4v)$/i, '_512kb.mp4'), url.replace(/\.(mp4|m4v)$/i, '.ia.mp4')];
+}
+
 export function videoUrl(identifier, fileName) {
   return `https://archive.org/download/${encodeURIComponent(identifier)}/${fileName.split('/').map(encodeURIComponent).join('/')}`;
 }

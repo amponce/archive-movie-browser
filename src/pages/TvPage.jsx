@@ -14,7 +14,8 @@ import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import Guide, { useGuideSpan } from '../components/tv/Guide';
 import InlineSet from '../components/tv/InlineSet';
-import { WatchTogether, EmptyChannel } from '../components/tv/Extras';
+import { WatchTogether, EmptyChannel, ChannelDown } from '../components/tv/Extras';
+import useTvSource from '../hooks/useTvSource';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
 // the same for everyone. The page keeps its own clock: /api/tv gives the lineups once, and the
@@ -98,15 +99,24 @@ function useStayed(channelId) {
 }
 
 function Screen({ tuning, channelId, subtitles }) {
-  const { film, needsClick, play, videoRef, next } = tuning;
+  const { film, start, needsClick, play, videoRef, next } = tuning;
   const onTimeUpdate = useStayed(channelId);
+  const source = useTvSource(film, next);
+  useEffect(() => {
+    // A copy replacing a file that wouldn't play: pick up where the schedule is
+    const video = videoRef.current;
+    if (!video || !film || source.src === film.url) return;
+    video.currentTime = start?.offset || 0;
+    video.play().catch(() => {});
+  }, [source.src]);
   return (
     <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-      {film ? <video ref={videoRef} src={film.url} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={next} onTimeUpdate={onTimeUpdate} onPause={onTimeUpdate}>
+      {source.down ? <ChannelDown retry={source.retry} />
+        : film ? <video ref={videoRef} src={source.src} controls playsInline className="absolute inset-0 w-full h-full" onEnded={next} onError={source.onError} onPlaying={source.onPlaying} onTimeUpdate={onTimeUpdate} onPause={onTimeUpdate}>
           <SubtitleTracks identifier={film.id} tracks={subtitles} />
         </video>
         : <div className="absolute inset-0 flex items-center justify-center text-muted">Nothing on this channel yet.</div>}
-      {film && needsClick && (
+      {film && needsClick && !source.down && (
         <button type="button" onClick={play} className="absolute inset-0 flex items-center justify-center bg-ink/60">
           <span className="btn-primary btn-lg">Tune in</span>
         </button>

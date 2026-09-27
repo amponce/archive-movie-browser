@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pickPlayableFile, playableFiles, videoUrl, shortcutFor, resumeTime, rememberPosition } from './playback.js';
+import { pickPlayableFile, playableFiles, videoUrl, shortcutFor, resumeTime, rememberPosition, streamCopies } from './playback.js';
 
 // Real file lists from Archive.org, trimmed to the fields used
 const deadPeople = [
@@ -27,6 +27,14 @@ test('pickPlayableFile skips a master too big to stream, and gives up when nothi
   assert.equal(pickPlayableFile(huge).name, 'film_512kb.mp4');
   assert.equal(pickPlayableFile([{ name: 'film.avi', format: 'Cinepack', source: 'original', size: '1' }, { name: 'film.ogv', format: 'Ogg Video', source: 'derivative', size: '1' }]), null, 'Safari cannot play Ogg: use the Archive.org player');
   assert.equal(pickPlayableFile(undefined), null);
+});
+
+test('streamCopies names the H.264 copies to try when an uploaded mp4 will not play', () => {
+  const base = 'https://archive.org/download/BruceLeeFightsBackFromTheGrave1976/bruceleefightsback';
+  assert.deepEqual(streamCopies(`${base}.mp4`), [`${base}_512kb.mp4`, `${base}.ia.mp4`]);
+  assert.deepEqual(streamCopies(`${base}_512kb.mp4`), []);
+  assert.deepEqual(streamCopies(`${base}.ia.mp4`), []);
+  assert.deepEqual(streamCopies(undefined), []);
 });
 
 test('videoUrl escapes each part of the path', () => {

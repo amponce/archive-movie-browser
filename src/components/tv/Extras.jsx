@@ -29,3 +29,13 @@ export function EmptyChannel() {
     </section>
   );
 }
+
+// Film after film on a channel wouldn't play: Archive.org is having a bad moment
+export function ChannelDown({ retry }) {
+  return (
+    <div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center">
+      <p className="text-bone">Archive.org isn't sending this channel right now.</p>
+      <button type="button" onClick={retry} className="btn-primary">Try again</button>
+    </div>
+  );
+}

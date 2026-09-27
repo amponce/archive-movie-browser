@@ -4,6 +4,8 @@ import { track } from '../../services/analytics';
 import useWatchReport from '../../hooks/useWatchReport';
 import PopOut from '../../ui/PopOut';
 import useSubtitles, { SubtitleTracks, subtitleNote } from '../../hooks/useSubtitles';
+import useTvSource from '../../hooks/useTvSource';
+import { ChannelDown } from './Extras';
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const minutes = s => Math.floor(s / 60);
@@ -33,9 +35,10 @@ export default function InlineSet({ channel, onClose }) {
     v.play().then(() => setBlocked(false)).catch(() => setBlocked(true));
   }, [slot?.film.id]);
 
+  const next = () => { report.current.flush(); setTuning(true); setSlot(onAirAt(channel.lineup, slot.endsAt + 1000)); };
+  const source = useTvSource(slot?.film, next);
   if (!slot) return null;
   const { film } = slot;
-  const next = () => { report.current.flush(); setTuning(true); setSlot(onAirAt(channel.lineup, slot.endsAt + 1000)); };
   const played = (e) => {
     const t = e.currentTarget.currentTime;
     if (last.current !== null && t > last.current && t - last.current < 2) report.current.add(t - last.current);
@@ -45,11 +48,12 @@ export default function InlineSet({ channel, onClose }) {
   return (
     <div ref={box} className="flex flex-col gap-3 px-2 w-full max-w-[calc(70vh*16/9)]">
       <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-        <video ref={video} key={film.id} src={`${film.url}#t=${slot.offset}`} controls playsInline className="absolute inset-0 w-full h-full" poster={film.poster || undefined}
-          onPlaying={() => setTuning(false)} onWaiting={() => setTuning(true)} onEnded={next} onError={next} onTimeUpdate={played} onPause={() => report.current.flush()}>
-          <SubtitleTracks identifier={film.id} tracks={subtitles} />
-        </video>
-        {tuning && !blocked && (
+        {source.down ? <ChannelDown retry={source.retry} />
+          : <video ref={video} key={source.src} src={`${source.src}#t=${slot.offset}`} autoPlay={source.src !== film.url} controls playsInline className="absolute inset-0 w-full h-full" poster={film.poster || undefined}
+            onPlaying={() => { setTuning(false); source.onPlaying(); }} onWaiting={() => setTuning(true)} onEnded={next} onError={source.onError} onTimeUpdate={played} onPause={() => report.current.flush()}>
+            <SubtitleTracks identifier={film.id} tracks={subtitles} />
+          </video>}
+        {tuning && !blocked && !source.down && (
           <span role="status" className="absolute left-4 bottom-16 flex items-center gap-2 font-mono text-xs tracking-[0.12em] uppercase text-bone bg-ink/80 px-3 py-2 rounded-full pointer-events-none">
             <span className="inline-block w-2 h-2 rounded-full bg-signal animate-pulse motion-reduce:animate-none" aria-hidden="true" />Tuning in to channel {channel.number}
           </span>
