@@ -73,6 +73,9 @@ export function isForbidden({ title, description, tags, subject } = {}) {
   return false;
 }
 
+// For the stats page only: searches for adult films, counted as one line
+export const isAdultSearch = text => SEXUAL.test(fold(text));
+
 // A search asking for any of it is answered with nothing and not sent to Archive.org. Whatever a
 // search does return still passes isForbidden, so a spelling this misses still finds nothing here.
 export function isForbiddenSearch(text) {

@@ -88,11 +88,12 @@ function Board({ rows, films, titles }) {
   return (
     <table className="w-full">
       <tbody>
-        {rows.map(([label, count]) => (
+        {rows.map(([label, count, people]) => (
           <tr key={label} className="border-b border-gray-700">
             <td className="py-1.5 pr-3 max-w-0 w-[60%] truncate" title={label}>{films ? <Film id={label} titles={titles} /> : label}</td>
             <td><div className="h-2 rounded-r min-w-[2px]" style={{ width: `${(count / top) * 100}%`, background: MARK }} /></td>
             <td className="w-14 text-right tabular-nums">{fmt(count)}</td>
+            {people !== undefined && <td className="w-20 text-right tabular-nums text-gray-400" title="different visits">{fmt(people)} ppl</td>}
           </tr>
         ))}
       </tbody>

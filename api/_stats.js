@@ -4,7 +4,7 @@
 // which keeps an estimate of how many distinct ids it saw and none of the ids.
 // (The leading underscore keeps Vercel from treating this file as an endpoint.)
 
-import { isForbiddenSearch } from '../src/services/policy.js';
+import { isForbiddenSearch, isAdultSearch } from '../src/services/policy.js';
 
 const FILM = /^[A-Za-z0-9._-]{1,200}$/;
 const CHANNEL = /^[a-z0-9-]{1,60}$/; // a list slug, or 'mine'
@@ -112,7 +112,11 @@ export function commandsFor({ name, data, visit }, { now = new Date(), visitor }
   }
   if (name === 'Play') { count('played', data.film); count('players', data.player); }
   if (name === 'Watched 10 minutes') count('watched', data.film);
-  if (name === 'Search' && data.kind === 'typed' && data.query) count('searches', data.query);
+  if (name === 'Search' && data.kind === 'typed' && data.query) {
+    count('searches', data.query);
+    // How many different visits asked it, so one person's fifteen tries don't look like a trend
+    if (visit) commands.push(['PFADD', `stats:searchers:${month}:${data.query}`, visit]);
+  }
   if (name === 'Filter') count('filters', `${data.type}: ${data.value}`);
   if (name === 'MCP banner') count('banner', data.action);
   if (name === 'Click') count('clicks', data.target);
@@ -173,3 +177,14 @@ export function mergeCommands(commands) {
   return [...merged, ...[...out.values()].filter(c => c[0] === 'EXPIRE')];
 }
 
+
+// The search board as the stats page shows it: adult searches as one line, the rest as they are,
+// top 25. Each row keeps the searcher estimates it needs (several for the adult line).
+export const ADULT_SEARCHES = 'adult searches';
+export function groupSearches(rows, month) {
+  const adult = rows.filter(([query]) => isAdultSearch(query));
+  const grouped = [...rows.filter(([query]) => !isAdultSearch(query)), ...(adult.length ? [[ADULT_SEARCHES, adult.reduce((sum, [, n]) => sum + n, 0)]] : [])];
+  return grouped.sort((a, b) => b[1] - a[1]).slice(0, 25).map(([label, count]) => ({
+    label, count, keys: (label === ADULT_SEARCHES ? adult.map(([query]) => query) : [label]).map(query => `stats:searchers:${month}:${query}`),
+  }));
+}

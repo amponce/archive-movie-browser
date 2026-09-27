@@ -2,7 +2,7 @@
 // is where the server-side code is tested.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validEvent, commandsFor, isBot, visitorToken } from '../api/_stats.js';
+import { validEvent, commandsFor, isBot, visitorToken, groupSearches, ADULT_SEARCHES } from '../api/_stats.js';
 
 test('only known events with well-formed data are accepted', () => {
   assert.deepEqual(validEvent({ name: 'Play', data: { film: 'Cops1922', player: 'own', extra: 'x' } }), { name: 'Play', data: { film: 'Cops1922', player: 'own' } });
@@ -69,4 +69,18 @@ test('every event lands on a short "latest events" feed: what happened and when,
   assert.deepEqual(JSON.parse(push[2]), { at: '2026-09-21T10:00:00.000Z', name: 'Play', data: { film: 'Cops1922', player: 'own' } });
   assert.deepEqual(commands.find(c => c[0] === 'LTRIM'), ['LTRIM', 'stats:recent', 0, 49]);
   assert.ok(!push[2].includes('abc123'));
+});
+
+test('a search counts once on the board and adds the visit to the estimate of people for that search', () => {
+  const now = new Date('2026-09-21T12:00:00Z');
+  const commands = commandsFor(validEvent({ name: 'Search', data: { query: 'noir', kind: 'typed' }, visit: '0123456789abcdef' }), { now });
+  assert.ok(commands.some(c => c[0] === 'ZINCRBY' && c[1] === 'stats:searches:2026-09' && c[3] === 'noir'));
+  assert.ok(commands.some(c => c[0] === 'PFADD' && c[1] === 'stats:searchers:2026-09:noir' && c[2] === '0123456789abcdef'));
+});
+
+test('the search board shows adult searches as one line, with every key its people count needs', () => {
+  const rows = groupSearches([['adult', 9], ['noir', 5], ['erotic thriller', 4], ['kung fu', 3]], '2026-09');
+  assert.deepEqual(rows.map(r => [r.label, r.count]), [[ADULT_SEARCHES, 13], ['noir', 5], ['kung fu', 3]]);
+  assert.deepEqual(rows[0].keys, ['stats:searchers:2026-09:adult', 'stats:searchers:2026-09:erotic thriller']);
+  assert.equal(groupSearches(Array.from({ length: 40 }, (_, i) => [`q${i}`, 40 - i]), '2026-09').length, 25);
 });

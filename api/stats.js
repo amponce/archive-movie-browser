@@ -1,7 +1,7 @@
 // GET /api/stats  (Authorization: Bearer <STATS_TOKEN>): the numbers behind the /stats page.
 import { timingSafeEqual } from 'node:crypto';
 import { redis } from './_redis.js';
-import { statsDay, onlineKey } from './_stats.js';
+import { statsDay, onlineKey, groupSearches } from './_stats.js';
 
 const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'banner', 'tv', 'tuned', 'stayed', 'minutes', 'channel-minutes', 'clicks'];
 const STAGES = ['visited', 'clicked', 'played', 'tuned in', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
@@ -39,7 +39,7 @@ async function read(days, month) {
   const [reads, visitors] = await Promise.all([
     redis([
       ...days.map(day => ['HGETALL', `stats:day:${day}`]),
-      ...BOARDS.map(board => ['ZREVRANGE', `stats:${board}:${month}`, 0, 24, 'WITHSCORES']),
+      ...BOARDS.map(board => ['ZREVRANGE', `stats:${board}:${month}`, 0, board === 'searches' ? 199 : 24, 'WITHSCORES']),
       ['LRANGE', 'stats:recent', 0, 39],
     ], { readOnly: true }),
     redis([
@@ -52,6 +52,9 @@ async function read(days, month) {
   ]);
 
   const boards = Object.fromEntries(BOARDS.map((board, i) => [board, pairs(reads[DAYS + i])]));
+  const searches = groupSearches(boards.searches, month);
+  const people = searches.length ? await redis(searches.map(row => ['PFCOUNT', ...row.keys])) : [];
+  boards.searches = searches.map((row, i) => [row.label, row.count, people[i] || 0]);
   const recent = (reads[DAYS + BOARDS.length] || []).flatMap(entry => { try { return [JSON.parse(entry)]; } catch { return []; } });
 
   // Names for every film the page will mention
