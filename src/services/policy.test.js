@@ -45,6 +45,8 @@ test('recent films stay off the front page rows and More like this', async () =>
   assert.deepEqual(rowFor(index, { limit: 10 }).map(f => f.id).sort(), ['mine', 'old']);
   assert.deepEqual(sameShelf(index, 'mine').map(f => f.id), ['old']);
   assert.ok(isRecent(now.getFullYear() - 24) && !isRecent(now.getFullYear() - 26));
+  assert.ok(!isRecent('1985-05-08') && isRecent(`${now.getFullYear() - 3}-01-01`), 'a full date counts by its year');
+  assert.ok(isRecent(null) && isRecent('') && isRecent(undefined), 'an unknown year is not picked');
 });
 
 test('the TV schedule never airs a taken-down upload', async () => {

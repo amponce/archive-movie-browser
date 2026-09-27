@@ -14,7 +14,11 @@ export const isTakenDown = id => taken.has(String(id || ''));
 //    this). Anything from the last 25 years is likely still in copyright, whoever uploaded it.
 //    Search and browse still find everything the Archive hosts: this site is a mirror.
 export const RECENT_YEARS = 25;
-export const isRecent = (year, now = new Date()) => Number(year) > now.getFullYear() - RECENT_YEARS;
+// A year or a date. When the year isn't known, the site doesn't pick the film either.
+export const isRecent = (year, now = new Date()) => {
+  const y = Number(String(year ?? '').slice(0, 4));
+  return !y || y > now.getFullYear() - RECENT_YEARS;
+};
 
 // Films that never go on a TV channel, by TMDB id (every upload of the film). Still searchable.
 const NEVER_ON_AIR = new Set([
