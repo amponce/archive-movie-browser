@@ -115,3 +115,13 @@ test('a listed film never goes on a channel', async () => {
   assert.ok(neverOnAir(39266) && neverOnAir('39266'));
   assert.ok(!neverOnAir(10331) && !neverOnAir(undefined));
 });
+
+test('a listed film stays off a shared channel too, even when Archive.org would hand it over', async (t) => {
+  const { readFileSync } = await import('node:fs');
+  const index = JSON.parse(readFileSync(new URL('../../public/poster-index.json', import.meta.url), 'utf8')).films;
+  const id = Object.keys(index).find(k => index[k].i === 39266);
+  assert.ok(id, 'fixture: an upload of the listed film is in the index');
+  t.mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({ metadata: { title: 'x' }, files: [{ name: 'a.mp4', format: 'h.264', length: '5000', size: '900000000' }] })));
+  const { personalChannel } = await import('../../api/_tv.js');
+  assert.equal((await personalChannel([id])).lineup.length, 0);
+});

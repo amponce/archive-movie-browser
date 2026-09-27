@@ -61,7 +61,7 @@ async function recordLive(id) {
     const file = data?.files ? pickPlayableFile(data.files) : null;
     const entry = index[id];
     // An identifier from a shared link can be anything: the same rules as everywhere else
-    if (isForbidden({ title: data?.metadata?.title, description: data?.metadata?.description, subject: data?.metadata?.subject }) || isForbidden({ title: entry?.t })) throw new Error('not shown here');
+    if (neverOnAir(entry?.i) || isForbidden({ title: data?.metadata?.title, description: data?.metadata?.description, subject: data?.metadata?.subject }) || isForbidden({ title: entry?.t })) throw new Error('not shown here');
     if (file?.length) value = { id, title: entry?.t || data.metadata?.title || id, year: entry?.y || null, poster: entry?.p ? `${TMDB_IMAGE}${entry.p}` : null, seconds: Math.round(Number(file.length)), url: videoUrl(id, file.name) };
   } catch { /* the film just does not air */ }
   if (measured.size > 2000) measured.clear(); // ponytail: a whole reset, not LRU; lists are what repeat
