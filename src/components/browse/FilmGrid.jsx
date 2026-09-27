@@ -124,10 +124,20 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
       {!loading && movies.length === 0 && !error && (
         <div className="text-center py-16 text-muted">
           <Film className="w-16 h-16 mx-auto mb-4 opacity-30" />
-          <p className="text-lg">No movies found matching your criteria</p>
-          <p className="text-sm mt-2">Try adjusting the filters or search query</p>
-          {suggestion && <div className="mt-4">{suggestion}</div>}
-          {canWiden && widenButton}
+          {nextPage ? (
+            <>
+              <p className="text-lg">No matching movies in the uploads checked so far</p>
+              <p className="text-sm mt-2">Archive.org has more uploads that may match these filters.</p>
+              <button onClick={handleLoadMore} className="btn-primary mt-4">Keep looking</button>
+            </>
+          ) : (
+            <>
+              <p className="text-lg">No movies found matching your criteria</p>
+              <p className="text-sm mt-2">Try adjusting the filters or search query</p>
+              {suggestion && <div className="mt-4">{suggestion}</div>}
+              {canWiden && widenButton}
+            </>
+          )}
         </div>
       )}
 
@@ -139,7 +149,7 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
         </div>
       )}
 
-      {nextPage && !error && (movies.length > 0 || !loading) && (
+      {nextPage && !error && movies.length > 0 && (
         <div className="flex justify-center mt-8 pt-8 border-t border-line">
           <button onClick={handleLoadMore} aria-disabled={loading} className="btn-primary btn-lg aria-disabled:opacity-50">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
