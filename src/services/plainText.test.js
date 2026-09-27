@@ -7,6 +7,10 @@ test('plainText turns an Archive.org description into text', () => {
   assert.equal(plainText('2021 Xmas Poem<br />'), '2021 Xmas Poem');
   assert.equal(plainText('Line one<br>Line two<p>Para</p>'), 'Line one\nLine two\nPara');
   assert.equal(plainText('Tom &amp; Jerry &quot;live&quot; &#39;now&#39; &lt;3 &nbsp;ok'), 'Tom & Jerry "live" \'now\' <3 ok');
+  assert.equal(
+    plainText('Caf&eacute; &copy; 1956 &mdash; <a href="x>y">link</a> &hellip;'),
+    'Café © 1956 — link …',
+  );
   assert.equal(plainText('<script>alert(1)</script>Safe'), 'Safe');
   assert.equal(plainText(null), '');
   assert.equal(plainText(['first', 'second']), 'first\nsecond', 'Archive.org sometimes sends a list');
