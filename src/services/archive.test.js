@@ -419,6 +419,24 @@ test('fetchFiltered keeps different films that share a title', async () => {
   }
 });
 
+test('fetchFiltered treats same-title uploads of the same length as one film, whatever year they claim', async () => {
+  const realFetch = globalThis.fetch;
+  mockDocs([
+    { identifier: 'express-a', title: 'Horror Express', year: '1973', runtime: '88:00' },
+    { identifier: 'express-b', title: 'Horror Express', year: '1976', runtime: '87:30' },
+    { identifier: 'express-c', title: 'Horror Express', year: '1972', runtime: '89:00' },
+    { identifier: 'bat-1926', title: 'The Bat', year: '1926', runtime: '88:00' },
+    { identifier: 'bat-1959', title: 'The Bat', year: '1959', runtime: '80:00' }
+  ]);
+  try {
+    const result = await archiveService.fetchFiltered({});
+    assert.deepEqual(result.movies.map(m => m.identifier).filter(id => id.startsWith('express')).length, 1);
+    assert.ok(result.movies.some(m => m.identifier === 'bat-1926') && result.movies.some(m => m.identifier === 'bat-1959'), 'remakes stay apart');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 test('fetchFiltered ignores a metadata year that is just the upload year', async () => {
   const realFetch = globalThis.fetch;
   mockDocs([

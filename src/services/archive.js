@@ -718,8 +718,11 @@ class ArchiveService {
         const rawYear = String(movie.title).match(FILM_YEAR)?.[0] ??
           (movie.year !== uploadYear ? movie.year : null);
         const year = rawYear == null || rawYear === '' ? null : Number(rawYear);
+        // Years that disagree but a running time within two minutes: one film, a mistyped year
+        const minutes = movie.runtimeMinutes;
+        const sameLength = entry => entry.minutes > 0 && minutes > 0 && Math.abs(entry.minutes - minutes) <= 2;
         const sameBatch = selected.find(entry =>
-          entry.key === key && (!entry.year || !year || entry.year === year));
+          entry.key === key && (!entry.year || !year || entry.year === year || sameLength(entry)));
         if (sameBatch) {
           movies[sameBatch.index] = this.betterCopy(movies[sameBatch.index], movie);
           continue;
@@ -730,7 +733,7 @@ class ArchiveService {
         if (duplicate) continue;
         seenTitles.add(key);
         seenTitles.add(`${key}|${year ?? '?'}`);
-        selected.push({ key, year, index: movies.length });
+        selected.push({ key, year, minutes, index: movies.length });
         movies.push(movie);
       }
 
