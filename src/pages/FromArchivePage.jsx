@@ -8,6 +8,7 @@ const KINDS = [
   { what: "Someone's page", path: '/details/@jason_scott', opens: 'The films they have favourited and the lists they keep, with posters. Watch their favourites as a channel.' },
   { what: 'A list someone keeps', path: '/details/@jason_scott/lists/1', opens: 'The films in the list. Watch the whole list as a channel.' },
   { what: 'A film', path: '/details/night_of_the_living_dead_dvd', opens: 'The film, with its poster, story and critics’ score.' },
+  { what: 'One file inside an upload', path: '/details/Alfred-Hitchcock-Films-in-MP4-Format/1935+The+39+Steps.mp4', opens: 'That file, playing, when an upload holds several films.' },
   { what: 'A collection', path: '/details/classic_tv_1990s', opens: 'Every film in it, to browse and filter.' },
   { what: 'A search', path: '/details/movies?query=subject:horror AND year:[1980 TO 1989]', opens: 'The same search, run here, trailers left out.' },
 ];
