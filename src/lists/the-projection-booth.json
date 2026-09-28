@@ -4,102 +4,105 @@
   "blurb": "Documentaries and the real world on film.",
   "curator": "the station",
   "generated": {
-    "rule": "Documentary 1920s\u20131990s",
-    "week": 202639
+    "rule": "Documentary 1920s–1990s",
+    "week": 202640
   },
   "films": [
     {
-      "id": "rock-hasta-que-se-ponga-el-sol-festival-barock-buenos-aires-1971"
-    },
-    {
-      "id": "QuevivaMexico"
-    },
-    {
-      "id": "moana-1926-colorized-movie-720p-hd"
-    },
-    {
-      "id": "1933-DeutschlandErwacht-EinDokumentVonDerWiedergeburtDeutschlands"
-    },
-    {
-      "id": "FightingLady"
-    },
-    {
       "id": "i-lived-but-2-hour-ozu-doc"
-    },
-    {
-      "id": "KnowYourEnemyJapan"
-    },
-    {
-      "id": "the.-killing.of.-america.-1981.1080p.-blu-ray.-h-264.-aac-rarbg"
-    },
-    {
-      "id": "nanookOfTheNorth1922"
-    },
-    {
-      "id": "SCHOOLFORDANGERVideoQualityUpgrade"
-    },
-    {
-      "id": "land-of-milk-and-honey"
-    },
-    {
-      "id": "mercedes-sosa-como-un-pajaro-libre-1983"
-    },
-    {
-      "id": "salt-for-svanetia_1930"
-    },
-    {
-      "id": "cure-in-orange-60fps-from-ld"
-    },
-    {
-      "id": "esta-es-mi-argentina-1974-1080p"
-    },
-    {
-      "id": "02-a-blank-on-the-map-1971"
-    },
-    {
-      "id": "BerlinSymphonyofaGreatCity"
-    },
-    {
-      "id": "WhyWeFight7WarComesToAmerica1945"
-    },
-    {
-      "id": "africa_speaks"
-    },
-    {
-      "id": "wwf_divide_and_conquer"
-    },
-    {
-      "id": "TheWorldAtWar"
-    },
-    {
-      "id": "CombatAmerica"
-    },
-    {
-      "id": "argentinisima-1972-1080p"
-    },
-    {
-      "id": "ToSeeSuchFun190"
     },
     {
       "id": "Heckmann"
     },
     {
-      "id": "forbidden-love-the-unashamed-stories-of-lesbian-lives-1992"
+      "id": "nanookOfTheNorth1922"
     },
     {
-      "id": "Nuremberg_Trials"
+      "id": "CombatAmerica"
     },
     {
-      "id": "nazi_concentration_camps"
-    },
-    {
-      "id": "Jacare_ipod"
+      "id": "land-of-milk-and-honey"
     },
     {
       "id": "TrueGlory1945"
     },
     {
-      "id": "turksib_1929"
+      "id": "TheMoneyMasters1996"
+    },
+    {
+      "id": "the-great-white-silence-1922"
+    },
+    {
+      "id": "rhythm_blues_review"
+    },
+    {
+      "id": "fangorias-weekend-of-horrors"
+    },
+    {
+      "id": "mercedes-sosa-como-un-pajaro-libre-1983"
+    },
+    {
+      "id": "argentinisima-duo"
+    },
+    {
+      "id": "my-metier"
+    },
+    {
+      "id": "FightingLady"
+    },
+    {
+      "id": "grey-gardens-1975_202110"
+    },
+    {
+      "id": "QuevivaMexico"
+    },
+    {
+      "id": "KnowYourEnemyJapan"
+    },
+    {
+      "id": "salt-for-svanetia_1930"
+    },
+    {
+      "id": "1933-DeutschlandErwacht-EinDokumentVonDerWiedergeburtDeutschlands"
+    },
+    {
+      "id": "WhyWeFight7WarComesToAmerica1945"
+    },
+    {
+      "id": "the.-killing.of.-america.-1981.1080p.-blu-ray.-h-264.-aac-rarbg"
+    },
+    {
+      "id": "das-weisse-stadion_1929"
+    },
+    {
+      "id": "DesertVictory"
+    },
+    {
+      "id": "rock-hasta-que-se-ponga-el-sol-festival-barock-buenos-aires-1971"
+    },
+    {
+      "id": "hammerthestudiothatdrippedblood"
+    },
+    {
+      "id": "f-for-fake"
+    },
+    {
+      "id": "the-love-goddesses_202108"
+    },
+    {
+      "id": "chang-a-drama-of-the-wilderness-1927_202509"
+    },
+    {
+      "id": "BasinStreetRevue"
+    },
+    {
+      "id": "esta-es-mi-argentina-1974-1080p"
+    },
+    {
+      "id": "nazi_concentration_camps"
+    },
+    {
+      "id": "ApptInTokyo"
     }
   ]
 }

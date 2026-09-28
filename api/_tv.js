@@ -7,6 +7,7 @@ import { videoUrl } from '../src/services/playback.js';
 import { onAirAt, programmesBetween, airable } from '../src/services/schedule.js';
 import { pickPlayableFile } from '../src/services/playback.js';
 import { isTakenDown, isRecent, isForbidden, neverOnAir } from '../src/services/policy.js';
+import { isFeature, betterUpload } from '../src/services/indexBrowse.js';
 
 const SITE = 'https://www.orphanedfilms.com';
 const TMDB_IMAGE = 'https://image.tmdb.org/t/p/w342';
@@ -103,6 +104,39 @@ export function schedule({ now = Date.now(), hours = 6, hoursBack = 0 } = {}) {
     };
   });
   return { now, epochNote: 'Every channel plays its lineup in order from a fixed moment, so this guide is the same for everyone.', channels: channels.filter(c => c.lineup.length) };
+}
+
+// The whole catalogue, not just what the channels air: every film the index has identified (a
+// TMDB match with a poster), feature length, one best upload per film, and none the site keeps
+// off its channels (taken down, from the last 25 years, forbidden). For players that browse
+// films rather than tune channels (Kodi, Jellyfin, VLC).
+export function catalogue() {
+  const best = new Map();
+  for (const pair of Object.entries(index)) {
+    const [id, e] = pair;
+    if (!e.i || !e.p || e.n || !isFeature(pair)) continue;
+    if (neverOnAir(e.i) || isTakenDown(id) || isRecent(e.y) || isForbidden({ title: e.t })) continue;
+    const kept = best.get(e.i);
+    if (!kept || betterUpload(pair, kept) < 0) best.set(e.i, pair);
+  }
+  return [...best.values()].map(([id, e]) => ({
+    id, tmdb: e.i, title: e.t, year: e.y || null, poster: `${TMDB_IMAGE}${e.p}`,
+    genre: e.g?.[0] || 'Other', genres: e.g || [], minutes: e.l || e.d || 0, rating: e.v || null,
+  })).sort((a, b) => a.genre.localeCompare(b.genre) || a.title.localeCompare(b.title));
+}
+const inCatalogue = new Set(catalogue().map(film => film.id));
+export const isCatalogued = id => inCatalogue.has(String(id));
+
+// Every film as one playlist, grouped by its main genre, each entry a link that sends the
+// player on to the film's file on Archive.org (/api/tv/film/<id>)
+export function toFilmsM3U(films, site = SITE) {
+  const lines = ['#EXTM3U', '#PLAYLIST:Orphaned Films: every film', '#EXTENC:UTF-8'];
+  for (const film of films) {
+    const name = `${oneLine(film.title)}${film.year ? ` (${film.year})` : ''}`;
+    lines.push(`#EXTINF:${film.minutes ? film.minutes * 60 : -1} tvg-id="${film.id}" tvg-name="${escapeAttr(name)}" tvg-logo="${film.poster}" group-title="${escapeAttr(film.genre)}",${name}`);
+    lines.push(`${site}/api/tv/film/${encodeURIComponent(film.id)}`);
+  }
+  return `${lines.join('\n')}\n`;
 }
 
 // An extended M3U: each channel's lineup in order, with lengths, as direct Archive.org streams

@@ -5,7 +5,8 @@ import http from 'node:http';
 import { Readable } from 'node:stream';
 import { Client } from '@modelcontextprotocol/client';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/client';
-import { handle, REQUESTS_PER_MINUTE } from '../api/mcp.js';
+import { handle, REQUESTS_PER_MINUTE, limits } from '../api/mcp.js';
+import archiveService from '../src/services/archive.js';
 
 // A few lines of glue standing in for Vercel: Node request in, web Response out
 function serve(t) {
@@ -45,4 +46,43 @@ test('browsers may call it (CORS), and one address cannot flood it', async t => 
   for (let i = 0; i <= REQUESTS_PER_MINUTE; i++) last = await ping();
   assert.equal(last.status, 429);
   assert.equal(last.headers.get('retry-after'), '60');
+});
+
+test('a request is always answered before Vercel would cut it off', async t => {
+  const url = await serve(t);
+  const saved = { ...limits };
+  t.after(() => Object.assign(limits, saved));
+  Object.assign(limits, { bodyMs: 200, answerMs: 300 });
+  const headers = { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'x-forwarded-for': '203.0.113.10' };
+
+  // A body that never finishes arriving: an error, not a hang
+  const stalled = new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('{"jsonrpc":"2.0",')); } });
+  const started = Date.now();
+  const cut = await fetch(url, { method: 'POST', headers, body: stalled, duplex: 'half' });
+  assert.equal(cut.status, 408);
+  assert.ok(Date.now() - started < 2000);
+
+  // A tool that takes too long: a JSON-RPC error with the request's id
+  const realFetch = archiveService.fetchFiltered;
+  archiveService.fetchFiltered = () => new Promise(() => {}); // Archive.org never answers
+  t.after(() => { archiveService.fetchFiltered = realFetch; });
+  const slow = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'search_films', arguments: { query: 'never answers' } } }) });
+  const answer = await slow.json();
+  assert.equal(answer.id, 7);
+  assert.match(answer.error.message, /too long/);
+
+  // And a normal call still gets its answer
+  const list = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ jsonrpc: '2.0', id: 8, method: 'tools/list' }) });
+  assert.match(await list.text(), /search_films/);
+});
+
+test('subscriptions/listen is declined at once instead of holding a stream open', async t => {
+  const url = await serve(t);
+  const started = Date.now();
+  const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'x-forwarded-for': '203.0.113.11' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'subscriptions/listen', params: { notifications: { toolsListChanged: true } } }) });
+  const answer = await response.json();
+  assert.equal(answer.id, 3);
+  assert.equal(answer.error.code, -32601);
+  assert.ok(Date.now() - started < 2000);
 });
