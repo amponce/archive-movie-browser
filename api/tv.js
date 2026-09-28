@@ -5,10 +5,14 @@
 // GET /api/tv?live=<channel> a redirect to the film on that channel now (/api/tv/live/<channel>)
 // GET /api/tv?format=films   every film, grouped by genre (/api/tv/films.m3u)
 // GET /api/tv?film=<id>       a redirect to that film's file on Archive.org (/api/tv/film/<id>)
+// GET /api/tv?format=library  every film as a Kodi / Jellyfin movie library, zipped (/api/tv/library.zip)
 // Add &mine=a,b,c (the identifiers from a shared channel link) to get just that channel.
 // Same schedule for everyone, so the whole thing is cached at the edge for a minute.
 import { schedule, personalChannel, toM3U, toChannelsM3U, liveStreams, toXMLTV, siteOf, catalogue, toFilmsM3U, isCatalogued } from './_tv.js';
 import { pickPlayableFile, videoUrl } from '../src/services/playback.js';
+import { libraryFiles, zip } from './_library.js';
+
+let pack; // the library zip, built once per instance: the catalogue only changes with a deploy
 
 // Whether a stream still answers (an Archive.org file can be removed mid-week), remembered for
 // ten minutes. Unsure (slow, network trouble) counts as yes: better a try than dead air.
@@ -71,6 +75,14 @@ export default async function handler(req, res) {
       res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');
       res.setHeader('Content-Disposition', 'inline; filename="orphaned-films-every-film.m3u"');
       res.status(200).send(toFilmsM3U(catalogue(), siteOf(req.headers?.host)));
+      return;
+    }
+    if (format === 'library') {
+      pack ||= zip(libraryFiles());
+      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', 'attachment; filename="orphaned-films-library.zip"');
+      res.status(200).send(pack);
       return;
     }
     const mine = String(req.query?.mine || '');

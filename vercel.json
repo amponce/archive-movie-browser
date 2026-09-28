@@ -41,6 +41,10 @@
       "destination": "/api/tv?format=films"
     },
     {
+      "source": "/api/tv/library.zip",
+      "destination": "/api/tv?format=library"
+    },
+    {
       "source": "/api/tv/film/:id",
       "destination": "/api/tv?film=:id"
     },

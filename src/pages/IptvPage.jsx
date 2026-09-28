@@ -83,6 +83,25 @@ export default function IptvPage() {
           </p>
         </section>
 
+        <section aria-labelledby="library" className="flex flex-col gap-3">
+          <h2 id="library" className="display text-2xl">As a movie library</h2>
+          <p className="text-muted leading-relaxed">
+            Rather browse the films, with posters, plots and genres, than tune channels? Download the library and Kodi,
+            Jellyfin or Emby shows all 4,200 films the way it shows your own movies. Each film streams from the Internet
+            Archive when you play it; the download itself is 3 MB of small text files.
+          </p>
+          <div className="flex items-center gap-3 min-w-0">
+            <code className="font-mono text-sm text-bone bg-panel rounded px-3 py-2 break-all flex-1 min-w-0">{`${SITE}/api/tv/library.zip`}</code>
+            <a className="btn-ghost shrink-0" href="/api/tv/library.zip" data-track="iptv-library" download>Download</a>
+          </div>
+          <ol className="list-decimal pl-5 flex flex-col gap-1 text-muted leading-relaxed">
+            <li>Unzip it on the machine that runs Kodi or Jellyfin (or a drive it can see). You get a folder called Orphaned Films.</li>
+            <li><span className="text-bone">Kodi:</span> Videos, Files, Add videos, and choose that folder. Set its content to Movies, with The Movie Database as the information provider, and let it scan.</li>
+            <li><span className="text-bone">Jellyfin or Emby:</span> Dashboard, Libraries, Add Media Library, type Movies, and add that folder.</li>
+          </ol>
+          <p className="text-muted leading-relaxed">Plex can’t play these: it doesn’t read the small link files the library is made of.</p>
+        </section>
+
         <section aria-labelledby="how" className="flex flex-col gap-3">
           <h2 id="how" className="display text-2xl">How it plays</h2>
           <p className="text-muted leading-relaxed">
