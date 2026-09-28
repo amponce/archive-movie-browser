@@ -4,102 +4,105 @@
   "blurb": "The first decade of sound, every kind of picture.",
   "curator": "the station",
   "generated": {
-    "rule": "Action or Adventure or Animation or Comedy or Crime or Documentary or Drama or Family or Fantasy or History or Horror or Music or Mystery or Romance or Sci-Fi or Thriller or War or Western 1930s\u20131930s",
-    "week": 202639
+    "rule": "Action or Adventure or Animation or Comedy or Crime or Documentary or Drama or Family or Fantasy or History or Horror or Music or Mystery or Romance or Sci-Fi or Thriller or War or Western 1930s–1930s",
+    "week": 202640
   },
   "films": [
+    {
+      "id": "dust-be-my-destiny-1939"
+    },
+    {
+      "id": "VictorHalperinsWhiteZombie1932"
+    },
+    {
+      "id": "mystery.-of.-edwin.-drood.-1935"
+    },
+    {
+      "id": "1933-the-kiss-before-the-mirror-un-beso-ante-el-espejo-james-whale-vose"
+    },
+    {
+      "id": "paramount-on-parade_1930"
+    },
+    {
+      "id": "OneFrightenedNight"
+    },
+    {
+      "id": "1931-city-streets-las-calles-de-la-ciudad-rouben-mamoulian-vose"
+    },
+    {
+      "id": "the.-adventures.-of.-tom.-sawyer.-1986"
+    },
+    {
+      "id": "westfront-1918_1930"
+    },
+    {
+      "id": "Bulldog_Drummonds_Bride"
+    },
+    {
+      "id": "A_Man_Betrayed_movie"
+    },
+    {
+      "id": "UndertheRedRobeVSjostrom1937RMassey"
+    },
+    {
+      "id": "NonStopNewYork1937"
+    },
+    {
+      "id": "ComeonRangers"
+    },
+    {
+      "id": "Murder_At_The_Baskervilles"
+    },
+    {
+      "id": "NancyDrewReporter"
+    },
+    {
+      "id": "UnderWesternStars"
+    },
+    {
+      "id": "hook_line_and_sinker"
+    },
+    {
+      "id": "young-man-of-manhattan_1930"
+    },
     {
       "id": "1937-beco-sem-saida-william-wyler"
     },
     {
-      "id": "BigFella"
+      "id": "TheManWhoCouldWorkMiracles"
     },
     {
-      "id": "oh-sailor-behave_1930"
+      "id": "TheSpanishCapeMystery1935"
     },
     {
-      "id": "Round-UpTimeinTexas"
+      "id": "1931-the-vice-squad-john-cromwell-vo"
     },
     {
-      "id": "Hot_Curves_3054"
+      "id": "TheHighCommand"
     },
     {
-      "id": "three_mesquiteers"
-    },
-    {
-      "id": "SomethingtoSingAbout"
-    },
-    {
-      "id": "RollinPlains"
-    },
-    {
-      "id": "BulldogDrummond720p1937"
-    },
-    {
-      "id": "irish_luck_ipod"
-    },
-    {
-      "id": "windjammer"
-    },
-    {
-      "id": "JimHanverDetective"
-    },
-    {
-      "id": "SpeakEasily"
-    },
-    {
-      "id": "SouthwardHo"
-    },
-    {
-      "id": "Judge_Priest"
-    },
-    {
-      "id": "el-tango-en-broadway-1934"
-    },
-    {
-      "id": "BulldogDrummondInAfrica1938"
-    },
-    {
-      "id": "el-expreso-de-shanghai-1932-1080-p-vose"
-    },
-    {
-      "id": "passing-fancy"
-    },
-    {
-      "id": "wds44178891"
-    },
-    {
-      "id": "the-man-in-the-iron-mask-1939_202511"
-    },
-    {
-      "id": "border_venegance"
-    },
-    {
-      "id": "the-girl-in-the-taxi"
-    },
-    {
-      "id": "TheFaceAtTheWindow"
-    },
-    {
-      "id": "1936-a-floresta-petrificada-archie-mayo"
-    },
-    {
-      "id": "mad-love-leg-pt"
-    },
-    {
-      "id": "TheBadSister931"
+      "id": "LittleLordFauntleroy1936JohnCromwellfullMovieHD"
     },
     {
       "id": "DriftFence"
     },
     {
-      "id": "AStarIsBorn"
+      "id": "song_of_the_gringo"
     },
     {
-      "id": "JacksTheBoy"
+      "id": "Mr.WongDetective720p1938"
     },
     {
-      "id": "presidents_mystery"
+      "id": "tc4457821"
+    },
+    {
+      "id": "BulldogDrummond720p1937"
+    },
+    {
+      "id": "The_Evil_Mind"
+    },
+    {
+      "id": "BigFella"
     }
   ]
 }

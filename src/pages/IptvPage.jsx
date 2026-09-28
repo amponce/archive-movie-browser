@@ -6,7 +6,8 @@ const SITE = 'https://www.orphanedfilms.com';
 const FEEDS = [
   { what: 'Channels', url: `${SITE}/api/tv/channels.m3u`, for: 'IPTV apps: Jellyfin, TiviMate, Kodi, Channels DVR. One entry per channel; each plays what is on it now.' },
   { what: 'TV guide (XMLTV)', url: `${SITE}/api/tv/guide.xml`, for: 'The schedule for the next three days, with a description and genre for every film, matched to the channels above.' },
-  { what: 'Every film as a playlist', url: `${SITE}/api/tv/playlist.m3u`, for: 'VLC and other players: every channel’s films in order, to play straight through.' },
+  { what: 'Every film, by genre', url: `${SITE}/api/tv/films.m3u`, for: 'The whole catalogue, not just what the channels air: about 4,200 films with posters, grouped by genre. Choose one and it plays from the start. Works in VLC, Kodi, TiviMate and most IPTV apps.' },
+  { what: 'The channels’ films in order', url: `${SITE}/api/tv/playlist.m3u`, for: 'VLC and other players: every channel’s films in order, to play straight through.' },
 ];
 const APPS = [
   { name: 'Jellyfin', steps: [
@@ -22,7 +23,7 @@ const APPS = [
     'Open it again and choose Configure. Kodi lists one entry, Migrated Add-on Config: choose that one. Don’t choose Add; a second copy of the add-on makes Kodi crash.',
     'Under General, put the channels address in M3U play list URL, then choose OK. The guide comes with it.',
     'Restart Kodi. From then on, the channels are on the home screen: choose TV, then Channels, or Guide for the schedule. In the guide, choose a channel’s name to watch what is on.',
-  ], note: 'Crashing, or every channel twice? The add-on has extra copies. Choose Configure again and turn off every entry but one.' },
+  ], note: 'Crashing, or every channel twice? The add-on has extra copies. Choose Configure again and turn off every entry but one. Rather have the films than the channels? Put the every-film address in M3U play list URL instead: each film is then an entry of its own, sorted into its genre.' },
 ];
 
 function Copy({ text }) {
@@ -80,6 +81,25 @@ export default function IptvPage() {
           <p className="text-muted leading-relaxed">
             Menus move between versions; any app that asks for an M3U playlist and an XMLTV guide takes these two.
           </p>
+        </section>
+
+        <section aria-labelledby="library" className="flex flex-col gap-3">
+          <h2 id="library" className="display text-2xl">As a movie library</h2>
+          <p className="text-muted leading-relaxed">
+            Rather browse the films, with posters, plots and genres, than tune channels? Download the library and Kodi,
+            Jellyfin or Emby shows all 4,200 films the way it shows your own movies. Each film streams from the Internet
+            Archive when you play it; the download itself is 3 MB of small text files.
+          </p>
+          <div className="flex items-center gap-3 min-w-0">
+            <code className="font-mono text-sm text-bone bg-panel rounded px-3 py-2 break-all flex-1 min-w-0">{`${SITE}/api/tv/library.zip`}</code>
+            <a className="btn-ghost shrink-0" href="/api/tv/library.zip" data-track="iptv-library" download>Download</a>
+          </div>
+          <ol className="list-decimal pl-5 flex flex-col gap-1 text-muted leading-relaxed">
+            <li>Unzip it on the machine that runs Kodi or Jellyfin (or a drive it can see). You get a folder called Orphaned Films.</li>
+            <li><span className="text-bone">Kodi:</span> Videos, Files, Add videos, and choose that folder. Set its content to Movies, with The Movie Database as the information provider, and let it scan.</li>
+            <li><span className="text-bone">Jellyfin or Emby:</span> Dashboard, Libraries, Add Media Library, type Movies, and add that folder.</li>
+          </ol>
+          <p className="text-muted leading-relaxed">Plex can’t play these: it doesn’t read the small link files the library is made of.</p>
         </section>
 
         <section aria-labelledby="how" className="flex flex-col gap-3">

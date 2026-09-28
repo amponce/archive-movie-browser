@@ -5,104 +5,104 @@
   "curator": "the station",
   "generated": {
     "rule": "Western 1930s–1970s",
-    "week": 202639
+    "week": 202640
   },
   "films": [
     {
-      "id": "the_local_bad_man"
+      "id": "1944FrontierOutlaws"
     },
     {
-      "id": "QueenoftheYukon"
+      "id": "LuckyTerror"
     },
     {
-      "id": "Rawhide_"
+      "id": "hc5558711"
     },
     {
-      "id": "the_silver_trail"
+      "id": "UnderWesternStars"
     },
     {
-      "id": "HomeinOklahoma"
-    },
-    {
-      "id": "ulzanas-raid-1972_20251016"
-    },
-    {
-      "id": "ten-gentlemen-from-west-point-1942"
-    },
-    {
-      "id": "BoothillBrigade"
-    },
-    {
-      "id": "TheBoldCaballero"
-    },
-    {
-      "id": "TheOldCorral"
-    },
-    {
-      "id": "face.-to.-face.-1967"
-    },
-    {
-      "id": "HandsAcrosstheBorder"
-    },
-    {
-      "id": "border_patrolman"
-    },
-    {
-      "id": "DesertGold"
-    },
-    {
-      "id": "DeathRidesTheRange"
-    },
-    {
-      "id": "CarsonCityKid"
+      "id": "Hurricane_at_Pilgrim_Hill"
     },
     {
       "id": "devil-and-miss-sarah-1975-gene-barry"
     },
     {
-      "id": "HittintheTrail"
+      "id": "FuzzySattlesDown"
     },
     {
-      "id": "BrandedaCoward"
+      "id": "WildCountry"
     },
     {
-      "id": "SouthwardHo"
+      "id": "winchester-73-1950"
     },
     {
-      "id": "DriftFence"
+      "id": "the.-price.of.-power.-1969"
     },
     {
-      "id": "WolvesoftheRange"
+      "id": "DesertGold"
     },
     {
-      "id": "dude_bandit"
+      "id": "rohb45458874"
     },
     {
-      "id": "TheKansan"
+      "id": "hombre-1967_202511"
     },
     {
-      "id": "KidRidesAgain"
+      "id": "Utah_"
     },
     {
-      "id": "sunset_range"
+      "id": "ambush_valley"
     },
     {
-      "id": "Billy_the_Kid_-_Trapped"
+      "id": "BlazingFrontier"
+    },
+    {
+      "id": "TheRidersoftheFrontier1939"
+    },
+    {
+      "id": "ComeOnCowboys"
     },
     {
       "id": "KiGrajRidingRanger"
     },
     {
-      "id": "the-violent-men-1955"
+      "id": "haunted_ranch"
     },
     {
-      "id": "the-big-gundown-1966_202511"
+      "id": "KidRidesAgain"
     },
     {
-      "id": "YodelinKidofPineRidge"
+      "id": "stagecoach-colorized"
     },
     {
-      "id": "phantom_of_the_range"
+      "id": "DeathRidesTheRange"
+    },
+    {
+      "id": "DowntheWyomingTrail"
+    },
+    {
+      "id": "RidinDowntheCanyon"
+    },
+    {
+      "id": "the_local_bad_man"
+    },
+    {
+      "id": "Heldorado"
+    },
+    {
+      "id": "the_silver_trail"
+    },
+    {
+      "id": "BoothillBrigade"
+    },
+    {
+      "id": "last-of-the-mohicans-1936-colorized"
+    },
+    {
+      "id": "BigBoyRidesAgain"
+    },
+    {
+      "id": "little-big-man-1970_202511"
     }
   ]
 }
