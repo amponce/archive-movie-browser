@@ -147,4 +147,6 @@ test('shelf selection rule', async () => {
   assert.equal(isBigBrand([], 'Dragonball Evolution'), true);
   assert.equal(isBigBrand([], 'The Mouse That Roared'), false);
   assert.equal(isBigBrand([], 'Frankenstein'), false);
+  for (const title of ['A Walt Disney Christmas', "Jiminy Cricket's Christmas", "Donald's Greatest Hits", 'Race for Your Life, Charlie Brown', "Mister Magoo's Christmas Carol"]) assert.equal(isBigBrand([], title), true, title);
+  assert.equal(isBigBrand([], 'Sunrise: A Song of Two Humans'), false);
 });
