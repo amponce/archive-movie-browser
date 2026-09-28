@@ -131,3 +131,15 @@ test('a listed film stays off a shared channel too, even when Archive.org would 
   const { personalChannel } = await import('../../api/_tv.js');
   assert.equal((await personalChannel([id])).lineup.length, 0);
 });
+
+test('big brands are known by their production companies', async () => {
+  const { isBigBrand } = await import('./policy.js');
+  assert.equal(isBigBrand(['Studio Ghibli', 'Tokuma Shoten']), true);
+  assert.equal(isBigBrand(['Walt Disney Productions']), true);
+  assert.equal(isBigBrand(['Pixar']), true);
+  assert.equal(isBigBrand(['Toei Animation']), true);
+  assert.equal(isBigBrand(['OLM', 'The Pokémon Company']), true);
+  assert.equal(isBigBrand(['Columbia Pictures', 'Hawk Films']), false, 'studio classics stay');
+  assert.equal(isBigBrand(['Image Ten']), false);
+  assert.equal(isBigBrand([]), false);
+});

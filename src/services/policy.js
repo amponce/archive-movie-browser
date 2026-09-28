@@ -26,6 +26,13 @@ const NEVER_ON_AIR = new Set([
 ]);
 export const neverOnAir = tmdbId => NEVER_ON_AIR.has(Number(tmdbId));
 
+// 4. Big brands stay off the shelves the site picks on its own (a collection's "best of"). Films
+//    from owners that enforce their copyright, known by their production companies on TMDB:
+//    Disney, Pixar, Ghibli, Nintendo and Pokémon, DreamWorks, Lucasfilm, and the studios behind
+//    franchise anime. Search and browse still find them: this site is a mirror.
+const BIG_BRANDS = /disney|pixar|ghibli|tokuma|nintendo|pok[eé]mon|game freak|the pok[eé]mon company|dreamworks|lucasfilm|illumination|blue sky studios|toei animation|sunrise|bandai|kadokawa|madhouse|shogakukan|shueisha|aniplex|production i\.?g|gainax|khara|tms entertainment|pierrot/i;
+export const isBigBrand = (companies = []) => companies.some(name => BIG_BRANDS.test(name));
+
 // 3. What never appears here, whoever searches for it and however it is linked. The site mirrors
 //    the Archive, adult films included, but not: anything sexual involving children; sexual
 //    violence; footage of real killing; hate material. Checked on every result (title, tags,

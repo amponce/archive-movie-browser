@@ -26,6 +26,7 @@ jobs:
       - name: Rank the best of each film collection
         env:
           OPEN_ROUTER_API_KEY: ${{ secrets.OPEN_ROUTER_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
         run: node scripts/build-collections.mjs --collections 200
       - run: npm test
       - name: Open a pull request with the week's rankings
