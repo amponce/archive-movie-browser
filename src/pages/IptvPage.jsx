@@ -6,7 +6,8 @@ const SITE = 'https://www.orphanedfilms.com';
 const FEEDS = [
   { what: 'Channels', url: `${SITE}/api/tv/channels.m3u`, for: 'IPTV apps: Jellyfin, TiviMate, Kodi, Channels DVR. One entry per channel; each plays what is on it now.' },
   { what: 'TV guide (XMLTV)', url: `${SITE}/api/tv/guide.xml`, for: 'The schedule for the next three days, with a description and genre for every film, matched to the channels above.' },
-  { what: 'Every film as a playlist', url: `${SITE}/api/tv/playlist.m3u`, for: 'VLC and other players: every channel’s films in order, to play straight through.' },
+  { what: 'Every film, by genre', url: `${SITE}/api/tv/films.m3u`, for: 'The whole catalogue, not just what the channels air: about 4,200 films with posters, grouped by genre. Choose one and it plays from the start. Works in VLC, Kodi, TiviMate and most IPTV apps.' },
+  { what: 'The channels’ films in order', url: `${SITE}/api/tv/playlist.m3u`, for: 'VLC and other players: every channel’s films in order, to play straight through.' },
 ];
 const APPS = [
   { name: 'Jellyfin', steps: [
@@ -22,7 +23,7 @@ const APPS = [
     'Open it again and choose Configure. Kodi lists one entry, Migrated Add-on Config: choose that one. Don’t choose Add; a second copy of the add-on makes Kodi crash.',
     'Under General, put the channels address in M3U play list URL, then choose OK. The guide comes with it.',
     'Restart Kodi. From then on, the channels are on the home screen: choose TV, then Channels, or Guide for the schedule. In the guide, choose a channel’s name to watch what is on.',
-  ], note: 'Crashing, or every channel twice? The add-on has extra copies. Choose Configure again and turn off every entry but one.' },
+  ], note: 'Crashing, or every channel twice? The add-on has extra copies. Choose Configure again and turn off every entry but one. Rather have the films than the channels? Put the every-film address in M3U play list URL instead: each film is then an entry of its own, sorted into its genre.' },
 ];
 
 function Copy({ text }) {

@@ -3,9 +3,12 @@
 // GET /api/tv?format=xml the guide as XMLTV
 // GET /api/tv?format=channels one entry per channel for IPTV apps (/api/tv/channels.m3u)
 // GET /api/tv?live=<channel> a redirect to the film on that channel now (/api/tv/live/<channel>)
+// GET /api/tv?format=films   every film, grouped by genre (/api/tv/films.m3u)
+// GET /api/tv?film=<id>       a redirect to that film's file on Archive.org (/api/tv/film/<id>)
 // Add &mine=a,b,c (the identifiers from a shared channel link) to get just that channel.
 // Same schedule for everyone, so the whole thing is cached at the edge for a minute.
-import { schedule, personalChannel, toM3U, toChannelsM3U, liveStreams, toXMLTV, siteOf } from './_tv.js';
+import { schedule, personalChannel, toM3U, toChannelsM3U, liveStreams, toXMLTV, siteOf, catalogue, toFilmsM3U, isCatalogued } from './_tv.js';
+import { pickPlayableFile, videoUrl } from '../src/services/playback.js';
 
 // Whether a stream still answers (an Archive.org file can be removed mid-week), remembered for
 // ten minutes. Unsure (slow, network trouble) counts as yes: better a try than dead air.
@@ -48,6 +51,26 @@ export default async function handler(req, res) {
       res.setHeader('Cache-Control', 'no-store'); // what is on changes; every tune asks again
       res.setHeader('Location', url);
       res.status(302).end();
+      return;
+    }
+    if (req.query?.film) {
+      // Only films in the catalogue: this is not a way to reach any upload on Archive.org
+      const id = String(req.query.film);
+      if (!isCatalogued(id)) { res.status(404).json({ error: 'Not a film in the catalogue.' }); return; }
+      const data = await fetch(`https://archive.org/metadata/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(15000) }).then(r => (r.ok ? r.json() : null));
+      const file = data?.files ? pickPlayableFile(data.files) : null;
+      if (!file) { res.status(404).json({ error: 'Archive.org has no playable file for this film right now.' }); return; }
+      res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800'); // a film's file rarely changes
+      res.setHeader('Location', videoUrl(id, file.name));
+      res.status(302).end();
+      return;
+    }
+    if (format === 'films') {
+      res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline; filename="orphaned-films-every-film.m3u"');
+      res.status(200).send(toFilmsM3U(catalogue(), siteOf(req.headers?.host)));
       return;
     }
     const mine = String(req.query?.mine || '');

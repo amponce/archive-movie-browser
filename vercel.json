@@ -37,6 +37,14 @@
       "destination": "/api/tv?live=:channel"
     },
     {
+      "source": "/api/tv/films.m3u",
+      "destination": "/api/tv?format=films"
+    },
+    {
+      "source": "/api/tv/film/:id",
+      "destination": "/api/tv?film=:id"
+    },
+    {
       "source": "/browse(/)?",
       "destination": "/index.html"
     },

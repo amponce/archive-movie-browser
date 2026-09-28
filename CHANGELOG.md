@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- **Every film as one playlist.** `/api/tv/films.m3u` has the whole catalogue, not just what the channels air: about 4,200 films with posters, grouped by genre, for VLC, Kodi and IPTV apps. Each film plays from the start. Listed on [/iptv](https://www.orphanedfilms.com/iptv).
 - **Install it on your phone.** Orphaned Films is now an installable web app: Add to Home Screen (Safari's Share menu on iPhone, Chrome's menu or install prompt on Android) puts the Orphaned Films icon on your home screen, and it opens full screen without the browser around it.
 
 ### Fixed
