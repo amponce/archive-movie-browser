@@ -142,4 +142,9 @@ test('big brands are known by their production companies', async () => {
   assert.equal(isBigBrand(['Columbia Pictures', 'Hawk Films']), false, 'studio classics stay');
   assert.equal(isBigBrand(['Image Ten']), false);
   assert.equal(isBigBrand([]), false);
+  assert.equal(isBigBrand([], 'Winnie the Pooh: Learning - Helping Others'), true, 'no companies on TMDB: the title tells');
+  assert.equal(isBigBrand([], "Pooh's Grand Adventure"), true);
+  assert.equal(isBigBrand([], 'Dragonball Evolution'), true);
+  assert.equal(isBigBrand([], 'The Mouse That Roared'), false);
+  assert.equal(isBigBrand([], 'Frankenstein'), false);
 });

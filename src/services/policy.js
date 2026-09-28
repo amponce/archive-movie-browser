@@ -31,7 +31,10 @@ export const neverOnAir = tmdbId => NEVER_ON_AIR.has(Number(tmdbId));
 //    Disney, Pixar, Ghibli, Nintendo and Pokémon, DreamWorks, Lucasfilm, and the studios behind
 //    franchise anime. Search and browse still find them: this site is a mirror.
 const BIG_BRANDS = /disney|pixar|ghibli|tokuma|nintendo|pok[eé]mon|game freak|the pok[eé]mon company|dreamworks|lucasfilm|illumination|blue sky studios|toei animation|sunrise|bandai|kadokawa|madhouse|shogakukan|shueisha|aniplex|production i\.?g|gainax|khara|tms entertainment|pierrot/i;
-export const isBigBrand = (companies = []) => companies.some(name => BIG_BRANDS.test(name));
+// TMDB lists no company for some of their titles (a Winnie the Pooh video), so the brands' own
+// characters and franchises in a title count too.
+const BRAND_TITLES = /\b(winnie the pooh|pooh'?s|mickey|minnie mouse|donald duck|goofy|pok[eé]mon|pikachu|super mario|mario bros|zelda|kirby|sonic the hedgehog|digimon|dragon ?ball|gundam|sailor moon|evangelion|yu-?gi-?oh|totoro|toy story|lion king|little mermaid|aladdin|shrek|star wars|muppets?)\b/i;
+export const isBigBrand = (companies = [], title = '') => companies.some(name => BIG_BRANDS.test(name)) || BRAND_TITLES.test(title);
 
 // 3. What never appears here, whoever searches for it and however it is linked. The site mirrors
 //    the Archive, adult films included, but not: anything sexual involving children; sexual

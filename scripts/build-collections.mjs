@@ -107,7 +107,7 @@ const out = arg('only') || flag('genres-only') ? { ...previous } : {};
 async function rank(collection, identifiers, total) {
   // The 40 best-known films, big brands left out, so the next-best fill their places
   const { identified, films: pool } = bestOfCollection(index, identifiers, { limit: 100 });
-  const kept = await Promise.all(pool.map(async f => ((await bigBrand(f.entry.i)) ? null : f)));
+  const kept = await Promise.all(pool.map(async f => ((isBigBrand([], f.entry.t) || await bigBrand(f.entry.i)) ? null : f)));
   const films = kept.filter(Boolean).slice(0, 40);
   if (films.length < 6) { console.log(`${collection.id}: ${films.length} films, skipped`); return null; }
   const verdicts = {};
