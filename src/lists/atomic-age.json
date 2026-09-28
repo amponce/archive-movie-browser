@@ -5,104 +5,104 @@
   "curator": "the station",
   "generated": {
     "rule": "Sci-Fi 1950s–1950s",
-    "week": 202639
+    "week": 202640
   },
   "films": [
     {
       "id": "the.angry.red.planet.1959"
     },
     {
-      "id": "curse-of-the-faceless-man-colorized-movie-720p-hd"
-    },
-    {
-      "id": "20-million-miles-to-earth"
-    },
-    {
-      "id": "monster-that-challenged-the-world-1957-colorized"
-    },
-    {
       "id": "earth-vs-the-flying-saucers-1956_202507"
-    },
-    {
-      "id": "target-earth-1954-colorized"
-    },
-    {
-      "id": "battle-in-outer-space-1959_202505"
-    },
-    {
-      "id": "The_Atomic_Man_1955"
-    },
-    {
-      "id": "donovans-brain-1953"
-    },
-    {
-      "id": "monster-on-campus"
-    },
-    {
-      "id": "the-revenge-of-frankenstein"
-    },
-    {
-      "id": "the-curse-of-frankenstein-1957_202406"
-    },
-    {
-      "id": "the-man-in-the-white-suit_202105"
-    },
-    {
-      "id": "CALTIKITheImmortalMonster1960"
-    },
-    {
-      "id": "it-the-terror-from-beyond-space-colorized"
     },
     {
       "id": "not-of-this-earth-1957"
     },
     {
+      "id": "target-earth-1954-colorized"
+    },
+    {
+      "id": "the-curse-of-frankenstein-1957_202406"
+    },
+    {
       "id": "x-the-unknown-1956-colorized"
     },
     {
-      "id": "kronos-1957-colorized"
+      "id": "20-million-miles-to-earth"
     },
     {
-      "id": "the-land-unknown"
+      "id": "battle-in-outer-space-1959_202505"
     },
     {
-      "id": "it-came-from-beneath-the-sea"
+      "id": "magnetic-monster"
     },
     {
-      "id": "TheMonolithMonsters1957"
+      "id": "curse-of-the-faceless-man-colorized-movie-720p-hd"
     },
     {
-      "id": "quatermass-2"
-    },
-    {
-      "id": "invasion-of-the-body-snatchers-1956-colorized"
-    },
-    {
-      "id": "tarantula-1955-colorized"
-    },
-    {
-      "id": "the.-fly.-1958"
-    },
-    {
-      "id": "the-tingler-1959_202510"
-    },
-    {
-      "id": "the.-blob.-1958"
-    },
-    {
-      "id": "man-from-planet-x"
-    },
-    {
-      "id": "the-quatermass-xperiment"
+      "id": "CALTIKITheImmortalMonster1960"
     },
     {
       "id": "how-to-make-a-monster-1958"
     },
     {
-      "id": "20-000-leagues-under-the-sea-1954_20251111"
+      "id": "quatermass-2"
     },
     {
-      "id": "FriendWithoutAFace104"
+      "id": "tarantula-1955-colorized"
+    },
+    {
+      "id": "monster-on-campus"
+    },
+    {
+      "id": "TheMonolithMonsters1957"
+    },
+    {
+      "id": "donovans-brain-1953"
+    },
+    {
+      "id": "i-married-a-monster"
+    },
+    {
+      "id": "the.-blob.-1958"
+    },
+    {
+      "id": "kronos-1957-colorized"
+    },
+    {
+      "id": "it-the-terror-from-beyond-space-colorized"
+    },
+    {
+      "id": "the-quatermass-xperiment"
+    },
+    {
+      "id": "the-tingler-1959_202510"
+    },
+    {
+      "id": "man-from-planet-x"
+    },
+    {
+      "id": "it-came-from-beneath-the-sea"
+    },
+    {
+      "id": "day-the-earth-stood-still-1951"
+    },
+    {
+      "id": "abbott-and-costello-meet-the-invisible-man"
+    },
+    {
+      "id": "invasion-of-the-body-snatchers-1956-colorized"
+    },
+    {
+      "id": "when-worlds-collide"
+    },
+    {
+      "id": "the-land-unknown"
+    },
+    {
+      "id": "monster-that-challenged-the-world-1957-colorized"
+    },
+    {
+      "id": "TheMonsterofPiedrasBlancas1959"
     }
   ]
 }
