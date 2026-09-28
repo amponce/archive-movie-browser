@@ -2,7 +2,7 @@ name: Collections
 
 # Every Monday, after the poster index, Jev ranks the best films in Archive.org's most-downloaded
 # film collections (scripts/build-collections.mjs) and the result goes to a branch as a pull
-# request for a maintainer to merge. About $0.15 of Jev a week. Never runs on pull requests.
+# request for a maintainer to merge. About $0.03 of Jev a run. Never runs on pull requests.
 on:
   workflow_dispatch:
   schedule:
