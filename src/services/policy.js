@@ -26,13 +26,10 @@ const NEVER_ON_AIR = new Set([
 ]);
 export const neverOnAir = tmdbId => NEVER_ON_AIR.has(Number(tmdbId));
 
-// 4. Big brands stay off the shelves the site picks on its own (a collection's "best of"). Films
-//    from owners that enforce their copyright, known by their production companies on TMDB:
-//    Disney, Pixar, Ghibli, Nintendo and Pokémon, DreamWorks, Lucasfilm, and the studios behind
-//    franchise anime. Search and browse still find them: this site is a mirror.
+// 4. Shelf selection: some films are left off the shelves the site picks on its own. Search and
+//    browse still find them.
 const BIG_BRANDS = /disney|pixar|ghibli|tokuma|nintendo|pok[eé]mon|game freak|the pok[eé]mon company|dreamworks|lucasfilm|illumination|blue sky studios|toei animation|sunrise|bandai|kadokawa|madhouse|shogakukan|shueisha|aniplex|production i\.?g|gainax|khara|tms entertainment|pierrot/i;
-// TMDB lists no company for some of their titles (a Winnie the Pooh video), so the brands' own
-// characters and franchises in a title count too.
+// Checked by title too, for entries TMDB lists no company for
 const BRAND_TITLES = /\b(winnie the pooh|pooh'?s|mickey|minnie mouse|donald duck|goofy|pok[eé]mon|pikachu|super mario|mario bros|zelda|kirby|sonic the hedgehog|digimon|dragon ?ball|gundam|sailor moon|evangelion|yu-?gi-?oh|totoro|toy story|lion king|little mermaid|aladdin|shrek|star wars|muppets?)\b/i;
 export const isBigBrand = (companies = [], title = '') => companies.some(name => BIG_BRANDS.test(name)) || BRAND_TITLES.test(title);
 

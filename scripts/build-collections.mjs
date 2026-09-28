@@ -40,10 +40,10 @@ if (!KEY) { console.error('Needs OPEN_ROUTER_API_KEY'); process.exit(1); }
 
 const index = JSON.parse(fs.readFileSync(path.join(root, 'public/poster-index.json'), 'utf8')).films;
 const TMDB = readKey('TMDB_API_KEY', 'VITE_TMDB_API_KEY');
-if (!TMDB) { console.error('Needs TMDB_API_KEY (big brands are known by their production companies)'); process.exit(1); }
+if (!TMDB) { console.error('Needs TMDB_API_KEY'); process.exit(1); }
 
-// Whether a film is from a big brand (policy.js), by its production companies on TMDB. Asked
-// once per film per run. A film TMDB won't answer for is left off too: when unsure, not a pick.
+// The shelf selection rule (policy.js), by production companies on TMDB, asked once per film per
+// run. A film TMDB won't answer for is left off too.
 const brands = new Map();
 let unsure = 0;
 function bigBrand(tmdbId) {
@@ -105,7 +105,7 @@ const out = arg('only') || flag('genres-only') ? { ...previous } : {};
 
 // Jev's ranking of one set of uploads, or null when it holds fewer than six films we know
 async function rank(collection, identifiers, total) {
-  // The 40 best-known films, big brands left out, so the next-best fill their places
+  // The 40 best-known films the selection rule allows; the next-best fill any places
   const { identified, films: pool } = bestOfCollection(index, identifiers, { limit: 100 });
   const kept = await Promise.all(pool.map(async f => ((isBigBrand([], f.entry.t) || await bigBrand(f.entry.i)) ? null : f)));
   const films = kept.filter(Boolean).slice(0, 40);
@@ -152,4 +152,4 @@ if (!arg('only')) {
   }
 }
 fs.writeFileSync(OUT, `${JSON.stringify({ model: MODEL, builtAt: new Date().toISOString().slice(0, 10), collections: out })}\n`);
-console.log(`\n${Object.keys(out).length} collections in public/collections.json, Jev cost $${cost.toFixed(4)}; ${[...brands.values()].length} films checked for big brands, ${unsure} TMDB could not answer for (left off)`);
+console.log(`\n${Object.keys(out).length} collections in public/collections.json, Jev cost $${cost.toFixed(4)}; ${[...brands.values()].length} films checked, ${unsure} TMDB could not answer for (left off)`);

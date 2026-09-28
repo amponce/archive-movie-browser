@@ -132,17 +132,17 @@ test('a listed film stays off a shared channel too, even when Archive.org would 
   assert.equal((await personalChannel([id])).lineup.length, 0);
 });
 
-test('big brands are known by their production companies', async () => {
+test('shelf selection rule', async () => {
   const { isBigBrand } = await import('./policy.js');
   assert.equal(isBigBrand(['Studio Ghibli', 'Tokuma Shoten']), true);
   assert.equal(isBigBrand(['Walt Disney Productions']), true);
   assert.equal(isBigBrand(['Pixar']), true);
   assert.equal(isBigBrand(['Toei Animation']), true);
   assert.equal(isBigBrand(['OLM', 'The Pokémon Company']), true);
-  assert.equal(isBigBrand(['Columbia Pictures', 'Hawk Films']), false, 'studio classics stay');
+  assert.equal(isBigBrand(['Columbia Pictures', 'Hawk Films']), false);
   assert.equal(isBigBrand(['Image Ten']), false);
   assert.equal(isBigBrand([]), false);
-  assert.equal(isBigBrand([], 'Winnie the Pooh: Learning - Helping Others'), true, 'no companies on TMDB: the title tells');
+  assert.equal(isBigBrand([], 'Winnie the Pooh: Learning - Helping Others'), true);
   assert.equal(isBigBrand([], "Pooh's Grand Adventure"), true);
   assert.equal(isBigBrand([], 'Dragonball Evolution'), true);
   assert.equal(isBigBrand([], 'The Mouse That Roared'), false);
