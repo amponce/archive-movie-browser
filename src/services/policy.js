@@ -26,13 +26,6 @@ const NEVER_ON_AIR = new Set([
 ]);
 export const neverOnAir = tmdbId => NEVER_ON_AIR.has(Number(tmdbId));
 
-// 4. Shelf selection: some films are left off the shelves the site picks on its own. Search and
-//    browse still find them.
-const BIG_BRANDS = /disney|pixar|ghibli|tokuma|nintendo|pok[eé]mon|game freak|the pok[eé]mon company|dreamworks|lucasfilm|illumination|blue sky studios|toei animation|sunrise|bandai|kadokawa|madhouse|shogakukan|shueisha|aniplex|production i\.?g|gainax|khara|tms entertainment|pierrot/i;
-// Checked by title too, for entries TMDB lists no company for
-const BRAND_TITLES = /\b(dtv|walt disney|disney'?s?|jiminy cricket|donald'?s|timon|pumbaa|chip 'n' dale|peanuts|charlie brown|snoopy|magoo|winnie the pooh|pooh'?s|mickey|minnie mouse|donald duck|goofy|pok[eé]mon|pikachu|super mario|mario bros|zelda|kirby|sonic the hedgehog|digimon|dragon ?ball|gundam|sailor moon|evangelion|yu-?gi-?oh|totoro|toy story|lion king|little mermaid|aladdin|shrek|star wars|muppets?)\b/i;
-export const isBigBrand = (companies = [], title = '') => companies.some(name => BIG_BRANDS.test(name)) || BRAND_TITLES.test(title);
-
 // 3. What never appears here, whoever searches for it and however it is linked. The site mirrors
 //    the Archive, adult films included, but not: anything sexual involving children; sexual
 //    violence; footage of real killing; hate material. Checked on every result (title, tags,

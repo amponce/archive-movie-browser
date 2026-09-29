@@ -15,7 +15,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { collectionUploads, bestOfCollection, rankByJudgement, SURE_STRAY } from '../src/services/collectionBest.js';
 import { cartoonOutOfPlace } from '../src/services/posterIndex.js';
-import { isBigBrand } from '../src/services/policy.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(root, 'public/collections.json');
@@ -39,22 +38,6 @@ const KEY = readKey('OPEN_ROUTER_API_KEY', 'OPENROUTER_API_KEY');
 if (!KEY) { console.error('Needs OPEN_ROUTER_API_KEY'); process.exit(1); }
 
 const index = JSON.parse(fs.readFileSync(path.join(root, 'public/poster-index.json'), 'utf8')).films;
-const TMDB = readKey('TMDB_API_KEY', 'VITE_TMDB_API_KEY');
-if (!TMDB) { console.error('Needs TMDB_API_KEY'); process.exit(1); }
-
-// The shelf selection rule (policy.js), by production companies on TMDB, asked once per film per
-// run. A film TMDB won't answer for is left off too.
-const brands = new Map();
-let unsure = 0;
-function bigBrand(tmdbId) {
-  if (!brands.has(tmdbId)) {
-    brands.set(tmdbId, fetch(`https://api.themoviedb.org/3/movie/${tmdbId}?api_key=${TMDB}`, { signal: AbortSignal.timeout(15000) })
-      .then(r => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
-      .then(film => isBigBrand((film.production_companies || []).map(c => c.name)))
-      .catch(() => { unsure++; return true; }));
-  }
-  return brands.get(tmdbId);
-}
 const SEARCH = 'https://archive.org/advancedsearch.php';
 
 async function search(q, fields, rows, sort) {
@@ -105,10 +88,7 @@ const out = arg('only') || flag('genres-only') ? { ...previous } : {};
 
 // Jev's ranking of one set of uploads, or null when it holds fewer than six films we know
 async function rank(collection, identifiers, total) {
-  // The 40 best-known films the selection rule allows; the next-best fill any places
-  const { identified, films: pool } = bestOfCollection(index, identifiers, { limit: 100 });
-  const kept = await Promise.all(pool.map(async f => ((isBigBrand([], f.entry.t) || await bigBrand(f.entry.i)) ? null : f)));
-  const films = kept.filter(Boolean).slice(0, 40);
+  const { identified, films } = bestOfCollection(index, identifiers, { limit: 40 });
   if (films.length < 6) { console.log(`${collection.id}: ${films.length} films, skipped`); return null; }
   const verdicts = {};
   for (let i = 0; i < films.length; i += 6) {
@@ -152,4 +132,4 @@ if (!arg('only')) {
   }
 }
 fs.writeFileSync(OUT, `${JSON.stringify({ model: MODEL, builtAt: new Date().toISOString().slice(0, 10), collections: out })}\n`);
-console.log(`\n${Object.keys(out).length} collections in public/collections.json, Jev cost $${cost.toFixed(4)}; ${[...brands.values()].length} films checked, ${unsure} TMDB could not answer for (left off)`);
+console.log(`\n${Object.keys(out).length} collections in public/collections.json, Jev cost $${cost.toFixed(4)}`);

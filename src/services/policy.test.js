@@ -131,22 +131,3 @@ test('a listed film stays off a shared channel too, even when Archive.org would 
   const { personalChannel } = await import('../../api/_tv.js');
   assert.equal((await personalChannel([id])).lineup.length, 0);
 });
-
-test('shelf selection rule', async () => {
-  const { isBigBrand } = await import('./policy.js');
-  assert.equal(isBigBrand(['Studio Ghibli', 'Tokuma Shoten']), true);
-  assert.equal(isBigBrand(['Walt Disney Productions']), true);
-  assert.equal(isBigBrand(['Pixar']), true);
-  assert.equal(isBigBrand(['Toei Animation']), true);
-  assert.equal(isBigBrand(['OLM', 'The Pokémon Company']), true);
-  assert.equal(isBigBrand(['Columbia Pictures', 'Hawk Films']), false);
-  assert.equal(isBigBrand(['Image Ten']), false);
-  assert.equal(isBigBrand([]), false);
-  assert.equal(isBigBrand([], 'Winnie the Pooh: Learning - Helping Others'), true);
-  assert.equal(isBigBrand([], "Pooh's Grand Adventure"), true);
-  assert.equal(isBigBrand([], 'Dragonball Evolution'), true);
-  assert.equal(isBigBrand([], 'The Mouse That Roared'), false);
-  assert.equal(isBigBrand([], 'Frankenstein'), false);
-  for (const title of ['A Walt Disney Christmas', "Jiminy Cricket's Christmas", "Donald's Greatest Hits", 'Race for Your Life, Charlie Brown', "Mister Magoo's Christmas Carol", 'DTV: Monster Hits']) assert.equal(isBigBrand([], title), true, title);
-  assert.equal(isBigBrand([], 'Sunrise: A Song of Two Humans'), false);
-});
