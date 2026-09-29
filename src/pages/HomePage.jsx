@@ -10,6 +10,7 @@ import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import McpBanner from '../components/McpBanner';
 import Hero from '../components/home/Hero';
+import CollectionPromo from '../components/home/CollectionPromo';
 import FilmRow from '../components/home/FilmRow';
 import Lists from '../components/home/Lists';
 import ContinueWatching from '../components/home/ContinueWatching';
@@ -56,6 +57,7 @@ export default function HomePage() {
       <OnAir skip={[today?.list, eighties?.list, SHELVES.westerns.list]} />
       <FilmRow id="horror" cards={horror} eyebrow="The house genre" title="Horror, mostly unclaimed" blurb="The most-watched horror on the Archive, all of it free to watch here." more="All horror" href="/browse?genre=Horror" />
       {featured && <Hero featured={featured} fileNumber={fileNumber} wall={wall} />}
+      <CollectionPromo index={index} />
       <FilmRow id="tonight-short" cards={short.map(cardFromIndex)} eyebrow="The tonight question" title="Under 90 minutes" blurb="Feature films you can finish in an evening, well regarded, a different dozen every day." more="All under 90" href="/browse?genre=all&runtime=40&sort=tmdb_rating" />
       <FilmRow id="surfaced" cards={newest} firstLabel="Newest" eyebrow="Just surfaced" title="New on the Archive" blurb="The latest feature-length uploads to archive.org. Come back tomorrow, there will be more." more="All newest" href="/browse?genre=all&sort=publicdate+desc&runtime=40" />
       <Lists lists={LISTS} index={index} />

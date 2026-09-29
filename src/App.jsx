@@ -13,6 +13,7 @@ const PAGES = {
   '/takedown': lazy(() => import('./pages/TakedownPage')),
   '/from-archive': lazy(() => import('./pages/FromArchivePage')),
   '/iptv': lazy(() => import('./pages/IptvPage')),
+  '/collection': lazy(() => import('./pages/CollectionPage')),
   '/details': lazy(() => import('./pages/ArchiveListPage')),
 };
 const ProfilePage = lazy(() => import('./pages/ArchiveProfilePage'));

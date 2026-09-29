@@ -8,8 +8,11 @@ const NAV = [
   ['/tv', 'TV'],
   ['/browse', 'Browse'],
   ['/lists', 'Lists'],
-  ['/mcp', 'MCP'],
+  ['/collection', 'Collection'],
 ];
+// The link that stands out in the nav: signal, with the on-air dot
+const FEATURED = '/collection';
+const Dot = () => <span className="inline-block w-1.5 h-1.5 rounded-full bg-signal mr-2" aria-hidden="true" />;
 
 export function Logo() {
   return (
@@ -35,7 +38,7 @@ export default function SiteHeader({ current = '/', search, children }) {
         <Logo />
         <nav className="hidden md:flex items-center gap-6" aria-label="Site">
           {NAV.map(([href, name]) => (
-            <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link ${href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{name}</a>
+            <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link ${href === FEATURED ? 'text-signal hover:text-bone flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
           ))}
         </nav>
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -48,7 +51,7 @@ export default function SiteHeader({ current = '/', search, children }) {
       </div>
       <nav className="md:hidden gutter flex gap-5 overflow-x-auto pb-3 -mt-1" aria-label="Site">
         {NAV.map(([href, name]) => (
-          <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link shrink-0 ${href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{name}</a>
+          <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link shrink-0 ${href === FEATURED ? 'text-signal flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
         ))}
       </nav>
       {children}

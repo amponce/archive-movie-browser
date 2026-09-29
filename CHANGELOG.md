@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Added
 
+- **The Orphan Collection.** [/collection](https://www.orphanedfilms.com/collection): numbered case files, each telling how a film fell through the cracks and how it was found. Volume I opens 24 files, from 1922 to 1968. It has its own place in the nav, a row on the front page after Tonight's orphan, and Tonight's orphan links to its file when it has one. Every film now carries an accession number; File numbers belong to the collection.
 - **A movie library for Kodi, Jellyfin and Emby.** `/api/tv/library.zip` is every film as a folder of small link files, each matched to its TMDB entry, so the apps show the catalogue like your own movies: posters, plots, genres, resume. Steps on [/iptv](https://www.orphanedfilms.com/iptv).
 - **Every film as one playlist.** `/api/tv/films.m3u` has the whole catalogue, not just what the channels air: about 4,200 films with posters, grouped by genre, for VLC, Kodi and IPTV apps. Each film plays from the start. Listed on [/iptv](https://www.orphanedfilms.com/iptv).
 - **Install it on your phone.** Orphaned Films is now an installable web app: Add to Home Screen (Safari's Share menu on iPhone, Chrome's menu or install prompt on Android) puts the Orphaned Films icon on your home screen, and it opens full screen without the browser around it.

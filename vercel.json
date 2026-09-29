@@ -77,6 +77,10 @@
       "destination": "/index.html"
     },
     {
+      "source": "/collection(/)?",
+      "destination": "/index.html"
+    },
+    {
       "source": "/lists/:slug",
       "destination": "/index.html"
     },
