@@ -53,7 +53,8 @@ function listFromPath(pathname) {
 }
 
 // The same path on this site: orphanedfilms.com/details/... is archive.org/details/... opened here
-export function parseSitePath(pathname, search = '') {
+export function parseSitePath(rawPath, search = '') {
+  const pathname = rawPath.replace(/%40/gi, '@');
   if (!pathname.startsWith('/details/')) return null;
   return listFromPath(pathname) || parseArchiveUrl(`https://archive.org${pathname}${search}`);
 }

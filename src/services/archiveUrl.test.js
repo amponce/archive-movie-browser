@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseArchiveUrl, pathFor, redirectFor } from './archiveUrl.js';
+import { parseArchiveUrl, parseSitePath, pathFor, redirectFor } from './archiveUrl.js';
 
 test('a film link opens that film, however it was copied', () => {
   const film = { type: 'film', identifier: 'night_of_the_living_dead' };
@@ -97,4 +97,9 @@ test("an Archive.org collection RSS feed opens that collection, newest first", a
 test('an Archive.org page with a query in its address runs that query here', () => {
   const link = parseArchiveUrl('https://archive.org/details/movies?tab=collection&query=mediatype%3Amovies++AND+subject%3Ahorror++AND+year%3A%5B1980+TO+1989%5D&page=7&and%5B%5D=mediatype%3A%22movies%22');
   assert.deepEqual(link, { type: 'search', query: 'mediatype:movies AND subject:horror AND year:[1980 TO 1989]' });
+});
+
+test('an address with @ encoded as %40 opens the same page', () => {
+  assert.deepEqual(parseSitePath('/details/%40jason_scott'), parseSitePath('/details/@jason_scott'));
+  assert.deepEqual(parseSitePath('/details/%40jason_scott/lists/3'), parseSitePath('/details/@jason_scott/lists/3'));
 });
