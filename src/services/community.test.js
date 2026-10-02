@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { newId, newKey, hashKey, cleanText, cleanFilms, afterContentEdit, submitProblem, isListed, LIMITS, createProfile, authProfile, getProfile, updateProfile, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels } from '../../api/_community.js';
 import { openTestDb } from './testDb.js';
+import { TAKEN_DOWN } from './policy.js';
 
 test('ids and keys have the agreed shape', async () => {
   assert.match(newId(), /^[a-z2-7]{10}$/);
@@ -130,4 +131,38 @@ test('delete removes the channel and its films', async () => {
   assert.equal(await deleteChannel(db, id, pid), true);
   assert.equal(await getChannel(db, id), null);
   assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM channel_films').first()).n, 0);
+});
+
+test('listing and profile counts leave removed films out', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  const id = await createChannel(db, pid, { name: 'Five', films: films(5) }, { now, flag: noFlag });
+  await db.prepare("UPDATE channels SET status = 'public' WHERE id = ?").bind(id).run();
+  await db.prepare('UPDATE channel_films SET film_id = ? WHERE channel_id = ? AND position = 0').bind(TAKEN_DOWN[0].id, id).run();
+  const [c] = await listChannels(db, { minutes: async () => ({}) });
+  assert.equal(c.films, 4);
+  assert.equal(c.firstFilm, 'film-1');
+  assert.equal((await getProfile(db, pid)).channels[0].films, 4);
+});
+
+test('forbidden films are never stored; positions stay contiguous', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  const flag = async film => (film === 'film-1' ? 'forbidden' : film === 'film-2');
+  const id = await createChannel(db, pid, { name: 'F', films: films(4) }, { now, flag });
+  let c = await getChannel(db, id);
+  assert.deepEqual(c.films.map(f => [f.film, f.flagged]), [['film-0', false], ['film-2', true], ['film-3', false]]);
+  await updateChannel(db, id, pid, { films: [{ film: 'film-3' }, { film: 'film-1' }, { film: 'film-0' }] }, { now, flag });
+  c = await getChannel(db, id);
+  assert.deepEqual(c.films.map(f => f.film), ['film-3', 'film-0']);
+  const pos = (await db.prepare('SELECT position FROM channel_films WHERE channel_id = ? ORDER BY position').bind(id).all()).results.map(r => r.position);
+  assert.deepEqual(pos, [0, 1]);
+});
+
+test('a removed favourite can still be unsaved', async () => {
+  const db = await openTestDb();
+  const { id } = await createProfile(db, { now });
+  await db.prepare('INSERT INTO favourites (profile_id, film_id, created) VALUES (?, ?, ?)').bind(id, TAKEN_DOWN[0].id, now).run();
+  assert.equal(await setFavourite(db, id, TAKEN_DOWN[0].id, false, { now }), true);
+  assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM favourites').first()).n, 0);
 });

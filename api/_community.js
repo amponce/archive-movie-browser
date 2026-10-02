@@ -49,10 +49,23 @@ export async function authProfile(db, id, key) {
   return row && row.key_hash === await hashKey(key) ? row : null;
 }
 
+const shownFilms = async (db, where, args) => {
+  const rows = (await db.prepare(`SELECT f.channel_id, f.film_id FROM channel_films f JOIN channels c ON c.id = f.channel_id WHERE ${where} ORDER BY f.channel_id, f.position`).bind(...args).all()).results;
+  const map = new Map();
+  for (const r of rows) {
+    if (isTakenDown(r.film_id)) continue;
+    if (!map.has(r.channel_id)) map.set(r.channel_id, []);
+    map.get(r.channel_id).push(r.film_id);
+  }
+  return map;
+};
+
 export async function getProfile(db, id) {
   const p = ID.test(String(id)) && await db.prepare('SELECT id, name, archive_user FROM profiles WHERE id = ? AND hidden = 0').bind(id).first();
   if (!p) return null;
-  const channels = (await db.prepare("SELECT c.id, c.name, c.status, COUNT(f.film_id) AS films FROM channels c LEFT JOIN channel_films f ON f.channel_id = c.id WHERE c.profile_id = ? AND c.status != 'hidden' GROUP BY c.id ORDER BY c.updated DESC").bind(id).all()).results;
+  const rows = (await db.prepare("SELECT id, name, status FROM channels WHERE profile_id = ? AND status != 'hidden' ORDER BY updated DESC").bind(id).all()).results;
+  const shown = await shownFilms(db, 'c.profile_id = ?', [id]);
+  const channels = rows.map(c => ({ ...c, films: (shown.get(c.id) || []).length }));
   const favourites = (await db.prepare('SELECT film_id FROM favourites WHERE profile_id = ? ORDER BY created DESC').bind(id).all()).results.map(r => r.film_id).filter(f => !isTakenDown(f));
   const saved = (await db.prepare("SELECT c.id, c.name FROM channel_saves s JOIN channels c ON c.id = s.channel_id WHERE s.profile_id = ? AND c.status != 'hidden' ORDER BY s.created DESC").bind(id).all()).results;
   return { id: p.id, name: p.name, archiveUser: p.archive_user, channels, favourites, saved };
@@ -69,7 +82,7 @@ export async function updateProfile(db, id, { name, archiveUser, agreed }, { now
 }
 
 export async function setFavourite(db, profileId, film, on, { now }) {
-  if (!FILM.test(String(film)) || isTakenDown(film)) return false;
+  if (!FILM.test(String(film)) || (on && isTakenDown(film))) return false;
   if (!on) { await db.prepare('DELETE FROM favourites WHERE profile_id = ? AND film_id = ?').bind(profileId, film).run(); return true; }
   const { n } = await db.prepare('SELECT COUNT(*) AS n FROM favourites WHERE profile_id = ?').bind(profileId).first();
   if (n >= LIMITS.favourites) return false;
@@ -78,10 +91,11 @@ export async function setFavourite(db, profileId, film, on, { now }) {
 }
 
 const filmRows = async (db, channelId, films, flag) => {
-  const flags = await Promise.all(films.map(f => flag(f.film)));
+  const all = await Promise.all(films.map(async f => ({ ...f, mark: await flag(f.film) })));
+  const kept = all.filter(f => f.mark !== 'forbidden');
   return [
     db.prepare('DELETE FROM channel_films WHERE channel_id = ?').bind(channelId),
-    ...films.map((f, i) => db.prepare('INSERT INTO channel_films (channel_id, film_id, position, note, flagged) VALUES (?, ?, ?, ?, ?)').bind(channelId, f.film, i, f.note, flags[i] ? 1 : 0)),
+    ...kept.map((f, i) => db.prepare('INSERT INTO channel_films (channel_id, film_id, position, note, flagged) VALUES (?, ?, ?, ?, ?)').bind(channelId, f.film, i, f.note, f.mark ? 1 : 0)),
   ];
 };
 
@@ -154,15 +168,14 @@ export async function setSaved(db, profileId, channelId, on, { now }) {
 export async function listChannels(db, { minutes }) {
   const rows = (await db.prepare(`
     SELECT c.id, c.name, c.status, c.featured_at, p.name AS owner,
-      (SELECT COUNT(*) FROM channel_films f WHERE f.channel_id = c.id) AS films,
-      (SELECT film_id FROM channel_films f WHERE f.channel_id = c.id ORDER BY position LIMIT 1) AS first_film,
       (SELECT COUNT(*) FROM channel_saves s WHERE s.channel_id = c.id AND s.profile_id != c.profile_id) AS saves
     FROM channels c JOIN profiles p ON p.id = c.profile_id
     WHERE c.status IN ('public', 'featured') AND p.hidden = 0
       AND NOT EXISTS (SELECT 1 FROM channel_films f WHERE f.channel_id = c.id AND f.flagged = 1)`).all()).results;
+  const shown = await shownFilms(db, "c.status IN ('public', 'featured')", []);
   const watched = await minutes(rows.map(r => `c-${r.id}`));
   return rows
-    .map(r => ({ id: r.id, name: r.name, owner: r.owner, films: r.films, firstFilm: r.first_film, status: r.status, featuredAt: r.featured_at, score: r.saves * 10 + (watched[`c-${r.id}`] || 0) }))
-    .sort((a, b) => (a.status === b.status ? (a.status === 'featured' ? b.featuredAt - a.featuredAt : b.score - a.score) : a.status === 'featured' ? -1 : 1))
+    .map(r => ({ id: r.id, name: r.name, owner: r.owner, films: (shown.get(r.id) || []).length, firstFilm: (shown.get(r.id) || [])[0], status: r.status, featuredAt: r.featured_at, score: r.saves * 10 + (watched[`c-${r.id}`] || 0) }))
+    .sort((a, b) => (a.status === b.status ? (a.status === 'featured' ? (b.featuredAt || 0) - (a.featuredAt || 0) : b.score - a.score) : a.status === 'featured' ? -1 : 1))
     .map(c => ({ id: c.id, name: c.name, owner: c.owner, films: c.films, firstFilm: c.firstFilm, status: c.status, score: c.score }));
 }
