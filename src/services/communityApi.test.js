@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { openTestDb } from './testDb.js';
-import { handle } from '../../api/community.js';
+import { handle, addressKey } from '../../api/community.js';
 
 const ORIGIN = 'https://www.orphanedfilms.com';
 const ctx = async () => ({ db: await openTestDb(), flag: async () => false, minutes: async () => ({}), now: 1_700_000_000_000 });
@@ -79,11 +79,34 @@ test('a declared oversized body is refused before reading', async () => {
   assert.equal(res.status, 413);
 });
 
-test('creating a profile clears expired limit rows', async () => {
+test('any write clears expired limit rows', async () => {
   const c = await ctx();
+  const me = await (await call(c, 'POST', '/api/profile')).json();
   await c.db.prepare("INSERT INTO limits (bucket, count, until) VALUES ('old', 1, 5)").run();
-  await call(c, 'POST', '/api/profile');
+  await call(c, 'PUT', `/api/profile/${me.id}/favourites/Detour`, { auth: me });
   assert.equal(await c.db.prepare("SELECT 1 AS n FROM limits WHERE bucket = 'old'").first(), null);
+});
+
+test('limit rows never hold the address, and still limit', async () => {
+  const c = await ctx();
+  const me = await (await call(c, 'POST', '/api/profile', { ip: '203.0.113.7' })).json();
+  assert.equal((await call(c, 'PUT', `/api/profile/${me.id}/favourites/Detour`, { auth: me, ip: '203.0.113.7' })).status, 204);
+  const buckets = (await c.db.prepare('SELECT bucket FROM limits').all()).results.map(r => r.bucket);
+  assert.deepEqual(buckets.map(b => b[0]).sort(), ['p', 'w']);
+  for (const b of buckets) {
+    assert.match(b, /^[pw]:[0-9a-f]{16}$/);
+    assert.ok(!b.includes('203.0.113.7'));
+  }
+  for (let i = 0; i < 4; i++) await call(c, 'POST', '/api/profile', { ip: '203.0.113.7' });
+  assert.equal((await call(c, 'POST', '/api/profile', { ip: '203.0.113.7' })).status, 429);
+  assert.equal((await call(c, 'POST', '/api/profile', { ip: '203.0.113.8' })).status, 201, 'another address has its own count');
+});
+
+test('the address key changes with the day', async () => {
+  const day = 86_400_000;
+  assert.equal(await addressKey('203.0.113.7', 0), await addressKey('203.0.113.7', day - 1));
+  assert.notEqual(await addressKey('203.0.113.7', 0), await addressKey('203.0.113.7', day));
+  assert.notEqual(await addressKey('203.0.113.7', 0), await addressKey('203.0.113.8', 0));
 });
 
 test('an internal failure is a plain 500', async () => {
