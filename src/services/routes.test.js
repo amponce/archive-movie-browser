@@ -9,7 +9,7 @@ const config = JSON.parse(readFileSync(new URL('../../wrangler.jsonc', import.me
 
 test('pages the server does not answer serve the SPA, which routes them itself', () => {
   assert.equal(config.assets.not_found_handling, 'single-page-application')
-  assert.deepEqual(config.assets.run_worker_first, ['/api/*', '/sitemap.xml'])
+  assert.deepEqual(config.assets.run_worker_first, ['/api/*', '/sitemap.xml', '/c/*', '/u/*'])
 })
 
 test('the short TV addresses reach /api/tv with the right query', () => {
