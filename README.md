@@ -158,6 +158,8 @@ A fork collects nothing unless its owner connects an Upstash Redis database (its
 
 [MIT](LICENSE) - feel free to use this project for personal or commercial purposes.
 
+**Name and brand.** The code is MIT, so you are welcome to fork it, change it and run your own copy. The name Orphaned Films, its logo and the orphanedfilms.com domain are not part of that license. If you run a copy, give it your own name and look, and don't present it as Orphaned Films or as affiliated with it.
+
 ## Contributing
 
 Contributions are welcome, from first-time contributors and from people who just love old films. Read [CONTRIBUTING.md](CONTRIBUTING.md) for setup, what to work on, and what review looks like. See the [CHANGELOG](CHANGELOG.md) for release history. Run `npm test` and `npm run build` before opening a pull request.
