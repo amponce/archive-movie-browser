@@ -45,7 +45,7 @@ export default async function handler(req, res) {
   if (!key) { res.status(503).json({ error: 'TMDB is not set up on this server.' }); return; }
   const url = tmdbUrl(req.query, key);
   if (!url) { res.status(400).json({ error: 'Not a lookup this site makes.' }); return; }
-  if (overLimit(String(req.headers?.['x-forwarded-for'] || 'unknown').split(',')[0].trim())) { res.status(429).json({ error: 'Too many lookups. Try again in a minute.' }); return; }
+  if (overLimit(String(req.headers?.['cf-connecting-ip'] || 'unknown'))) { res.status(429).json({ error: 'Too many lookups. Try again in a minute.' }); return; }
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!response.ok) { res.setHeader('Cache-Control', 'no-store'); res.status(response.status === 404 ? 404 : 502).json({ error: 'TMDB did not answer.' }); return; }

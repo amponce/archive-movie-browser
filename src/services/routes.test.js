@@ -1,23 +1,32 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { test } from 'node:test'
+import { route } from '../../api/_routes.js'
+import { LIST_FILES } from '../../api/_lists.js'
 
-const config = JSON.parse(readFileSync(new URL('../../vercel.json', import.meta.url), 'utf8'))
-const pageRewrites = config.rewrites.filter(route => route.destination === '/index.html')
+// wrangler.jsonc is JSON with comments: drop whole-line comments and parse the rest
+const config = JSON.parse(readFileSync(new URL('../../wrangler.jsonc', import.meta.url), 'utf8').replace(/^\s*\/\/.*$/gm, ''))
 
-for (const page of ['mcp', 'stats', 'tv', 'browse', 'lists', 'takedown', 'from-archive', 'iptv']) {
-  test(`${page} serves the SPA with or without a trailing slash`, () => {
-    for (const path of [`/${page}`, `/${page}/`]) {
-      assert.ok(pageRewrites.some(route => new RegExp(`^${route.source}$`).test(path)), path)
-    }
-    for (const path of [`/${page}/missing`, `/${page}-missing`]) {
-      assert.ok(!pageRewrites.some(route => new RegExp(`^${route.source}$`).test(path)), path)
-    }
-  })
-}
+test('pages the server does not answer serve the SPA, which routes them itself', () => {
+  assert.equal(config.assets.not_found_handling, 'single-page-application')
+  assert.deepEqual(config.assets.run_worker_first, ['/api/*', '/sitemap.xml'])
+})
 
-test('any /details/ address (an Archive.org path on this site) serves the SPA, with or without a trailing slash', () => {
-  for (const path of ['/details/hexziasmovies', '/details/hexziasmovies/', '/details/hexziasmovies/Annabelle+Comes+Home.mp4', '/details/@jason_scott', '/details/@jason_scott/lists/1/', '/details/@jason_scott/lists/1/ballyhoo-reliquary']) {
-    assert.ok(pageRewrites.some(route => new RegExp(`^${route.source}$`).test(path)), path)
-  }
+test('the short TV addresses reach /api/tv with the right query', () => {
+  assert.deepEqual(route('/api/tv/playlist.m3u'), { name: 'tv', query: { format: 'm3u' } })
+  assert.deepEqual(route('/api/tv/guide.xml'), { name: 'tv', query: { format: 'xml' } })
+  assert.deepEqual(route('/api/tv/channels.m3u'), { name: 'tv', query: { format: 'channels' } })
+  assert.deepEqual(route('/api/tv/films.m3u'), { name: 'tv', query: { format: 'films' } })
+  assert.deepEqual(route('/api/tv/library.zip'), { name: 'tv', query: { format: 'library' } })
+  assert.deepEqual(route('/api/tv/live/3'), { name: 'tv', query: { live: '3' } })
+  assert.deepEqual(route('/api/tv/film/Detour'), { name: 'tv', query: { film: 'Detour' } })
+  assert.deepEqual(route('/sitemap.xml'), { name: 'sitemap', query: {} })
+  assert.deepEqual(route('/api/mcp'), { name: 'mcp', query: {} })
+  for (const path of ['/api/tv/nope', '/api/_stats', '/api/missing', '/api/tv/live/a/b']) assert.equal(route(path), null, path)
+})
+
+test('every list file is imported for the server (add its line to api/_lists.js)', () => {
+  const dir = new URL('../lists/', import.meta.url)
+  const slugs = readdirSync(dir).filter(f => f.endsWith('.json')).map(f => JSON.parse(readFileSync(new URL(f, dir), 'utf8')).slug).sort()
+  assert.deepEqual(LIST_FILES.map(list => list.slug).sort(), slugs)
 })

@@ -86,7 +86,7 @@ export default async function handler(req, res) {
       return;
     }
     const mine = String(req.query?.mine || '');
-    if (mine && overLimit(String(req.headers?.['x-forwarded-for'] || 'unknown').split(',')[0].trim())) { res.status(429).json({ error: 'Too many shared channels at once. Try again in a minute.' }); return; }
+    if (mine && overLimit(String(req.headers?.['cf-connecting-ip'] || 'unknown'))) { res.status(429).json({ error: 'Too many shared channels at once. Try again in a minute.' }); return; }
     // Three days of guide: apps refresh it every 6 to 24 hours and show about two days. It starts
     // six hours back, since an app keeps it for hours and draws a blank before its first entry.
     const hours = format === 'xml' ? 72 : 6;

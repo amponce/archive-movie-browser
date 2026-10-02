@@ -27,3 +27,7 @@ npm-debug.log*
 .claude/
 *.swp
 *.swo
+
+# Cloudflare Workers local state and secrets
+.wrangler
+.dev.vars

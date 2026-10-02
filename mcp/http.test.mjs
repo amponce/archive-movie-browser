@@ -41,7 +41,7 @@ test('browsers may call it (CORS), and one address cannot flood it', async t => 
   const preflight = await fetch(url, { method: 'OPTIONS' });
   assert.equal(preflight.status, 204);
   assert.equal(preflight.headers.get('access-control-allow-origin'), '*');
-  const ping = () => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'x-forwarded-for': '203.0.113.9' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }) });
+  const ping = () => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'cf-connecting-ip': '203.0.113.9' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }) });
   let last;
   for (let i = 0; i <= REQUESTS_PER_MINUTE; i++) last = await ping();
   assert.equal(last.status, 429);
@@ -53,7 +53,7 @@ test('a request is always answered before Vercel would cut it off', async t => {
   const saved = { ...limits };
   t.after(() => Object.assign(limits, saved));
   Object.assign(limits, { bodyMs: 200, answerMs: 300 });
-  const headers = { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'x-forwarded-for': '203.0.113.10' };
+  const headers = { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'cf-connecting-ip': '203.0.113.10' };
 
   // A body that never finishes arriving: an error, not a hang
   const stalled = new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('{"jsonrpc":"2.0",')); } });
@@ -79,7 +79,7 @@ test('a request is always answered before Vercel would cut it off', async t => {
 test('subscriptions/listen is declined at once instead of holding a stream open', async t => {
   const url = await serve(t);
   const started = Date.now();
-  const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'x-forwarded-for': '203.0.113.11' },
+  const response = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'cf-connecting-ip': '203.0.113.11' },
     body: JSON.stringify({ jsonrpc: '2.0', id: 3, method: 'subscriptions/listen', params: { notifications: { toolsListChanged: true } } }) });
   const answer = await response.json();
   assert.equal(answer.id, 3);

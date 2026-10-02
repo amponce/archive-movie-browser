@@ -4,13 +4,12 @@ import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import './fonts.css';
 import './index.css';
-import { Analytics } from '@vercel/analytics/react';
 import { startAnalytics } from './services/analytics';
 
 startAnalytics();
 
 // Each page is its own canonical address on the site's domain, so /lists/... and /browse are
-// indexed as themselves, never as a preview or vercel.app copy. Set here, not in index.html,
+// indexed as themselves, never as a preview or workers.dev copy. Set here, not in index.html,
 // which every page shares.
 const canonical = `https://www.orphanedfilms.com${location.pathname}`;
 const tag = (name, attrs) => document.head.appendChild(Object.assign(document.createElement(name), attrs));
@@ -29,8 +28,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
-    {/* Vercel Web Analytics: page views and visitors, cookieless, beside our own counts (api/_stats.js).
-        The address goes without its query and hash: those carry search text (?q=) and films (#id). */}
-    <Analytics beforeSend={event => ({ ...event, url: event.url.split(/[?#]/)[0] })} />
   </React.StrictMode>
 );

@@ -1,8 +1,10 @@
 // The television service behind /api/tv. Channels are the curated lists; each film's length
 // and stream come from public/tv-lineups.json. One schedule feeds three outputs: JSON for the
 // site, an M3U playlist and an XMLTV guide for other players.
-import { readFileSync, readdirSync } from 'node:fs';
-import { collectLists } from '../src/services/lists.js';
+import { LISTS } from './_lists.js';
+import posterIndex from '../public/poster-index.json' with { type: 'json' };
+import channels from '../src/programme/channels.json' with { type: 'json' };
+import tvLineups from '../public/tv-lineups.json' with { type: 'json' };
 import { videoUrl } from '../src/services/playback.js';
 import { onAirAt, programmesBetween, airable } from '../src/services/schedule.js';
 import { pickPlayableFile } from '../src/services/playback.js';
@@ -12,15 +14,13 @@ import { isFeature, betterUpload } from '../src/services/indexBrowse.js';
 const SITE = 'https://www.orphanedfilms.com';
 const TMDB_IMAGE = 'https://image.tmdb.org/t/p/w342';
 
-const listsDir = new URL('../src/lists/', import.meta.url);
-const LISTS = collectLists(readdirSync(listsDir).filter(f => f.endsWith('.json')).map(f => JSON.parse(readFileSync(new URL(f, listsDir), 'utf8'))));
-const index = JSON.parse(readFileSync(new URL('../public/poster-index.json', import.meta.url), 'utf8')).films;
+const index = posterIndex.films;
 // A film's one-line note from a hand-picked list, for the guide's description
 const NOTES = Object.fromEntries(LISTS.flatMap(list => list.films.filter(f => f.note).map(f => [f.id, f.note])));
 
 // Every list is a channel, numbered by its place in src/programme/channels.json so a channel
 // keeps its number when lists are added; a list not placed there yet goes on the end
-const { lineup } = JSON.parse(readFileSync(new URL('../src/programme/channels.json', import.meta.url), 'utf8'));
+const { lineup } = channels;
 const place = slug => { const i = lineup.findIndex(([s]) => s === slug); return i < 0 ? Infinity : i; };
 export const CHANNELS = [...LISTS].sort((a, b) => place(a.slug) - place(b.slug)).map((list, i) => ({ number: i + 1, id: list.slug, name: list.title, blurb: list.blurb, films: list.films.map(f => f.id) }));
 
@@ -28,7 +28,7 @@ export const CHANNELS = [...LISTS].sort((a, b) => place(a.slug) - place(b.slug))
 // because asking Archive.org for fifty records at request time takes longer than a request may.
 // ponytail: a list edited without `npm run tv` has films that never air; a test that every list
 // film has a lineup entry, or a CI step that runs the script, closes that.
-const lineups = JSON.parse(readFileSync(new URL('../public/tv-lineups.json', import.meta.url), 'utf8')).films;
+const lineups = tvLineups.films;
 
 // One film as the channels air it, or null when it may not air
 function record(id) {
@@ -153,9 +153,9 @@ export function toM3U({ channels }) {
 
 // Where this copy is served, for the addresses in the channel playlist (which is cached at the
 // edge, so it must never carry an address a request made up): the request's host only when it is
-// ours (the domain, this project's Vercel previews, a local copy); otherwise SITE_URL (a fork sets
+// ours (the domain, this project's workers.dev address, a local copy); otherwise SITE_URL (a fork sets
 // it) or the site's own address.
-const TRUSTED_HOST = /^((www\.)?orphanedfilms\.com|archive-movie-browser(-[a-z0-9-]+)?\.vercel\.app|(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3})(:\d{2,5})?)$/;
+const TRUSTED_HOST = /^((www\.)?orphanedfilms\.com|orphanedfilms\.[a-z0-9-]+\.workers\.dev|(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3})(:\d{2,5})?)$/;
 export function siteOf(host) {
   const h = String(host || '').toLowerCase();
   if (!TRUSTED_HOST.test(h)) return (process.env.SITE_URL || SITE).replace(/\/+$/, '');

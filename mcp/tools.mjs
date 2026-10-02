@@ -1,12 +1,11 @@
 // The tools, kept apart from the transport so they can be tested without starting a server.
 // All Archive.org logic comes from the web app's services (src/services), which have no browser
 // dependencies: search across collections, de-duplication of re-uploads, runtime parsing, retries.
-import { readFileSync } from 'node:fs';
 import archiveService, { VIDEO_CATEGORIES, STANDARD_GENRES, DECADES, ALL_FILMS, runtimeFilter, defaultMinRuntime } from '../src/services/archive.js';
 import { setPosterIndex, indexedMatch, loadPosterIndex } from '../src/services/posterIndex.js';
 import { browsesIndex, indexFilms } from '../src/services/indexBrowse.js';
 
-const index = JSON.parse(readFileSync(new URL('../public/poster-index.json', import.meta.url)));
+import index from '../public/poster-index.json' with { type: 'json' };
 setPosterIndex(index.films);
 
 export const SORTS = ['downloads', 'avg_rating', 'date desc', 'date asc', 'publicdate desc', 'title asc'];

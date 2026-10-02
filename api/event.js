@@ -35,7 +35,7 @@ export async function POST(request) {
   if (origin && originHost(origin) !== new URL(request.url).host) return done(403);
 
   const userAgent = request.headers.get('user-agent') || '';
-  const ip = (request.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim();
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
   if (isBot(userAgent)) return done(204);
   if (overLimit(ip)) return done(429);
 

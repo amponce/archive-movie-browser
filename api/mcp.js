@@ -2,7 +2,7 @@
 // Same tools as the local server in ../mcp. Public and read-only, so two guards keep it from
 // being used to hammer Archive.org, which throttles busy clients.
 // ponytail: both guards live in this instance's memory. Good enough while traffic is small;
-// move to Vercel Firewall rate limiting and a shared cache if it gets real use.
+// move to a Cloudflare rate limiting rule and a shared cache if it gets real use.
 import { createHandler } from '../mcp/register.mjs';
 
 const CACHE_MINUTES = 15;
@@ -40,7 +40,7 @@ const CORS = {
 
 const mcp = createHandler({ wrap });
 
-// Vercel stops the function at 30 s, and a request cut off there leaves its client with nothing,
+// A request cut off by the host leaves its client with nothing,
 // so some retry the same thing every 32 s. Every request gets an answer before then: a body that
 // is still arriving after 10 s, or an answer not ready by 25 s, gets a JSON-RPC error.
 export const limits = { bodyMs: 10_000, answerMs: 25_000 }; // the tests shorten them
@@ -52,7 +52,7 @@ function tooSlow(ids, message) {
   return new Response(JSON.stringify(body), { status: 200, headers: { ...CORS, 'Content-Type': 'application/json' } });
 }
 
-// One line per request in the Vercel logs: what was asked, by what client, how it ended
+// One line per request in the Worker logs: what was asked, by what client, how it ended
 // ponytail: search words are logged (the site's own stats already count them); no addresses
 function logLine(request, text, status, outcome, started) {
   let call = {};
@@ -62,7 +62,7 @@ function logLine(request, text, status, outcome, started) {
 
 export async function handle(request) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
-  const ip = (request.headers.get('x-forwarded-for') || 'unknown').split(',')[0].trim();
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
   if (overLimit(ip)) {
     return new Response(JSON.stringify({ jsonrpc: '2.0', error: { code: -32000, message: 'Too many requests, try again in a minute' }, id: null }),
       { status: 429, headers: { ...CORS, 'Content-Type': 'application/json', 'Retry-After': '60' } });

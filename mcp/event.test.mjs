@@ -11,7 +11,7 @@ const { GET } = await import('../api/stats.js');
 
 const BROWSER = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/604.1';
 const post = (body, headers = {}) => POST(new Request('https://site.test/api/event', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body),
-  headers: { 'user-agent': BROWSER, 'sec-fetch-site': 'same-origin', origin: 'https://site.test', 'x-forwarded-for': '203.0.113.7', ...headers } }));
+  headers: { 'user-agent': BROWSER, 'sec-fetch-site': 'same-origin', origin: 'https://site.test', 'cf-connecting-ip': '203.0.113.7', ...headers } }));
 
 function stubRedis(t, reply = (commands) => commands.map(() => ({ result: 1 }))) {
   const calls = [];
@@ -49,7 +49,7 @@ test('a malformed Origin (null, or not a URL) is refused with 403, never a 500',
 test('one address cannot flood the counters', async t => {
   stubRedis(t);
   let last;
-  for (let i = 0; i < 62; i++) last = await post({ name: 'Load more', data: {} }, { 'x-forwarded-for': '198.51.100.20' });
+  for (let i = 0; i < 62; i++) last = await post({ name: 'Load more', data: {} }, { 'cf-connecting-ip': '198.51.100.20' });
   assert.equal(last.status, 429);
 });
 
@@ -58,7 +58,7 @@ test('a database failure is a 503, never an exception', async t => {
   const later = Date.now() + 3600_000; // past the batch interval, so this event is the one that writes
   t.mock.method(Date, 'now', () => later);
   t.mock.method(console, 'error', () => {});
-  assert.equal((await post({ name: 'Load more', data: {} }, { 'x-forwarded-for': '198.51.100.21' })).status, 503);
+  assert.equal((await post({ name: 'Load more', data: {} }, { 'cf-connecting-ip': '198.51.100.21' })).status, 503);
 });
 
 test('stats need the secret, read with the read-only token, and come back shaped for the page', async t => {

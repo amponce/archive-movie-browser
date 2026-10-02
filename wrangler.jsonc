@@ -1,0 +1,16 @@
+// Cloudflare Workers: the built site from dist/ plus worker.js for /api/* and /sitemap.xml.
+// The account comes from CLOUDFLARE_ACCOUNT_ID. Secrets (TMDB_API_KEY, KV_REST_API_URL,
+// KV_REST_API_TOKEN, KV_REST_API_READ_ONLY_TOKEN, STATS_TOKEN) are set with `wrangler secret put`.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "orphanedfilms",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/sitemap.xml"]
+  },
+  "observability": { "enabled": true }
+}

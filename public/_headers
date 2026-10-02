@@ -1,0 +1,12 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://image.tmdb.org https://archive.org https://*.archive.org; connect-src 'self' https://archive.org https://api.themoviedb.org; media-src 'self' https://archive.org https://*.archive.org; frame-src https://archive.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), fullscreen=(self "https://archive.org"), autoplay=(self "https://archive.org")
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+/poster-index.json
+  Cache-Control: public, max-age=3600

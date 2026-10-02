@@ -52,7 +52,7 @@ test("the channel playlist's addresses only ever name a host that is ours", asyn
   const { siteOf } = await import('../../api/_tv.js');
   assert.equal(siteOf('www.orphanedfilms.com'), 'https://www.orphanedfilms.com');
   assert.equal(siteOf('orphanedfilms.com'), 'https://orphanedfilms.com');
-  assert.equal(siteOf('archive-movie-browser-git-fix-x-amponce.vercel.app'), 'https://archive-movie-browser-git-fix-x-amponce.vercel.app');
+  assert.equal(siteOf('orphanedfilms.example-team.workers.dev'), 'https://orphanedfilms.example-team.workers.dev');
   assert.equal(siteOf('localhost:5183'), 'http://localhost:5183');
   assert.equal(siteOf('192.168.4.37:5184'), 'http://192.168.4.37:5184');
   for (const forged of ['evil.example', 'orphanedfilms.com.evil.example', 'evil.example/orphanedfilms.com', 'www.orphanedfilms.com@evil.example', '"><script>', '', undefined]) {
