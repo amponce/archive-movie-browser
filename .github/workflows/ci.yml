@@ -17,10 +17,10 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
-      - run: npm ci
+      - run: npm ci && npm ci --prefix mcp # the MCP server has its own dependencies
       - run: npm run lint
       - run: npm test
-      - run: npm ci --prefix mcp && npm test --prefix mcp # the MCP server has its own dependencies
+      - run: npm test --prefix mcp
       - run: npm run build
 
   # Every push to main goes live on Cloudflare once the build above passes
