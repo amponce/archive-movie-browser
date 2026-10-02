@@ -78,7 +78,7 @@ export function redirectFor(pathname, search = '') {
   const link = parseSitePath(pathname, search);
   if (link?.type === 'list') return null;
   // A profile's other tabs (/details/@name/lists, ?tab=uploads) all open the one profile page
-  if (link) return pathFor(link) === pathname.replace(/\/+$/, '') ? null : pathFor(link);
+  if (link) return pathFor(link) === pathname.replace(/%40/gi, '@').replace(/\/+$/, '') ? null : pathFor(link);
   const q = new URLSearchParams(search).get('q');
   const pasted = q && parseArchiveUrl(q);
   return pasted ? pathFor(pasted) : null;

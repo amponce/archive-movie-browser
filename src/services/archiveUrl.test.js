@@ -103,3 +103,9 @@ test('an address with @ encoded as %40 opens the same page', () => {
   assert.deepEqual(parseSitePath('/details/%40jason_scott'), parseSitePath('/details/@jason_scott'));
   assert.deepEqual(parseSitePath('/details/%40jason_scott/lists/3'), parseSitePath('/details/@jason_scott/lists/3'));
 });
+
+test('an encoded @ is already the right address: no redirect back and forth', () => {
+  assert.equal(redirectFor('/details/%40jason_scott'), null);
+  assert.equal(redirectFor('/details/@jason_scott'), null);
+  assert.equal(redirectFor('/details/%40jason_scott/lists'), '/details/@jason_scott');
+});
