@@ -11,8 +11,8 @@ export async function openTestDb() {
   const statement = (sql, args = []) => ({
     sql, args,
     bind: (...next) => statement(sql, next),
-    first: async () => raw.prepare(sql).get(...args) ?? null,
-    all: async () => ({ results: raw.prepare(sql).all(...args) }),
+    first: async () => { const row = raw.prepare(sql).get(...args); return row ? { ...row } : null; },
+    all: async () => ({ results: raw.prepare(sql).all(...args).map(r => ({ ...r })) }),
     run: async () => ({ meta: { changes: Number(raw.prepare(sql).run(...args).changes) } }),
   });
   return {
@@ -20,7 +20,17 @@ export async function openTestDb() {
     batch: async (statements) => {
       raw.exec('BEGIN');
       try {
-        const out = statements.map(s => ({ meta: { changes: Number(raw.prepare(s.sql).run(...s.args).changes) } }));
+        const out = statements.map(s => {
+          const stmt = raw.prepare(s.sql);
+          const hasColumns = stmt.columns().length > 0;
+          if (hasColumns) {
+            const results = stmt.all(...s.args).map(r => ({ ...r }));
+            return { results, meta: { changes: 0 } };
+          } else {
+            const changes = Number(stmt.run(...s.args).changes);
+            return { results: [], meta: { changes } };
+          }
+        });
         raw.exec('COMMIT');
         return out;
       } catch (error) { raw.exec('ROLLBACK'); throw error; }

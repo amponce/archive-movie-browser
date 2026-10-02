@@ -18,3 +18,14 @@ test('batch is all or nothing', async () => {
   ]));
   assert.equal(await db.prepare('SELECT id FROM profiles').first(), null);
 });
+
+test('batch with INSERT and SELECT returns D1 shape with plain objects', async () => {
+  const db = await openTestDb();
+  const result = await db.batch([
+    db.prepare('INSERT INTO profiles (id, key_hash, created, updated) VALUES (?, ?, ?, ?)').bind('cccccccccc', 'h', 1, 1),
+    db.prepare('SELECT id FROM profiles WHERE id = ?').bind('cccccccccc'),
+  ]);
+  assert.deepEqual(result[0], { results: [], meta: { changes: 1 } });
+  assert.deepEqual(result[1], { results: [{ id: 'cccccccccc' }], meta: { changes: 0 } });
+  assert.deepEqual(await db.prepare('SELECT id FROM profiles').first(), { id: 'cccccccccc' });
+});
