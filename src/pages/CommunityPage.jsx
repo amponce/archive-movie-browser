@@ -11,7 +11,7 @@ function Card({ channel }) {
         : <div className="w-full aspect-[2/3] bg-panel" />}
       <div className="p-3">
         <p className="font-semibold text-bone break-words">{channel.name}</p>
-        <p className="text-sm text-dim mt-1 break-words">{channel.films} films{channel.owner && ` · ${channel.owner}`}</p>
+        <p className="text-sm text-dim mt-1 break-words">{channel.films} {channel.films === 1 ? 'film' : 'films'}{channel.owner && ` · ${channel.owner}`}</p>
       </div>
     </a>
   );
