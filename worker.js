@@ -29,7 +29,7 @@ async function archiveFlag(film) {
 }
 
 // The handlers written for (req, res), run with a web Request and answered with a Response
-const node = (handler) => async (request, query) => {
+const node = (handler) => async (request, query, env) => {
   const req = { method: request.method, query, headers: Object.fromEntries(request.headers) };
   let status = 200, body = null;
   const headers = new Headers();
@@ -40,7 +40,7 @@ const node = (handler) => async (request, query) => {
     send(value) { body = value; },
     end(value) { body = value ?? null; },
   };
-  await handler(req, res);
+  await handler(req, res, env);
   return new Response(body, { status, headers });
 };
 

@@ -52,22 +52,30 @@ function record(id) {
 const lineupOf = channel => airable(channel.films.map(record).filter(Boolean));
 
 // A personal channel from a link's identifiers. Films on a list are already measured; the rest
-// are read from their Archive.org records, in parallel, and remembered for this instance.
+// are read from their Archive.org records, in parallel, and remembered for this instance. A record
+// that could not be read (slow, down, no playable file) is not remembered, so the next request asks again.
 const measured = new Map();
 async function recordLive(id) {
   if (measured.has(id)) return measured.get(id);
-  let value = null;
+  let value;
   try {
-    const data = await fetch(`https://archive.org/metadata/${encodeURIComponent(id)}`).then(r => (r.ok ? r.json() : null));
+    const data = await fetch(`https://archive.org/metadata/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(8000) }).then(r => (r.ok ? r.json() : null));
     const file = data?.files ? pickPlayableFile(data.files) : null;
     const entry = index[id];
     // An identifier from a shared link can be anything: the same rules as everywhere else
-    if (neverOnAir(entry?.i) || isForbidden({ title: data?.metadata?.title, description: data?.metadata?.description, subject: data?.metadata?.subject }) || isForbidden({ title: entry?.t })) throw new Error('not shown here');
-    if (file?.length) value = { id, title: entry?.t || data.metadata?.title || id, year: entry?.y || null, poster: entry?.p ? `${TMDB_IMAGE}${entry.p}` : null, seconds: Math.round(Number(file.length)), url: videoUrl(id, file.name) };
-  } catch { /* the film just does not air */ }
+    if (neverOnAir(entry?.i) || isForbidden({ title: data?.metadata?.title, description: data?.metadata?.description, subject: data?.metadata?.subject }) || isForbidden({ title: entry?.t })) {
+      remember(id, null); // a refusal is an answer: it is not asked again
+      return null;
+    }
+    if (!file?.length) return null;
+    value = { id, title: entry?.t || data.metadata?.title || id, year: entry?.y || null, poster: entry?.p ? `${TMDB_IMAGE}${entry.p}` : null, seconds: Math.round(Number(file.length)), url: videoUrl(id, file.name) };
+  } catch { return null; } // the film just does not air, this time
+  remember(id, value);
+  return value;
+}
+function remember(id, value) {
   if (measured.size > 2000) measured.clear(); // ponytail: a whole reset, not LRU; lists are what repeat
   measured.set(id, value);
-  return value;
 }
 
 export async function personalChannel(ids, { now = Date.now(), hours = 6 } = {}) {

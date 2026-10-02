@@ -19,6 +19,17 @@ async function measure(id) {
   return entry;
 }
 
+// A community channel's lineup, built by the server from its saved films (/api/tv?channel=).
+// The films are part of the address, so an edit is not answered from the edge cache.
+async function served(id, ids) {
+  const films = ids.join('\n');
+  let hash = 0;
+  for (let i = 0; i < films.length; i += 1) hash = (hash * 31 + films.charCodeAt(i)) | 0;
+  const response = await fetch(`/api/tv?channel=${encodeURIComponent(id.replace(/^c-/, ''))}&v=${(hash >>> 0).toString(36)}`);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return (await response.json()).channels?.[0]?.lineup || [];
+}
+
 // shared: { id, name, ids } for a channel from the server; it is read-only here
 export default function useMyChannel(hours = 6, shared = null) {
   const fromLink = useMemo(() => shared?.ids || channelFromUrl(window.location.search), [shared]);
@@ -27,6 +38,9 @@ export default function useMyChannel(hours = 6, shared = null) {
   const [lengths, setLengths] = useState(readLengths);
   // Films whose record could not be read on this visit: left out for now, asked again next load
   const [failed, setFailed] = useState(() => new Set());
+  // A shared channel's lineup from the server, with the ids it was asked for
+  const [fromServer, setFromServer] = useState(null);
+  const sharedId = shared?.id;
 
   // Take a film off your own channel (a shared one is someone else's to edit)
   const remove = useCallback((id) => {
@@ -43,9 +57,18 @@ export default function useMyChannel(hours = 6, shared = null) {
     return () => { window.removeEventListener('storage', refresh); window.removeEventListener('pageshow', refresh); };
   }, [fromLink]);
 
+  // A shared channel asks the server again whenever its films change (an owner's edit)
+  useEffect(() => {
+    if (!sharedId || !ids.length) return undefined;
+    let cancelled = false;
+    served(sharedId, ids).catch(() => []).then(lineup => { if (!cancelled) setFromServer({ ids, lineup }); });
+    return () => { cancelled = true; };
+  }, [sharedId, ids]);
+
   // The schedule is one cycle through every film, so what is on now depends on every length:
   // the lineup changes once, when the last film is measured, never film by film
   useEffect(() => {
+    if (sharedId) return undefined;
     let cancelled = false;
     const missing = ids.filter(id => !lengths[id]);
     if (!missing.length) return undefined;
@@ -60,11 +83,12 @@ export default function useMyChannel(hours = 6, shared = null) {
       setFailed(lost);
     });
     return () => { cancelled = true; };
-  }, [ids]);
+  }, [ids, sharedId]);
 
   return useMemo(() => {
     if (!ids.length) return null;
-    const lineup = airable(ids.map(id => lengths[id] && lengths[id].file ? { id, title: lengths[id].title, year: lengths[id].year, poster: lengths[id].poster || null, seconds: lengths[id].seconds, url: videoUrl(id, lengths[id].file) } : null).filter(Boolean));
+    const loaded = !shared || fromServer?.ids === ids;
+    const lineup = shared ? (loaded ? fromServer.lineup.map(f => ({ id: f.id, title: f.title, year: f.year, poster: f.poster || null, seconds: f.seconds, url: f.url })) : []) : airable(ids.map(id => lengths[id] && lengths[id].file ? { id, title: lengths[id].title, year: lengths[id].year, poster: lengths[id].poster || null, seconds: lengths[id].seconds, url: videoUrl(id, lengths[id].file) } : null).filter(Boolean));
     const now = Date.now();
     const slot = onAirAt(lineup, now);
     return {
@@ -74,10 +98,10 @@ export default function useMyChannel(hours = 6, shared = null) {
       mine: !fromLink,
       ids,
       remove,
-      pending: ids.filter(id => !lengths[id] && !failed.has(id)).length,
+      pending: shared ? (loaded ? 0 : ids.length) : ids.filter(id => !lengths[id] && !failed.has(id)).length,
       lineup,
       now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
       programmes: programmesBetween(lineup, now, now + hours * 3600_000).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, startsAt: p.startsAt, endsAt: p.endsAt })),
     };
-  }, [ids, lengths, failed, fromLink, shared, hours, remove]);
+  }, [ids, lengths, failed, fromServer, fromLink, shared, hours, remove]);
 }

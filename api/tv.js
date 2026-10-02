@@ -7,10 +7,12 @@
 // GET /api/tv?film=<id>       a redirect to that film's file on Archive.org (/api/tv/film/<id>)
 // GET /api/tv?format=library  every film as a Kodi / Jellyfin movie library, zipped (/api/tv/library.zip)
 // Add &mine=a,b,c (the identifiers from a shared channel link) to get just that channel.
+// Add &channel=<id> (a community channel, /c/<id>) to get just that channel, from its saved films.
 // Same schedule for everyone, so the whole thing is cached at the edge for a minute.
 import { schedule, personalChannel, toM3U, toChannelsM3U, liveStreams, toXMLTV, siteOf, catalogue, toFilmsM3U, isCatalogued } from './_tv.js';
 import { pickPlayableFile, videoUrl } from '../src/services/playback.js';
 import { libraryFiles, zip } from './_library.js';
+import { getChannel } from './_community.js';
 
 let pack; // the library zip, built once per instance: the catalogue only changes with a deploy
 
@@ -42,7 +44,7 @@ function overLimit(ip) {
   return count > SHARED_PER_MINUTE;
 }
 
-export default async function handler(req, res) {
+export default async function handler(req, res, env = {}) {
   if (req.method !== 'GET') { res.status(405).end(); return; }
   const format = String(req.query?.format || 'json');
   try {
@@ -86,13 +88,23 @@ export default async function handler(req, res) {
       return;
     }
     const mine = String(req.query?.mine || '');
-    if (mine && overLimit(String(req.headers?.['cf-connecting-ip'] || 'unknown'))) { res.status(429).json({ error: 'Too many shared channels at once. Try again in a minute.' }); return; }
+    const community = String(req.query?.channel || '');
+    if ((mine || community) && overLimit(String(req.headers?.['cf-connecting-ip'] || 'unknown'))) { res.status(429).json({ error: 'Too many shared channels at once. Try again in a minute.' }); return; }
     // Three days of guide: apps refresh it every 6 to 24 hours and show about two days. It starts
     // six hours back, since an app keeps it for hours and draws a blank before its first entry.
     const hours = format === 'xml' ? 72 : 6;
     const hoursBack = format === 'xml' ? 6 : 0;
-    const data = mine ? { now: Date.now(), channels: [await personalChannel(mine.split(','), { hours })] } : schedule({ hours, hoursBack });
-    res.setHeader('Cache-Control', mine ? 'public, s-maxage=300' : 'public, s-maxage=60, stale-while-revalidate=300');
+    let data;
+    if (community) {
+      const saved = env.DB ? await getChannel(env.DB, community) : null;
+      if (!saved) { res.status(404).json({ error: 'No such channel.' }); return; }
+      const channel = await personalChannel(saved.films.map(f => f.film), { hours });
+      data = { now: Date.now(), channels: [{ ...channel, id: `c-${saved.id}`, name: saved.name, blurb: '' }] };
+    } else {
+      data = mine ? { now: Date.now(), channels: [await personalChannel(mine.split(','), { hours })] } : schedule({ hours, hoursBack });
+    }
+    // A community channel's owner can edit it, so it is kept for a minute only
+    res.setHeader('Cache-Control', community ? 'public, s-maxage=60' : mine ? 'public, s-maxage=300' : 'public, s-maxage=60, stale-while-revalidate=300');
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (format === 'channels') {
       res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');
