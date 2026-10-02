@@ -1,5 +1,6 @@
 // Profiles, favourites and channels: rules and storage. `db` is a D1 database.
-import { isTakenDown } from '../src/services/policy.js';
+import { isTakenDown, isForbidden } from '../src/services/policy.js';
+import posterIndex from '../public/poster-index.json' with { type: 'json' };
 
 export const ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567';
 export const LIMITS = { displayName: 40, name: 80, description: 500, note: 280, films: 40, channels: 50, favourites: 1000, minToSubmit: 5 };
@@ -13,16 +14,20 @@ export const hashKey = async key => hex(new Uint8Array(await crypto.subtle.diges
 
 // Control characters become spaces; invisible and direction-changing characters are dropped
 // eslint-disable-next-line no-control-regex
-export const cleanText = (value, max) => String(value ?? '').replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').replace(/[\u200b\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
+export const cleanText = (value, max) => String(value ?? '').replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').replace(/[\u115f\u1160\u200b\u200e\u200f\u202a-\u202e\u2066-\u2069\u2800\u3164\ufeff\uffa0]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
 // The same for text with paragraphs (a description): line breaks stay, at most one blank line
 export const cleanLines = (value, max) => String(value ?? '').split(/\r\n?|\n/).map(line => cleanText(line, max)).join('\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, max);
+
+// A film is checked by its title from the index, or by its identifier read as words, so a
+// check needs no Archive.org request
+export const refused = film => isTakenDown(film) || isForbidden({ title: posterIndex.films[film]?.t || String(film).replace(/[_.-]+/g, ' ') });
 
 export function cleanFilms(list) {
   const seen = new Set();
   const out = [];
   for (const item of Array.isArray(list) ? list : []) {
     const film = String(item?.film ?? '');
-    if (!FILM.test(film) || isTakenDown(film) || seen.has(film)) continue;
+    if (!FILM.test(film) || seen.has(film) || refused(film)) continue;
     seen.add(film);
     out.push({ film, note: cleanText(item.note, LIMITS.note) });
     if (out.length === LIMITS.films) break;
@@ -70,7 +75,7 @@ export async function getProfile(db, id) {
   const shown = await shownFilms(db, 'c.profile_id = ?', [id]);
   const channels = rows.map(c => ({ ...c, films: (shown.get(c.id) || []).length }));
   const favourites = (await db.prepare('SELECT film_id FROM favourites WHERE profile_id = ? ORDER BY created DESC').bind(id).all()).results.map(r => r.film_id).filter(f => !isTakenDown(f));
-  const saved = (await db.prepare("SELECT c.id, c.name FROM channel_saves s JOIN channels c ON c.id = s.channel_id WHERE s.profile_id = ? AND c.status != 'hidden' ORDER BY s.created DESC").bind(id).all()).results;
+  const saved = (await db.prepare("SELECT c.id, c.name FROM channel_saves s JOIN channels c ON c.id = s.channel_id JOIN profiles o ON o.id = c.profile_id WHERE s.profile_id = ? AND c.status != 'hidden' AND o.hidden = 0 ORDER BY s.created DESC").bind(id).all()).results;
   return { id: p.id, name: p.name, archiveUser: p.archive_user, channels, favourites, saved };
 }
 
@@ -85,7 +90,7 @@ export async function updateProfile(db, id, { name, archiveUser, agreed }, { now
 }
 
 export async function setFavourite(db, profileId, film, on, { now }) {
-  if (!FILM.test(String(film)) || (on && isTakenDown(film))) return false;
+  if (!FILM.test(String(film)) || (on && refused(film))) return false;
   if (!on) { await db.prepare('DELETE FROM favourites WHERE profile_id = ? AND film_id = ?').bind(profileId, film).run(); return true; }
   const { n } = await db.prepare('SELECT COUNT(*) AS n FROM favourites WHERE profile_id = ?').bind(profileId).first();
   if (n >= LIMITS.favourites) return false;
@@ -181,7 +186,7 @@ export async function submitChannel(db, id, profileId, { now, flag }) {
 export async function setSaved(db, profileId, channelId, on, { now }) {
   if (!ID.test(String(channelId))) return false;
   if (!on) { await db.prepare('DELETE FROM channel_saves WHERE profile_id = ? AND channel_id = ?').bind(profileId, channelId).run(); return true; }
-  const exists = await db.prepare("SELECT id FROM channels WHERE id = ? AND status != 'hidden'").bind(channelId).first();
+  const exists = await db.prepare("SELECT c.id FROM channels c JOIN profiles o ON o.id = c.profile_id WHERE c.id = ? AND c.status != 'hidden' AND o.hidden = 0").bind(channelId).first();
   if (!exists) return false;
   await db.prepare('INSERT OR IGNORE INTO channel_saves (profile_id, channel_id, created) VALUES (?, ?, ?)').bind(profileId, channelId, now).run();
   return true;

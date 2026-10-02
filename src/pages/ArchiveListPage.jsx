@@ -24,8 +24,10 @@ export async function searchDocs(q, rows) {
 }
 
 // Each search result as a card, with the poster and title from the index where it has them.
-// A taken-down upload (src/services/policy.js) is left out.
-export const withPosters = (docs) => Promise.all(docs.filter(doc => !isTakenDown(doc.identifier) && !isForbidden(doc)).map(async (doc) => {
+// A taken-down upload (src/services/policy.js) is left out; one without a title is checked by
+// its identifier read as words.
+const refused = doc => isTakenDown(doc.identifier) || isForbidden(doc) || (!doc.title && isForbidden({ title: String(doc.identifier).replace(/[_.-]+/g, ' ') }));
+export const withPosters = (docs) => Promise.all(docs.filter(doc => !refused(doc)).map(async (doc) => {
   const match = await indexedMatch(doc.identifier);
   return {
     id: doc.identifier,

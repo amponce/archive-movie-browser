@@ -1,5 +1,5 @@
 // /api/profile, /api/channel, /api/channels
-import { createProfile, authProfile, getProfile, updateProfile, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels, hashKey } from './_community.js';
+import { createProfile, authProfile, getProfile, updateProfile, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels, hashKey, isListed } from './_community.js';
 
 const MAX_BODY = 20_000;
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-store', ...headers } });
@@ -71,7 +71,7 @@ async function route(request, { db, flag, minutes, now }) {
       const { profileId, ...open } = c;
       // The owner's own id comes back only to the owner, so the page can show the editor
       if (request.headers.get('authorization') && (await owner(request, db))?.id === profileId) open.ownerId = profileId;
-      return json(open, 200, c.status === 'public' || c.status === 'featured' ? {} : { 'X-Robots-Tag': 'noindex' });
+      return json(open, 200, isListed(c.status) && !c.films.some(f => f.flagged) ? {} : { 'X-Robots-Tag': 'noindex' });
     }
     return empty(404);
   }

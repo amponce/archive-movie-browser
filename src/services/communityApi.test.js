@@ -127,3 +127,19 @@ test('a channel read says who owns it only to the owner', async () => {
   assert.equal((await (await call(c, 'GET', `/api/channel/${id}`, { auth: other })).json()).ownerId, undefined);
   assert.equal((await (await call(c, 'GET', `/api/channel/${id}`, { auth: { id: me.id, key: 'f'.repeat(64) } })).json()).ownerId, undefined);
 });
+
+test('a film the filter refuses is a 400 as a favourite', async () => {
+  const c = await ctx();
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  assert.equal((await call(c, 'PUT', `/api/profile/${me.id}/favourites/test_snuff-film.upload`, { auth: me })).status, 400);
+});
+
+test('a listed channel holding a flagged film is noindex', async () => {
+  const c = await ctx();
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  const { id } = await (await call(c, 'POST', '/api/channel', { auth: me, body: { name: 'N', films: [{ film: 'a' }] } })).json();
+  await c.db.prepare("UPDATE channels SET status = 'public' WHERE id = ?").bind(id).run();
+  assert.equal((await call(c, 'GET', `/api/channel/${id}`)).headers.get('x-robots-tag'), null);
+  await c.db.prepare('UPDATE channel_films SET flagged = 1 WHERE channel_id = ?').bind(id).run();
+  assert.equal((await call(c, 'GET', `/api/channel/${id}`)).headers.get('x-robots-tag'), 'noindex');
+});

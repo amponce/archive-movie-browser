@@ -83,7 +83,7 @@ async function sharePage(request, env, kind, id) {
   } catch {
     return new Response(html, { status: asset.status, headers });
   }
-  const listed = kind === 'c' && !!data && isListed(data.status);
+  const listed = kind === 'c' && !!data && isListed(data.status) && !data.films.some(f => f.flagged);
   const title = data ? `${data.name || 'A profile'} | Orphaned Films` : 'Orphaned Films';
   const description = data && kind === 'c' ? `${data.films.length} ${data.films.length === 1 ? 'film' : 'films'}${data.owner ? ` · by ${data.owner}` : ''}` : 'Forgotten films, found.';
   const image = data && posterOf(kind === 'c' ? data.films.map(f => f.film) : data.favourites);

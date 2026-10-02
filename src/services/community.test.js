@@ -279,3 +279,36 @@ test('the listing leaves out a channel with no visible films and does not expose
   assert.deepEqual(list.map(c => c.id), [full]);
   assert.equal('score' in list[0], false);
 });
+
+// An invented identifier whose words the filter refuses (no such upload)
+const REFUSED = 'test_snuff-film.upload';
+
+test('a film the filter refuses is never a favourite or a channel film, with no lookup', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  assert.equal(await setFavourite(db, pid, REFUSED, true, { now }), false);
+  assert.deepEqual((await getProfile(db, pid)).favourites, []);
+  assert.deepEqual(cleanFilms([{ film: REFUSED }, { film: 'Detour' }]).map(f => f.film), ['Detour']);
+  const asked = [];
+  const flag = async f => { asked.push(f); return false; };
+  const id = await createChannel(db, pid, { name: 'R', films: [{ film: REFUSED }, { film: 'film-0' }] }, { now, flag });
+  assert.deepEqual((await getChannel(db, id)).films.map(f => f.film), ['film-0']);
+  assert.deepEqual(asked, ['film-0']);
+});
+
+test('text loses filler characters that render blank', () => {
+  assert.equal(cleanText('ㅤᅟᅠﾠ⠀', 80), '');
+  assert.equal(cleanText('aㅤb', 80), 'ab');
+});
+
+test("a hidden owner's channel is neither shown nor savable under other profiles", async () => {
+  const db = await openTestDb();
+  const { id: owner } = await createProfile(db, { now });
+  const { id: fan } = await createProfile(db, { now });
+  const id = await createChannel(db, owner, { name: 'X', films: films(1) }, { now, flag: noFlag });
+  assert.equal(await setSaved(db, fan, id, true, { now }), true);
+  await db.prepare('UPDATE profiles SET hidden = 1 WHERE id = ?').bind(owner).run();
+  assert.deepEqual((await getProfile(db, fan)).saved, []);
+  await setSaved(db, fan, id, false, { now });
+  assert.equal(await setSaved(db, fan, id, true, { now }), false);
+});
