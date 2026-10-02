@@ -36,7 +36,7 @@ export default function ArchiveMovieBrowser() {
   const [linkError, setLinkError] = useState(null);
   // Opened with a film in the link (every film card links to /browse#id): until that film has
   // loaded, the page stays blank rather than flashing the browse grid for a moment
-  const [opening, setOpening] = useState(() => window.location.hash.length > 1);
+  const [opening, setOpening] = useState(() => filmFromHash(window.location.hash) !== null);
   const [viewMode, changeViewMode] = useViewMode();
   const selectedRef = useRef(null); // what popstate and hashchange see without re-subscribing
   selectedRef.current = selectedMovie;
@@ -71,7 +71,7 @@ export default function ArchiveMovieBrowser() {
     let cancelled = false;
     const openFromHash = () => {
       const link = filmFromHash(window.location.hash);
-      if (!link) return;
+      if (!link) { setOpening(false); return; }
       const decoded = link.identifier;
       setStartFile(link.file);
       if (selectedRef.current?.identifier === decoded) return;
