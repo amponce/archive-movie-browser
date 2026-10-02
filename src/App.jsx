@@ -36,7 +36,9 @@ export function pageFor(pathname, search = '', hash = '') {
 export default function App() {
   // An edit link (/u/<id>#key=...) moves the profile into this browser before anything renders
   if (adoptFromLink(window.location.pathname, window.location.hash)) { window.location.replace('/browse'); return null; }
-  return <><Routed /><SaveLinkPanel /></>;
+  // The panel would sit over the TV player's controls
+  const onTv = window.location.pathname.replace(/\/+$/, '') === '/tv';
+  return <><Routed />{!onTv && <SaveLinkPanel />}</>;
 }
 
 function Routed() {
