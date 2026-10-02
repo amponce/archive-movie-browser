@@ -5,6 +5,7 @@ import archiveService from '../services/archive';
 import { Sprockets, fieldFor } from '../ui/FilmCard';
 import TitleCover from './TitleCover';
 import { plainText } from '../services/plainText';
+import FavouriteButton from './FavouriteButton';
 
 const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) {
   const [tmdbData, setTmdbData] = useState(null);
@@ -69,6 +70,7 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
   // Grid view: the same sprocket frame as the front page
   if (viewMode === 'grid') {
     return (
+      <div className="relative min-w-0">
       <div
         role="button"
         tabIndex={0}
@@ -102,7 +104,7 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
           </span>
 
           {rating ? (
-            <span className="absolute top-3 right-4 font-mono text-[10px] tracking-[0.1em] bg-bone text-ink px-1.5 py-0.5 rounded-sm tabular-nums">{rating.toFixed(1)}</span>
+            <span className="absolute top-3 left-4 font-mono text-[10px] tracking-[0.1em] bg-bone text-ink px-1.5 py-0.5 rounded-sm tabular-nums">{rating.toFixed(1)}</span>
           ) : null}
           <Sprockets />
         </span>
@@ -110,11 +112,15 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
         <h3 className="mt-3 font-sans font-medium text-sm text-bone leading-snug line-clamp-2 group-hover:text-signal">{movie.title}</h3>
         {meta && <span className="block mt-0.5 font-mono text-[11px] text-dim tabular-nums">{meta}</span>}
       </div>
+      {/* A sibling of the card, not inside it: a button cannot sit in a role=button */}
+      <FavouriteButton film={movie.identifier} className="absolute top-2 right-2 z-10" />
+      </div>
     );
   }
 
   // List view (detail-focused)
   return (
+    <div className="relative">
     <div
       role="button"
       tabIndex={0}
@@ -204,6 +210,8 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
           </p>
         )}
       </div>
+    </div>
+    <FavouriteButton film={movie.identifier} className="absolute top-2 right-2 z-10" />
     </div>
   );
 });

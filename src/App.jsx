@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import ArchiveMovieBrowser from './components/ArchiveMovieBrowser';
+import SaveLinkPanel from './components/SaveLinkPanel';
 import { parseSitePath, redirectFor } from './services/archiveUrl';
 
 // A few pages do not need a router: the path picks the page, and links between them are
@@ -32,6 +33,10 @@ export function pageFor(pathname, search = '', hash = '') {
 }
 
 export default function App() {
+  return <><Routed /><SaveLinkPanel /></>;
+}
+
+function Routed() {
   const redirect = redirectFor(window.location.pathname, window.location.search);
   if (redirect) { window.location.replace(redirect); return null; }
   const list = parseSitePath(window.location.pathname);
