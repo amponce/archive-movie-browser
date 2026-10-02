@@ -65,3 +65,31 @@ test('oversized bodies and unknown routes', async () => {
   assert.equal((await call(c, 'GET', '/api/channel/not-an-id')).status, 404);
   assert.equal((await call(c, 'DELETE', '/api/channels')).status, 405);
 });
+
+test('a malformed film address is a 400, not an error', async () => {
+  const c = await ctx();
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  assert.equal((await call(c, 'PUT', `/api/profile/${me.id}/favourites/%E0%A4%A`, { auth: me })).status, 400);
+});
+
+test('a declared oversized body is refused before reading', async () => {
+  const c = await ctx();
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  const res = await handle(new Request(ORIGIN + '/api/channel', { method: 'POST', body: '{}', headers: { origin: ORIGIN, 'sec-fetch-site': 'same-origin', 'content-length': '30000', authorization: `Bearer ${me.id}.${me.key}` } }), c);
+  assert.equal(res.status, 413);
+});
+
+test('creating a profile clears expired limit rows', async () => {
+  const c = await ctx();
+  await c.db.prepare("INSERT INTO limits (bucket, count, until) VALUES ('old', 1, 5)").run();
+  await call(c, 'POST', '/api/profile');
+  assert.equal(await c.db.prepare("SELECT 1 AS n FROM limits WHERE bucket = 'old'").first(), null);
+});
+
+test('an internal failure is a plain 500', async () => {
+  const c = await ctx();
+  const quiet = console.error; console.error = () => {};
+  const res = await handle(new Request(ORIGIN + '/api/channels'), { ...c, db: {} });
+  console.error = quiet;
+  assert.equal(res.status, 500);
+});

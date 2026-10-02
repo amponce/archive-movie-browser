@@ -90,8 +90,11 @@ export async function setFavourite(db, profileId, film, on, { now }) {
   return true;
 }
 
-const filmRows = async (db, channelId, films, flag) => {
-  const all = await Promise.all(films.map(async f => ({ ...f, mark: await flag(f.film) })));
+const storedFilms = async (db, channelId) => (await db.prepare('SELECT film_id, note, flagged FROM channel_films WHERE channel_id = ? ORDER BY position').bind(channelId).all()).results;
+
+const filmRows = async (db, channelId, films, flag, stored = []) => {
+  const known = new Map(stored.map(r => [r.film_id, r.flagged]));
+  const all = await Promise.all(films.map(async f => ({ ...f, mark: known.has(f.film) ? known.get(f.film) : await flag(f.film) })));
   const kept = all.filter(f => f.mark !== 'forbidden');
   return [
     db.prepare('DELETE FROM channel_films WHERE channel_id = ?').bind(channelId),
@@ -124,11 +127,15 @@ export async function getChannel(db, id) {
 export async function updateChannel(db, id, profileId, patch, { now, flag }) {
   const c = await db.prepare("SELECT status FROM channels WHERE id = ? AND profile_id = ? AND status != 'hidden'").bind(id, profileId).first();
   if (!c) return false;
-  const contentChanged = patch.name !== undefined || patch.description !== undefined || patch.films !== undefined;
+  const stored = patch.films === undefined ? [] : await storedFilms(db, id);
+  const films = patch.films === undefined ? null : cleanFilms(patch.films);
+  const notes = new Map(stored.map(r => [r.film_id, r.note]));
+  const filmsChanged = films !== null && (films.length !== stored.length || films.some(f => notes.get(f.film) !== f.note));
+  const contentChanged = patch.name !== undefined || patch.description !== undefined || filmsChanged;
   const status = contentChanged ? afterContentEdit(c.status) : c.status;
   const statements = [db.prepare('UPDATE channels SET name = COALESCE(?, name), description = COALESCE(?, description), status = ?, updated = ? WHERE id = ?')
     .bind(patch.name === undefined ? null : (cleanText(patch.name, LIMITS.name) || 'Untitled channel'), patch.description === undefined ? null : cleanText(patch.description, LIMITS.description), status, now, id)];
-  if (patch.films !== undefined) statements.push(...(await filmRows(db, id, cleanFilms(patch.films), flag)));
+  if (films !== null) statements.push(...(await filmRows(db, id, films, flag, stored)));
   await db.batch(statements);
   return true;
 }
@@ -144,11 +151,18 @@ export async function deleteChannel(db, id, profileId) {
   return true;
 }
 
-export async function submitChannel(db, id, profileId, { now }) {
+export async function submitChannel(db, id, profileId, { now, flag }) {
   const p = await db.prepare('SELECT agreed_at FROM profiles WHERE id = ?').bind(profileId).first();
-  const c = await db.prepare("SELECT c.status, COUNT(f.film_id) AS films, COALESCE(SUM(f.flagged), 0) AS flagged FROM channels c LEFT JOIN channel_films f ON f.channel_id = c.id WHERE c.id = ? AND c.profile_id = ? GROUP BY c.id").bind(id, profileId).first();
-  if (!c) return 'hidden';
+  const owned = await db.prepare('SELECT id FROM channels WHERE id = ? AND profile_id = ?').bind(id, profileId).first();
+  if (!owned) return 'hidden';
   if (!p?.agreed_at) return 'not-agreed';
+  const flagged = (await storedFilms(db, id)).filter(r => r.flagged);
+  const marks = await Promise.all(flagged.map(r => flag(r.film_id)));
+  const updates = flagged.flatMap((r, i) => (marks[i] === 'forbidden'
+    ? [db.prepare('DELETE FROM channel_films WHERE channel_id = ? AND film_id = ?').bind(id, r.film_id)]
+    : marks[i] ? [] : [db.prepare('UPDATE channel_films SET flagged = 0 WHERE channel_id = ? AND film_id = ?').bind(id, r.film_id)]));
+  if (updates.length) await db.batch(updates);
+  const c = await db.prepare("SELECT c.status, COUNT(f.film_id) AS films, COALESCE(SUM(f.flagged), 0) AS flagged FROM channels c LEFT JOIN channel_films f ON f.channel_id = c.id WHERE c.id = ? AND c.profile_id = ? GROUP BY c.id").bind(id, profileId).first();
   const problem = submitProblem(c);
   if (problem) return problem;
   if (c.status === 'unlisted') await db.prepare("UPDATE channels SET status = 'submitted', submitted_at = ? WHERE id = ?").bind(now, id).run();

@@ -24,6 +24,7 @@ async function overLimit(db, bucket, max, windowMs, now) {
 }
 
 async function readBody(request) {
+  if (Number(request.headers.get('content-length')) > MAX_BODY) return { tooBig: true };
   const text = await request.text();
   if (text.length > MAX_BODY) return { tooBig: true };
   try { return { body: text ? JSON.parse(text) : {} }; } catch { return { body: null }; }
@@ -34,7 +35,11 @@ async function owner(request, db) {
   return authProfile(db, id, key);
 }
 
-export async function handle(request, { db, flag, minutes, now }) {
+export async function handle(request, deps) {
+  try { return await route(request, deps); } catch (error) { console.error('community:', error.message); return empty(500); }
+}
+
+async function route(request, { db, flag, minutes, now }) {
   const url = new URL(request.url);
   const parts = url.pathname.replace(/\/+$/, '').split('/').slice(2); // ['profile', id, ...]
   const method = request.method;
@@ -63,6 +68,7 @@ export async function handle(request, { db, flag, minutes, now }) {
   if (await overLimit(db, `w:${ip}`, 120, 60_000, now)) return empty(429);
 
   if (method === 'POST' && parts[0] === 'profile' && parts.length === 1) {
+    await db.prepare('DELETE FROM limits WHERE until < ?').bind(now).run();
     if (await overLimit(db, `p:${ip}`, 5, 3_600_000, now)) return empty(429);
     return json(await createProfile(db, { now }), 201);
   }
@@ -76,7 +82,9 @@ export async function handle(request, { db, flag, minutes, now }) {
   if (parts[0] === 'profile' && parts[1] === me.id) {
     if (method === 'PATCH' && parts.length === 2) { await updateProfile(db, me.id, body, { now }); return empty(204); }
     if (parts[2] === 'favourites' && parts.length === 4 && (method === 'PUT' || method === 'DELETE')) {
-      return empty(await setFavourite(db, me.id, decodeURIComponent(parts[3]), method === 'PUT', { now }) ? 204 : 400);
+      let film;
+      try { film = decodeURIComponent(parts[3]); } catch { return empty(400); }
+      return empty(await setFavourite(db, me.id, film, method === 'PUT', { now }) ? 204 : 400);
     }
     return empty(405);
   }
@@ -91,7 +99,7 @@ export async function handle(request, { db, flag, minutes, now }) {
     if (parts.length === 2 && method === 'PATCH') return empty(await updateChannel(db, id, me.id, body, { now, flag }) ? 204 : 404);
     if (parts.length === 2 && method === 'DELETE') return empty(await deleteChannel(db, id, me.id) ? 204 : 404);
     if (parts[2] === 'submit' && method === 'POST') {
-      const problem = await submitChannel(db, id, me.id, { now });
+      const problem = await submitChannel(db, id, me.id, { now, flag });
       return problem ? json({ problem }, 409) : empty(204);
     }
     if (parts[2] === 'save' && (method === 'PUT' || method === 'DELETE')) return empty(await setSaved(db, me.id, id, method === 'PUT', { now }) ? 204 : 404);

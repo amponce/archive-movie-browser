@@ -85,9 +85,9 @@ test('submit: agreement, five films, no flagged; listed after approval; edit unl
   const db = await openTestDb();
   const { id: pid } = await createProfile(db, { now });
   const id = await createChannel(db, pid, { name: 'Five', films: films(5) }, { now, flag: noFlag });
-  assert.equal(await submitChannel(db, id, pid, { now }), 'not-agreed');
+  assert.equal(await submitChannel(db, id, pid, { now, flag: noFlag }), 'not-agreed');
   await updateProfile(db, pid, { agreed: true }, { now });
-  assert.equal(await submitChannel(db, id, pid, { now }), null);
+  assert.equal(await submitChannel(db, id, pid, { now, flag: noFlag }), null);
   assert.equal((await getChannel(db, id)).status, 'submitted');
   await db.prepare("UPDATE channels SET status = 'public' WHERE id = ?").bind(id).run();
   assert.equal((await listChannels(db, { minutes: async () => ({}) })).length, 1);
@@ -165,4 +165,33 @@ test('a removed favourite can still be unsaved', async () => {
   await db.prepare('INSERT INTO favourites (profile_id, film_id, created) VALUES (?, ?, ?)').bind(id, TAKEN_DOWN[0].id, now).run();
   assert.equal(await setFavourite(db, id, TAKEN_DOWN[0].id, false, { now }), true);
   assert.equal((await db.prepare('SELECT COUNT(*) AS n FROM favourites').first()).n, 0);
+});
+
+test('reorder re-checks no film; a new film is checked once; reorder keeps a public channel public', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  let calls = 0;
+  const flag = async () => { calls++; return false; };
+  const id = await createChannel(db, pid, { name: 'R', films: films(3) }, { now, flag });
+  await db.prepare("UPDATE channels SET status = 'public' WHERE id = ?").bind(id).run();
+  calls = 0;
+  await updateChannel(db, id, pid, { films: [{ film: 'film-2' }, { film: 'film-1' }, { film: 'film-0' }] }, { now, flag });
+  assert.equal(calls, 0);
+  assert.equal((await getChannel(db, id)).status, 'public');
+  await updateChannel(db, id, pid, { films: [{ film: 'film-2' }, { film: 'film-1' }, { film: 'film-0' }, { film: 'new' }] }, { now, flag });
+  assert.equal(calls, 1);
+  assert.equal((await getChannel(db, id)).status, 'submitted');
+  await db.prepare("UPDATE channels SET status = 'public' WHERE id = ?").bind(id).run();
+  await updateChannel(db, id, pid, { films: [{ film: 'film-2', note: 'x' }, { film: 'film-1' }, { film: 'film-0' }, { film: 'new' }] }, { now, flag });
+  assert.equal((await getChannel(db, id)).status, 'submitted');
+});
+
+test('submit re-checks flagged films: cleared ones pass, forbidden ones are dropped', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  await updateProfile(db, pid, { agreed: true }, { now });
+  const id = await createChannel(db, pid, { name: 'S', films: films(6) }, { now, flag: async f => f === 'film-0' || f === 'film-1' });
+  assert.equal(await submitChannel(db, id, pid, { now, flag: async () => true }), 'flagged');
+  assert.equal(await submitChannel(db, id, pid, { now, flag: async f => (f === 'film-1' ? 'forbidden' : false) }), null);
+  assert.deepEqual((await getChannel(db, id)).films.map(f => f.film), ['film-0', 'film-2', 'film-3', 'film-4', 'film-5']);
 });

@@ -20,7 +20,7 @@ async function redisMinutes(members) {
   return Object.fromEntries(members.map((m, i) => [m, scores.reduce((sum, list) => sum + (Number(list?.[i]) || 0), 0)]));
 }
 async function archiveFlag(film) {
-  const meta = await fetch(`https://archive.org/metadata/${encodeURIComponent(film)}/metadata`).then(r => (r.ok ? r.json() : null)).catch(() => null);
+  const meta = await fetch(`https://archive.org/metadata/${encodeURIComponent(film)}/metadata`, { signal: AbortSignal.timeout(5000) }).then(r => (r.ok ? r.json() : null)).catch(() => null);
   if (!meta?.result) return true;
   if (isForbidden(meta.result)) return 'forbidden';
   return isMature(meta.result);
@@ -63,7 +63,7 @@ export default {
     if (!found) return new Response('Not found', { status: 404 });
     const query = { ...Object.fromEntries(url.searchParams), ...found.query };
     // Answers marked s-maxage are kept in Cloudflare's cache for that long, as Vercel's CDN did
-    const cacheable = request.method === 'GET' && found.name !== 'stats' && found.name !== 'community';
+    const cacheable = request.method === 'GET' && found.name !== 'stats' && (found.name !== 'community' || url.pathname === '/api/channels');
     if (cacheable) {
       const hit = await caches.default.match(request);
       if (hit) return hit;
