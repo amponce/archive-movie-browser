@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { isTakenDown, isRecent, TAKEN_DOWN } from './policy.js';
+import { isTakenDown, isRecent, TAKEN_DOWN, isMature } from './policy.js';
 
 const FIXTURE = 'orphanedfilms-takedown-test';
 const entry = (y) => ({ i: 999, t: 'Test film', y, p: '/p.jpg', c: 1, g: ['Horror'], v: 7, k: 900, l: 90, d: 90 });
@@ -130,4 +130,13 @@ test('a listed film stays off a shared channel too, even when Archive.org would 
   t.mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify({ metadata: { title: 'x' }, files: [{ name: 'a.mp4', format: 'h.264', length: '5000', size: '900000000' }] })));
   const { personalChannel } = await import('../../api/_tv.js');
   assert.equal((await personalChannel([id])).lineup.length, 0);
+});
+
+test('mature: sexual words in the title or tags, or plainly in the description', () => {
+  assert.equal(isMature({ title: 'Softcore Classics Vol 2' }), true);
+  assert.equal(isMature({ title: 'A drama', subject: ['erotic'] }), true);
+  assert.equal(isMature({ title: 'A drama', description: 'contains nudity' }), true);
+  assert.equal(isMature({ title: 'Adult education film', description: 'for adult learners' }), true);
+  assert.equal(isMature({ title: 'Detour', description: 'an adult man drives west' }), false);
+  assert.equal(isMature({ title: 'Nosferatu' }), false);
 });
