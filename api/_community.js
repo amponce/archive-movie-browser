@@ -131,9 +131,10 @@ export async function updateChannel(db, id, profileId, patch, { now, flag }) {
   const c = await db.prepare("SELECT status, name, description FROM channels WHERE id = ? AND profile_id = ? AND status != 'hidden'").bind(id, profileId).first();
   if (!c) return false;
   const stored = patch.films === undefined ? [] : await storedFilms(db, id);
+  const visible = stored.filter(r => !isTakenDown(r.film_id));
   const films = patch.films === undefined ? null : cleanFilms(patch.films);
-  const notes = new Map(stored.map(r => [r.film_id, r.note]));
-  const filmsChanged = films !== null && (films.length !== stored.length || films.some(f => notes.get(f.film) !== f.note));
+  const notes = new Map(visible.map(r => [r.film_id, r.note]));
+  const filmsChanged = films !== null && (films.length !== visible.length || films.some(f => notes.get(f.film) !== f.note));
   const name = patch.name === undefined ? null : (cleanText(patch.name, LIMITS.name) || 'Untitled channel');
   const description = patch.description === undefined ? null : cleanLines(patch.description, LIMITS.description);
   const contentChanged = (name !== null && name !== c.name) || (description !== null && description !== c.description) || filmsChanged;
@@ -167,7 +168,10 @@ export async function submitChannel(db, id, profileId, { now, flag }) {
     ? [db.prepare('DELETE FROM channel_films WHERE channel_id = ? AND film_id = ?').bind(id, r.film_id)]
     : marks[i] ? [] : [db.prepare('UPDATE channel_films SET flagged = 0 WHERE channel_id = ? AND film_id = ?').bind(id, r.film_id)]));
   if (updates.length) await db.batch(updates);
-  const c = await db.prepare("SELECT c.status, COUNT(f.film_id) AS films, COALESCE(SUM(f.flagged), 0) AS flagged FROM channels c LEFT JOIN channel_films f ON f.channel_id = c.id WHERE c.id = ? AND c.profile_id = ? GROUP BY c.id").bind(id, profileId).first();
+  const c = await db.prepare('SELECT status FROM channels WHERE id = ? AND profile_id = ?').bind(id, profileId).first();
+  const shown = (await storedFilms(db, id)).filter(r => !isTakenDown(r.film_id));
+  c.films = shown.length;
+  c.flagged = shown.filter(r => r.flagged).length;
   const problem = submitProblem(c);
   if (problem) return problem;
   if (c.status === 'unlisted') await db.prepare("UPDATE channels SET status = 'submitted', submitted_at = ? WHERE id = ?").bind(now, id).run();
@@ -196,5 +200,6 @@ export async function listChannels(db, { minutes }) {
   return rows
     .map(r => ({ id: r.id, name: r.name, owner: r.owner, films: (shown.get(r.id) || []).length, firstFilm: (shown.get(r.id) || [])[0], status: r.status, featuredAt: r.featured_at, score: r.saves * 10 + (watched[`c-${r.id}`] || 0) }))
     .sort((a, b) => (a.status === b.status ? (a.status === 'featured' ? (b.featuredAt || 0) - (a.featuredAt || 0) : b.score - a.score) : a.status === 'featured' ? -1 : 1))
-    .map(c => ({ id: c.id, name: c.name, owner: c.owner, films: c.films, firstFilm: c.firstFilm, status: c.status, score: c.score }));
+    .filter(c => c.films > 0)
+    .map(c => ({ id: c.id, name: c.name, owner: c.owner, films: c.films, firstFilm: c.firstFilm, status: c.status }));
 }

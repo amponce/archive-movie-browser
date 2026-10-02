@@ -236,3 +236,46 @@ test('a channel description is stored with its line breaks, on create and on edi
   await updateChannel(db, id, pid, { description: 'Three\nFour' }, { now, flag: noFlag });
   assert.equal((await getChannel(db, id)).description, 'Three\nFour');
 });
+
+const GONE = TAKEN_DOWN[0].id;
+const addRow = (db, id, film, pos, flagged = 0) => db.prepare('INSERT INTO channel_films (channel_id, film_id, position, note, flagged) VALUES (?, ?, ?, ?, ?)').bind(id, film, pos, '', flagged).run();
+
+test('a taken-down film does not count toward the five needed to submit', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  await updateProfile(db, pid, { agreed: true }, { now });
+  const id = await createChannel(db, pid, { name: 'T', films: films(4) }, { now, flag: noFlag });
+  await addRow(db, id, GONE, 4);
+  assert.equal(await submitChannel(db, id, pid, { now, flag: noFlag }), 'too-few');
+});
+
+test('a flagged row whose film is taken down does not block submit', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  await updateProfile(db, pid, { agreed: true }, { now });
+  const id = await createChannel(db, pid, { name: 'T', films: films(5) }, { now, flag: noFlag });
+  await addRow(db, id, GONE, 5, 1);
+  assert.equal(await submitChannel(db, id, pid, { now, flag: async () => true }), null);
+});
+
+test('reordering the visible films of a public channel with a taken-down row keeps it public', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  const id = await createChannel(db, pid, { name: 'T', films: films(5) }, { now, flag: noFlag });
+  await addRow(db, id, GONE, 5);
+  await db.prepare("UPDATE channels SET status = 'public' WHERE id = ?").bind(id).run();
+  await updateChannel(db, id, pid, { films: films(5).reverse() }, { now, flag: noFlag });
+  assert.equal((await getChannel(db, id)).status, 'public');
+});
+
+test('the listing leaves out a channel with no visible films and does not expose the score', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  const empty = await createChannel(db, pid, { name: 'Empty', films: [] }, { now, flag: noFlag });
+  await addRow(db, empty, GONE, 0);
+  const full = await createChannel(db, pid, { name: 'Full', films: films(5) }, { now, flag: noFlag });
+  await db.prepare("UPDATE channels SET status = 'public'").run();
+  const list = await listChannels(db, { minutes: async () => ({}) });
+  assert.deepEqual(list.map(c => c.id), [full]);
+  assert.equal('score' in list[0], false);
+});
