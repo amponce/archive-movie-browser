@@ -36,6 +36,7 @@ export function adoptFromLink(pathname, hash) {
   const had = readProfile();
   if (had && had.id !== id) keepPrevious(had);
   writeProfile({ id, key: found.key });
+  keepStorage();
   try { history.replaceState(null, '', pathname + (globalThis.location?.search || '')); } catch { /* not in a browser */ }
   return true;
 }
@@ -81,6 +82,11 @@ function carryOver(p) {
 }
 
 let creating = null;
+// Asks the browser not to evict this site's storage, where the edit key lives
+export function keepStorage(nav = globalThis.navigator) {
+  try { return Promise.resolve(nav?.storage?.persist?.()).catch(() => false); } catch { return Promise.resolve(false); }
+}
+
 export async function ensureProfile() {
   const have = readProfile();
   if (have) { carryOver(have); return have; }
@@ -89,6 +95,7 @@ export async function ensureProfile() {
     if (!res.ok) throw new Error(`Could not save (${res.status})`);
     const p = await res.json();
     writeProfile(p);
+    keepStorage();
     await carryOver(p);
     return p;
   })().finally(() => { creating = null; });

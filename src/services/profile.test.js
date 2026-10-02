@@ -117,3 +117,13 @@ test('a throwing carry-over does not stop ensureProfile', async () => {
   assert.deepEqual(await fresh.ensureProfile(), { id: ID, key: KEY });
   assert.ok(store['tv-my-channel']);
 });
+
+test('asking to keep storage never throws, with or without browser support', async () => {
+  const { keepStorage } = await import('./profile.js');
+  let asked = 0;
+  assert.equal(await keepStorage({ storage: { persist: async () => { asked++; return true; } } }), true);
+  assert.equal(asked, 1);
+  assert.equal(await keepStorage({ storage: { persist: async () => { throw new Error('no'); } } }), false);
+  assert.equal(await keepStorage({}), undefined);
+  assert.equal(await keepStorage(undefined), undefined);
+});
