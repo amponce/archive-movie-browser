@@ -13,6 +13,9 @@
     { "pattern": "www.orphanedfilms.com", "custom_domain": true },
     { "pattern": "orphanedfilms.com", "custom_domain": true }
   ],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "orphanedfilms", "database_id": "32bb1c81-0a6d-47bc-a939-391510af2594", "migrations_dir": "migrations" }
+  ],
   "assets": {
     "directory": "dist",
     "not_found_handling": "single-page-application",
