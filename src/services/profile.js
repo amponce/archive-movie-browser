@@ -67,6 +67,8 @@ const CARRIED_KEY = 'profile-carried';
 let carriedMemory = null;
 const carried = (p) => { try { if (localStorage.getItem(CARRIED_KEY) === p.id) return true; } catch { /* private mode */ } return carriedMemory === p.id; };
 const markCarried = (p) => { carriedMemory = p.id; try { localStorage.setItem(CARRIED_KEY, p.id); } catch { /* private mode */ } };
+// The profile the old list was copied into, if any
+export const carriedInto = () => { try { const id = localStorage.getItem(CARRIED_KEY); if (id) return id; } catch { /* private mode */ } return carriedMemory; };
 let carrying = null;
 function carryOver(p) {
   if (carried(p)) return Promise.resolve();

@@ -16,6 +16,10 @@ import Guide, { useGuideSpan } from '../components/tv/Guide';
 import InlineSet from '../components/tv/InlineSet';
 import { WatchTogether, EmptyChannel, ChannelDown } from '../components/tv/Extras';
 import useTvSource from '../hooks/useTvSource';
+import useProfile from '../hooks/useProfile';
+import useSavedChannels from '../hooks/useSavedChannels';
+import { carriedInto } from '../services/profile';
+import { tvPersonal, personalNumber } from '../services/yourChannels';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
 // the same for everyone. The page keeps its own clock: /api/tv gives the lineups once, and the
@@ -209,22 +213,45 @@ function Rail({ channels, current, onTune }) {
 // its page (ChannelPage) keeps its own address and passes its details as children
 export default function TvPage({ channel = null, children }) {
   const { channels: stations, error } = useSchedule();
-  const mine = useMyChannel(6, channel);
+  // A profile's own channels (not on a channel page). The old browser-only list shows only
+  // until it has been copied to the profile.
+  const { data: me, profile } = useProfile();
+  const profileId = channel ? null : profile?.id;
+  const personal = useMemo(() => (channel ? { legacy: true, saved: [] } : tvPersonal({ profileId, carriedId: carriedInto(), channels: me?.channels })), [channel, profileId, me]);
+  const saved = useSavedChannels(personal.saved);
+  const savedPending = !!profileId && (!me || saved.pending);
+  const mine = useMyChannel(6, channel, !personal.legacy);
   const span = useGuideSpan();
   const [open, setOpen] = useState(null); // the guide row playing under itself
-  // The personal channel goes first, as channel 0, when it has anything on it
+  // The personal channels go first, numbered 0, 0b, 0c..., when they have anything on them
   // A community channel waits until every film is measured, so it starts on the shared clock
   const waiting = !!channel && !!mine?.pending;
   const empty = !!channel && !waiting && !mine?.lineup.length;
-  const channels = useMemo(() => (mine && mine.lineup.length && !waiting ? [mine, ...stations] : stations), [mine, stations, waiting]);
+  const channels = useMemo(() => {
+    const own = [...saved.channels, ...(mine && mine.lineup.length && !waiting ? [mine] : [])];
+    return [...(channel ? own : own.map((c, i) => ({ ...c, number: personalNumber(i) }))), ...stations];
+  }, [saved.channels, mine, stations, waiting, channel]);
   // The channel in the link, else the one this browser watched last, else channel 1
   const [currentId, setCurrentId] = useState(() => { if (channel) return channel.id; try { return decodeURIComponent(window.location.hash.slice(1)) || readLast(); } catch { return readLast(); } });
   const [now, setNow] = useState(Date.now);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(t); }, []);
   useEffect(() => { if (!channel) document.title = 'TV | Orphaned Films'; }, [channel]);
+  // Unless a station was asked for, the set waits for the profile's channels on the first load
+  // (a while at most), so it does not tune a station first and then jump
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!savedPending) { setSettled(true); return undefined; }
+    const t = setTimeout(() => setSettled(true), 8000);
+    return () => clearTimeout(t);
+  }, [savedPending]);
+  const holding = !settled && savedPending && !stations.some(s => s.id === currentId);
 
-  const current = useMemo(() => ((waiting || empty) && currentId === channel.id ? null
-    : channels.find(c => c.id === currentId) || (mine?.lineup.length && window.location.search.includes('mine=') ? mine : null) || channels[0] || null), [channels, currentId, mine, waiting, empty, channel]);
+  const current = useMemo(() => (((waiting || empty) && currentId === channel.id) || holding ? null
+    : channels.find(c => c.id === currentId) || (mine?.lineup.length && window.location.search.includes('mine=') ? channels.find(c => c.id === mine.id) : null) || channels[0] || null), [channels, currentId, mine, waiting, empty, channel, holding]);
+  // Once the set has picked a channel it stays on it, even when an add reorders your channels
+  useEffect(() => {
+    if (!channel && settled && stations.length && current && current.id !== currentId) setCurrentId(current.id);
+  }, [channel, settled, stations.length, current, currentId]);
   const tune = useCallback((to) => {
     setCurrentId(to.id);
     if (!channel) {
@@ -253,7 +280,7 @@ export default function TvPage({ channel = null, children }) {
       <SiteHeader current="/tv" />
       <main className="gutter py-8 flex flex-col gap-8">
         {error && <p className="text-muted">The guide didn't load ({error}). <a href="/browse" className="text-bone underline">Browse instead.</a></p>}
-        {currentId === 'mine' && !mine?.ids.length && <EmptyChannel />}
+        {currentId === 'mine' && personal.legacy && !mine?.ids.length && <EmptyChannel />}
         {waiting && currentId === channel.id && <p className="text-muted">Tuning in…</p>}
         {empty && currentId === channel.id && (
           <div className="lg:w-2/3 relative aspect-video bg-black rounded-lg overflow-hidden">

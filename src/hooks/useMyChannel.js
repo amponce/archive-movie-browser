@@ -21,7 +21,7 @@ async function measure(id) {
 
 // A community channel's lineup, built by the server from its saved films (/api/tv?channel=).
 // The films are part of the address, so an edit is not answered from the edge cache.
-async function served(id, ids) {
+export async function served(id, ids) {
   const films = ids.join('\n');
   let hash = 0;
   for (let i = 0; i < films.length; i += 1) hash = (hash * 31 + films.charCodeAt(i)) | 0;
@@ -30,11 +30,13 @@ async function served(id, ids) {
   return (await response.json()).channels?.[0]?.lineup || [];
 }
 
-// shared: { id, name, ids } for a channel from the server; it is read-only here
-export default function useMyChannel(hours = 6, shared = null) {
+const NONE = [];
+// shared: { id, name, ids } for a channel from the server; it is read-only here.
+// hideOwn: leave out this browser's own list (it has been copied to the server); a link's still shows
+export default function useMyChannel(hours = 6, shared = null, hideOwn = false) {
   const fromLink = useMemo(() => shared?.ids || channelFromUrl(window.location.search), [shared]);
   const [own, setIds] = useState(() => fromLink || readMyChannel());
-  const ids = shared ? shared.ids : own;
+  const ids = shared ? shared.ids : hideOwn && !fromLink ? NONE : own;
   const [lengths, setLengths] = useState(readLengths);
   // Films whose record could not be read on this visit: left out for now, asked again next load
   const [failed, setFailed] = useState(() => new Set());
