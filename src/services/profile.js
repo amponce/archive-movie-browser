@@ -18,12 +18,36 @@ export function writeProfile(p) {
 export function keyFromHash(hash) { const key = new URLSearchParams(String(hash).replace(/^#/, '')).get('key'); return key && KEY.test(key) ? { key } : null; }
 export const editLink = (origin, p) => `${origin}/u/${p.id}#key=${p.key}`;
 
+// A different profile this browser had is kept under PREVIOUS_KEY, so the owner can switch back
+export const PREVIOUS_KEY = 'profile-previous';
+export function readPrevious() {
+  try { const p = JSON.parse(localStorage.getItem(PREVIOUS_KEY) || 'null'); if (p && ID.test(p.id) && KEY.test(p.key)) return p; } catch { /* fall through */ }
+  return null;
+}
+// Which profile the old browser-only list was copied into goes with it, so it is not copied twice
+function keepPrevious(p) {
+  try { localStorage.setItem(PREVIOUS_KEY, JSON.stringify({ id: p.id, key: p.key, carried: localStorage.getItem(CARRIED_KEY) === p.id })); } catch { /* private mode */ }
+}
+
 export function adoptFromLink(pathname, hash) {
-  const id = pathname.match(/^\/u\/([a-z2-7]{10})$/)?.[1];
+  const id = pathname.match(/^\/u\/([a-z2-7]{10})\/?$/)?.[1];
   const found = keyFromHash(hash);
   if (!id || !found) return false;
+  const had = readProfile();
+  if (had && had.id !== id) keepPrevious(had);
   writeProfile({ id, key: found.key });
   try { history.replaceState(null, '', pathname + (globalThis.location?.search || '')); } catch { /* not in a browser */ }
+  return true;
+}
+
+// Swap this browser's profile with the one kept by adoptFromLink. False when there is none.
+export function switchBack() {
+  const previous = readPrevious();
+  const current = readProfile();
+  if (!previous) return false;
+  if (current) keepPrevious(current); else try { localStorage.removeItem(PREVIOUS_KEY); } catch { /* private mode */ }
+  writeProfile(previous);
+  if (previous.carried) markCarried(previous);
   return true;
 }
 

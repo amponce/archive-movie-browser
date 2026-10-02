@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const store = {};
 globalThis.localStorage = { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; } };
-const { keyFromHash, editLink, readProfile, writeProfile, adoptFromLink } = await import('./profile.js');
+const { keyFromHash, editLink, readProfile, writeProfile, adoptFromLink, readPrevious, switchBack } = await import('./profile.js');
 const KEY = 'a'.repeat(64);
 
 test('the key comes only from a well-formed fragment', () => {
@@ -22,6 +22,40 @@ test('an edit link replaces whatever profile this browser had', () => {
   assert.equal(adoptFromLink('/u/abcdefghij', `#key=${KEY}`), true);
   assert.deepEqual(readProfile(), { id: 'abcdefghij', key: KEY });
   assert.equal(adoptFromLink('/c/abcdefghij', `#key=${KEY}`), false);
+});
+
+test('an edit link with a trailing slash is adopted too', () => {
+  writeProfile({ id: 'oldoldoldo', key: 'b'.repeat(64) });
+  let replaced = null;
+  globalThis.history = { replaceState: (_, __, url) => { replaced = url; } };
+  assert.equal(adoptFromLink('/u/abcdefghij/', `#key=${KEY}`), true);
+  assert.deepEqual(readProfile(), { id: 'abcdefghij', key: KEY });
+  assert.equal(replaced, '/u/abcdefghij/');
+});
+
+test('the profile an edit link replaced is kept, and switching back swaps them', () => {
+  for (const k of Object.keys(store)) delete store[k];
+  const old = { id: 'oldoldoldo', key: 'b'.repeat(64) };
+  writeProfile(old);
+  store['profile-carried'] = old.id;
+  globalThis.history = { replaceState: () => {} };
+  adoptFromLink('/u/abcdefghij', `#key=${KEY}`);
+  assert.deepEqual(readPrevious(), { ...old, carried: true });
+  assert.equal(switchBack(), true);
+  assert.deepEqual(readProfile(), old);
+  assert.deepEqual(readPrevious(), { id: 'abcdefghij', key: KEY, carried: false });
+  assert.equal(store['profile-carried'], old.id, 'the old list is not copied into it again');
+  assert.equal(switchBack(), true);
+  assert.deepEqual(readProfile(), { id: 'abcdefghij', key: KEY });
+});
+
+test('opening your own edit link again keeps nothing to switch back to', () => {
+  for (const k of Object.keys(store)) delete store[k];
+  writeProfile({ id: 'abcdefghij', key: KEY });
+  adoptFromLink('/u/abcdefghij', `#key=${KEY}`);
+  assert.equal(readPrevious(), null);
+  assert.equal(switchBack(), false);
+  assert.deepEqual(readProfile(), { id: 'abcdefghij', key: KEY });
 });
 
 const ID = 'abcdefghij';

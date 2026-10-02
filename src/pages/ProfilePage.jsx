@@ -3,11 +3,13 @@ import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import Button from '../ui/Button';
 import { FilmGrid, withPosters } from './ArchiveListPage';
-import { api, readProfile, editLink } from '../services/profile';
+import { api, readProfile, editLink, readPrevious, switchBack } from '../services/profile';
 import { refreshProfile } from '../hooks/useProfile';
 
 const LABEL = { unlisted: 'Unlisted', submitted: 'In review', public: 'Public', featured: 'Featured' };
 const FIELD = 'bg-transparent border-b border-line text-bone w-full py-1';
+// Put together here so the address appears nowhere as one string
+const REPORT_TO = ['hello', 'orphanedfilms.com'].join('@');
 
 // /u/<id>: a profile's name, channels, saved channels and favourites. Its owner can edit the
 // name and Archive.org username and copy the edit link.
@@ -20,6 +22,7 @@ export default function ProfilePage({ slug }) {
   const [reset, setReset] = useState(0); // remounts the inputs back to the stored values
   const me = readProfile();
   const isOwner = me?.id === slug;
+  const previous = isOwner && readPrevious();
 
   const loads = useRef(0);
   const load = useCallback(() => {
@@ -86,6 +89,7 @@ export default function ProfilePage({ slug }) {
           {isOwner && <input key={`a-${p.archiveUser}-${reset}`} defaultValue={p.archiveUser} maxLength={60} placeholder="Archive.org username (optional)" aria-label="Archive.org username" className={FIELD} onBlur={e => save('archiveUser', e)} />}
           {failed && <p role="alert" className="text-sm text-signal">Could not save</p>}
           {p.archiveUser && <a className="nav-link" href={`/details/@${encodeURIComponent(p.archiveUser)}`}>@{p.archiveUser} on Archive.org</a>}
+          <a className="nav-link hover:text-signal self-start" href={`mailto:${REPORT_TO}?subject=${encodeURIComponent('Report')}&body=${encodeURIComponent(window.location.href)}`}>Report</a>
         </div>
         <section>
           <h2 className="display text-xl">Channels</h2>
@@ -119,6 +123,11 @@ export default function ProfilePage({ slug }) {
                 className="mt-3 w-full bg-ink border border-line px-2 py-2 font-mono text-xs text-bone" />
             )}
             <div className="mt-3"><Button onClick={copy}>{copied ? 'Copied' : 'Copy edit link'}</Button></div>
+            {previous && (
+              <button type="button" className="nav-link hover:text-signal mt-4 block" onClick={() => { if (switchBack()) window.location.assign(`/u/${readProfile().id}`); }}>
+                Switch back to your other profile
+              </button>
+            )}
           </section>
         )}
       </main>
