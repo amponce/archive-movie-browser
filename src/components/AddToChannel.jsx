@@ -7,6 +7,15 @@ import { readLast, writeLast } from '../services/lastChannel';
 const MAX_FILMS = 40;
 const SIZES = { overlay: 'p-1.5', inline: 'p-3' };
 
+// One add at a time per channel in this tab, so two quick adds cannot overwrite each other.
+const queues = new Map();
+const serial = (id, fn) => {
+  const next = (queues.get(id) || Promise.resolve()).catch(() => {}).then(fn);
+  queues.set(id, next);
+  next.catch(() => {}).then(() => { if (queues.get(id) === next) queues.delete(id); });
+  return next;
+};
+
 // Returns 'added', 'full' or 'failed'.
 async function addFilm(profile, channelId, film) {
   const res = await api(`/api/channel/${channelId}`, { profile });
@@ -39,10 +48,10 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
   useEffect(() => {
     if (!open) return undefined;
     const onDown = e => { if (root.current && !root.current.contains(e.target)) { setOpen(false); setNaming(false); } };
-    const onKey = e => { if (e.key === 'Escape') { setOpen(false); setNaming(false); button.current?.focus(); } };
+    const onKey = e => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); setOpen(false); setNaming(false); button.current?.focus(); } };
     document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
+    document.addEventListener('keydown', onKey, true);
+    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey, true); };
   }, [open]);
 
   const close = () => { setOpen(false); setNaming(false); };
@@ -51,9 +60,10 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
     close();
     try {
       const profile = await ensureProfile();
-      const result = await addFilm(profile, channel.id, film);
+      const result = await serial(channel.id, () => addFilm(profile, channel.id, film));
       if (result !== 'failed') writeLast(channel.id);
-      setStatus(result === 'added' ? `Added to ${channel.name}` : result === 'full' ? 'That channel is full' : 'Could not add');
+      const reviewed = channel.status === 'public' || channel.status === 'featured';
+      setStatus(result === 'added' ? `Added to ${channel.name}${reviewed ? '. It will be reviewed again.' : ''}` : result === 'full' ? 'That channel is full' : 'Could not add');
     } catch {
       setStatus('Could not add');
     }
@@ -80,7 +90,7 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
 
   return (
     <div ref={root} className={`relative ${className}`} onClick={e => e.stopPropagation()}>
-      <button ref={button} type="button" aria-label="Add to a channel" aria-haspopup="menu" aria-expanded={open} data-track="add-to-channel"
+      <button ref={button} type="button" aria-label="Add to a channel" aria-expanded={open} data-track="add-to-channel"
         className={`${SIZES[variant] || SIZES.overlay} rounded-full bg-ink/70 hover:bg-ink text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal`}
         onClick={() => {
           if (open) { close(); return; }
@@ -91,9 +101,9 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
         <Plus size={16} />
       </button>
       {open && (
-        <div role="menu" className={`absolute ${alignLeft ? 'left-0' : 'right-0'} mt-1 w-56 bg-ink border border-line z-30 text-sm text-bone`}>
+        <div className={`absolute ${alignLeft ? 'left-0' : 'right-0'} mt-1 w-56 bg-ink border border-line z-30 text-sm text-bone`}>
           {channels.map(c => (
-            <button key={c.id} role="menuitem" type="button" className="block w-full text-left px-3 py-2 hover:bg-line focus-visible:outline-none focus-visible:bg-line truncate" onClick={() => pick(c)}>{c.name}</button>
+            <button key={c.id} type="button" className="block w-full text-left px-3 py-2 hover:bg-line focus-visible:outline-none focus-visible:bg-line truncate" onClick={() => pick(c)}>{c.name}</button>
           ))}
           {naming
             ? (
@@ -101,10 +111,10 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
                 <input name="name" autoFocus maxLength={80} placeholder="Channel name" aria-label="Channel name" className="w-full bg-transparent border border-line px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal" />
               </form>
             )
-            : <button role="menuitem" type="button" className="block w-full text-left px-3 py-2 hover:bg-line focus-visible:outline-none focus-visible:bg-line text-signal" onClick={() => setNaming(true)}>New channel…</button>}
+            : <button type="button" className="block w-full text-left px-3 py-2 hover:bg-line focus-visible:outline-none focus-visible:bg-line text-signal" onClick={() => setNaming(true)}>New channel…</button>}
         </div>
       )}
-      {status && <span role="status" className="absolute right-0 top-full mt-1 whitespace-nowrap text-xs text-bone bg-ink border border-line px-2 py-1 z-30">{status}</span>}
+      <span role="status" title={status || undefined} className={`absolute ${alignLeft ? 'left-0' : 'right-0'} top-full mt-1 max-w-[14rem] truncate text-xs text-bone bg-ink z-30 ${status ? 'border border-line px-2 py-1' : ''}`}>{status}</span>
     </div>
   );
 }
