@@ -7,6 +7,12 @@
   "main": "worker.js",
   "compatibility_date": "2026-09-30",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "www.orphanedfilms.com", "custom_domain": true },
+    { "pattern": "orphanedfilms.com", "custom_domain": true }
+  ],
   "assets": {
     "directory": "dist",
     "not_found_handling": "single-page-application",
