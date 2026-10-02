@@ -73,9 +73,13 @@ export function isForbidden({ title, description, tags, subject } = {}) {
   return false;
 }
 
+const MATURE_WORDS = [...SEXUAL_WORDS.filter(w => !['strip\\w*', 'explicit', 'naked'].includes(w)), 'strippers?', 'striptease', 'strip ?tease', 'strip clubs?', 'strip joints?', 'strip poker'];
+const MATURE = any([...MATURE_WORDS, 'adult']);
+const MATURE_PROSE = any(MATURE_WORDS);
+
 export function isMature({ title, description, tags, subject } = {}) {
   const named = fold([Array.isArray(title) ? title[0] : title, ...[].concat(tags || []), ...[].concat(subject || [])].join(' ; '));
-  return SEXUAL.test(named) || SEXUAL_PROSE.test(fold(description));
+  return MATURE.test(named) || MATURE_PROSE.test(fold(description));
 }
 
 // For the stats page only: searches for adult films, counted as one line

@@ -139,4 +139,17 @@ test('mature: sexual words in the title or tags, or plainly in the description',
   assert.equal(isMature({ title: 'Adult education film', description: 'for adult learners' }), true);
   assert.equal(isMature({ title: 'Detour', description: 'an adult man drives west' }), false);
   assert.equal(isMature({ title: 'Nosferatu' }), false);
+  // False positives excluded: strip, explicit, naked in non-sexual contexts
+  assert.equal(isMature({ title: 'Stripes' }), false);
+  assert.equal(isMature({ title: 'Sunset Strip' }), false);
+  assert.equal(isMature({ title: 'The Naked City' }), false);
+  assert.equal(isMature({ title: 'A film', subject: ['Comic strips'] }), false);
+  assert.equal(isMature({ title: 'A film', description: 'a comic strip artist' }), false);
+  assert.equal(isMature({ title: 'A film', description: 'a man in a striped suit' }), false);
+  assert.equal(isMature({ title: 'A film', description: 'he is stripped of his rank' }), false);
+  assert.equal(isMature({ title: 'A film', description: 'explicit orders from the captain' }), false);
+  assert.equal(isMature({ title: 'A film', description: 'the naked eye' }), false);
+  // True positives for striptease and strip clubs
+  assert.equal(isMature({ title: 'Striptease Revue' }), true);
+  assert.equal(isMature({ title: 'A film', description: 'a strip club dancer' }), true);
 });
