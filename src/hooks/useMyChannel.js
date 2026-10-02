@@ -5,15 +5,12 @@ import { indexedMatch } from '../services/posterIndex';
 import { pickPlayableFile, videoUrl } from '../services/playback';
 import { onAirAt, programmesBetween, airable } from '../services/schedule';
 import { readMyChannel, removeSaved, channelFromUrl, MY_CHANNEL_ID, MY_CHANNEL_KEY } from '../services/myChannel';
+import { readLengths, rememberLength, measureEach } from '../services/filmLengths';
 
 // The personal channel in the same shape as the channels from /api/tv, so the TV page treats it
 // like any other. Film lengths come from each item's own Archive.org record (one request per
-// film, remembered in this browser), posters from the index.
-const LENGTHS_KEY = 'tv-film-lengths';
-const readLengths = () => { try { return JSON.parse(localStorage.getItem(LENGTHS_KEY) || '{}') || {}; } catch { return {}; } };
-
-async function measure(id, known) {
-  if (known[id]) return known[id];
+// film, six at a time, each remembered in this browser as it lands), posters from the index.
+async function measure(id) {
   const data = await archiveService.getMetadata(id);
   const file = pickPlayableFile(data.files);
   const entry = { seconds: Math.round(Number(file?.length) || 0), file: file?.name || null, title: data.metadata?.title || id, year: Number(String(data.metadata?.year || '').slice(0, 4)) || null };
@@ -28,6 +25,8 @@ export default function useMyChannel(hours = 6, shared = null) {
   const [own, setIds] = useState(() => fromLink || readMyChannel());
   const ids = shared ? shared.ids : own;
   const [lengths, setLengths] = useState(readLengths);
+  // Films whose record could not be read on this visit: left out for now, asked again next load
+  const [failed, setFailed] = useState(() => new Set());
 
   // Take a film off your own channel (a shared one is someone else's to edit)
   const remove = useCallback((id) => {
@@ -44,19 +43,22 @@ export default function useMyChannel(hours = 6, shared = null) {
     return () => { window.removeEventListener('storage', refresh); window.removeEventListener('pageshow', refresh); };
   }, [fromLink]);
 
+  // The schedule is one cycle through every film, so what is on now depends on every length:
+  // the lineup changes once, when the last film is measured, never film by film
   useEffect(() => {
     let cancelled = false;
     const missing = ids.filter(id => !lengths[id]);
     if (!missing.length) return undefined;
-    (async () => {
-      const next = { ...lengths };
-      for (const id of missing) {
-        try { next[id] = await measure(id, next); } catch { next[id] = { seconds: 0 }; }
-        if (cancelled) return;
-      }
-      try { localStorage.setItem(LENGTHS_KEY, JSON.stringify(next)); } catch { /* private mode */ }
-      setLengths(next);
-    })();
+    const landed = {};
+    const lost = new Set();
+    const once = id => measure(id).catch(() => measure(id)); // one retry for a dropped request
+    measureEach(missing, once, (id, entry) => {
+      if (entry) { landed[id] = entry; rememberLength(id, entry); } else lost.add(id);
+    }, { cancelled: () => cancelled }).then(() => {
+      if (cancelled) return;
+      setLengths(known => ({ ...known, ...landed }));
+      setFailed(lost);
+    });
     return () => { cancelled = true; };
   }, [ids]);
 
@@ -72,10 +74,10 @@ export default function useMyChannel(hours = 6, shared = null) {
       mine: !fromLink,
       ids,
       remove,
-      pending: ids.filter(id => !lengths[id]).length,
+      pending: ids.filter(id => !lengths[id] && !failed.has(id)).length,
       lineup,
       now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
       programmes: programmesBetween(lineup, now, now + hours * 3600_000).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, startsAt: p.startsAt, endsAt: p.endsAt })),
     };
-  }, [ids, lengths, fromLink, shared, hours, remove]);
+  }, [ids, lengths, failed, fromLink, shared, hours, remove]);
 }
