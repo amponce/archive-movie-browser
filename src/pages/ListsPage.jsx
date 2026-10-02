@@ -49,11 +49,12 @@ export default function ListsPage({ slug }) {
     const current = ++request.current;
     archiveService.getMovieByIdentifier(id).then(movie => {
       if (current !== request.current) return;
+      try { sessionStorage.setItem('played-from', JSON.stringify({ film: id, list: slug })); } catch { /* ignore */ }
       track('Film opened', { film: id, title: movie.title });
       setStartFile(file);
       setSelected(movie);
     }).catch(() => {});
-  }, []);
+  }, [slug]);
 
   // History traversal fires hashchange after the dialog's popstate close handler.
   // Restore from the URL on arrival and Forward, without adding another history entry.
@@ -113,7 +114,7 @@ export default function ListsPage({ slug }) {
       </div>
 
       {selected && (
-        <MovieDetailPage movie={selected} startFile={startFile} onClose={close} allMovies={[]} onPlayRelated={movie => { request.current++; setStartFile(null); setSelected(movie); }} />
+        <MovieDetailPage movie={selected} startFile={startFile} onClose={close} allMovies={[]} onPlayRelated={movie => { try { sessionStorage.removeItem('played-from'); } catch { /* ignore */ } request.current++; setStartFile(null); setSelected(movie); }} />
       )}
       <SiteFooter />
     </div>

@@ -119,3 +119,10 @@ test('a visit that does anything counts as active now, in a five-minute window t
   const merged = mergeCommands([...commands, ...commandsFor(validEvent({ name: 'Page view', data: { path: '/' }, visit: 'bbbbbbbbbbbbbbbb' }), { now })]);
   assert.ok(merged.some(c => c[0] === 'PFADD' && c[1] === key && c.includes('aaaaaaaaaaaaaaaa') && c.includes('bbbbbbbbbbbbbbbb')), 'batched into one PFADD');
 });
+
+test('a play can say which list it came from', () => {
+  assert.deepEqual(validEvent({ name: 'Play', data: { film: 'Detour', player: 'own', list: 'cult-80s' } }).data, { film: 'Detour', player: 'own', list: 'cult-80s' });
+  assert.deepEqual(validEvent({ name: 'Play', data: { film: 'Detour', player: 'own', list: 'BAD LIST' } }).data, { film: 'Detour', player: 'own' });
+  const cmds = commandsFor({ name: 'Play', data: { film: 'Detour', player: 'own', list: 'cult-80s' } }, { now: new Date('2026-10-02T12:00:00Z') });
+  assert.ok(cmds.some(c => c[0] === 'ZINCRBY' && c[1] === 'stats:played-from:2026-10' && c[3] === 'cult-80s'));
+});

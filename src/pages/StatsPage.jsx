@@ -9,7 +9,7 @@ const FILM_BOARDS = ['played', 'watched', 'opened', 'minutes'];
 const BOARDS = [
   ['minutes', 'Minutes watched, by film'], ['channel-minutes', 'Minutes watched, by channel'], ['clicks', 'What people click'],
   ['tuned', 'Channels tuned to'], ['stayed', 'Channels watched 10+ minutes'], ['played', 'Films played'], ['watched', 'Watched 10+ minutes'], ['opened', 'Films opened'], ['searches', 'Searches'], ['filters', 'Filters used'],
-  ['referrers', 'Where visitors came from'], ['pages', 'Pages'], ['players', 'Player used'], ['banner', 'MCP banner'],
+  ['referrers', 'Where visitors came from'], ['pages', 'Pages'], ['players', 'Player used'], ['played-from', 'Plays, by list or channel'], ['banner', 'MCP banner'],
 ];
 
 const fmt = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });

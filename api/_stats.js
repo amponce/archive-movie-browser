@@ -24,7 +24,7 @@ const clean = (value, max = 60) => String(value ?? '').replace(/[\u0000-\u001f]/
 const EVENTS = {
   'Page view': d => ({ path: clean(d.path, 40) || '/', referrer: clean(d.referrer, 60) }),
   'Film opened': d => (FILM.test(d.film) ? { film: d.film, ...(clean(d.title, 80) && { title: clean(d.title, 80) }) } : null),
-  'Play': d => (FILM.test(d.film) && ['own', 'archive'].includes(d.player) ? { film: d.film, player: d.player } : null),
+  'Play': d => (FILM.test(d.film) && ['own', 'archive'].includes(d.player) ? { film: d.film, player: d.player, ...(CHANNEL.test(d.list || '') && { list: d.list }) } : null),
   'Watched 10 minutes': d => (FILM.test(d.film) ? { film: d.film } : null),
   // A pasted link is counted as one, without the link (it can name someone's Archive.org page);
   // a search the site refuses is counted without its words
@@ -110,7 +110,7 @@ export function commandsFor({ name, data, visit }, { now = new Date(), visitor }
     // Boards are keyed by identifier (titles are not unique); the name is kept beside them
     if (data.title) commands.push(['HSET', 'stats:titles', data.film, data.title]);
   }
-  if (name === 'Play') { count('played', data.film); count('players', data.player); }
+  if (name === 'Play') { count('played', data.film); count('players', data.player); if (data.list) count('played-from', data.list); }
   if (name === 'Watched 10 minutes') count('watched', data.film);
   if (name === 'Search' && data.kind === 'typed' && data.query) {
     count('searches', data.query);

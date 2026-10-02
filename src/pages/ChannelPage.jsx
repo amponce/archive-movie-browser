@@ -89,7 +89,7 @@ export default function ChannelPage({ slug }) {
                 <SubmitForReview channel={channel} onChange={load} />
               </>
             )
-            : <FilmGrid films={cards} notes={notes} track="channel-film" saves />}
+            : <FilmGrid films={cards} notes={notes} track="channel-film" saves source={`c-${channel.id}`} />}
         </section>
       </TvPage>
     </Suspense>

@@ -3,7 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { redis } from './_redis.js';
 import { statsDay, onlineKey, groupSearches } from './_stats.js';
 
-const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'banner', 'tv', 'tuned', 'stayed', 'minutes', 'channel-minutes', 'clicks'];
+const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'played-from', 'banner', 'tv', 'tuned', 'stayed', 'minutes', 'channel-minutes', 'clicks'];
 const STAGES = ['visited', 'clicked', 'played', 'tuned in', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
 const FUNNEL_DAYS = 14;
 const FILM_BOARDS = ['opened', 'played', 'watched', 'minutes'];

@@ -31,7 +31,11 @@ export default function FilmPlayer({ movie, files }) {
 
   // Which player ended up showing the film: ours, or Archive.org's as the fallback
   useEffect(() => {
-    if (source !== undefined) track('Play', { film: movie.identifier, player: source ? 'own' : 'archive' });
+    if (source !== undefined) {
+      let list;
+      try { const from = JSON.parse(sessionStorage.getItem('played-from') || 'null'); if (from?.film === movie.identifier) list = from.list; } catch { /* ignore */ }
+      track('Play', { film: movie.identifier, player: source ? 'own' : 'archive', ...(list && { list }) });
+    }
   }, [source, movie.identifier]);
 
   useEffect(() => {

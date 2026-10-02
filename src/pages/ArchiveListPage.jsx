@@ -49,13 +49,13 @@ async function describe(identifiers) {
 // Film cards that can each go on your own channel, which stays in this browser.
 // notes: an optional line of text under each card, by film id. saves: ♡ and + in place of the
 // browser-only channel toggle
-export function FilmGrid({ films, track: from, notes, saves = false }) {
+export function FilmGrid({ films, track: from, notes, saves = false, source }) {
   const [mine, setMine] = useState(readMyChannel);
   const toggle = (filmId) => { setMine(toggleSaved(filmId)); track('TV', { action: hasFilm(mine, filmId) ? 'remove from my channel' : 'add to my channel', film: filmId }); };
   return (
     <CardGrid>
       {films.map(film => (
-        <div key={film.id} className="flex flex-col gap-2">
+        <div key={film.id} className="flex flex-col gap-2" onClick={source ? () => { try { sessionStorage.setItem('played-from', JSON.stringify({ film: film.id, list: source })); } catch { /* ignore */ } } : undefined}>
           <FilmCard film={film} href={watchUrl(film.id)} track={from} />
           {notes?.[film.id] && <p className="text-sm text-muted break-words">{notes[film.id]}</p>}
           {saves
