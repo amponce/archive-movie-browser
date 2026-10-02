@@ -34,6 +34,25 @@ async function overLimit(db, bucket, max, windowMs, now) {
   return false;
 }
 
+// New films looked up on Archive.org per address per hour; past it a new film is stored
+// flagged without a lookup, and a submit re-checks it once the hour is over
+export const LOOKUPS = 200;
+async function withLookups(db, bucket, flag, now, run) {
+  const row = await db.prepare('SELECT count, until FROM limits WHERE bucket = ?').bind(bucket).first();
+  const live = row && row.until > now;
+  let used = 0;
+  const left = LOOKUPS - (live ? row.count : 0);
+  try {
+    return await run(film => (used < left ? (used++, flag(film)) : true));
+  } finally {
+    if (used) {
+      await (live
+        ? db.prepare('UPDATE limits SET count = count + ? WHERE bucket = ?').bind(used, bucket)
+        : db.prepare('INSERT OR REPLACE INTO limits (bucket, count, until) VALUES (?, ?, ?)').bind(bucket, used, now + 3_600_000)).run();
+    }
+  }
+}
+
 async function readBody(request) {
   if (Number(request.headers.get('content-length')) > MAX_BODY) return { tooBig: true };
   const text = await request.text();
@@ -103,15 +122,16 @@ async function route(request, { db, flag, minutes, now }) {
   if (parts[0] === 'profile') return empty(404);
 
   if (parts[0] === 'channel') {
+    const looked = run => withLookups(db, `l:${address}`, flag, now, run);
     if (method === 'POST' && parts.length === 1) {
-      const id = await createChannel(db, me.id, body, { now, flag });
+      const id = await looked(f => createChannel(db, me.id, body, { now, flag: f }));
       return id ? json({ id }, 201) : empty(409);
     }
     const id = parts[1];
-    if (parts.length === 2 && method === 'PATCH') return empty(await updateChannel(db, id, me.id, body, { now, flag }) ? 204 : 404);
+    if (parts.length === 2 && method === 'PATCH') return empty(await looked(f => updateChannel(db, id, me.id, body, { now, flag: f })) ? 204 : 404);
     if (parts.length === 2 && method === 'DELETE') return empty(await deleteChannel(db, id, me.id) ? 204 : 404);
     if (parts[2] === 'submit' && method === 'POST') {
-      const problem = await submitChannel(db, id, me.id, { now, flag });
+      const problem = await looked(f => submitChannel(db, id, me.id, { now, flag: f }));
       return problem ? json({ problem }, 409) : empty(204);
     }
     if (parts[2] === 'save' && (method === 'PUT' || method === 'DELETE')) return empty(await setSaved(db, me.id, id, method === 'PUT', { now }) ? 204 : 404);

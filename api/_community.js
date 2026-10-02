@@ -164,10 +164,10 @@ export async function deleteChannel(db, id, profileId) {
 
 export async function submitChannel(db, id, profileId, { now, flag }) {
   const p = await db.prepare('SELECT agreed_at FROM profiles WHERE id = ?').bind(profileId).first();
-  const owned = await db.prepare('SELECT id FROM channels WHERE id = ? AND profile_id = ?').bind(id, profileId).first();
-  if (!owned) return 'hidden';
+  const owned = await db.prepare('SELECT status FROM channels WHERE id = ? AND profile_id = ?').bind(id, profileId).first();
+  if (!owned || owned.status === 'hidden') return 'hidden';
   if (!p?.agreed_at) return 'not-agreed';
-  const flagged = (await storedFilms(db, id)).filter(r => r.flagged);
+  const flagged = (await storedFilms(db, id)).filter(r => r.flagged && !isTakenDown(r.film_id));
   const marks = await Promise.all(flagged.map(r => flag(r.film_id)));
   const updates = flagged.flatMap((r, i) => (marks[i] === 'forbidden'
     ? [db.prepare('DELETE FROM channel_films WHERE channel_id = ? AND film_id = ?').bind(id, r.film_id)]

@@ -122,3 +122,27 @@ test('share pages fetch the site shell and show the first poster', async () => {
   assert.ok(html.includes(`<meta property="og:image" content="${image}">`));
   assert.ok(html.includes('summary_large_image'));
 });
+
+test('a film is looked up on Archive.org once per instance; a failed lookup is asked again', async () => {
+  const { default: worker } = await import('../../worker.js');
+  const env = { DB: await openTestDb() };
+  const asked = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    asked.push(String(url));
+    if (String(url).includes('memo-down')) throw new Error('slow');
+    return new Response(JSON.stringify({ result: { title: 'A film' } }), { headers: { 'Content-Type': 'application/json' } });
+  };
+  try {
+    const site = 'https://www.orphanedfilms.com';
+    const send = (method, path, body, auth) => worker.fetch(new Request(site + path, { method, body: body && JSON.stringify(body), headers: { origin: site, 'sec-fetch-site': 'same-origin', 'cf-connecting-ip': '198.51.100.4', ...(auth && { authorization: `Bearer ${auth.id}.${auth.key}` }) } }), env, { waitUntil() {} });
+    const me = await (await send('POST', '/api/profile')).json();
+    const films = [{ film: 'memo-one' }, { film: 'memo-two' }, { film: 'memo-down' }];
+    assert.equal((await send('POST', '/api/channel', { name: 'A', films }, me)).status, 201);
+    assert.equal(asked.length, 3);
+    assert.equal((await send('POST', '/api/channel', { name: 'B', films }, me)).status, 201);
+    assert.deepEqual(asked.slice(3).map(u => u.includes('memo-down')), [true]);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

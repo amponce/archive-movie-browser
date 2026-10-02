@@ -21,11 +21,17 @@ async function redisMinutes(members) {
   const scores = await redis(months().map(m => ['ZMSCORE', `stats:channel-minutes:${m}`, ...members]), { readOnly: true }).catch(() => []);
   return Object.fromEntries(members.map((m, i) => [m, scores.reduce((sum, list) => sum + (Number(list?.[i]) || 0), 0)]));
 }
+// A film's verdict is remembered for this instance; a lookup that failed (slow, down, no
+// record) is not, so it is asked again later
+const verdicts = new Map();
 async function archiveFlag(film) {
+  if (verdicts.has(film)) return verdicts.get(film);
   const meta = await fetch(`https://archive.org/metadata/${encodeURIComponent(film)}/metadata`, { signal: AbortSignal.timeout(5000) }).then(r => (r.ok ? r.json() : null)).catch(() => null);
   if (!meta?.result) return true;
-  if (isForbidden(meta.result)) return 'forbidden';
-  return isMature(meta.result);
+  const verdict = isForbidden(meta.result) ? 'forbidden' : isMature(meta.result);
+  if (verdicts.size > 2000) verdicts.clear(); // ponytail: a whole reset, as in api/_tv.js
+  verdicts.set(film, verdict);
+  return verdict;
 }
 
 // The handlers written for (req, res), run with a web Request and answered with a Response
