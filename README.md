@@ -68,7 +68,7 @@ Every list is also a channel. The generated stations (`"curator": "the station"`
 
 ## How it is built
 
-React 19, Vite, Tailwind. No router, no state library, no UI kit. Vercel serves the site and the functions in `api/`.
+React 19, Vite, Tailwind. No router, no state library, no UI kit. A Cloudflare Worker serves the site and the functions in `api/` (`worker.js`, `wrangler.jsonc`).
 
 ```
 tailwind.config.js        tokens: ink, bone, signal, line; Big Shoulders Display, IBM Plex
@@ -129,23 +129,23 @@ In the order we mean to do them. Open an issue if you want one.
 
 ## Privacy
 
-No accounts, no cookies, no ads, and nothing is sold or shared. Here is everything the site keeps, and who else your browser talks to.
+No accounts, no ads, no cookies of our own, and nothing is sold or shared. Here is everything the site keeps, and who else your browser talks to.
 
 **Our own counts** (`api/event.js`; the rules are in `api/_stats.js`, and they are tested). They are kept in an [Upstash](https://upstash.com) Redis database: events per day; monthly boards of films opened, played and watched (with minutes watched per film and per channel, and each film's title beside its id), searches, filters, pages, referring sites, clicks on the site's own buttons, which player was used, and what people do with TV (channels tuned, stayed on, shared); and the last 50 events, for the private `/stats` page. None of it says who did what. Distinct visitors are estimated with a HyperLogLog fed by a hash of the day, your IP address and your browser name; the hash changes every day, so days cannot be linked, and neither the hash nor the IP address is stored. For the funnel (visited → played → watched), each browser tab gets a random id that lives in `sessionStorage` and disappears when the tab closes; it only ever goes into a HyperLogLog, which keeps an estimate of how many ids it saw and none of the ids. Search text is lowercased, cut to 60 characters, and anything shaped like an email address is removed before it leaves your browser; a search the site refuses is counted without its words, and a pasted link is counted without the link. Your IP address is used, in memory for at most a minute, only to slow down anything sending too many requests. Bots are not counted, and everything expires after 400 days.
 
-**Vercel Web Analytics** counts page views and visitors for the project's Vercel dashboard. It receives the page's address without its search or film part (`?q=…` and `#…` are removed first) and the site you came from. It uses no cookies ([Vercel's privacy policy](https://vercel.com/legal/privacy-policy)).
+**Cloudflare** sits in front of the site and blocks or challenges automated traffic. It sees each request, as any host does, and keeps ordinary request logs ([Cloudflare's privacy policy](https://www.cloudflare.com/privacypolicy/)). If it asks your browser to prove it is not a bot, it sets one cookie, `cf_clearance`, that remembers you passed; most visitors never see a challenge and get no cookie.
 
 **Your browser talks directly to:**
 - the [Internet Archive](https://archive.org), for search, film details and the video itself, as when you visit archive.org;
 - [TMDB](https://www.themoviedb.org)'s image server, for posters (film details from TMDB come through our server, below; if you add your own TMDB key, your browser asks TMDB directly);
 
-Someone's Archive.org lists and a film's subtitle files come through our server instead (`/api/archive-list`, `/api/subtitles`), because Archive.org only lets its own pages read them; film details from TMDB do too (`/api/tmdb`), so the site's key stays private and each film is looked up once for everyone; so does a channel shared by link, whose films are looked up on Archive.org (`/api/tv`). Nothing is kept on the way through. The site is hosted on Vercel, which keeps ordinary request logs.
+Someone's Archive.org lists and a film's subtitle files come through our server instead (`/api/archive-list`, `/api/subtitles`), because Archive.org only lets its own pages read them; film details from TMDB do too (`/api/tmdb`), so the site's key stays private and each film is looked up once for everyone; so does a channel shared by link, whose films are looked up on Archive.org (`/api/tv`). Nothing is kept on the way through. The site is hosted on Cloudflare (above).
 
 **Kept in your browser** (`localStorage`, and `sessionStorage` for the tab's visit id and a film you pressed play on, so it starts on its page): your own channel, where you stopped in each film, recent searches, grid or list view, the last channel you watched, cached film lengths and TMDB lookups, a dismissed banner, your own TMDB key if you add one, and the `/stats` key if you use that page. None of it is sent to us. The films in your own channel are looked up on Archive.org, like any film you open. Clearing the site's data removes all of it.
 
 **Jev**, the model that identifies films and ranks collections, runs offline on our side against Archive.org's metadata and never sees visitors.
 
-A fork collects nothing unless its owner connects an Upstash Redis database (`vercel integration add upstash/upstash-kv`) and sets a `STATS_TOKEN` for the private `/stats` page.
+A fork collects nothing unless its owner connects an Upstash Redis database (its REST address and token as the Worker secrets `KV_REST_API_URL` and `KV_REST_API_TOKEN`) and sets a `STATS_TOKEN` for the private `/stats` page.
 
 ## API Credits
 

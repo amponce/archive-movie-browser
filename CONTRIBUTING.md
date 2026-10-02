@@ -48,7 +48,7 @@ Changes to dependencies, `package.json`, build configuration, or anything under 
 
 ## Two things that catch people out
 
-- **Loading something from a new origin** (a font, an image host, an API)? The site sends a Content-Security-Policy, so add the origin to `vercel.json` or browsers will block it in production while it works fine locally.
+- **Loading something from a new origin** (a font, an image host, an API)? The site sends a Content-Security-Policy, so add the origin to `public/_headers` or browsers will block it in production while it works fine locally.
 - **You never need API keys.** `npm test`, `npm run dev` and `npm run build` all work without any. Keys are only for posters from TMDB at runtime (optional) and for `npm run index` (maintainers).
 
 ## Using AI tools

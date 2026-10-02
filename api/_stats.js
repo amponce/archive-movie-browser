@@ -2,7 +2,7 @@
 // counters each one bumps. It stores counts only: no cookies, no IP addresses, no visitor ids.
 // A visit id (random, one per browser tab) only ever goes into a HyperLogLog for the funnel,
 // which keeps an estimate of how many distinct ids it saw and none of the ids.
-// (The leading underscore keeps Vercel from treating this file as an endpoint.)
+// (The leading underscore marks a helper, not an endpoint; worker.js routes only the others.)
 
 import { isForbiddenSearch, isAdultSearch } from '../src/services/policy.js';
 

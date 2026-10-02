@@ -43,8 +43,8 @@ export function libraryFiles(films = catalogue(), site = SITE) {
 
 // A zip with no compression (the files are tiny; the names are most of it). Written by hand to
 // keep dependencies out: local headers, the central directory, and the end record.
-// ponytail: 3.4 MB for 4,200 films, built whole; Vercel answers up to 4.5 MB. Past ~5,500 films,
-// serve it from Blob or split it by decade.
+// ponytail: 3.4 MB for 4,200 films, built whole in the Worker's memory. If it grows a lot,
+// build it on a schedule into R2 or split it by decade.
 export function zip(files) {
   const parts = [];
   const central = [];
