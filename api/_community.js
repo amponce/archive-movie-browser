@@ -11,8 +11,9 @@ export const newId = () => [...crypto.getRandomValues(new Uint8Array(10))].map(b
 export const newKey = () => hex(crypto.getRandomValues(new Uint8Array(32)));
 export const hashKey = async key => hex(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(String(key)))));
 
+// Control characters become spaces; invisible and direction-changing characters are dropped
 // eslint-disable-next-line no-control-regex
-export const cleanText = (value, max) => String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+export const cleanText = (value, max) => String(value ?? '').replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ').replace(/[\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '').replace(/\s+/g, ' ').trim().slice(0, max);
 
 export function cleanFilms(list) {
   const seen = new Set();

@@ -19,6 +19,15 @@ test('text is trimmed, flattened and cut to its limit', () => {
   assert.equal(cleanText(null, 80), '');
 });
 
+test('text loses C1 controls, zero-width, bidi and byte-order characters', () => {
+  assert.equal(cleanText('a\u0085b\u009fc', 80), 'a b c');
+  assert.equal(cleanText('a\u200bb\u200cc\u200dd\u200ee\u200ff', 80), 'abcdef');
+  assert.equal(cleanText('\u202aa\u202bb\u202cc\u202dd\u202ee', 80), 'abcde');
+  assert.equal(cleanText('\u2066a\u2067b\u2068c\u2069', 80), 'abc');
+  assert.equal(cleanText('\ufeffname\ufeff', 80), 'name');
+  assert.equal(cleanText('\u200b \u202e ', 80), '');
+});
+
 test('films: valid ids only, once each, taken-down out, capped, notes cut', () => {
   const films = cleanFilms([{ film: 'Detour' }, { film: 'Detour' }, { film: '<x>' }, { film: 'ok-1', note: 'n'.repeat(400) }]);
   assert.deepEqual(films.map(f => f.film), ['Detour', 'ok-1']);
