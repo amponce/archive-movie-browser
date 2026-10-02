@@ -71,7 +71,7 @@ export default function InlineSet({ channel, onClose }) {
         </p>
         <div className="flex items-center gap-4">
           <PopOut video={() => video.current} className="nav-link flex items-center gap-2 hover:text-signal" />
-          <a href={`/tv#${channel.id}`} className="nav-link hover:text-signal" data-track="inline-open-tv">Open on TV</a>
+          <a href={channel.id.startsWith('c-') ? `/c/${channel.id.slice(2)}` : `/tv#${channel.id}`} className="nav-link hover:text-signal" data-track="inline-open-tv">Open on TV</a>
           <button type="button" onClick={onClose} className="nav-link hover:text-signal">Close</button>
         </div>
       </div>

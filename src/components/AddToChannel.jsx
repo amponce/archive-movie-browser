@@ -3,18 +3,10 @@ import { Plus } from 'lucide-react';
 import useProfile from '../hooks/useProfile';
 import { ensureProfile, api } from '../services/profile';
 import { readLast, writeLast } from '../services/lastChannel';
+import { serial } from '../services/serial';
 
 const MAX_FILMS = 40;
 const SIZES = { overlay: 'p-1.5', inline: 'p-3' };
-
-// One add at a time per channel in this tab, so two quick adds cannot overwrite each other.
-const queues = new Map();
-const serial = (id, fn) => {
-  const next = (queues.get(id) || Promise.resolve()).catch(() => {}).then(fn);
-  queues.set(id, next);
-  next.catch(() => {}).then(() => { if (queues.get(id) === next) queues.delete(id); });
-  return next;
-};
 
 // Returns 'added', 'already', 'full' or 'failed'.
 async function addFilm(profile, channelId, film) {

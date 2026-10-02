@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import Button from '../ui/Button';
@@ -21,8 +21,14 @@ export default function ChannelPage({ slug }) {
   const { data: me } = useProfile();
   const saved = savedNow ?? !!me?.saved?.some(s => s.id === slug);
 
-  const load = useCallback(() => api(`/api/channel/${slug}`, { profile: readProfile() })
-    .then(r => (r.ok ? r.json() : null)).catch(() => null).then(setChannel), [slug]);
+  // A reload that answers after a newer one is dropped
+  const loads = useRef(0);
+  const load = useCallback(() => {
+    const n = ++loads.current;
+    return api(`/api/channel/${slug}`, { profile: readProfile() })
+      .then(r => (r.ok ? r.json() : null)).catch(() => null)
+      .then(c => { if (n === loads.current) setChannel(c); });
+  }, [slug]);
   useEffect(() => { load(); }, [load]);
   useEffect(() => { if (channel) document.title = `${channel.name} | Orphaned Films`; }, [channel]);
   useEffect(() => {
@@ -32,7 +38,10 @@ export default function ChannelPage({ slug }) {
     return () => { live = false; };
   }, [channel]);
 
-  const shared = useMemo(() => channel && { id: `c-${channel.id}`, name: channel.name, ids: channel.films.map(f => f.film) }, [channel]);
+  // The same ids array while the films are unchanged, so an edit does not restart measuring
+  const idsKey = channel ? channel.films.map(f => f.film).join('\n') : null;
+  const ids = useMemo(() => (idsKey ? idsKey.split('\n') : []), [idsKey]);
+  const shared = useMemo(() => channel && { id: `c-${channel.id}`, name: channel.name, ids }, [channel?.id, channel?.name, ids]);
 
   if (channel === undefined) return <div className="min-h-screen bg-ink" />;
   if (channel === null) {
@@ -74,7 +83,7 @@ export default function ChannelPage({ slug }) {
           </div>
           {isOwner
             ? <ChannelEditor key={channel.id} channel={channel} titles={titles} onChange={load} />
-            : <FilmGrid films={cards} notes={notes} track="channel-film" />}
+            : <FilmGrid films={cards} notes={notes} track="channel-film" saves />}
         </section>
       </TvPage>
     </Suspense>

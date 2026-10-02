@@ -1,35 +1,47 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { api, readProfile } from '../services/profile';
+import { serial } from '../services/serial';
 
 const MAX_FILMS = 40;
 const field = 'w-full bg-transparent border border-line px-2 py-1 text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal';
 
 // The owner's controls on a channel page. Each change is saved as it is made: text on blur,
-// order and removals at once. Only fields that changed are sent.
+// order and removals at once. Only fields that changed are sent. Saves go one at a time, and
+// only the last one queued reports and reloads.
 export default function ChannelEditor({ channel, titles = {}, onChange }) {
   const [films, setFilms] = useState(channel.films);
   const [drag, setDrag] = useState(null);
   const [confirm, setConfirm] = useState(false);
   const [status, setStatus] = useState(null);
+  const queued = useRef({ last: 0, failed: false });
   const profile = readProfile();
 
-  const save = async (body) => {
+  const save = (body) => {
+    const n = ++queued.current.last;
     setStatus('Saving…');
-    try {
-      const res = await api(`/api/channel/${channel.id}`, { method: 'PATCH', profile, body });
-      setStatus(res.ok ? 'Saved' : 'Could not save');
-    } catch {
-      setStatus('Could not save');
-    }
-    onChange();
+    serial(channel.id, async () => {
+      try {
+        const res = await api(`/api/channel/${channel.id}`, { method: 'PATCH', profile, body });
+        if (!res.ok) queued.current.failed = true;
+      } catch {
+        queued.current.failed = true;
+      }
+      if (n !== queued.current.last) return;
+      setStatus(queued.current.failed ? 'Could not save' : 'Saved');
+      queued.current.failed = false;
+      onChange();
+    });
   };
   const saveFilms = (next) => { setFilms(next); save({ films: next.slice(0, MAX_FILMS).map(({ film, note }) => ({ film, note })) }); };
   const move = (from, to) => { const next = [...films]; const [x] = next.splice(from, 1); next.splice(to, 0, x); saveFilms(next); };
   const changed = (value, stored) => value.trim() !== (stored || '');
   const remove = async () => {
-    const res = await api(`/api/channel/${channel.id}`, { method: 'DELETE', profile });
-    if (res.ok) window.location.href = `/u/${profile.id}`;
-    else { setConfirm(false); setStatus('Could not delete'); }
+    try {
+      const res = await serial(channel.id, () => api(`/api/channel/${channel.id}`, { method: 'DELETE', profile }));
+      if (res.ok) { window.location.href = `/u/${profile.id}`; return; }
+    } catch { /* falls through */ }
+    setConfirm(false);
+    setStatus('Could not delete');
   };
 
   return (
@@ -64,7 +76,7 @@ export default function ChannelEditor({ channel, titles = {}, onChange }) {
       </ol>
       <div className="flex flex-wrap items-center gap-3 text-sm">
         {confirm
-          ? <span className="flex items-center gap-3">Delete this channel? <button type="button" className="text-signal underline" onClick={remove}>Yes, delete</button> <button type="button" className="underline" onClick={() => setConfirm(false)}>No</button></span>
+          ? <span className="flex items-center gap-3">Delete this channel? <button type="button" className="text-signal underline" onClick={remove}>Yes, delete</button> <button type="button" className="underline" autoFocus onClick={() => setConfirm(false)}>No</button></span>
           : <button type="button" className="nav-link hover:text-signal" onClick={() => setConfirm(true)}>Delete channel</button>}
         <span role="status" className="text-muted">{status}</span>
       </div>

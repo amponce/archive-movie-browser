@@ -165,7 +165,7 @@ function Stage({ channel, channels, onTune, onNext }) {
   const tuning = useTuning(channel, onNext);
   const subtitles = useSubtitles(tuning.film?.id, tuning.film?.url);
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-4">
+    <div data-stage className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-4">
       <div className="lg:col-span-8"><Screen tuning={tuning} channelId={channel.id} subtitles={subtitles} /></div>
       <aside className="lg:col-span-4 flex flex-col gap-3" aria-label="Channels">
         <span className="label lg:hidden">Channels</span>
@@ -215,6 +215,7 @@ export default function TvPage({ channel = null, children }) {
   // The personal channel goes first, as channel 0, when it has anything on it
   // A community channel waits until every film is measured, so it starts on the shared clock
   const waiting = !!channel && !!mine?.pending;
+  const empty = !!channel && !waiting && !mine?.lineup.length;
   const channels = useMemo(() => (mine && mine.lineup.length && !waiting ? [mine, ...stations] : stations), [mine, stations, waiting]);
   // The channel in the link, else the one this browser watched last, else channel 1
   const [currentId, setCurrentId] = useState(() => { if (channel) return channel.id; try { return decodeURIComponent(window.location.hash.slice(1)) || readLast(); } catch { return readLast(); } });
@@ -222,8 +223,8 @@ export default function TvPage({ channel = null, children }) {
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(t); }, []);
   useEffect(() => { if (!channel) document.title = 'TV | Orphaned Films'; }, [channel]);
 
-  const current = useMemo(() => (waiting && currentId === channel.id ? null
-    : channels.find(c => c.id === currentId) || (mine?.lineup.length && window.location.search.includes('mine=') ? mine : null) || channels[0] || null), [channels, currentId, mine, waiting, channel]);
+  const current = useMemo(() => ((waiting || empty) && currentId === channel.id ? null
+    : channels.find(c => c.id === currentId) || (mine?.lineup.length && window.location.search.includes('mine=') ? mine : null) || channels[0] || null), [channels, currentId, mine, waiting, empty, channel]);
   const tune = useCallback((to) => {
     setCurrentId(to.id);
     if (!channel) {
@@ -237,13 +238,15 @@ export default function TvPage({ channel = null, children }) {
   useEffect(() => {
     const onKeyDown = (event) => {
       if (!channels.length || ['INPUT', 'TEXTAREA'].includes(event.target?.tagName)) return;
+      // On a channel page the page below the set keeps its arrow keys
+      if (channel && (!current || !(event.target === document.body || event.target?.closest?.('[data-stage]')))) return;
       const i = channels.findIndex(c => c.id === current?.id);
       if (event.key === 'ArrowUp') { event.preventDefault(); tune(channels[(i - 1 + channels.length) % channels.length]); }
       if (event.key === 'ArrowDown') { event.preventDefault(); tune(channels[(i + 1) % channels.length]); }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [channels, current, tune]);
+  }, [channels, current, tune, channel]);
 
   return (
     <div className="min-h-screen">
@@ -252,6 +255,11 @@ export default function TvPage({ channel = null, children }) {
         {error && <p className="text-muted">The guide didn't load ({error}). <a href="/browse" className="text-bone underline">Browse instead.</a></p>}
         {currentId === 'mine' && !mine?.ids.length && <EmptyChannel />}
         {waiting && currentId === channel.id && <p className="text-muted">Tuning in…</p>}
+        {empty && currentId === channel.id && (
+          <div className="lg:w-2/3 relative aspect-video bg-black rounded-lg overflow-hidden">
+            <div className="absolute inset-0 flex items-center justify-center text-muted">Nothing on this channel yet.</div>
+          </div>
+        )}
         {current && <Stage channel={current} channels={channels} onTune={tune} onNext={() => setNow(Date.now())} />}
         {children}
         {!channel && mine && (mine.lineup.length > 0 || mine.pending > 0) && (
