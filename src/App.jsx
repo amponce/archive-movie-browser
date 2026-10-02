@@ -17,6 +17,7 @@ const PAGES = {
   '/iptv': lazy(() => import('./pages/IptvPage')),
   '/collection': lazy(() => import('./pages/CollectionPage')),
   '/details': lazy(() => import('./pages/ArchiveListPage')),
+  '/channels': lazy(() => import('./pages/CommunityPage')),
   '/c': lazy(() => import('./pages/ChannelPage')),
   '/u': lazy(() => import('./pages/ProfilePage')),
 };
