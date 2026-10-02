@@ -22,9 +22,11 @@ async function measure(id, known) {
   return entry;
 }
 
-export default function useMyChannel(hours = 6) {
-  const fromLink = useMemo(() => channelFromUrl(window.location.search), []);
-  const [ids, setIds] = useState(() => fromLink || readMyChannel());
+// shared: { id, name, ids } for a channel from the server; it is read-only here
+export default function useMyChannel(hours = 6, shared = null) {
+  const fromLink = useMemo(() => shared?.ids || channelFromUrl(window.location.search), [shared]);
+  const [own, setIds] = useState(() => fromLink || readMyChannel());
+  const ids = shared ? shared.ids : own;
   const [lengths, setLengths] = useState(readLengths);
 
   // Take a film off your own channel (a shared one is someone else's to edit)
@@ -64,9 +66,9 @@ export default function useMyChannel(hours = 6) {
     const now = Date.now();
     const slot = onAirAt(lineup, now);
     return {
-      id: MY_CHANNEL_ID,
+      id: shared?.id || MY_CHANNEL_ID,
       number: 0,
-      name: fromLink ? 'A shared channel' : 'My channel',
+      name: shared?.name || (fromLink ? 'A shared channel' : 'My channel'),
       mine: !fromLink,
       ids,
       remove,
@@ -75,5 +77,5 @@ export default function useMyChannel(hours = 6) {
       now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
       programmes: programmesBetween(lineup, now, now + hours * 3600_000).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, startsAt: p.startsAt, endsAt: p.endsAt })),
     };
-  }, [ids, lengths, fromLink, hours, remove]);
+  }, [ids, lengths, fromLink, shared, hours, remove]);
 }

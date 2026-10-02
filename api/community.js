@@ -58,7 +58,9 @@ async function route(request, { db, flag, minutes, now }) {
     if (parts[0] === 'channel' && parts.length === 2) {
       const c = await getChannel(db, parts[1]);
       if (!c) return empty(404);
-      const { profileId: _owner, ...open } = c;
+      const { profileId, ...open } = c;
+      // The owner's own id comes back only to the owner, so the page can show the editor
+      if (request.headers.get('authorization') && (await owner(request, db))?.id === profileId) open.ownerId = profileId;
       return json(open, 200, c.status === 'public' || c.status === 'featured' ? {} : { 'X-Robots-Tag': 'noindex' });
     }
     return empty(404);

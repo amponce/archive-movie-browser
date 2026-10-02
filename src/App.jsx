@@ -17,14 +17,16 @@ const PAGES = {
   '/iptv': lazy(() => import('./pages/IptvPage')),
   '/collection': lazy(() => import('./pages/CollectionPage')),
   '/details': lazy(() => import('./pages/ArchiveListPage')),
+  '/c': lazy(() => import('./pages/ChannelPage')),
+  '/u': lazy(() => import('./pages/ProfilePage')),
 };
 const ProfilePage = lazy(() => import('./pages/ArchiveProfilePage'));
 
 export default function App() {
   // An edit link (/u/<id>#key=...) moves the profile into this browser before anything renders
-  if (adoptFromLink(window.location.pathname, window.location.hash)) { window.location.replace('/browse'); return null; }
+  if (adoptFromLink(window.location.pathname, window.location.hash)) { window.location.replace(window.location.pathname); return null; }
   // The panel would sit over the TV player's controls
-  const onTv = window.location.pathname.replace(/\/+$/, '') === '/tv';
+  const onTv = /^\/(tv|c\/[^/]+)$/.test(window.location.pathname.replace(/\/+$/, ''));
   return <><Routed />{!onTv && <SaveLinkPanel />}</>;
 }
 

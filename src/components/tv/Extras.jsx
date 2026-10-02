@@ -7,7 +7,8 @@ import { track } from '../../services/analytics';
 // Everyone who opens a channel's link lands on the same frame, so a link is a watch party
 export function WatchTogether({ channel }) {
   const [copied, setCopied] = useState(false);
-  const url = channel.id === 'mine' && channel.ids ? shareUrl(channel.ids, window.location.origin) : `${window.location.origin}/tv#${channel.id}`;
+  const url = channel.id === 'mine' && channel.ids ? shareUrl(channel.ids, window.location.origin)
+    : channel.id.startsWith('c-') ? `${window.location.origin}/c/${channel.id.slice(2)}` : `${window.location.origin}/tv#${channel.id}`;
   const copy = () => { navigator.clipboard?.writeText(url); setCopied(true); track('TV', { action: 'watch together', channel: channel.id }); setTimeout(() => setCopied(false), 4000); };
   return (
     <button type="button" onClick={copy} className="btn-primary w-full">

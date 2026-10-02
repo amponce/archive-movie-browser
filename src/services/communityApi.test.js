@@ -93,3 +93,14 @@ test('an internal failure is a plain 500', async () => {
   console.error = quiet;
   assert.equal(res.status, 500);
 });
+
+test('a channel read says who owns it only to the owner', async () => {
+  const c = await ctx();
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  const { id } = await (await call(c, 'POST', '/api/channel', { auth: me, body: { name: 'Night', films: [{ film: 'Detour' }] } })).json();
+  const other = await (await call(c, 'POST', '/api/profile', { ip: '2.2.2.2' })).json();
+  assert.equal((await (await call(c, 'GET', `/api/channel/${id}`, { auth: me })).json()).ownerId, me.id);
+  assert.equal((await (await call(c, 'GET', `/api/channel/${id}`)).json()).ownerId, undefined);
+  assert.equal((await (await call(c, 'GET', `/api/channel/${id}`, { auth: other })).json()).ownerId, undefined);
+  assert.equal((await (await call(c, 'GET', `/api/channel/${id}`, { auth: { id: me.id, key: 'f'.repeat(64) } })).json()).ownerId, undefined);
+});

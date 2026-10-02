@@ -16,12 +16,12 @@ const serial = (id, fn) => {
   return next;
 };
 
-// Returns 'added', 'full' or 'failed'.
+// Returns 'added', 'already', 'full' or 'failed'.
 async function addFilm(profile, channelId, film) {
   const res = await api(`/api/channel/${channelId}`, { profile });
   if (!res.ok) return 'failed';
   const current = await res.json();
-  if (current.films.some(f => f.film === film)) return 'added';
+  if (current.films.some(f => f.film === film)) return 'already';
   if (current.films.length >= MAX_FILMS) return 'full';
   const films = [...current.films.map(({ film: id, note }) => ({ film: id, note })), { film }];
   const patch = await api(`/api/channel/${channelId}`, { method: 'PATCH', profile, body: { films } });
@@ -63,7 +63,7 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
       const result = await serial(channel.id, () => addFilm(profile, channel.id, film));
       if (result !== 'failed') writeLast(channel.id);
       const reviewed = channel.status === 'public' || channel.status === 'featured';
-      setStatus(result === 'added' ? `Added to ${channel.name}${reviewed ? '. It will be reviewed again.' : ''}` : result === 'full' ? 'That channel is full' : 'Could not add');
+      setStatus(result === 'added' ? `Added to ${channel.name}${reviewed ? '. It will be reviewed again.' : ''}` : result === 'already' ? `Added to ${channel.name}` : result === 'full' ? 'That channel is full' : 'Could not add');
     } catch {
       setStatus('Could not add');
     }
@@ -114,7 +114,7 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
             : <button type="button" className="block w-full text-left px-3 py-2 hover:bg-line focus-visible:outline-none focus-visible:bg-line text-signal" onClick={() => setNaming(true)}>New channel…</button>}
         </div>
       )}
-      <span role="status" title={status || undefined} className={`absolute ${alignLeft ? 'left-0' : 'right-0'} top-full mt-1 max-w-[14rem] truncate text-xs text-bone bg-ink z-30 ${status ? 'border border-line px-2 py-1' : ''}`}>{status}</span>
+      <span role="status" title={status || undefined} className={`absolute ${alignLeft ? 'left-0' : 'right-0'} top-full mt-1 w-max max-w-[14rem] whitespace-normal break-words text-xs text-bone bg-ink z-30 ${status ? 'border border-line px-2 py-1' : ''}`}>{status}</span>
     </div>
   );
 }
