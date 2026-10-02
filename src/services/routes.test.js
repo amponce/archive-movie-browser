@@ -30,3 +30,7 @@ test('every list file is imported for the server (add its line to api/_lists.js)
   const slugs = readdirSync(dir).filter(f => f.endsWith('.json')).map(f => JSON.parse(readFileSync(new URL(f, dir), 'utf8')).slug).sort()
   assert.deepEqual(LIST_FILES.map(list => list.slug).sort(), slugs)
 })
+
+test('community addresses go to one handler', () => {
+  for (const p of ['/api/profile', '/api/profile/abcdefghij/favourites/Detour', '/api/channel/abcdefghij/submit', '/api/channels']) assert.equal(route(p).name, 'community')
+})
