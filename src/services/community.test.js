@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newId, newKey, hashKey, cleanText, cleanFilms, afterContentEdit, submitProblem, isListed, LIMITS, createProfile, authProfile, getProfile, updateProfile, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels } from '../../api/_community.js';
+import { newId, newKey, hashKey, cleanText, cleanLines, cleanFilms, afterContentEdit, submitProblem, isListed, LIMITS, createProfile, authProfile, getProfile, updateProfile, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels } from '../../api/_community.js';
 import { openTestDb } from './testDb.js';
 import { TAKEN_DOWN } from './policy.js';
 
@@ -29,6 +29,15 @@ test('text loses C1 controls, zero-width, bidi and byte-order characters', () =>
   assert.equal(cleanText('\u2066a\u2067b\u2068c\u2069', 80), 'abc');
   assert.equal(cleanText('\ufeffname\ufeff', 80), 'name');
   assert.equal(cleanText('\u200b \u202e ', 80), '');
+});
+
+test('a description keeps its line breaks and nothing else invisible', () => {
+  assert.equal(cleanLines('First line\nsecond\r\nthird', 500), 'First line\nsecond\nthird');
+  assert.equal(cleanLines('a\n\n\n\n\nb', 500), 'a\n\nb');
+  assert.equal(cleanLines('a\n \t \n\n b', 500), 'a\n\nb');
+  assert.equal(cleanLines('\n\n  a\u0000b\u200b\u202ec\tx  \n\n', 500), 'a bc x');
+  assert.equal(cleanLines('x'.repeat(300) + '\n' + 'y'.repeat(300), 500).length, 500);
+  assert.equal(cleanLines(null, 500), '');
 });
 
 test('films: valid ids only, once each, taken-down out, capped, notes cut', () => {
@@ -217,4 +226,13 @@ test('a name or description equal to the stored one is not a content edit', asyn
   assert.equal((await getChannel(db, id)).status, 'public');
   await updateChannel(db, id, pid, { name: 'different' }, { now, flag: noFlag });
   assert.equal((await getChannel(db, id)).status, 'submitted');
+});
+
+test('a channel description is stored with its line breaks, on create and on edit', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  const id = await createChannel(db, pid, { name: 'Lines', description: 'One\n\n\n\nTwo', films: films(1) }, { now, flag: noFlag });
+  assert.equal((await getChannel(db, id)).description, 'One\n\nTwo');
+  await updateChannel(db, id, pid, { description: 'Three\nFour' }, { now, flag: noFlag });
+  assert.equal((await getChannel(db, id)).description, 'Three\nFour');
 });
