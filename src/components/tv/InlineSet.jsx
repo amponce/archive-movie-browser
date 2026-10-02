@@ -6,6 +6,8 @@ import PopOut from '../../ui/PopOut';
 import useSubtitles, { SubtitleTracks, subtitleNote } from '../../hooks/useSubtitles';
 import useTvSource from '../../hooks/useTvSource';
 import { ChannelDown } from './Extras';
+import FavouriteButton from '../FavouriteButton';
+import AddToChannel from '../AddToChannel';
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const minutes = s => Math.floor(s / 60);
@@ -69,7 +71,9 @@ export default function InlineSet({ channel, onClose }) {
           <span className="font-display font-black text-signal tabular-nums mr-2">{channel.number}</span>
           {film.title}{film.year ? ` (${film.year})` : ''} <span className="text-muted">joined {minutes(slot.offset)} min in, on {channel.name}{subtitleNote(subtitles) ? `. ${subtitleNote(subtitles)}` : ''}</span>
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <FavouriteButton film={film.id} variant="inline" />
+          <AddToChannel film={film.id} variant="inline" />
           <PopOut video={() => video.current} className="nav-link flex items-center gap-2 hover:text-signal" />
           <a href={channel.id.startsWith('c-') ? `/c/${channel.id.slice(2)}` : `/tv#${channel.id}`} className="nav-link hover:text-signal" data-track="inline-open-tv">Open on TV</a>
           <button type="button" onClick={onClose} className="nav-link hover:text-signal">Close</button>

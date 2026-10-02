@@ -16,6 +16,8 @@ import Guide, { useGuideSpan } from '../components/tv/Guide';
 import InlineSet from '../components/tv/InlineSet';
 import { WatchTogether, EmptyChannel, ChannelDown } from '../components/tv/Extras';
 import useTvSource from '../hooks/useTvSource';
+import FavouriteButton from '../components/FavouriteButton';
+import AddToChannel from '../components/AddToChannel';
 import useProfile from '../hooks/useProfile';
 import useSavedChannels from '../hooks/useSavedChannels';
 import { carriedInto } from '../services/profile';
@@ -156,6 +158,8 @@ function NowPlaying({ channel, tuning, subtitles }) {
         {fromStart && <button type="button" onClick={live} className="btn-ghost">Back to live</button>}
         <PopOut video={() => videoRef.current} />
         <a href={`/browse#${encodeURIComponent(film.id)}`} className="btn-ghost">About this film</a>
+        <FavouriteButton film={film.id} variant="inline" />
+        <AddToChannel film={film.id} variant="inline" />
       </div>
     </div>
   );
