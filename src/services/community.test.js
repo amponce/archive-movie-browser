@@ -207,3 +207,14 @@ test('submit re-checks flagged films: cleared ones pass, forbidden ones are drop
   assert.equal(await submitChannel(db, id, pid, { now, flag: async f => (f === 'film-1' ? 'forbidden' : false) }), null);
   assert.deepEqual((await getChannel(db, id)).films.map(f => f.film), ['film-0', 'film-2', 'film-3', 'film-4', 'film-5']);
 });
+
+test('a name or description equal to the stored one is not a content edit', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  const id = await createChannel(db, pid, { name: 'Same', description: 'Words', films: films(2) }, { now, flag: noFlag });
+  await db.prepare("UPDATE channels SET status = 'public' WHERE id = ?").bind(id).run();
+  await updateChannel(db, id, pid, { name: '  Same  ', description: ' Words ' }, { now, flag: noFlag });
+  assert.equal((await getChannel(db, id)).status, 'public');
+  await updateChannel(db, id, pid, { name: 'different' }, { now, flag: noFlag });
+  assert.equal((await getChannel(db, id)).status, 'submitted');
+});
