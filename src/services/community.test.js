@@ -17,11 +17,14 @@ test('text is trimmed, flattened and cut to its limit', () => {
   assert.equal(cleanText('  a\n\tb\u0000c  ', 80), 'a b c');
   assert.equal(cleanText('x'.repeat(100), 80).length, 80);
   assert.equal(cleanText(null, 80), '');
+  assert.equal(cleanText('\u{1F468}\u200D\u{1F469}\u200D\u{1F467}', 80), '\u{1F468}\u200D\u{1F469}\u200D\u{1F467}');
+  assert.equal(cleanText('\u0645\u06CC\u200C\u062E\u0648\u0627\u0647\u0645', 80), '\u0645\u06CC\u200C\u062E\u0648\u0627\u0647\u0645');
+  assert.equal(cleanText('a\u200Bb\u202Ec', 80), 'abc');
 });
 
 test('text loses C1 controls, zero-width, bidi and byte-order characters', () => {
   assert.equal(cleanText('a\u0085b\u009fc', 80), 'a b c');
-  assert.equal(cleanText('a\u200bb\u200cc\u200dd\u200ee\u200ff', 80), 'abcdef');
+  assert.equal(cleanText('a\u200bb\u200cc\u200dd\u200ee\u200ff', 80), 'ab\u200cc\u200ddef');
   assert.equal(cleanText('\u202aa\u202bb\u202cc\u202dd\u202ee', 80), 'abcde');
   assert.equal(cleanText('\u2066a\u2067b\u2068c\u2069', 80), 'abc');
   assert.equal(cleanText('\ufeffname\ufeff', 80), 'name');
