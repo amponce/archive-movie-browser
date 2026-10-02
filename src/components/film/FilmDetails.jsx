@@ -93,7 +93,7 @@ export default function FilmDetails({ movie, details, titleId, playing, onPlay, 
           <Button size="lg" variant="ghost" onClick={toggleMyChannel} aria-pressed={onMyChannel} title="Your own TV channel, kept in this browser">
             {onMyChannel ? 'On my channel' : 'Add to my channel'}
           </Button>
-          <FavouriteButton film={movie.identifier} className="self-start sm:self-center p-3" />
+          <FavouriteButton film={movie.identifier} variant="inline" className="self-start sm:self-center" />
         </div>
       )}
     </div>

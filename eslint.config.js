@@ -5,7 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 
 export default [
-  { ignores: ['dist/', 'node_modules/', 'mcp/node_modules/', '.vercel/', '.claude/', '.omc/', 'design/'] },
+  { ignores: ['dist/', 'node_modules/', 'mcp/node_modules/', '.vercel/', '.claude/', '.omc/', 'design/', '.wrangler/'] },
   js.configs.recommended,
   {
     files: ['**/*.{js,jsx,mjs}'],
