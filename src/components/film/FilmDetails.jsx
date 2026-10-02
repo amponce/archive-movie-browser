@@ -4,6 +4,7 @@ import tmdbService from '../../services/tmdb';
 import archiveService from '../../services/archive';
 import Button from '../../ui/Button';
 import FavouriteButton from '../FavouriteButton';
+import AddToChannel from '../AddToChannel';
 import { track } from '../../services/analytics';
 import { plainText } from '../../services/plainText';
 import { readMyChannel, toggleSaved, hasFilm, MY_CHANNEL_KEY } from '../../services/myChannel';
@@ -93,6 +94,7 @@ export default function FilmDetails({ movie, details, titleId, playing, onPlay, 
           <Button size="lg" variant="ghost" onClick={toggleMyChannel} aria-pressed={onMyChannel} title="Your own TV channel, kept in this browser">
             {onMyChannel ? 'On my channel' : 'Add to my channel'}
           </Button>
+          <AddToChannel film={movie.identifier} variant="inline" className="self-start sm:self-center" />
           <FavouriteButton film={movie.identifier} variant="inline" className="self-start sm:self-center" />
         </div>
       )}

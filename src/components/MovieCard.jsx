@@ -6,6 +6,7 @@ import { Sprockets, fieldFor } from '../ui/FilmCard';
 import TitleCover from './TitleCover';
 import { plainText } from '../services/plainText';
 import FavouriteButton from './FavouriteButton';
+import AddToChannel from './AddToChannel';
 
 const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) {
   const [tmdbData, setTmdbData] = useState(null);
@@ -113,7 +114,10 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
         {meta && <span className="block mt-0.5 font-mono text-[11px] text-dim tabular-nums">{meta}</span>}
       </div>
       {/* A sibling of the card, not inside it: a button cannot sit in a role=button */}
-      <FavouriteButton film={movie.identifier} className="absolute top-2 right-2 z-10" />
+      <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+        <AddToChannel film={movie.identifier} />
+        <FavouriteButton film={movie.identifier} />
+      </div>
       </div>
     );
   }
@@ -211,7 +215,10 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
         )}
       </div>
     </div>
-    <FavouriteButton film={movie.identifier} className="absolute top-2 right-2 z-10" />
+    <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+        <AddToChannel film={movie.identifier} />
+        <FavouriteButton film={movie.identifier} />
+      </div>
     </div>
   );
 });
