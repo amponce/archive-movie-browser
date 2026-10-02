@@ -13,6 +13,7 @@ import { redis } from './api/_redis.js';
 import { isForbidden, isMature } from './src/services/policy.js';
 import { route } from './api/_routes.js';
 import { getChannel, getProfile, isListed } from './api/_community.js';
+import posterIndex from './public/poster-index.json' with { type: 'json' };
 
 const months = (now = new Date()) => [0, 1].map(back => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 1)).toISOString().slice(0, 7));
 async function redisMinutes(members) {
@@ -57,11 +58,20 @@ const API = {
   community: (request, query, env) => community(request, { db: env.DB, flag: archiveFlag, minutes: redisMinutes, now: Date.now() }),
 };
 
+// The share card's picture: the poster of the first film that has one
+const posterOf = (films) => {
+  for (const film of films) {
+    const entry = posterIndex.films[film];
+    if (entry?.p && !isForbidden({ title: entry.t })) return `https://image.tmdb.org/t/p/w500${entry.p}`;
+  }
+  return null;
+};
+
 const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // /c/<id> and /u/<id>: the app's page with a share preview; unlisted channels and profiles are noindex
 async function sharePage(request, env, kind, id) {
-  const asset = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url)));
+  const asset = await env.ASSETS.fetch(new Request(new URL('/', request.url)));
   const headers = new Headers(asset.headers);
   headers.delete('ETag');
   headers.set('Cache-Control', 'no-store');
@@ -76,7 +86,8 @@ async function sharePage(request, env, kind, id) {
   const listed = kind === 'c' && !!data && isListed(data.status);
   const title = data ? `${data.name || 'A profile'} | Orphaned Films` : 'Orphaned Films';
   const description = data && kind === 'c' ? `${data.films.length} ${data.films.length === 1 ? 'film' : 'films'}${data.owner ? ` · by ${data.owner}` : ''}` : 'Forgotten films, found.';
-  const meta = `<meta property="og:title" content="${escapeHtml(title)}"><meta name="description" content="${escapeHtml(description)}"><meta property="og:description" content="${escapeHtml(description)}"><meta name="twitter:card" content="summary">${listed ? '' : '<meta name="robots" content="noindex">'}`;
+  const image = data && posterOf(kind === 'c' ? data.films.map(f => f.film) : data.favourites);
+  const meta = `<meta property="og:title" content="${escapeHtml(title)}"><meta name="description" content="${escapeHtml(description)}"><meta property="og:description" content="${escapeHtml(description)}">${image ? `<meta property="og:image" content="${escapeHtml(image)}">` : ''}<meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">${listed ? '' : '<meta name="robots" content="noindex">'}`;
   html = html.replace(/<meta (?:name="description"|property="og:(?:title|description|image[^"]*)"|name="twitter:card")[^>]*>\s*/g, '');
   if (data) html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(title)}</title>`);
   html = html.replace('</head>', () => `${meta}</head>`);

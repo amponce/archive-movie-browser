@@ -1,4 +1,5 @@
-// Cloudflare Workers: the built site from dist/ plus worker.js for /api/* and /sitemap.xml.
+// Cloudflare Workers: the built site from dist/ plus worker.js for /api/*, /sitemap.xml and the
+// share pages /c/* and /u/* (the site's page with a preview card).
 // The account comes from CLOUDFLARE_ACCOUNT_ID. Secrets (TMDB_API_KEY, KV_REST_API_URL,
 // KV_REST_API_TOKEN, KV_REST_API_READ_ONLY_TOKEN, STATS_TOKEN) are set with `wrangler secret put`.
 {

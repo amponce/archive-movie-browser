@@ -91,3 +91,34 @@ test('share pages carry an escaped preview and noindex unless listed', async () 
   assert.equal(html, page);
   assert.equal(res.headers.get('X-Robots-Tag'), 'noindex');
 });
+
+test('share pages fetch the site shell and show the first poster', async () => {
+  const { default: worker } = await import('../../worker.js');
+  const { createProfile, createChannel, setFavourite } = await import('../../api/_community.js');
+  const { default: posterIndex } = await import('../../public/poster-index.json', { with: { type: 'json' } });
+  const { isTakenDown, isForbidden } = await import('./policy.js');
+  const [withPoster, entry] = Object.entries(posterIndex.films).find(([id, e]) => e.p && /^[A-Za-z0-9._-]+$/.test(id) && !isTakenDown(id) && !isForbidden({ title: e.t }));
+  const page = '<!doctype html><html><head><meta property="og:image" content="x.jpg" /><title>Orphaned Films</title></head><body></body></html>';
+  const asked = [];
+  const db = await openTestDb();
+  const env = { DB: db, ASSETS: { fetch: async (request) => { asked.push(new URL(request.url).pathname); return new Response(page, { headers: { 'Content-Type': 'text/html' } }); } } };
+  const get = path => worker.fetch(new Request(`https://www.orphanedfilms.com${path}`), env, { waitUntil() {} });
+  const { id: owner } = await createProfile(db, { now: 1 });
+  const id = await createChannel(db, owner, { name: 'Posters', films: [{ film: 'no-poster-here' }, { film: withPoster }] }, { now: 1, flag: async () => false });
+  const image = `https://image.tmdb.org/t/p/w500${entry.p}`;
+
+  let html = await (await get(`/c/${id}`)).text();
+  assert.deepEqual(asked, ['/']);
+  assert.ok(html.includes(`<meta property="og:image" content="${image}">`));
+  assert.ok(html.includes('<meta name="twitter:card" content="summary_large_image">'));
+  assert.equal(html.match(/og:image/g).length, 1);
+
+  html = await (await get(`/u/${owner}`)).text();
+  assert.ok(!html.includes('og:image'), 'no favourites, no picture');
+  assert.ok(html.includes('<meta name="twitter:card" content="summary">'));
+
+  await setFavourite(db, owner, withPoster, true, { now: 2 });
+  html = await (await get(`/u/${owner}`)).text();
+  assert.ok(html.includes(`<meta property="og:image" content="${image}">`));
+  assert.ok(html.includes('summary_large_image'));
+});
