@@ -30,13 +30,13 @@ test('the channel listing is cached under its bare path', async () => {
 test('share pages carry an escaped preview and noindex unless listed', async () => {
   const { default: worker } = await import('../../worker.js');
   const { createProfile, createChannel } = await import('../../api/_community.js');
-  const page = '<!doctype html><html><head><meta property="og:title" content="Site" /><meta property="og:image" content="x.jpg" /><title>Orphaned Films: forgotten films, found</title></head><body><div id="root"></div></body></html>';
+  const page = '<!doctype html><html><head><meta name="description" content="Site" /><meta property="og:title" content="Site" /><meta property="og:image" content="x.jpg" /><title>Orphaned Films: forgotten films, found</title></head><body><div id="root"></div></body></html>';
   const db = await openTestDb();
-  const env = { DB: db, ASSETS: { fetch: async () => new Response(page, { headers: { 'Content-Type': 'text/html' } }) } };
+  const env = { DB: db, ASSETS: { fetch: async () => new Response(page, { headers: { 'Content-Type': 'text/html', ETag: '"abc"' } }) } };
   const get = path => worker.fetch(new Request(`https://www.orphanedfilms.com${path}`), env, { waitUntil() {} });
   const { id: owner } = await createProfile(db, { now: 1 });
   const name = '<script>alert(1)</script> & "x"';
-  const id = await createChannel(db, owner, { name, description: '', films: ['film-one'] }, { now: 1, flag: async () => false });
+  const id = await createChannel(db, owner, { name, description: '', films: [{ film: 'film-one' }] }, { now: 1, flag: async () => false });
   const escaped = '&lt;script&gt;alert(1)&lt;/script&gt; &amp; &quot;x&quot; | Orphaned Films';
 
   let res = await get(`/c/${id}`);
@@ -67,6 +67,22 @@ test('share pages carry an escaped preview and noindex unless listed', async () 
   assert.equal(res.status, 404);
   assert.ok(html.includes('<div id="root">') && html.includes('noindex'));
   assert.equal(res.headers.get('X-Robots-Tag'), 'noindex');
+
+  res = await get(`/c/${id}/`);
+  html = await res.text();
+  assert.equal(res.status, 200);
+  assert.ok(html.includes('og:title'));
+  assert.ok(html.includes('name="description" content="1 film"'));
+  assert.equal(res.headers.get('ETag'), null);
+  assert.equal(html.match(/name="description"/g).length, 1);
+
+  env.ASSETS = { fetch: async () => new Response('spa', { status: 200 }) };
+  for (const path of ['/c/AAAAAAAAAA', '/u/bad']) {
+    res = await get(path);
+    assert.equal(res.status, 200);
+    assert.equal(await res.text(), 'spa');
+  }
+  env.ASSETS = { fetch: async () => new Response(page, { headers: { 'Content-Type': 'text/html' } }) };
 
   env.DB = { prepare() { throw new Error('down'); } };
   res = await get(`/c/${id}`);

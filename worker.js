@@ -63,6 +63,7 @@ const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<':
 async function sharePage(request, env, kind, id) {
   const asset = await env.ASSETS.fetch(new Request(new URL('/index.html', request.url)));
   const headers = new Headers(asset.headers);
+  headers.delete('ETag');
   headers.set('Cache-Control', 'no-store');
   headers.set('X-Robots-Tag', 'noindex');
   let html = await asset.text();
@@ -74,9 +75,9 @@ async function sharePage(request, env, kind, id) {
   }
   const listed = kind === 'c' && !!data && isListed(data.status);
   const title = data ? `${data.name || 'A profile'} | Orphaned Films` : 'Orphaned Films';
-  const description = data && kind === 'c' ? `${data.films.length} films${data.owner ? ` · by ${data.owner}` : ''}` : 'Forgotten films, found.';
-  const meta = `<meta property="og:title" content="${escapeHtml(title)}"><meta property="og:description" content="${escapeHtml(description)}"><meta name="twitter:card" content="summary">${listed ? '' : '<meta name="robots" content="noindex">'}`;
-  html = html.replace(/<meta (?:property="og:(?:title|description|image[^"]*)"|name="twitter:card")[^>]*>\s*/g, '');
+  const description = data && kind === 'c' ? `${data.films.length} ${data.films.length === 1 ? 'film' : 'films'}${data.owner ? ` · by ${data.owner}` : ''}` : 'Forgotten films, found.';
+  const meta = `<meta property="og:title" content="${escapeHtml(title)}"><meta name="description" content="${escapeHtml(description)}"><meta property="og:description" content="${escapeHtml(description)}"><meta name="twitter:card" content="summary">${listed ? '' : '<meta name="robots" content="noindex">'}`;
+  html = html.replace(/<meta (?:name="description"|property="og:(?:title|description|image[^"]*)"|name="twitter:card")[^>]*>\s*/g, '');
   if (data) html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(title)}</title>`);
   html = html.replace('</head>', () => `${meta}</head>`);
   if (listed) headers.delete('X-Robots-Tag');
@@ -86,8 +87,9 @@ async function sharePage(request, env, kind, id) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const share = ['GET', 'HEAD'].includes(request.method) && url.pathname.match(/^\/(c|u)\/([a-z2-7]{10})$/);
+    const share = ['GET', 'HEAD'].includes(request.method) && url.pathname.match(/^\/(c|u)\/([a-z2-7]{10})\/?$/);
     if (share) return sharePage(request, env, share[1], share[2]);
+    if (/^\/[cu]\//.test(url.pathname)) return env.ASSETS.fetch(request);
     const found = route(url.pathname);
     if (!found) return new Response('Not found', { status: 404 });
     const query = { ...Object.fromEntries(url.searchParams), ...found.query };
