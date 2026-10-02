@@ -1,33 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Calendar, Globe, DollarSign, TrendingUp, Users, Play } from 'lucide-react';
 import tmdbService from '../../services/tmdb';
 import archiveService from '../../services/archive';
 import Button from '../../ui/Button';
 import FavouriteButton from '../FavouriteButton';
 import AddToChannel from '../AddToChannel';
-import { track } from '../../services/analytics';
 import { plainText } from '../../services/plainText';
-import { readMyChannel, toggleSaved, hasFilm, MY_CHANNEL_KEY } from '../../services/myChannel';
 
 // The words about the film: what it is, what the upload was called, the facts, the overview,
-// who made it and who is in it (click a name to search for them), then Watch now and the
-// personal channel.
+// who made it and who is in it (click a name to search for them), then Watch now, add to a
+// channel and favourite.
 export default function FilmDetails({ movie, details, titleId, playing, onPlay, onSearch }) {
   const { tmdbDetails, identified, director, cast, genres } = details;
-
-  const [myChannel, setMyChannel] = useState(readMyChannel);
-  const onMyChannel = hasFilm(myChannel, movie.identifier);
-  // Keep the button right when another tab changes the channel, or Back restores this page
-  useEffect(() => {
-    const refresh = (event) => { if (!event.key || event.key === MY_CHANNEL_KEY) setMyChannel(readMyChannel()); };
-    window.addEventListener('storage', refresh);
-    window.addEventListener('pageshow', refresh);
-    return () => { window.removeEventListener('storage', refresh); window.removeEventListener('pageshow', refresh); };
-  }, []);
-  const toggleMyChannel = () => {
-    setMyChannel(toggleSaved(movie.identifier));
-    track('TV', { action: onMyChannel ? 'remove from my channel' : 'add to my channel', film: movie.identifier });
-  };
 
   return (
     <div className="flex-1 min-w-0">
@@ -91,9 +75,6 @@ export default function FilmDetails({ movie, details, titleId, playing, onPlay, 
       {!playing && (
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <Button size="lg" onClick={onPlay} className="sm:flex-1" data-track="film-watch-now" data-film={movie.identifier}><Play className="w-5 h-5 fill-current" /> Watch now</Button>
-          <Button size="lg" variant="ghost" onClick={toggleMyChannel} aria-pressed={onMyChannel} title="Your own TV channel, kept in this browser">
-            {onMyChannel ? 'On my channel' : 'Add to my channel'}
-          </Button>
           <AddToChannel film={movie.identifier} variant="inline" className="self-start sm:self-center" />
           <FavouriteButton film={movie.identifier} variant="inline" className="self-start sm:self-center" />
         </div>
