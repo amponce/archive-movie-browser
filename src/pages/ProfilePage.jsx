@@ -16,6 +16,8 @@ export default function ProfilePage({ slug }) {
   const [films, setFilms] = useState([]);
   const [manual, setManual] = useState(false); // the clipboard was not available
   const [copied, setCopied] = useState(false);
+  const [failed, setFailed] = useState(false); // the last save did not go through
+  const [reset, setReset] = useState(0); // remounts the inputs back to the stored values
   const me = readProfile();
   const isOwner = me?.id === slug;
 
@@ -36,16 +38,22 @@ export default function ProfilePage({ slug }) {
     return () => meta.remove();
   }, []);
 
+  useEffect(() => { if (p === null) document.title = 'Profile not available | Orphaned Films'; }, [p]);
+
   useEffect(() => {
     if (!p) return undefined;
     document.title = `${p.name || 'A profile'} | Orphaned Films`;
     let live = true;
-    withPosters(p.favourites.map(identifier => ({ identifier }))).then(c => live && setFilms(c));
+    withPosters(p.favourites.map(identifier => ({ identifier }))).then(c => live && setFilms(c)).catch(() => {});
     return () => { live = false; };
   }, [p]);
 
   const patch = body => api(`/api/profile/${slug}`, { method: 'PATCH', profile: me, body })
-    .then(() => { load(); refreshProfile(); }).catch(() => {});
+    .then(r => {
+      if (!r.ok) throw new Error('save failed');
+      setFailed(false); load(); refreshProfile();
+    })
+    .catch(() => { setFailed(true); setReset(n => n + 1); });
   const save = (field, e) => {
     const value = e.target.value.trim();
     if (value !== (p[field] || '')) patch({ [field]: value });
@@ -73,9 +81,10 @@ export default function ProfilePage({ slug }) {
       <main className="gutter py-8 flex flex-col gap-8 text-bone">
         <div className="flex flex-col gap-3">
           {isOwner
-            ? <input key={`n-${p.name}`} defaultValue={p.name} placeholder="Your display name" maxLength={40} aria-label="Display name" className={`${FIELD} display text-3xl`} onBlur={e => save('name', e)} />
+            ? <input key={`n-${p.name}-${reset}`} defaultValue={p.name} placeholder="Your display name" maxLength={40} aria-label="Display name" className={`${FIELD} display text-3xl`} onBlur={e => save('name', e)} />
             : <h1 className="display text-3xl break-words">{p.name || 'A profile'}</h1>}
-          {isOwner && <input key={`a-${p.archiveUser}`} defaultValue={p.archiveUser} placeholder="Archive.org username (optional)" aria-label="Archive.org username" className={FIELD} onBlur={e => save('archiveUser', e)} />}
+          {isOwner && <input key={`a-${p.archiveUser}-${reset}`} defaultValue={p.archiveUser} maxLength={60} placeholder="Archive.org username (optional)" aria-label="Archive.org username" className={FIELD} onBlur={e => save('archiveUser', e)} />}
+          {failed && <p role="alert" className="text-sm text-signal">Could not save</p>}
           {p.archiveUser && <a className="nav-link" href={`/details/@${encodeURIComponent(p.archiveUser)}`}>@{p.archiveUser} on Archive.org</a>}
         </div>
         <section>
@@ -83,7 +92,7 @@ export default function ProfilePage({ slug }) {
           <ul className="mt-2 flex flex-col gap-1">
             {p.channels.map(c => (
               <li key={c.id}>
-                <a className="underline hover:text-signal" href={`/c/${c.id}`}>{c.name}</a>
+                <a className="underline hover:text-signal break-words" href={`/c/${c.id}`}>{c.name}</a>
                 <span className="text-muted"> · {c.films} {c.films === 1 ? 'film' : 'films'}{isOwner && LABEL[c.status] ? ` · ${LABEL[c.status]}` : ''}</span>
               </li>
             ))}
@@ -93,7 +102,7 @@ export default function ProfilePage({ slug }) {
           <section>
             <h2 className="display text-xl">Saved channels</h2>
             <ul className="mt-2 flex flex-col gap-1">
-              {p.saved.map(c => <li key={c.id}><a className="underline hover:text-signal" href={`/c/${c.id}`}>{c.name}</a></li>)}
+              {p.saved.map(c => <li key={c.id}><a className="underline hover:text-signal break-words" href={`/c/${c.id}`}>{c.name}</a></li>)}
             </ul>
           </section>
         )}
