@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import ArchiveMovieBrowser from './components/ArchiveMovieBrowser';
 import SaveLinkPanel from './components/SaveLinkPanel';
 import { parseSitePath, redirectFor } from './services/archiveUrl';
+import { adoptFromLink } from './services/profile';
 
 // A few pages do not need a router: the path picks the page, and links between them are
 // ordinary links. The side pages load on demand so the film browser stays small.
@@ -33,6 +34,8 @@ export function pageFor(pathname, search = '', hash = '') {
 }
 
 export default function App() {
+  // An edit link (/u/<id>#key=...) moves the profile into this browser before anything renders
+  if (adoptFromLink(window.location.pathname, window.location.hash)) { window.location.replace('/browse'); return null; }
   return <><Routed /><SaveLinkPanel /></>;
 }
 

@@ -82,6 +82,8 @@ test('a link to one file inside an upload plays that file', async () => {
   assert.deepEqual(filmFromHash('#hexziasmovies/Annabelle%20Comes%20Home.mp4'), { identifier: 'hexziasmovies', file: 'Annabelle Comes Home.mp4' });
   assert.deepEqual(filmFromHash('#Cops1922'), { identifier: 'Cops1922', file: null });
   assert.equal(filmFromHash(''), null);
+  assert.equal(filmFromHash(`#key=${'a'.repeat(64)}`), null);
+  assert.equal(filmFromHash('key=abc'), null);
 });
 
 test("an Archive.org collection RSS feed opens that collection, newest first", async () => {

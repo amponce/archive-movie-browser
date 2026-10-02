@@ -86,7 +86,7 @@ export function redirectFor(pathname, search = '') {
 // The film a /browse#... hash opens: '#upload' or '#upload/file name'
 export function filmFromHash(hash) {
   const text = String(hash || '').replace(/^#/, '');
-  if (!text) return null;
+  if (!text || /^key=/.test(text)) return null; // an edit-link key is never a film
   const [identifier, ...file] = text.split('/');
   return { identifier: safeDecode(identifier), file: file.length ? safeDecode(file.join('/')) : null };
 }
