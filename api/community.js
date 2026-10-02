@@ -2,7 +2,7 @@
 import { createProfile, authProfile, getProfile, updateProfile, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels } from './_community.js';
 
 const MAX_BODY = 20_000;
-const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers } });
+const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-store', ...headers } });
 const empty = status => new Response(null, { status, headers: { 'Cache-Control': 'no-store' } });
 const originHost = origin => { try { return new URL(origin).host; } catch { return null; } };
 

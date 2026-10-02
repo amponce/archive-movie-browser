@@ -64,13 +64,15 @@ export default {
     const query = { ...Object.fromEntries(url.searchParams), ...found.query };
     // Answers marked s-maxage are kept in Cloudflare's cache for that long, as Vercel's CDN did
     const cacheable = request.method === 'GET' && found.name !== 'stats' && (found.name !== 'community' || url.pathname === '/api/channels');
+    // The channel listing ignores its query string, so it is cached under the bare path
+    const cacheKey = found.name === 'community' ? new Request(new URL(url.pathname, request.url)) : request;
     if (cacheable) {
-      const hit = await caches.default.match(request);
+      const hit = await caches.default.match(cacheKey);
       if (hit) return hit;
     }
     const response = await API[found.name](request, query, env);
     if (cacheable && response.status === 200 && /s-maxage=\d+/.test(response.headers.get('Cache-Control') || '')) {
-      ctx.waitUntil(caches.default.put(request, response.clone()));
+      ctx.waitUntil(caches.default.put(cacheKey, response.clone()));
     }
     return response;
   },
