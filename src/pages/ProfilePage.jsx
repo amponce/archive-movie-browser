@@ -80,7 +80,7 @@ export default function ProfilePage({ slug }) {
 
   return (
     <div className="min-h-screen">
-      <SiteHeader />
+      <SiteHeader current={`/u/${p.id}`} />
       <main className="gutter py-8 flex flex-col gap-8 text-bone">
         <div className="flex flex-col gap-3">
           {isOwner

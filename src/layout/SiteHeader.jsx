@@ -2,6 +2,7 @@ import React from 'react';
 import Button from '../ui/Button';
 import SearchField from '../ui/SearchField';
 import { spin } from '../services/reel';
+import { useProfileId } from '../hooks/useProfile';
 
 const NAV = [
   ['/', 'Tonight'],
@@ -10,6 +11,8 @@ const NAV = [
   ['/lists', 'Lists'],
   ['/collection', 'Collection'],
 ];
+// Shown only to a browser that has a profile: its own page, with its channels
+const yours = id => [`/u/${id}`, 'Your channels', 'nav-yours'];
 // The link that stands out in the nav: signal, with the on-air dot
 const FEATURED = '/collection';
 const Dot = () => <span className="inline-block w-1.5 h-1.5 rounded-full bg-signal mr-2" aria-hidden="true" />;
@@ -27,18 +30,20 @@ export function Logo() {
 }
 
 // The same header on every page: name, nav, search, spin.
-// On phones the same links sit in a scrollable row under the search box: no drawer to open,
-// nothing to get stuck. It stops scaling past eight or so destinations. `search` replaces the plain search
-// box when a page has a richer one (the browser passes its type-ahead). `current` is the nav
-// path to mark.
+// On phones the same links sit in a row under the search box, wrapping to a second line when
+// they do not fit: no drawer to open, nothing hidden off the edge. It stops scaling past eight
+// or so destinations. `search` replaces the plain search box when a page has a richer one (the
+// browser passes its type-ahead). `current` is the nav path to mark.
 export default function SiteHeader({ current = '/', search, children }) {
+  const profileId = useProfileId();
+  const nav = profileId ? [...NAV, yours(profileId)] : NAV;
   return (
     <header className="rule">
       <div className="gutter flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-5">
         <Logo />
         <nav className="hidden md:flex items-center gap-6" aria-label="Site">
-          {NAV.map(([href, name]) => (
-            <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link ${href === FEATURED ? 'text-signal hover:text-bone flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
+          {nav.map(([href, name, id]) => (
+            <a key={href} href={href} data-track={id || `nav-${name.toLowerCase()}`} className={`nav-link ${href === FEATURED ? 'text-signal hover:text-bone flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
           ))}
         </nav>
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -49,9 +54,9 @@ export default function SiteHeader({ current = '/', search, children }) {
           </Button>
         </div>
       </div>
-      <nav className="md:hidden gutter flex gap-5 overflow-x-auto pb-3 -mt-1" aria-label="Site">
-        {NAV.map(([href, name]) => (
-          <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link shrink-0 ${href === FEATURED ? 'text-signal flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
+      <nav className="md:hidden gutter flex flex-wrap gap-x-5 gap-y-2 pb-3 -mt-1" aria-label="Site">
+        {nav.map(([href, name, id]) => (
+          <a key={href} href={href} data-track={id || `nav-${name.toLowerCase()}`} className={`nav-link shrink-0 ${href === FEATURED ? 'text-signal flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
         ))}
       </nav>
       {children}

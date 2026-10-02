@@ -29,6 +29,17 @@ export function refreshProfile() {
   return inflight;
 }
 
+// This browser's profile id, without loading the profile: updates when a profile is made here
+export function useProfileId() {
+  const [, changed] = useState(0);
+  useEffect(() => {
+    const fn = () => changed(n => n + 1);
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  }, []);
+  return readProfile()?.id || null;
+}
+
 export default function useProfile() {
   const [data, setData] = useState(cache);
   useEffect(() => {
