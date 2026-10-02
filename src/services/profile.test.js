@@ -49,11 +49,30 @@ test('a failed carry-over keeps the old list and is retried later', async () => 
   };
   assert.deepEqual(await fresh.ensureProfile(), { id: ID, key: KEY });
   assert.ok(store['tv-my-channel']);
+  assert.equal(store['profile-carried'], undefined);
   channelStatus = 201;
   await fresh.ensureProfile();
   await new Promise(r => setTimeout(r, 10));
   assert.equal(channelPosts, 2);
-  assert.equal(store['tv-my-channel'], undefined);
+  assert.equal(store['profile-carried'], ID);
+});
+
+test('a successful carry-over keeps the old list and happens once per profile', async () => {
+  reset();
+  const fresh = await import('./profile.js?once');
+  store['tv-my-channel'] = JSON.stringify(['film-one', 'film-two']);
+  let channelPosts = 0;
+  globalThis.fetch = async path => {
+    if (path === '/api/profile') return json(201, { id: ID, key: KEY });
+    channelPosts++; return json(201, { id: 'chan' });
+  };
+  await fresh.ensureProfile();
+  assert.equal(channelPosts, 1);
+  assert.equal(store['tv-my-channel'], JSON.stringify(['film-one', 'film-two']));
+  await fresh.ensureProfile();
+  await new Promise(r => setTimeout(r, 10));
+  assert.equal(channelPosts, 1);
+  assert.equal(store['tv-my-channel'], JSON.stringify(['film-one', 'film-two']));
 });
 
 test('a throwing carry-over does not stop ensureProfile', async () => {

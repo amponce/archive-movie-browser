@@ -1,4 +1,4 @@
-import { readMyChannel, MY_CHANNEL_KEY } from './myChannel.js';
+import { readMyChannel } from './myChannel.js';
 
 export const PROFILE_KEY = 'profile';
 const KEY = /^[0-9a-f]{64}$/;
@@ -35,17 +35,23 @@ export function api(path, { method = 'GET', body, profile } = {}) {
   });
 }
 
-// Move the old browser-only list into a channel. Never throws; the old list is removed only
-// once the server has accepted it, so a failure is retried on a later call.
+// Copy the old browser-only list into a channel, once per profile. Never throws. The old list
+// stays where it is (the TV page still reads it); a flag set only after the server accepts
+// the channel stops a second copy, so a failure is retried on a later call.
+const CARRIED_KEY = 'profile-carried';
+let carriedMemory = null;
+const carried = (p) => { try { if (localStorage.getItem(CARRIED_KEY) === p.id) return true; } catch { /* private mode */ } return carriedMemory === p.id; };
+const markCarried = (p) => { carriedMemory = p.id; try { localStorage.setItem(CARRIED_KEY, p.id); } catch { /* private mode */ } };
 let carrying = null;
 function carryOver(p) {
+  if (carried(p)) return Promise.resolve();
   const legacy = readMyChannel();
   if (!legacy.length) return Promise.resolve();
   carrying ||= (async () => {
     try {
       const res = await api('/api/channel', { method: 'POST', profile: p, body: { name: 'My channel', films: legacy.map(film => ({ film })) } });
-      if (res.ok) localStorage.removeItem(MY_CHANNEL_KEY);
-    } catch { /* keep the list, try again next time */ }
+      if (res.ok) markCarried(p);
+    } catch { /* try again next time */ }
   })().finally(() => { carrying = null; });
   return carrying;
 }
