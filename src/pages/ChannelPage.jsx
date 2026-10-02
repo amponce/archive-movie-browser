@@ -4,6 +4,7 @@ import SiteFooter from '../layout/SiteFooter';
 import Button from '../ui/Button';
 import { FilmGrid, withPosters } from './ArchiveListPage';
 import ChannelEditor from '../components/ChannelEditor';
+import SubmitForReview from '../components/SubmitForReview';
 import { api, readProfile, ensureProfile } from '../services/profile';
 import useProfile, { refreshProfile } from '../hooks/useProfile';
 
@@ -82,7 +83,12 @@ export default function ChannelPage({ slug }) {
             <a className="nav-link hover:text-signal" href={`mailto:${REPORT_TO}?subject=${encodeURIComponent('Report')}&body=${encodeURIComponent(window.location.href)}`}>Report</a>
           </div>
           {isOwner
-            ? <ChannelEditor key={channel.id} channel={channel} titles={titles} onChange={load} />
+            ? (
+              <>
+                <ChannelEditor key={channel.id} channel={channel} titles={titles} onChange={load} />
+                <SubmitForReview channel={channel} onChange={load} />
+              </>
+            )
             : <FilmGrid films={cards} notes={notes} track="channel-film" saves />}
         </section>
       </TvPage>
