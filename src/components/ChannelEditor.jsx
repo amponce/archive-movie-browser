@@ -3,36 +3,60 @@ import { api, readProfile } from '../services/profile';
 import { serial } from '../services/serial';
 
 const MAX_FILMS = 40;
+const filmsKey = list => list.map(f => f.film).join('\n');
+const RELOADED = 'This channel changed in another tab — reloaded';
 const field = 'w-full bg-transparent border border-line px-2 py-1 text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal';
 
 // The owner's controls on a channel page. Each change is saved as it is made: text on blur,
 // order and removals at once. Only fields that changed are sent. Saves go one at a time, and
 // only the last one queued reports and reloads.
+// The film list is sent whole, so the stored list is read again before each film save: another
+// tab, window or device may have added a film since. If it changed, the editor takes the stored
+// list instead of saving over it, and says so.
 export default function ChannelEditor({ channel, titles = {}, onChange }) {
   const [films, setFilms] = useState(channel.films);
   const [drag, setDrag] = useState(null);
   const [confirm, setConfirm] = useState(false);
   const [status, setStatus] = useState(null);
-  const queued = useRef({ last: 0, failed: false });
+  const queued = useRef({ last: 0, failed: false, reloaded: false });
+  const stored = useRef(filmsKey(channel.films)); // the list as last read or saved here
+  const edits = useRef(0); // film saves made before a reload are dropped
   const profile = readProfile();
 
-  const save = (body) => {
+  // True when this film save may go ahead
+  const current = async (edit) => {
+    if (edit !== edits.current) return false;
+    const res = await api(`/api/channel/${channel.id}`, { profile });
+    const fresh = res.ok ? await res.json() : null;
+    if (!fresh || filmsKey(fresh.films) === stored.current) return true;
+    edits.current++;
+    stored.current = filmsKey(fresh.films);
+    setFilms(fresh.films);
+    queued.current.reloaded = true;
+    return false;
+  };
+
+  const save = (body, edit) => {
     const n = ++queued.current.last;
     setStatus('Saving…');
     serial(channel.id, async () => {
       try {
-        const res = await api(`/api/channel/${channel.id}`, { method: 'PATCH', profile, body });
-        if (!res.ok) queued.current.failed = true;
+        if (edit === undefined || await current(edit)) {
+          const res = await api(`/api/channel/${channel.id}`, { method: 'PATCH', profile, body });
+          if (!res.ok) queued.current.failed = true;
+          else if (body.films) stored.current = filmsKey(body.films);
+        }
       } catch {
         queued.current.failed = true;
       }
       if (n !== queued.current.last) return;
-      setStatus(queued.current.failed ? 'Could not save' : 'Saved');
+      setStatus(queued.current.reloaded ? RELOADED : queued.current.failed ? 'Could not save' : 'Saved');
       queued.current.failed = false;
+      queued.current.reloaded = false;
       onChange();
     });
   };
-  const saveFilms = (next) => { setFilms(next); save({ films: next.slice(0, MAX_FILMS).map(({ film, note }) => ({ film, note })) }); };
+  const saveFilms = (next) => { setFilms(next); save({ films: next.slice(0, MAX_FILMS).map(({ film, note }) => ({ film, note })) }, edits.current); };
   const move = (from, to) => { const next = [...films]; const [x] = next.splice(from, 1); next.splice(to, 0, x); saveFilms(next); };
   const changed = (value, stored) => value.trim() !== (stored || '');
   const remove = async () => {
