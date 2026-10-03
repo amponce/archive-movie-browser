@@ -19,6 +19,10 @@ export function tvPersonal({ profileId, carriedId, channels }) {
   };
 }
 
+// Whether the set should still wait for the profile's channels: while the profile loads, then
+// while its channels do. A load that ended with nothing (failed, or no profile) ends the wait.
+export const awaitingSaved = ({ profileId, me, tried, pending }) => !!profileId && (me ? pending : !tried);
+
 // Once the set has picked a channel it holds on to it, so an add that reorders your channels
 // does not move it: the id to hold, or null to leave the asked-for one. keepMine: the old list can
 // still show, so `mine` is left as asked: with nothing on it the page shows how to start one, and it

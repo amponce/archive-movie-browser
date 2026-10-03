@@ -10,6 +10,7 @@ const publish = data => { cache = data; listeners.forEach(fn => fn(data)); };
 // of the result, so the older answer cannot undo it.
 let inflight = null;
 let settled = false;
+const onSettled = new Set();
 const toggles = [];
 const applyToggles = (favourites, from) => toggles.slice(from).filter(t => !t.failed)
   .reduce((list, t) => (t.on ? [t.film, ...list.filter(f => f !== t.film)] : list.filter(f => f !== t.film)), favourites);
@@ -25,7 +26,7 @@ export function refreshProfile() {
       const data = await res.json();
       publish({ ...data, favourites: applyToggles(data.favourites || [], from) });
     } catch { /* keep what we have; a later refresh can retry */ }
-  })().finally(() => { inflight = null; settled = true; });
+  })().finally(() => { inflight = null; settled = true; onSettled.forEach(fn => fn(true)); });
   return inflight;
 }
 
@@ -42,11 +43,14 @@ export function useProfileId() {
 
 export default function useProfile() {
   const [data, setData] = useState(cache);
+  const [tried, setTried] = useState(settled); // a load has finished, with or without data
   useEffect(() => {
     listeners.add(setData);
+    onSettled.add(setTried);
     setData(cache); // a publish may have landed between render and subscribe
+    setTried(settled);
     if (cache === null && !inflight && !settled && readProfile()) refreshProfile();
-    return () => listeners.delete(setData);
+    return () => { listeners.delete(setData); onSettled.delete(setTried); };
   }, []);
   const toggleFavourite = useCallback(async (film) => {
     const had = (cache?.favourites || []).includes(film);
@@ -67,5 +71,5 @@ export default function useProfile() {
       refreshProfile();
     }
   }, []);
-  return { get profile() { return readProfile(); }, data, refresh: refreshProfile, toggleFavourite };
+  return { get profile() { return readProfile(); }, data, tried, refresh: refreshProfile, toggleFavourite };
 }

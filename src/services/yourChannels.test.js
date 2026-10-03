@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { tvPersonal, personalNumber, pinTo, followCopy, MAX_ON_TV } from './yourChannels.js';
+import { tvPersonal, personalNumber, pinTo, followCopy, awaitingSaved, MAX_ON_TV } from './yourChannels.js';
 
 const ch = (id, films) => ({ id, name: `Channel ${id}`, status: 'private', films });
 
@@ -74,4 +74,13 @@ test('a copy the loaded profile does not have (deleted, or another profile\'s) d
   assert.deepEqual(followCopy({ ...asked, known: [] }), { id: 'mine', keepOld: false });
   assert.deepEqual(followCopy({ ...asked, known: ['other', 'abc'] }), { id: 'mine', keepOld: true }, 'known, still loading');
   assert.deepEqual(followCopy({ ...asked, known: null }), { id: 'mine', keepOld: true }, 'profile not loaded yet');
+});
+
+test('the set waits for the profile, then its channels, and stops once a load ends with nothing', () => {
+  const me = { channels: [] };
+  assert.equal(awaitingSaved({ profileId: null, me: null, tried: false, pending: false }), false, 'no profile');
+  assert.equal(awaitingSaved({ profileId: 'p1', me: null, tried: false, pending: false }), true, 'loading');
+  assert.equal(awaitingSaved({ profileId: 'p1', me: null, tried: true, pending: false }), false, 'failed');
+  assert.equal(awaitingSaved({ profileId: 'p1', me, tried: true, pending: true }), true, 'channels loading');
+  assert.equal(awaitingSaved({ profileId: 'p1', me, tried: true, pending: false }), false);
 });
