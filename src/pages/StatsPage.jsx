@@ -126,6 +126,68 @@ function Latest({ events, titles }) {
   );
 }
 
+const CHANGES = { 'profile-created': 'Profile created', 'profile-edited': 'Profile edited', 'channel-created': 'Channel created', 'channel-edited': 'Channel edited', 'channel-deleted': 'Channel deleted', 'channel-submitted': 'Channel submitted' };
+const th = 'font-medium text-right first:text-left pr-4 py-1 whitespace-nowrap';
+
+// Changes to profiles and channels: per day, networks (by tag) with several new profiles, latest
+function Community({ community }) {
+  const { days, networks, latest } = community;
+  const who = row => (row.kind.startsWith('channel') ? row.channel : row.name || (row.handle && `@${row.handle}`)) || '';
+  return (
+    <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(19rem,1fr))]">
+      <div className="overflow-x-auto">
+        <table className="text-sm w-full">
+          <thead><tr className="text-gray-400">{['Day', 'Profiles', 'Channels', 'Channel edits', 'Channels deleted'].map(h => <th key={h} className={th}>{h}</th>)}</tr></thead>
+          <tbody>
+            {[...days].reverse().map(day => (
+              <tr key={day.day} className="border-t border-gray-700 tabular-nums">
+                <td className="pr-4 py-1">{day.day}</td>
+                {['profiles', 'channels', 'edits', 'deleted'].map(key => <td key={key} className="text-right pr-4">{fmt(day[key])}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="space-y-5">
+        <div>
+          <h3 className="text-sm text-gray-400 mb-1">Networks with several new profiles (7 days)</h3>
+          {networks.length ? (
+            <table className="text-sm w-full">
+              <tbody>
+                {networks.map(row => (
+                  <tr key={row.tag} className="border-b border-gray-700 tabular-nums">
+                    <td className="py-1 pr-3 font-mono">{row.tag}</td>
+                    <td className="text-right">{fmt(row.profiles)} profiles</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : <p className="text-gray-400 text-sm">None.</p>}
+        </div>
+        <div>
+          <h3 className="text-sm text-gray-400 mb-1">Latest changes</h3>
+          {latest.length ? (
+            <div className="max-h-72 overflow-y-auto">
+              <table className="text-sm w-full">
+                <tbody>
+                  {latest.map((row, i) => (
+                    <tr key={i} className="border-b border-gray-700">
+                      <td className="py-1 pr-3 text-gray-400 tabular-nums whitespace-nowrap">{new Date(row.at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</td>
+                      <td className="py-1 pr-3 whitespace-nowrap">{CHANGES[row.kind] || row.kind}</td>
+                      <td className="py-1 pr-3 max-w-0 w-[45%] truncate" title={who(row)}>{who(row)}</td>
+                      <td className="py-1 font-mono text-gray-400">{row.net || ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : <p className="text-gray-400 text-sm">Nothing yet.</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // The maintainer's view of our own usage counts (api/stats.js). The key is checked by the
 // server; here it is only remembered on this device.
 export default function StatsPage() {
@@ -225,6 +287,12 @@ export default function StatsPage() {
                 <Panel title="Hearted films" note={`(all time; ${fmt(data.saves.totals.hearts)} hearts from ${fmt(data.saves.totals.hearters)} people)`}><Board rows={data.saves.hearted} films titles={data.titles || {}} /></Panel>
                 <Panel title="Films in people's channels" note={`(all time; ${fmt(data.saves.totals.channels)} channels, ${fmt(data.saves.totals.profiles)} profiles)`}><Board rows={data.saves.channels} films titles={data.titles || {}} /></Panel>
               </div>
+            )}
+
+            {data.community && (
+              <Panel title="Community" note="(changes to profiles and channels, last 14 days, Pacific time; tags are the first 6 characters)">
+                <Community community={data.community} />
+              </Panel>
             )}
 
             <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(19rem,1fr))]">

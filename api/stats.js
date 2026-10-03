@@ -9,6 +9,8 @@ const STAGES = ['visited', 'clicked', 'played', 'tuned in', 'watched 1+ min', 'w
 const FUNNEL_DAYS = 14;
 const FILM_BOARDS = ['opened', 'played', 'watched', 'minutes'];
 const DAYS = 30;
+const COMMUNITY_DAYS = 14;
+const COUNTED = { 'profile-created': 'profiles', 'channel-created': 'channels', 'channel-edited': 'edits', 'channel-deleted': 'deleted' };
 
 function allowed(request) {
   const expected = process.env.STATS_TOKEN || '';
@@ -63,12 +65,13 @@ async function read(days, month, db) {
   const names = films.length ? (await redis([['HMGET', 'stats:titles', ...films]], { readOnly: true }))[0] : [];
   const titles = Object.fromEntries(films.map((film, i) => [film, names[i]]).filter(([, title]) => title));
 
-  const saves = await savesOf(db);
+  const [saves, community] = await Promise.all([savesOf(db), communityOf(db, days.slice(-COMMUNITY_DAYS))]);
   for (const [film] of [...saves.hearted, ...saves.channels]) if (!titles[film] && posterIndex.films[film]?.t) titles[film] = posterIndex.films[film].t;
 
   const body = {
     month,
     saves,
+    community,
     days: days.map((day, i) => ({ day, visitors: visitors[i] || 0, events: Object.fromEntries(pairs(reads[i])) })),
     visitorsThisMonth: visitors[DAYS] || 0,
     activeNow: visitors.at(-1) || 0,
@@ -94,5 +97,30 @@ export async function savesOf(db) {
     return { hearted: rows(hearted), channels: rows(channels), totals: totals.results[0] };
   } catch {
     return none;
+  }
+}
+
+// Changes from the history table: counts per Pacific day, networks (by the first 6 characters
+// of their tag) that made 2 or more profiles in 7 days, and the latest 20 changes
+export async function communityOf(db, days, now = Date.now()) {
+  if (!db) return null;
+  try {
+    const kinds = Object.keys(COUNTED);
+    // From a day before the first day, so every Pacific hour of it is in; other days are dropped
+    const since = Date.parse(`${days[0]}T00:00:00Z`) - 86_400_000;
+    const [hours, networks, latest] = await db.batch([
+      db.prepare(`SELECT kind, at / 3600000 AS hour, COUNT(*) n FROM history WHERE at >= ? AND kind IN (${kinds.map(() => '?').join(', ')}) GROUP BY kind, hour`).bind(since, ...kinds),
+      db.prepare("SELECT substr(net, 1, 6) tag, COUNT(*) profiles FROM history WHERE kind = 'profile-created' AND net IS NOT NULL AND at >= ? GROUP BY net HAVING COUNT(*) >= 2 ORDER BY profiles DESC, MAX(at) DESC LIMIT 10").bind(now - 7 * 86_400_000),
+      db.prepare("SELECT h.at, h.kind, substr(h.net, 1, 6) net, CASE WHEN h.channel_id IS NOT NULL THEN COALESCE(c.name, json_extract(h.detail, '$.name')) END channel, p.name, p.handle FROM history h LEFT JOIN channels c ON c.id = h.channel_id LEFT JOIN profiles p ON p.id = h.profile_id ORDER BY h.id DESC LIMIT 20"),
+    ]);
+    // Pacific time is a whole number of hours from UTC, so each hour falls in one Pacific day
+    const counts = Object.fromEntries(days.map(day => [day, { day, profiles: 0, channels: 0, edits: 0, deleted: 0 }]));
+    for (const { kind, hour, n } of hours.results) {
+      const day = counts[statsDay(new Date(hour * 3_600_000))];
+      if (day) day[COUNTED[kind]] += n;
+    }
+    return { days: days.map(day => counts[day]), networks: networks.results, latest: latest.results };
+  } catch {
+    return null;
   }
 }
