@@ -78,6 +78,8 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
         aria-label={`Open ${movie.title}`}
         onKeyDown={handleKeyDown}
         onClick={() => onPlay?.(movie)}
+        data-track="film-card"
+        data-film={movie.identifier}
         className="movie-card group block min-w-0 cursor-pointer focus-visible:outline-none"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -131,6 +133,8 @@ const MovieCard = memo(function MovieCard({ movie, viewMode = 'grid', onPlay }) 
       aria-label={`Open ${movie.title}`}
       onKeyDown={handleKeyDown}
       onClick={() => onPlay?.(movie)}
+      data-track="film-card"
+      data-film={movie.identifier}
       className="movie-card flex gap-4 p-3 panel hover:border-bone group transition-colors cursor-pointer focus-visible:outline-none focus-visible:border-signal"
     >
       {/* Thumbnail */}

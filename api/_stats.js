@@ -65,7 +65,8 @@ export function validEvent(body) {
 // The funnel stages an event puts its visit in
 function stagesOf({ name, data }) {
   if (name === 'Page view') return ['visited'];
-  if (name === 'Click') return ['clicked'];
+  // Opening a film counts too: film cards can open one by keyboard, which is not a click
+  if (name === 'Click' || name === 'Film opened') return ['clicked'];
   // A film pressed play; tuning in to a channel is its own stage: you join mid-film and surf, so
   // counting it as a play made films look abandoned
   if (name === 'Play') return ['played'];
