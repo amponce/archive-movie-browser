@@ -1,5 +1,5 @@
-// /api/profile, /api/channel, /api/channels, /api/passkey
-import { createProfile, authProfile, getProfile, updateProfile, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels, hashKey, isListed } from './_community.js';
+// /api/profile, /api/channel, /api/channels, /api/passkey, /api/handle
+import { createProfile, authProfile, getProfile, updateProfile, checkHandle, movedHandle, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels, hashKey, isListed } from './_community.js';
 import { rpFor, isPasskeyId, registrationOptions, register, listPasskeys, removePasskey, signinOptions, signin } from './_passkeys.js';
 
 const MAX_BODY = 20_000;
@@ -86,7 +86,18 @@ async function route(request, deps) {
   if (method === 'GET') {
     if (parts[0] === 'profile' && parts.length === 2) {
       const p = await getProfile(db, parts[1]);
-      return p ? json(p, 200, { 'X-Robots-Tag': 'noindex' }) : empty(404);
+      if (p) return json(p, 200, { 'X-Robots-Tag': 'noindex' });
+      const moved = await movedHandle(db, parts[1], now);
+      return moved ? json({ moved }, 200, { 'X-Robots-Tag': 'noindex' }) : empty(404);
+    }
+    // Whether a handle is free; one held for the caller's own profile is free to its owner
+    if (parts[0] === 'handle' && parts.length === 2) {
+      const address = await addressKey(request.headers.get('cf-connecting-ip') || 'unknown', now);
+      if (await overLimit(db, `h:${address}`, 60, 60_000, now)) return empty(429);
+      let value;
+      try { value = decodeURIComponent(parts[1]); } catch { return empty(400); }
+      const me = request.headers.get('authorization') ? await owner(request, db) : null;
+      return json(await checkHandle(db, value, me?.id ?? null, now));
     }
     if (parts[0] === 'channel' && parts.length === 2) {
       const c = await getChannel(db, parts[1]);
@@ -115,7 +126,10 @@ async function route(request, deps) {
   if (!me) return empty(401);
 
   if (parts[0] === 'profile' && parts[1] === me.id) {
-    if (method === 'PATCH' && parts.length === 2) { return (await updateProfile(db, me.id, body, { now })) === 'reserved' ? json({ error: 'reserved' }, 400) : empty(204); }
+    if (method === 'PATCH' && parts.length === 2) {
+      const error = await updateProfile(db, me.id, body, { now });
+      return error ? json({ error }, 400) : empty(204);
+    }
     if (parts[2] === 'favourites' && parts.length === 4 && (method === 'PUT' || method === 'DELETE')) {
       let film;
       try { film = decodeURIComponent(parts[3]); } catch { return empty(400); }

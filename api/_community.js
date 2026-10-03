@@ -1,5 +1,6 @@
 // Profiles, favourites and channels: rules and storage. `db` is a D1 database.
 import { isTakenDown, isForbidden } from '../src/services/policy.js';
+import { HANDLE, cleanHandle, handleVariants } from '../src/services/handle.js';
 import posterIndex from '../public/poster-index.json' with { type: 'json' };
 
 export const ALPHABET = 'abcdefghijklmnopqrstuvwxyz234567';
@@ -68,16 +69,20 @@ const shownFilms = async (db, where, args) => {
   return map;
 };
 
-export async function getProfile(db, id) {
-  const p = ID.test(String(id)) && await db.prepare('SELECT id, name, archive_user FROM profiles WHERE id = ? AND hidden = 0').bind(id).first();
+// By id or by handle
+export async function getProfile(db, idOrHandle) {
+  const key = cleanHandle(idOrHandle);
+  const column = ID.test(key) ? 'id' : HANDLE.test(key) ? 'handle' : null;
+  const p = column && await db.prepare(`SELECT id, name, archive_user, handle FROM profiles WHERE ${column} = ? AND hidden = 0`).bind(key).first();
   if (!p) return null;
+  const { id } = p;
   // Oldest first, so each keeps its place as channels are edited
   const rows = (await db.prepare("SELECT id, name, status FROM channels WHERE profile_id = ? AND status != 'hidden' ORDER BY created, rowid").bind(id).all()).results;
   const shown = await shownFilms(db, 'c.profile_id = ?', [id]);
   const channels = rows.map(c => ({ ...c, films: (shown.get(c.id) || []).length }));
   const favourites = (await db.prepare('SELECT film_id FROM favourites WHERE profile_id = ? ORDER BY created DESC').bind(id).all()).results.map(r => r.film_id).filter(f => !isTakenDown(f));
   const saved = (await db.prepare("SELECT c.id, c.name FROM channel_saves s JOIN channels c ON c.id = s.channel_id JOIN profiles o ON o.id = c.profile_id WHERE s.profile_id = ? AND c.status != 'hidden' AND o.hidden = 0 ORDER BY s.created DESC").bind(id).all()).results;
-  return { id: p.id, name: p.name, archiveUser: p.archive_user, channels, favourites, saved };
+  return { id: p.id, name: p.name, archiveUser: p.archive_user, handle: p.handle, channels, favourites, saved };
 }
 
 const BRAND = ['orphanedfilms', 'admin', 'administrator', 'moderator', 'official'];
@@ -88,8 +93,79 @@ export function isReservedName(name) {
   return String(name || '').toLowerCase().split(/[^a-z0-9]+/).some(w => WORDS.has(w));
 }
 
-export async function updateProfile(db, id, { name, archiveUser, agreed }, { now }) {
+// A changed or removed handle stays with its profile this long, and redirects to it
+export const HOLD = 30 * 86_400_000;
+
+export function handleProblem(handle) {
+  if (!HANDLE.test(handle) || ID.test(handle)) return 'invalid';
+  if (isReservedName(handle) || isForbidden({ title: handle.replace(/[-_]+/g, ' ') })) return 'reserved';
+  return null;
+}
+
+// Handles out of reach for `profileId`: in use by another profile, or held for one
+async function handlesTaken(db, handles, profileId, now) {
+  const marks = handles.map(() => '?').join(', ');
+  const rows = (await db.prepare(`SELECT handle FROM profiles WHERE handle IN (${marks}) AND id IS NOT ?
+    UNION SELECT handle FROM handle_holds WHERE handle IN (${marks}) AND profile_id IS NOT ? AND until > ?`)
+    .bind(...handles, profileId, ...handles, profileId, now).all()).results;
+  return new Set(rows.map(r => r.handle));
+}
+
+// Free variants of a taken handle: the first free numbered one, then the others in order
+export async function suggestHandles(db, handle, profileId, now) {
+  const variants = handleVariants(handle).filter(h => !handleProblem(h));
+  const taken = await handlesTaken(db, variants, profileId, now);
+  const free = variants.filter(h => !taken.has(h));
+  const numbered = free.filter(h => /\d$/.test(h));
+  return [...numbered.slice(0, 1), ...free.filter(h => !/\d$/.test(h)), ...numbered.slice(1)].slice(0, 3);
+}
+
+// Whether `value` could be this profile's handle (`profileId` null for anyone)
+export async function checkHandle(db, value, profileId, now) {
+  const handle = cleanHandle(value);
+  const reason = handleProblem(handle) || ((await handlesTaken(db, [handle], profileId, now)).size ? 'taken' : null);
+  if (!reason) return { available: true };
+  return reason === 'taken' ? { available: false, reason, suggestions: await suggestHandles(db, handle, profileId, now) } : { available: false, reason };
+}
+
+// The address a changed or removed handle now leads to (the new handle or the id), while held
+export async function movedHandle(db, value, now) {
+  const handle = cleanHandle(value);
+  if (!HANDLE.test(handle)) return null;
+  const p = await db.prepare('SELECT p.id, p.handle FROM handle_holds h JOIN profiles p ON p.id = h.profile_id WHERE h.handle = ? AND h.until > ? AND p.hidden = 0').bind(handle, now).first();
+  return p ? p.handle || p.id : null;
+}
+
+// Set, change or remove (null or '') a handle. The one it replaces is held for this profile.
+// Uniqueness is the database's: a claim that loses a race fails as 'taken'.
+async function setHandle(db, id, value, now) {
+  const handle = cleanHandle(value);
+  const problem = handle && handleProblem(handle);
+  if (problem) return problem;
+  const current = (await db.prepare('SELECT handle FROM profiles WHERE id = ?').bind(id).first())?.handle || '';
+  if (handle === current) return null;
+  const hold = current && db.prepare(`INSERT INTO handle_holds (handle, profile_id, until) SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM profiles WHERE id = ? AND handle IS ?)
+    ON CONFLICT (handle) DO UPDATE SET profile_id = excluded.profile_id, until = excluded.until`).bind(current, id, now + HOLD, id, handle || null);
+  try {
+    const [claimed] = await db.batch([
+      db.prepare('UPDATE profiles SET handle = ?, updated = ? WHERE id = ? AND NOT EXISTS (SELECT 1 FROM handle_holds WHERE handle = ? AND profile_id != ? AND until > ?)')
+        .bind(handle || null, now, id, handle, id, now),
+      db.prepare('DELETE FROM handle_holds WHERE until <= ? OR (handle = ? AND profile_id = ?)').bind(now, handle, id),
+      ...(hold ? [hold] : []),
+    ]);
+    return claimed.meta.changes ? null : 'taken';
+  } catch (error) {
+    if (/UNIQUE constraint/i.test(error.message)) return 'taken';
+    throw error;
+  }
+}
+
+export async function updateProfile(db, id, { name, archiveUser, agreed, handle }, { now }) {
   if (name !== undefined && isReservedName(name)) return 'reserved';
+  if (handle !== undefined) {
+    const problem = await setHandle(db, id, handle, now);
+    if (problem) return problem;
+  }
   const sets = [];
   const args = [];
   if (name !== undefined) { sets.push('name = ?'); args.push(cleanText(name, LIMITS.displayName)); }

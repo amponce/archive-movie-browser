@@ -247,3 +247,55 @@ test('profile: reserved names are refused', async () => {
   assert.deepEqual(await bad.json(), { error: 'reserved' });
   assert.equal((await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: me, body: { name: 'Night Owl' } })).status, 204);
 });
+
+test('profile: a handle is set by its owner, refused with a reason, read by handle', async () => {
+  const c = await ctx();
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  const other = await (await call(c, 'POST', '/api/profile', { ip: '2.2.2.2' })).json();
+  assert.equal((await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: me, body: { handle: 'Night-Owl' } })).status, 204);
+  for (const [handle, error] of [['night-owl', 'taken'], ['admin', 'reserved'], ['a', 'invalid'], [other.id, 'invalid']]) {
+    const res = await call(c, 'PATCH', `/api/profile/${other.id}`, { auth: other, body: { handle } });
+    assert.equal(res.status, 400);
+    assert.deepEqual(await res.json(), { error }, handle);
+  }
+  assert.equal((await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: other, body: { handle: 'mine' } })).status, 404);
+  const read = await call(c, 'GET', '/api/profile/night-owl');
+  assert.equal(read.status, 200);
+  assert.equal(read.headers.get('cache-control'), 'no-store');
+  assert.equal((await read.json()).id, me.id);
+  assert.equal((await (await call(c, 'GET', `/api/profile/${me.id}`)).json()).handle, 'night-owl');
+  assert.equal((await (await call(c, 'GET', `/api/profile/${other.id}`)).json()).handle, null);
+
+  assert.equal((await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: me, body: { handle: 'owl' } })).status, 204);
+  assert.deepEqual(await (await call(c, 'GET', '/api/profile/night-owl')).json(), { moved: 'owl' });
+  assert.equal((await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: me, body: { handle: null } })).status, 204);
+  assert.deepEqual(await (await call(c, 'GET', '/api/profile/owl')).json(), { moved: me.id });
+  assert.equal((await call(c, 'GET', '/api/profile/nobody-here')).status, 404);
+});
+
+test('handle availability: anyone may ask, the owner sees its own held handle as free, never cached', async () => {
+  const c = await ctx();
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: me, body: { handle: 'reel' } });
+  await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: me, body: { handle: 'reels' } });
+  const ask = (h, headers = {}) => handle(new Request(`${ORIGIN}/api/handle/${h}`, { headers: { 'cf-connecting-ip': '3.3.3.3', ...headers } }), c);
+  let res = await ask('Reel');
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await res.json(), { available: false, reason: 'taken', suggestions: ['reel2', 'reel_films', 'reel-tv'] });
+  assert.deepEqual(await (await ask('reel', { authorization: `Bearer ${me.id}.${me.key}` })).json(), { available: true });
+  assert.deepEqual(await (await ask('reels', { authorization: `Bearer ${me.id}.${me.key}` })).json(), { available: true });
+  assert.deepEqual(await (await ask('reel', { authorization: `Bearer ${me.id}.bad` })).json(), { available: false, reason: 'taken', suggestions: ['reel2', 'reel_films', 'reel-tv'] });
+  assert.deepEqual(await (await ask('fresh-name')).json(), { available: true });
+  assert.deepEqual(await (await ask('staff')).json(), { available: false, reason: 'reserved' });
+  assert.deepEqual(await (await ask('no--no')).json(), { available: false, reason: 'invalid' });
+  assert.equal((await ask('%E0%A4%A')).status, 400);
+});
+
+test('handle availability is limited per address', async () => {
+  const c = await ctx();
+  const ask = ip => handle(new Request(`${ORIGIN}/api/handle/night`, { headers: { 'cf-connecting-ip': ip } }), c);
+  for (let i = 0; i < 60; i++) assert.equal((await ask('4.4.4.4')).status, 200);
+  assert.equal((await ask('4.4.4.4')).status, 429);
+  assert.equal((await ask('5.5.5.5')).status, 200);
+});

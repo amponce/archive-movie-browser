@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newId, newKey, hashKey, cleanText, cleanLines, cleanFilms, afterContentEdit, submitProblem, isListed, LIMITS, createProfile, authProfile, getProfile, updateProfile, isReservedName, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels } from '../../api/_community.js';
+import { newId, newKey, hashKey, cleanText, cleanLines, cleanFilms, afterContentEdit, submitProblem, isListed, LIMITS, createProfile, authProfile, getProfile, updateProfile, isReservedName, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels, handleProblem, checkHandle, suggestHandles, movedHandle, HOLD } from '../../api/_community.js';
 import { openTestDb } from './testDb.js';
 import { TAKEN_DOWN } from './policy.js';
 
@@ -327,4 +327,97 @@ test("a hidden owner's channel is neither shown nor savable under other profiles
 test('names that look like the site or its staff are reserved', () => {
   for (const n of ['Orphaned Films', 'orphanedfilms', 'Orphaned-Films Team', 'ADMIN', 'Mod', 'moderator42', 'Staff picks', 'Official', 'support', 'team', 'System']) assert.equal(isReservedName(n), true, n);
   for (const n of ['Midnight Projector', 'Modern Times fan', 'The Teamsters', 'Night Owl']) assert.equal(isReservedName(n), false, n);
+});
+
+test('handles: shape, id-shaped, reserved and refused words', () => {
+  assert.equal(handleProblem('midnight-projector'), null);
+  for (const h of ['ab', 'Abc', 'a--b', '-abc', 'abcdefghij', 'x'.repeat(31), '']) assert.equal(handleProblem(h), 'invalid', h);
+  assert.equal(handleProblem('abcdefgh1j'), null, 'not id-shaped: 1 is not in the alphabet');
+  for (const h of ['admin', 'orphanedfilms-tv', 'the-staff', 'support']) assert.equal(handleProblem(h), 'reserved', h);
+  assert.equal(handleProblem('rape-films'), 'reserved');
+});
+
+test('handles: set, read by handle, unique whatever the case', async () => {
+  const db = await openTestDb();
+  const a = await createProfile(db, { now });
+  const b = await createProfile(db, { now });
+  assert.equal(await updateProfile(db, a.id, { handle: '  Night-Owl ' }, { now }), undefined);
+  assert.equal((await getProfile(db, a.id)).handle, 'night-owl');
+  assert.equal((await getProfile(db, 'night-owl')).id, a.id);
+  assert.equal((await getProfile(db, 'NIGHT-OWL')).id, a.id);
+  assert.equal((await getProfile(db, b.id)).handle, null);
+  assert.equal(await updateProfile(db, b.id, { handle: 'NIGHT-OWL' }, { now }), 'taken');
+  assert.equal(await updateProfile(db, b.id, { handle: 'admin' }, { now }), 'reserved');
+  assert.equal(await updateProfile(db, b.id, { handle: b.id }, { now }), 'invalid');
+  assert.equal(await updateProfile(db, a.id, { handle: 'night-owl', name: 'Owl' }, { now }), undefined, 'the same handle again is no change');
+  assert.equal((await getProfile(db, a.id)).name, 'Owl');
+  await assert.rejects(db.prepare("UPDATE profiles SET handle = 'Night-Owl' WHERE id = ?").bind(b.id).run(), /UNIQUE/);
+});
+
+test('handles: two claims at once, one wins and the other is taken', async () => {
+  const db = await openTestDb();
+  const a = await createProfile(db, { now });
+  const b = await createProfile(db, { now });
+  const out = await Promise.all([a, b].map(p => updateProfile(db, p.id, { handle: 'reel' }, { now })));
+  assert.deepEqual(out.sort(), ['taken', undefined].sort());
+  assert.ok([a.id, b.id].includes((await getProfile(db, 'reel')).id));
+});
+
+test('handles: a changed handle is held and redirects for 30 days, then anyone can claim it', async () => {
+  const db = await openTestDb();
+  const a = await createProfile(db, { now });
+  const b = await createProfile(db, { now });
+  await updateProfile(db, a.id, { handle: 'first' }, { now });
+  await updateProfile(db, a.id, { handle: 'second' }, { now });
+  assert.equal(await getProfile(db, 'first'), null);
+  assert.equal(await movedHandle(db, 'first', now + 1), 'second');
+  await updateProfile(db, a.id, { handle: 'third' }, { now: now + 2 });
+  assert.equal(await movedHandle(db, 'first', now + 3), 'third', 'an older handle leads to the current one');
+  assert.equal(await updateProfile(db, b.id, { handle: 'first' }, { now: now + 4 }), 'taken');
+  assert.deepEqual(await checkHandle(db, 'first', null, now + 4), { available: false, reason: 'taken', suggestions: ['first2', 'first_films', 'first-tv'] });
+  assert.deepEqual(await checkHandle(db, 'first', a.id, now + 4), { available: true }, 'free to its own profile');
+  const later = now + HOLD + 1;
+  assert.equal(await movedHandle(db, 'first', later), null);
+  assert.deepEqual(await checkHandle(db, 'first', null, later), { available: true });
+  assert.equal(await updateProfile(db, b.id, { handle: 'first' }, { now: later }), undefined);
+  assert.equal((await getProfile(db, 'first')).id, b.id);
+});
+
+test('handles: the owner takes a held handle back; removal leads back to the id', async () => {
+  const db = await openTestDb();
+  const a = await createProfile(db, { now });
+  await updateProfile(db, a.id, { handle: 'first' }, { now });
+  await updateProfile(db, a.id, { handle: 'second' }, { now });
+  assert.equal(await updateProfile(db, a.id, { handle: 'first' }, { now: now + 1 }), undefined);
+  assert.equal((await getProfile(db, 'first')).id, a.id);
+  assert.equal(await movedHandle(db, 'second', now + 2), 'first');
+  assert.equal(await movedHandle(db, 'first', now + 2), null, 'its own hold is gone');
+  assert.equal(await updateProfile(db, a.id, { handle: null }, { now: now + 3 }), undefined);
+  assert.equal((await getProfile(db, a.id)).handle, null);
+  assert.equal(await getProfile(db, 'first'), null);
+  assert.equal(await movedHandle(db, 'first', now + 4), a.id);
+  assert.equal(await movedHandle(db, 'second', now + 4), a.id);
+  assert.equal(await updateProfile(db, a.id, { handle: '' }, { now: now + 5 }), undefined, 'removing nothing is no change');
+});
+
+test('handles: a hidden profile is not found by handle, old or current', async () => {
+  const db = await openTestDb();
+  const a = await createProfile(db, { now });
+  await updateProfile(db, a.id, { handle: 'gone-old' }, { now });
+  await updateProfile(db, a.id, { handle: 'gone' }, { now });
+  await db.prepare('UPDATE profiles SET hidden = 1 WHERE id = ?').bind(a.id).run();
+  assert.equal(await getProfile(db, 'gone'), null);
+  assert.equal(await movedHandle(db, 'gone-old', now + 1), null);
+});
+
+test('handles: suggestions skip taken, held and refused variants', async () => {
+  const db = await openTestDb();
+  const ps = await Promise.all(Array.from({ length: 4 }, () => createProfile(db, { now })));
+  await updateProfile(db, ps[0].id, { handle: 'reel' }, { now });
+  await updateProfile(db, ps[1].id, { handle: 'reel2' }, { now });
+  await updateProfile(db, ps[2].id, { handle: 'reel_films' }, { now });
+  await updateProfile(db, ps[2].id, { handle: 'reel-other' }, { now });
+  assert.deepEqual(await suggestHandles(db, 'reel', null, now), ['reel3', 'reel-tv', 'reel4']);
+  assert.deepEqual(await suggestHandles(db, 'reel', ps[2].id, now), ['reel3', 'reel_films', 'reel-tv'], 'a hold of its own is free');
+  assert.ok((await suggestHandles(db, 'abcdefghi', null, now)).every(h => !/^[a-z2-7]{10}$/.test(h)), 'never id-shaped');
 });
