@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { tvPersonal, personalNumber, pinTo, followCopy, awaitingSaved, toFetch, airable, MAX_ON_TV } from './yourChannels.js';
+import { tvPersonal, personalNumber, pinTo, followCopy, awaitingSaved, toFetch, airable, onDemandIds, MAX_ON_TV } from './yourChannels.js';
 
 const ch = (id, films) => ({ id, name: `Channel ${id}`, status: 'private', films });
 
@@ -99,4 +99,17 @@ test('a saved channel that failed or has nothing on leaves a gap; the rest keep 
   const loaded = { a: [1], b: [], d: [1] };
   assert.deepEqual(airable(list, loaded).map(c => [c.id, c.number]), [['a', '0'], ['d', '0d']]);
   assert.deepEqual(airable(list, {}), []);
+});
+
+test('on demand: the profile\'s own channels and this browser\'s own list, not a shared link or a station', () => {
+  const ids = onDemandIds({ own: ['c-a', 'c-b'], mine: { id: 'mine', mine: true } });
+  assert.deepEqual([...ids], ['c-a', 'c-b', 'mine']);
+  assert.equal(onDemandIds({ own: [], mine: { id: 'mine', mine: false } }).has('mine'), false);
+  assert.equal(onDemandIds({ own: ['c-a'], mine: null }).has('atomic-age'), false);
+});
+
+test('on demand on a channel page: only when this profile made or saved the channel', () => {
+  const page = { id: 'c-x', mine: false };
+  assert.equal(onDemandIds({ mine: page, kept: true }).has('c-x'), true);
+  assert.equal(onDemandIds({ mine: page, kept: false }).has('c-x'), false);
 });

@@ -14,7 +14,7 @@ const MAX_VIEWING = 4 * 3600; // seconds in one report
 // Funnel stages a viewing reaches by its running total, in seconds
 const WATCHED = [[60, 'watched 1+ min'], [600, 'watched 10+ min'], [1800, 'watched 30+ min']];
 const seconds = v => (Number.isInteger(v) && v > 0 ? v : null);
-const TV_ACTIONS = ['tune', 'watched 10 minutes', 'watch together', 'from start', 'share my channel', 'add to my channel', 'remove from my channel'];
+const TV_ACTIONS = ['tune', 'watched 10 minutes', 'watch together', 'from start', 'on-demand', 'share my channel', 'add to my channel', 'remove from my channel'];
 const KEEP_DAYS = 400;
 const RECENT = 50;
 // eslint-disable-next-line no-control-regex -- stripping control characters is the point
@@ -70,6 +70,7 @@ function stagesOf({ name, data }) {
   // counting it as a play made films look abandoned
   if (name === 'Play') return ['played'];
   if (name === 'TV' && data.action === 'tune') return ['tuned in'];
+  if (name === 'TV' && data.action === 'on-demand') return ['played']; // a film picked from a channel's lineup
   if (name === 'Watched') return WATCHED.filter(([at]) => data.total >= at).map(([, stage]) => stage);
   return [];
 }

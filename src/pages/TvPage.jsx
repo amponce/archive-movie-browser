@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Radio } from 'lucide-react';
 import { onAirAt, tuneIn } from '../services/schedule';
 import { shortcutFor } from '../services/playback';
 import { track } from '../services/analytics';
@@ -14,6 +15,7 @@ import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import Guide, { useGuideSpan } from '../components/tv/Guide';
 import InlineSet from '../components/tv/InlineSet';
+import OnDemand from '../components/tv/OnDemand';
 import { WatchTogether, EmptyChannel, ChannelDown } from '../components/tv/Extras';
 import useTvSource from '../hooks/useTvSource';
 import FavouriteButton from '../components/FavouriteButton';
@@ -21,7 +23,7 @@ import AddToChannel from '../components/AddToChannel';
 import useProfile from '../hooks/useProfile';
 import useSavedChannels from '../hooks/useSavedChannels';
 import { carriedInto, carriedChannel } from '../services/profile';
-import { tvPersonal, personalNumber, pinTo, followCopy, awaitingSaved } from '../services/yourChannels';
+import { tvPersonal, personalNumber, pinTo, followCopy, awaitingSaved, onDemandIds } from '../services/yourChannels';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
 // the same for everyone. The page keeps its own clock: /api/tv gives the lineups once, and the
@@ -48,10 +50,13 @@ function useTuning(channel, onNext) {
   const [slot, setSlot] = useState(() => onAirAt(channel.lineup));
   const [fromStart, setFromStart] = useState(false);
   const [needsClick, setNeedsClick] = useState(false);
+  // A film picked from a personal channel's lineup, playing from its start: { channel, film }
+  const [demand, setDemand] = useState(null);
+  const picked = demand?.channel === channel.id ? demand.film : null;
 
-  useEffect(() => { setSlot(onAirAt(channel.lineup)); setFromStart(false); }, [channel.id]);
+  useEffect(() => { setSlot(onAirAt(channel.lineup)); setFromStart(false); setDemand(null); }, [channel.id]);
 
-  const start = fromStart ? { film: slot?.film, offset: 0 } : tuneIn(slot);
+  const start = picked ? { film: picked, offset: 0 } : fromStart ? { film: slot?.film, offset: 0 } : tuneIn(slot);
   const film = start?.film || slot?.film;
 
   useEffect(() => {
@@ -59,15 +64,19 @@ function useTuning(channel, onNext) {
     if (!video || !film) return;
     video.currentTime = start?.offset || 0;
     video.play().then(() => setNeedsClick(false)).catch(() => setNeedsClick(true)); // autoplay may need a gesture
-  }, [film?.id, fromStart]);
+  }, [film?.id, fromStart, picked?.id]);
+
+  // Back to whatever is on now, from the second it is at
+  const live = useCallback(() => { setDemand(null); setFromStart(false); setSlot(onAirAt(channel.lineup)); }, [channel]);
 
   const next = useCallback(() => {
+    if (picked) { live(); onNext?.(); return; }
     // The film ended: the schedule has moved on to the next one by now
     const now = onAirAt(channel.lineup);
     setFromStart(false);
     setSlot(now && now.film.id === film?.id ? { ...now, film: channel.lineup[(now.index + 1) % channel.lineup.length], offset: 0 } : now);
     onNext?.();
-  }, [channel, film?.id, onNext]);
+  }, [channel, film?.id, onNext, picked, live]);
 
   useEffect(() => {
     const onKeyDown = (event) => {
@@ -85,7 +94,8 @@ function useTuning(channel, onNext) {
   }, []);
 
   const play = () => videoRef.current?.play().then(() => setNeedsClick(false));
-  return { film, slot, start, fromStart, restart: () => setFromStart(true), live: () => setFromStart(false), needsClick, play, videoRef, next };
+  const pick = to => setDemand({ channel: channel.id, film: to });
+  return { film, slot, start, fromStart, picked, pick, restart: () => setFromStart(true), live, needsClick, play, videoRef, next };
 }
 
 // Ten minutes of actual playback on one channel counts as someone staying, once per tune-in
@@ -133,12 +143,12 @@ function Screen({ tuning, channelId, subtitles }) {
 
 // One line under the screen: what this is, and the two things you can do about it
 function NowPlaying({ channel, tuning, subtitles }) {
-  const { film, slot, start, fromStart, restart, live, videoRef } = tuning;
+  const { film, slot, start, fromStart, picked, restart, live, videoRef } = tuning;
   if (!film) return null;
-  const joined = !fromStart && start?.offset > 60 ? Math.floor(start.offset / 60) : 0;
+  const joined = !fromStart && !picked && start?.offset > 60 ? Math.floor(start.offset / 60) : 0;
   const facts = [
-    slot && `On until ${clock(slot.endsAt)}`,
-    fromStart ? 'watching from the beginning' : joined ? `you joined ${joined} minutes in` : null,
+    slot && !picked && `On until ${clock(slot.endsAt)}`,
+    fromStart || picked ? 'watching from the beginning' : joined ? `you joined ${joined} minutes in` : null,
     film.rating > 0 && `TMDB ${film.rating.toFixed(1)}`,
     film.critics != null && `Critics ${film.critics}%`,
     subtitleNote(subtitles),
@@ -150,12 +160,13 @@ function NowPlaying({ channel, tuning, subtitles }) {
           <span className="font-display font-black text-2xl text-signal tabular-nums shrink-0">{channel.number}</span>
           <span className="display text-2xl text-bone truncate">{film.title}</span>
           {film.year && <span className="text-dim shrink-0">{film.year}</span>}
+          {picked && <span className="label text-signal border border-signal/40 rounded-full px-2 py-0.5 shrink-0 self-center">On demand</span>}
         </p>
         <p className="text-sm text-muted">{facts.join(' · ')}</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {joined > 0 && <button type="button" onClick={() => { track('TV', { action: 'from start', channel: channel.id }); restart(); }} className="btn-ghost">Start from the beginning</button>}
-        {fromStart && <button type="button" onClick={live} className="btn-ghost">Back to live</button>}
+        {(fromStart || picked) && <button type="button" onClick={live} className="btn-ghost inline-flex items-center gap-2"><Radio size={16} aria-hidden="true" />Back to live</button>}
         <PopOut video={() => videoRef.current} />
         <a href={`/browse#${encodeURIComponent(film.id)}`} className="btn-ghost">About this film</a>
         <FavouriteButton film={film.id} variant="inline" />
@@ -169,8 +180,10 @@ function NowPlaying({ channel, tuning, subtitles }) {
 // are more. Tap to tune.
 // The stage: the screen with the channels beside it (ending where the screen ends), and the
 // now-playing line under the screen
-function Stage({ channel, channels, onTune, onNext }) {
+// onDemand: this channel's films can each be played from the start, from a list under the set
+function Stage({ channel, channels, onTune, onNext, onDemand }) {
   const tuning = useTuning(channel, onNext);
+  const play = (film) => { track('TV', { action: 'on-demand', channel: channel.id, film: film.id }); tuning.pick(film); };
   const subtitles = useSubtitles(tuning.film?.id, tuning.film?.url);
   return (
     <div data-stage className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-4">
@@ -180,7 +193,10 @@ function Stage({ channel, channels, onTune, onNext }) {
         <div className="relative lg:flex-1"><Rail channels={channels} current={channel} onTune={onTune} /></div>
         <WatchTogether channel={channel} />
       </aside>
-      <div className="lg:col-span-8"><NowPlaying channel={channel} tuning={tuning} subtitles={subtitles} /></div>
+      <div className="lg:col-span-8">
+        <NowPlaying channel={channel} tuning={tuning} subtitles={subtitles} />
+        {onDemand && channel.lineup?.length > 0 && <OnDemand channel={channel} playing={tuning.picked?.id} onPlay={play} />}
+      </div>
     </div>
   );
 }
@@ -214,8 +230,9 @@ function Rail({ channels, current, onTune }) {
 }
 
 // channel: a community channel ({ id: 'c-<id>', name, ids }) shown as channel 0 and tuned on load;
-// its page (ChannelPage) keeps its own address and passes its details as children
-export default function TvPage({ channel = null, children }) {
+// its page (ChannelPage) keeps its own address and passes its details as children. kept: this
+// profile made or saved that channel
+export default function TvPage({ channel = null, kept = false, children }) {
   const { channels: stations, error } = useSchedule();
   // A profile's own channels (not on a channel page). The old browser-only list shows only
   // until it has been copied to the profile.
@@ -229,6 +246,7 @@ export default function TvPage({ channel = null, children }) {
   const follow = followCopy({ currentId, legacy: personal.legacy, copied: carriedChannel(), onSet: saved.channels.map(c => c.id),
     left: (me?.channels || []).map(c => c.id).filter(id => !personal.saved.some(c => c.id === id)), known: me && (me.channels || []).map(c => c.id) });
   const mine = useMyChannel(6, channel, !personal.legacy && !follow.keepOld);
+  const onDemand = useMemo(() => onDemandIds({ own: saved.channels.map(c => c.id), mine, kept }), [saved.channels, mine, kept]);
   const span = useGuideSpan();
   const [open, setOpen] = useState(null); // the guide row playing under itself
   // The personal channels go first, numbered 0, 0b, 0c..., when they have anything on them
@@ -294,7 +312,7 @@ export default function TvPage({ channel = null, children }) {
             <div className="absolute inset-0 flex items-center justify-center text-muted">Nothing on this channel yet.</div>
           </div>
         )}
-        {current && <Stage channel={current} channels={channels} onTune={tune} onNext={() => setNow(Date.now())} />}
+        {current && <Stage channel={current} channels={channels} onTune={tune} onNext={() => setNow(Date.now())} onDemand={onDemand.has(current.id)} />}
         {children}
         {!channel && mine && (mine.lineup.length > 0 || mine.pending > 0) && (
           <p className="label flex flex-wrap items-center gap-x-4 gap-y-1 -mt-4">
