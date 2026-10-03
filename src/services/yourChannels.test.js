@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { tvPersonal, personalNumber, pinTo, followCopy, MAX_ON_TV } from './yourChannels.js';
 
-const ch = (id, films, created = 0) => ({ id, name: `Channel ${id}`, status: 'private', films, created });
+const ch = (id, films) => ({ id, name: `Channel ${id}`, status: 'private', films });
 
 test('no profile: the old browser list, nothing from the server', () => {
   assert.deepEqual(tvPersonal({ profileId: null, carriedId: null, channels: [ch('a', 3)] }), { legacy: true, saved: [] });
@@ -19,13 +19,13 @@ test('once copied, the old list goes and the saved channels show, empty ones lef
   assert.deepEqual(r.saved.map(c => c.id), ['a', 'c']);
 });
 
-test('oldest first, whatever order they arrive in, so an edit never renumbers them', () => {
-  const r = tvPersonal({ profileId: 'p1', carriedId: 'p1', channels: [ch('newest', 1, 300), ch('first', 2, 100), ch('middle', 1, 200)] });
+test('in the order the server sends them (oldest first)', () => {
+  const r = tvPersonal({ profileId: 'p1', carriedId: 'p1', channels: [ch('first', 2), ch('middle', 1), ch('newest', 1)] });
   assert.deepEqual(r.saved.map(c => c.id), ['first', 'middle', 'newest']);
 });
 
-test('at most ten, the oldest ten', () => {
-  const channels = Array.from({ length: 14 }, (_, i) => ch(`c${i}`, 1, i)).reverse();
+test('at most ten, the first ten', () => {
+  const channels = Array.from({ length: 14 }, (_, i) => ch(`c${i}`, 1));
   const r = tvPersonal({ profileId: 'p1', carriedId: 'p1', channels });
   assert.equal(r.saved.length, MAX_ON_TV);
   assert.deepEqual(r.saved.map(c => c.id), Array.from({ length: 10 }, (_, i) => `c${i}`));

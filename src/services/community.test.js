@@ -166,6 +166,17 @@ test('listing and profile counts leave removed films out', async () => {
   assert.equal((await getProfile(db, pid)).channels[0].films, 4);
 });
 
+test('a profile lists its channels oldest first, without their times', async () => {
+  const db = await openTestDb();
+  const { id: pid } = await createProfile(db, { now });
+  const first = await createChannel(db, pid, { name: 'First', films: films(1) }, { now, flag: noFlag });
+  const second = await createChannel(db, pid, { name: 'Second', films: films(1) }, { now: now + 1000, flag: noFlag });
+  await updateChannel(db, first, pid, { name: 'First, edited' }, { now: now + 2000, flag: noFlag });
+  const { channels } = await getProfile(db, pid);
+  assert.deepEqual(channels.map(c => c.id), [first, second]);
+  assert.ok(channels.every(c => !('created' in c) && !('updated' in c)));
+});
+
 test('forbidden films are never stored; positions stay contiguous', async () => {
   const db = await openTestDb();
   const { id: pid } = await createProfile(db, { now });

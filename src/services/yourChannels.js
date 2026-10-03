@@ -9,14 +9,13 @@ export const MAX_ON_TV = 10;
 export const personalNumber = i => (i === 0 ? '0' : `0${String.fromCharCode(97 + i)}`);
 
 // profileId: this browser's profile, if any. carriedId: the profile the old browser-only list
-// was copied into. channels: the profile's channels, each with its `created` time. They go
-// oldest first, so a channel keeps its number when films are added. The old list shows only
-// until it has been copied into this profile.
+// was copied into. channels: the profile's channels, oldest first as the server sends them, so a
+// channel keeps its number when films are added. The old list shows only until it has been
+// copied into this profile.
 export function tvPersonal({ profileId, carriedId, channels }) {
-  const byAge = [...(channels || [])].sort((a, b) => (a.created || 0) - (b.created || 0));
   return {
     legacy: !profileId || carriedId !== profileId,
-    saved: profileId ? byAge.filter(c => c.films > 0).slice(0, MAX_ON_TV).map(c => ({ id: c.id, name: c.name })) : [],
+    saved: profileId ? (channels || []).filter(c => c.films > 0).slice(0, MAX_ON_TV).map(c => ({ id: c.id, name: c.name })) : [],
   };
 }
 
