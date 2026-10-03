@@ -1,19 +1,22 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { onAirAt, programmesBetween } from '../services/schedule';
+import { toFetch } from '../services/yourChannels';
 import { served } from './useMyChannel';
 
-// The TV's view of a person's own server channels: list is [{ id, name }] (services/yourChannels).
+// The TV's view of a person's own server channels: list is [{ id, name, films }] (services/yourChannels).
 // Each one's films come from /api/channel/<id>, its lineup from /api/tv?channel=<id> (keyed by
-// those films, so an edit is not answered from the edge cache). A channel that fails to load,
-// or has nothing that airs, is left out. pending: some are still loading.
+// those films, so an edit is not answered from the edge cache). Only a channel whose film count
+// changed is loaded again. A channel that fails to load, or has nothing that airs, is left out.
+// pending: some are still loading.
 export default function useSavedChannels(list, hours = 6) {
   const [loaded, setLoaded] = useState({}); // id -> lineup (empty when it failed)
-  const key = list.map(c => c.id).join(',');
+  const asked = useRef({}); // id -> the film count its lineup was asked for at
+  const key = list.map(c => `${c.id}:${c.films}`).join(',');
 
   useEffect(() => {
-    if (!key) return undefined;
-    let cancelled = false;
-    key.split(',').forEach(async (id) => {
+    const wanted = key ? key.split(',').map((entry) => { const [id, films] = entry.split(':'); return { id, films: Number(films) }; }) : [];
+    toFetch(wanted, asked.current).forEach(async ({ id, films }) => {
+      asked.current[id] = films;
       let lineup = [];
       try {
         const res = await fetch(`/api/channel/${encodeURIComponent(id)}`);
@@ -22,9 +25,8 @@ export default function useSavedChannels(list, hours = 6) {
           if (ids.length) lineup = await served(id, ids);
         }
       } catch { /* left out this visit */ }
-      if (!cancelled) setLoaded(had => ({ ...had, [id]: lineup }));
+      if (asked.current[id] === films) setLoaded(had => ({ ...had, [id]: lineup }));
     });
-    return () => { cancelled = true; };
   }, [key]);
 
   return useMemo(() => {

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { tvPersonal, personalNumber, pinTo, followCopy, awaitingSaved, MAX_ON_TV } from './yourChannels.js';
+import { tvPersonal, personalNumber, pinTo, followCopy, awaitingSaved, toFetch, MAX_ON_TV } from './yourChannels.js';
 
 const ch = (id, films) => ({ id, name: `Channel ${id}`, status: 'private', films });
 
@@ -17,6 +17,7 @@ test('once copied, the old list goes and the saved channels show, empty ones lef
   const r = tvPersonal({ profileId: 'p1', carriedId: 'p1', channels: [ch('a', 2), ch('b', 0), ch('c', 5)] });
   assert.equal(r.legacy, false);
   assert.deepEqual(r.saved.map(c => c.id), ['a', 'c']);
+  assert.deepEqual(r.saved[0], { id: 'a', name: 'Channel a', films: 2 });
 });
 
 test('in the order the server sends them (oldest first)', () => {
@@ -83,4 +84,12 @@ test('the set waits for the profile, then its channels, and stops once a load en
   assert.equal(awaitingSaved({ profileId: 'p1', me: null, tried: true, pending: false }), false, 'failed');
   assert.equal(awaitingSaved({ profileId: 'p1', me, tried: true, pending: true }), true, 'channels loading');
   assert.equal(awaitingSaved({ profileId: 'p1', me, tried: true, pending: false }), false);
+});
+
+test('only new channels, and ones whose films changed, are loaded again', () => {
+  const list = [{ id: 'a', films: 2 }, { id: 'b', films: 4 }, { id: 'c', films: 1 }];
+  assert.deepEqual(toFetch(list, {}).map(c => c.id), ['a', 'b', 'c']);
+  assert.deepEqual(toFetch(list, { a: 2, b: 3, c: 1 }).map(c => c.id), ['b'], 'a film was added to b');
+  assert.deepEqual(toFetch(list, { a: 2, b: 4 }).map(c => c.id), ['c']);
+  assert.deepEqual(toFetch(list, { a: 2, b: 4, c: 1 }), []);
 });

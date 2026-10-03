@@ -15,9 +15,13 @@ export const personalNumber = i => (i === 0 ? '0' : `0${String.fromCharCode(97 +
 export function tvPersonal({ profileId, carriedId, channels }) {
   return {
     legacy: !profileId || carriedId !== profileId,
-    saved: profileId ? (channels || []).filter(c => c.films > 0).slice(0, MAX_ON_TV).map(c => ({ id: c.id, name: c.name })) : [],
+    saved: profileId ? (channels || []).filter(c => c.films > 0).slice(0, MAX_ON_TV).map(c => ({ id: c.id, name: c.name, films: c.films })) : [],
   };
 }
+
+// The saved channels whose lineup has to be loaded: new ones, and ones whose film count changed
+// since it was asked for. asked: id -> the film count it was last asked for at.
+export const toFetch = (list, asked) => list.filter(c => asked[c.id] !== c.films);
 
 // Whether the set should still wait for the profile's channels: while the profile loads, then
 // while its channels do. A load that ended with nothing (failed, or no profile) ends the wait.
