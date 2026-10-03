@@ -14,12 +14,12 @@ const fake = () => {
   let n = 0;
   return {
     generateRegistrationOptions: async (o) => ({ challenge: `reg${++n}`, user: { id: o.userID }, rp: { id: o.rpID }, o }),
-    verifyRegistrationResponse: async ({ response, expectedChallenge, expectedOrigin, expectedRPID }) => (
+    verifyRegistrationResponse: async ({ response, expectedOrigin, expectedRPID }) => (
       expectedOrigin === rp.origin && expectedRPID === rp.rpID
         ? { verified: true, registrationInfo: { credential: { id: response.id, publicKey: new Uint8Array([1, 2, 3]), counter: 0, transports: ['internal'] } } }
         : { verified: false }),
     generateAuthenticationOptions: async () => ({ challenge: `auth${++n}` }),
-    verifyAuthenticationResponse: async ({ response, expectedChallenge, credential }) => (
+    verifyAuthenticationResponse: async ({ response, credential }) => (
       response.id === credential.id
         ? { verified: true, authenticationInfo: { newCounter: (response.counter ?? credential.counter + 1) } }
         : { verified: false }),
