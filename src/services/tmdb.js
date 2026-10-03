@@ -47,6 +47,8 @@ function cacheEntry(key, data) {
 
 // Pending requests tracker to prevent duplicate in-flight requests
 const pendingRequests = new Map();
+// The longest a rating sort waits for any one lookup, so a retried or slow lookup can't hold up a page
+export const RANK_WAIT = 1500;
 
 // Rate limiting
 let lastRequestTime = 0;
@@ -332,10 +334,14 @@ bestMatch = bestMatch || bestStrictMatch(guesses, filmYear);
 
   // Rank one batch of films by TMDB rating, highest first. Every lookup finishes before the
   // batch is ranked, so the order is final when it reaches the screen. Films with no rating
-  // (no match, or a failed lookup) follow in the order they came in.
+  // (no match, a failed lookup, or one still waiting after RANK_WAIT) follow in the order they
+  // came in; a slow lookup carries on for its card.
   async sortByRating(movies) {
-    const ratings = await Promise.all(movies.map(movie =>
-      this.searchMovie(movie.title, movie.year, movie.identifier).then(match => match?.voteAverage || 0, () => 0)));
+    const late = new Promise(resolve => setTimeout(() => resolve(0), RANK_WAIT));
+    const ratings = await Promise.all(movies.map(movie => Promise.race([
+      this.searchMovie(movie.title, movie.year, movie.identifier).then(match => match?.voteAverage || 0, () => 0),
+      late,
+    ])));
     return movies
       .map((movie, index) => ({ movie, rating: ratings[index] }))
       .sort((a, b) => b.rating - a.rating)

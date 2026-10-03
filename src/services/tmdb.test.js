@@ -266,6 +266,19 @@ test('sortByRating waits for every rating, ranks the batch once, and leaves unra
   assert.equal(batch[0].identifier, 'unrated-a', 'the input is not reordered');
 });
 
+test('sortByRating does not wait past its limit for a slow lookup', async t => {
+  const { service } = await makeService(t);
+  t.mock.method(service, 'searchMovie', async (title, year, identifier) => (identifier === 'stuck'
+    ? new Promise(() => {})
+    : { voteAverage: 7 }));
+  const batch = ['stuck', 'quick'].map(identifier => ({ identifier, title: identifier, year: 1950 }));
+  const pending = service.sortByRating(batch);
+  await new Promise(resolve => setImmediate(resolve)); // the quick lookup answers first
+  t.mock.timers.tick(1500);
+  const sorted = await pending;
+  assert.deepEqual(sorted.map(m => m.identifier), ['quick', 'stuck']);
+});
+
 test('a 429 lookup is retried once after a wait, and a second 429 is not cached', async t => {
   const { service } = await makeService(t);
   t.mock.method(console, 'warn', () => {});
