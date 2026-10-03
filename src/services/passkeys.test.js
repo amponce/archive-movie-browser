@@ -2,29 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { openTestDb } from './testDb.js';
 import { createProfile, authProfile } from '../../api/_community.js';
+import { fakeWebauthn as fake, rp, resp } from './fakeWebauthn.js';
 import { rpFor, registrationOptions, register, listPasskeys, removePasskey, signinOptions, signin, MAX_PASSKEYS } from '../../api/_passkeys.js';
 
 const now = 1_800_000_000_000;
-const cd = challenge => Buffer.from(JSON.stringify({ challenge })).toString('base64url');
-const resp = (id, challenge, extra = {}) => ({ id, response: { clientDataJSON: cd(challenge) }, ...extra });
-const rp = { rpID: 'orphanedfilms.com', origin: 'https://www.orphanedfilms.com' };
-// A fake WebAuthn library: options echo a fixed challenge; verification succeeds when the
-// response carries the expected challenge and credential, fails otherwise
-const fake = () => {
-  let n = 0;
-  return {
-    generateRegistrationOptions: async (o) => ({ challenge: `reg${++n}`, user: { id: o.userID }, rp: { id: o.rpID }, o }),
-    verifyRegistrationResponse: async ({ response, expectedOrigin, expectedRPID }) => (
-      expectedOrigin === rp.origin && expectedRPID === rp.rpID
-        ? { verified: true, registrationInfo: { credential: { id: response.id, publicKey: new Uint8Array([1, 2, 3]), counter: 0, transports: ['internal'] } } }
-        : { verified: false }),
-    generateAuthenticationOptions: async () => ({ challenge: `auth${++n}` }),
-    verifyAuthenticationResponse: async ({ response, credential }) => (
-      response.id === credential.id
-        ? { verified: true, authenticationInfo: { newCounter: (response.counter ?? credential.counter + 1) } }
-        : { verified: false }),
-  };
-};
 
 test('only our origins get a relying party', () => {
   assert.deepEqual(rpFor('https://www.orphanedfilms.com'), rp);

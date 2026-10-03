@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { openTestDb } from './testDb.js';
 import { handle, addressKey, LOOKUPS } from '../../api/community.js';
+import { fakeWebauthn, resp } from './fakeWebauthn.js';
 
 const ORIGIN = 'https://www.orphanedfilms.com';
 const ctx = async () => ({ db: await openTestDb(), flag: async () => false, minutes: async () => ({}), now: 1_700_000_000_000 });
@@ -173,4 +174,55 @@ test('submit does not look anything up for a hidden channel', async () => {
   asked = 0;
   assert.equal((await (await call(c, 'POST', `/api/channel/${id}/submit`, { auth: me })).json()).problem, 'hidden');
   assert.equal(asked, 0);
+});
+
+test('passkey: register as owner, then sign in anywhere returns a new key', async () => {
+  const c = { ...(await ctx()), webauthn: fakeWebauthn() };
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  const opts = await (await call(c, 'POST', '/api/passkey/options', { auth: me })).json();
+  assert.equal((await call(c, 'POST', '/api/passkey', { auth: me, body: resp('credA-padding-xxxx', opts.challenge) })).status, 204);
+  const list = await call(c, 'GET', '/api/passkey', { auth: me });
+  assert.equal(list.headers.get('cache-control'), 'no-store');
+  assert.equal((await list.json()).passkeys.length, 1);
+  const so = await (await call(c, 'POST', '/api/passkey/challenge')).json();
+  const out = await (await call(c, 'POST', '/api/passkey/verify', { body: resp('credA-padding-xxxx', so.challenge, { counter: 1 }) })).json();
+  assert.equal(out.id, me.id);
+  assert.notEqual(out.key, me.key);
+  assert.equal((await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: me, body: { name: 'x' } })).status, 401);
+  assert.equal((await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: out, body: { name: 'x' } })).status, 204);
+});
+
+test('passkey: anonymous cannot register or list; other origins refused', async () => {
+  const c = { ...(await ctx()), webauthn: fakeWebauthn() };
+  assert.equal((await call(c, 'POST', '/api/passkey/options')).status, 401);
+  assert.equal((await call(c, 'GET', '/api/passkey')).status, 401);
+  const res = await handle(new Request('https://www.orphanedfilms.com/api/passkey/challenge', { method: 'POST', headers: { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' } }), c);
+  assert.equal(res.status, 403);
+});
+
+test('passkey: limits apply to challenges', async () => {
+  const c = { ...(await ctx()), webauthn: fakeWebauthn() };
+  for (let i = 0; i < 30; i++) assert.equal((await call(c, 'POST', '/api/passkey/challenge', { ip: '8.8.8.8' })).status, 200);
+  assert.equal((await call(c, 'POST', '/api/passkey/challenge', { ip: '8.8.8.8' })).status, 429);
+});
+
+test('passkey: a failed sign-in, a removal, and a full profile', async () => {
+  const c = { ...(await ctx()), webauthn: fakeWebauthn() };
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  const so = await (await call(c, 'POST', '/api/passkey/challenge')).json();
+  const bad = await call(c, 'POST', '/api/passkey/verify', { body: resp('unknown-padding-xxxx', so.challenge) });
+  assert.equal(bad.status, 400);
+  assert.equal(bad.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await bad.json(), { error: 'invalid' });
+  for (let i = 0; i < 5; i++) {
+    const o = await (await call(c, 'POST', '/api/passkey/options', { auth: me })).json();
+    assert.equal((await call(c, 'POST', '/api/passkey', { auth: me, body: resp(`k${i}-padding-xxxxxxxx`, o.challenge) })).status, 204);
+  }
+  const full = await call(c, 'POST', '/api/passkey/options', { auth: me });
+  assert.equal(full.status, 409);
+  assert.deepEqual(await full.json(), { error: 'full' });
+  assert.equal((await call(c, 'DELETE', '/api/passkey/k0-padding-xxxxxxxx', { auth: me })).status, 204);
+  assert.equal((await call(c, 'DELETE', '/api/passkey/k0-padding-xxxxxxxx', { auth: me })).status, 404);
+  const other = await (await call(c, 'POST', '/api/profile', { ip: '2.2.2.2' })).json();
+  assert.equal((await call(c, 'DELETE', '/api/passkey/k1-padding-xxxxxxxx', { auth: other })).status, 404);
 });

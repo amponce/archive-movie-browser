@@ -34,3 +34,7 @@ test('every list file is imported for the server (add its line to api/_lists.js)
 test('community addresses go to one handler', () => {
   for (const p of ['/api/profile', '/api/profile/abcdefghij/favourites/Detour', '/api/channel/abcdefghij/submit', '/api/channels']) assert.equal(route(p).name, 'community')
 })
+
+test('passkey addresses go to the community handler', () => {
+  for (const p of ['/api/passkey', '/api/passkey/options', '/api/passkey/challenge', '/api/passkey/verify', '/api/passkey/abcDEF_123-xyz00000']) assert.equal(route(p).name, 'community')
+})

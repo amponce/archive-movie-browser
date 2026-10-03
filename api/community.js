@@ -1,5 +1,6 @@
-// /api/profile, /api/channel, /api/channels
+// /api/profile, /api/channel, /api/channels, /api/passkey
 import { createProfile, authProfile, getProfile, updateProfile, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels, hashKey, isListed } from './_community.js';
+import { rpFor, isPasskeyId, registrationOptions, register, listPasskeys, removePasskey, signinOptions, signin } from './_passkeys.js';
 
 const MAX_BODY = 20_000;
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-store', ...headers } });
@@ -69,10 +70,13 @@ export async function handle(request, deps) {
   try { return await route(request, deps); } catch (error) { console.error('community:', error.message); return empty(500); }
 }
 
-async function route(request, { db, flag, minutes, now }) {
+async function route(request, deps) {
+  const { db, flag, minutes, now } = deps;
   const url = new URL(request.url);
   const parts = url.pathname.replace(/\/+$/, '').split('/').slice(2); // ['profile', id, ...]
   const method = request.method;
+
+  if (parts[0] === 'passkey') return passkeyRoute(request, parts, deps);
 
   if (parts[0] === 'channels' && parts.length === 1) {
     if (method !== 'GET') return empty(405);
@@ -136,5 +140,51 @@ async function route(request, { db, flag, minutes, now }) {
     }
     if (parts[2] === 'save' && (method === 'PUT' || method === 'DELETE')) return empty(await setSaved(db, me.id, id, method === 'PUT', { now }) ? 204 : 404);
   }
+  return empty(404);
+}
+
+// Passkeys: an owner adds them to a profile; anyone holding one gets that profile's new edit key
+async function passkeyRoute(request, parts, { db, webauthn, now }) {
+  const method = request.method;
+  const rp = rpFor(request.headers.get('origin') || new URL(request.url).origin, request.url);
+  if (!rp) return empty(403);
+  const who = await addressKey(request.headers.get('cf-connecting-ip') || 'unknown', now);
+  // GET is read-only and answers only the caller's own passkeys
+  if (method === 'GET' && parts.length === 1) {
+    const me = await owner(request, db);
+    return me ? json({ passkeys: await listPasskeys(db, me.id) }) : empty(401);
+  }
+  if (!sameSite(request)) return empty(403);
+  if (method === 'POST' && parts[1] === 'challenge' && parts.length === 2) {
+    if (await overLimit(db, `pk:${who}`, 30, 3_600_000, now)) return empty(429);
+    return json(await signinOptions(db, webauthn, { rp, now }));
+  }
+  if (method === 'POST' && parts[1] === 'verify' && parts.length === 2) {
+    if (await overLimit(db, `pv:${who}`, 30, 3_600_000, now)) return empty(429);
+    const { body, tooBig } = await readBody(request);
+    if (tooBig) return empty(413);
+    if (!body) return empty(400);
+    const out = await signin(db, webauthn, body, { rp, now });
+    if (out === 'hidden') return empty(403);
+    return typeof out === 'string' ? json({ error: out }, 400) : json(out);
+  }
+  const me = await owner(request, db);
+  if (!me) return empty(401);
+  if (method === 'POST' && parts[1] === 'options' && parts.length === 2) {
+    if (await overLimit(db, `pk:${who}`, 30, 3_600_000, now)) return empty(429);
+    const out = await registrationOptions(db, webauthn, me.id, { rp, now });
+    if (out === 'hidden') return empty(403);
+    return out === 'full' ? json({ error: 'full' }, 409) : json(out);
+  }
+  if (method === 'POST' && parts.length === 1) {
+    if (await overLimit(db, `pv:${who}`, 30, 3_600_000, now)) return empty(429);
+    const { body, tooBig } = await readBody(request);
+    if (tooBig) return empty(413);
+    if (!body) return empty(400);
+    const out = await register(db, webauthn, me.id, body, { rp, now });
+    if (out === 'hidden') return empty(403);
+    return out === 'ok' ? empty(204) : json({ error: out }, 400);
+  }
+  if (method === 'DELETE' && parts.length === 2 && isPasskeyId(parts[1])) return empty(await removePasskey(db, me.id, parts[1]) ? 204 : 404);
   return empty(404);
 }
