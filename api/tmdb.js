@@ -7,7 +7,7 @@ const PATHS = /^(search\/movie|movie\/\d{1,9}|genre\/movie\/list)$/;
 const MONTH = 30 * 86400;
 
 // A miss reaches TMDB, so misses are limited per address per minute (hits never reach this code)
-const PER_MINUTE = 240;
+const PER_MINUTE = 600;
 const hits = new Map();
 let minute = 0;
 function overLimit(ip) {
