@@ -100,6 +100,8 @@ test('channel: create, read in order with notes and flags, owner only edits', as
   assert.equal(await updateChannel(db, id, a.id, { films: [{ film: 'film-2' }, { film: 'film-1' }] }, { now, flag }), true);
   c = await getChannel(db, id);
   assert.deepEqual(c.films.map(f => f.film), ['film-2', 'film-1']);
+  const mine = (await getProfile(db, a.id)).channels[0];
+  assert.deepEqual([mine.films, mine.filmIds], [2, ['film-2', 'film-1']]);
 });
 
 test('submit: agreement, five films, no flagged; listed after approval; edit unlists', async () => {

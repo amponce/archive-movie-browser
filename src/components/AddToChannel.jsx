@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Check } from 'lucide-react';
 import useProfile from '../hooks/useProfile';
 import { ensureProfile, api } from '../services/profile';
 import { readLast, writeLast } from '../services/lastChannel';
@@ -30,6 +30,8 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
   const button = useRef(null);
   const last = readLast();
   const channels = [...(data?.channels || [])].sort((a, b) => (a.id === last ? -1 : b.id === last ? 1 : 0));
+  const holds = c => (c.filmIds || []).includes(film);
+  const added = channels.some(holds);
 
   useEffect(() => {
     if (!status) return undefined;
@@ -82,7 +84,7 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
 
   return (
     <div ref={root} className={`relative ${className}`} onClick={e => e.stopPropagation()}>
-      <button ref={button} type="button" aria-label="Add to a channel" aria-expanded={open} data-track="add-to-channel"
+      <button ref={button} type="button" aria-label={added ? 'In a channel. Add to another' : 'Add to a channel'} title={added ? 'In a channel' : 'Add to a channel'} aria-expanded={open} data-track="add-to-channel"
         className={`${SIZES[variant] || SIZES.overlay} rounded-full bg-ink/70 hover:bg-ink text-bone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal`}
         onClick={() => {
           if (open) { close(); return; }
@@ -90,12 +92,12 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
           setAlignLeft(r.right - 232 < 8 && r.left + 232 <= window.innerWidth - 8);
           setOpen(true);
         }}>
-        <Plus size={16} />
+        {added ? <Check size={16} className="text-signal" /> : <Plus size={16} />}
       </button>
       {open && (
         <div className={`absolute ${alignLeft ? 'left-0' : 'right-0'} mt-1 w-56 bg-ink border border-line z-30 text-sm text-bone`}>
           {channels.map(c => (
-            <button key={c.id} type="button" className="block w-full text-left px-3 py-2 hover:bg-line focus-visible:outline-none focus-visible:bg-line truncate" onClick={() => pick(c)}>{c.name}</button>
+            <button key={c.id} type="button" className="flex w-full items-center gap-2 text-left px-3 py-2 hover:bg-line focus-visible:outline-none focus-visible:bg-line" onClick={() => pick(c)}><span className="truncate flex-1">{c.name}</span>{holds(c) && <Check size={14} aria-label="Added" className="shrink-0 text-signal" />}</button>
           ))}
           {naming
             ? (
