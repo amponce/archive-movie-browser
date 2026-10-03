@@ -150,6 +150,16 @@ class TMDBService {
     return fetch(url);
   }
 
+  // A lookup refused with 429 during a burst is tried once more, after the wait the answer asks for.
+  async lookupFetch(url) {
+    const response = await this.throttledFetch(url);
+    if (response.status !== 429) return response;
+    const retryAfter = Number(response.headers?.get?.('Retry-After'));
+    const wait = retryAfter > 0 ? Math.min(retryAfter, 10) * 1000 : 2000 + Math.random() * 500;
+    await new Promise(resolve => setTimeout(resolve, wait));
+    return this.throttledFetch(url);
+  }
+
   getCacheKey(title, year) {
     return `${title.toLowerCase().trim()}-${year || 'unknown'}`;
   }
@@ -221,7 +231,7 @@ let bestMatch = null;
 
 const guesses = [];
 for (const candidate of titleCandidates(title)) {
-  const response = await this.throttledFetch(this.lookupUrl('search/movie', { query: candidate.query }));
+  const response = await this.lookupFetch(this.lookupUrl('search/movie', { query: candidate.query }));
 
   if (!response.ok) {
     // Not cached: an outage or rate limit must not hide this film's poster for a week
@@ -291,7 +301,7 @@ bestMatch = bestMatch || bestStrictMatch(guesses, filmYear);
 
   async _fetchMovieDetails(id, cacheKey) {
     try {
-      const response = await this.throttledFetch(this.lookupUrl(`movie/${id}`, { append_to_response: 'credits' }));
+      const response = await this.lookupFetch(this.lookupUrl(`movie/${id}`, { append_to_response: 'credits' }));
       if (!response.ok) {
         console.warn('TMDB details failed:', response.status);
         return null;

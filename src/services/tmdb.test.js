@@ -265,3 +265,40 @@ test('sortByRating waits for every rating, ranks the batch once, and leaves unra
   assert.deepEqual(sorted.map(m => m.identifier), ['slow', 'fast', 'unrated-a', 'failed', 'unrated-b']);
   assert.equal(batch[0].identifier, 'unrated-a', 'the input is not reordered');
 });
+
+test('a 429 lookup is retried once after a wait, and a second 429 is not cached', async t => {
+  const { service } = await makeService(t);
+  t.mock.method(console, 'warn', () => {});
+  service.setApiKey('');
+  const limited = { ok: false, status: 429, headers: new Headers() };
+  const found = { ok: true, status: 200, json: async () => ({ results: [{ id: 9, title: 'Example', poster_path: '/p.jpg' }] }) };
+  const replies = [limited, found];
+  const fetchMock = t.mock.method(globalThis, 'fetch', async () => replies.shift());
+  const throttle = t.mock.method(service, 'throttledFetch');
+  const settle = async promise => {
+    let done = false;
+    promise.finally(() => { done = true; });
+    while (!done) {
+      await new Promise(resolve => setImmediate(resolve));
+      t.mock.timers.tick(1000);
+    }
+    return promise;
+  };
+  assert.equal((await settle(service.searchMovie('Example'))).posterPath, '/p.jpg');
+  assert.equal(fetchMock.mock.callCount(), 2);
+  assert.equal(throttle.mock.callCount(), 2, 'the retry goes through the throttle');
+
+  replies.push(limited, limited);
+  assert.equal(await settle(service.searchMovie('Other')), null);
+  assert.equal(fetchMock.mock.callCount(), 4, 'only one retry');
+  assert.equal(service.getFromCache('Other').found, false);
+
+  replies.push({ ok: false, status: 429, headers: new Headers({ 'Retry-After': '5' }) }, { ok: true, status: 200, json: async () => ({ id: 50 }) });
+  const details = service.getMovieDetails(50);
+  for (let i = 0; i < 3; i++) await new Promise(resolve => setImmediate(resolve));
+  t.mock.timers.tick(4000);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(fetchMock.mock.callCount(), 5, 'Retry-After is honoured');
+  assert.deepEqual(await settle(details), { credits: { cast: [], crew: [] } });
+  assert.equal(fetchMock.mock.callCount(), 6);
+});
