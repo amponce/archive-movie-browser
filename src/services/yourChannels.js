@@ -21,9 +21,10 @@ export function tvPersonal({ profileId, carriedId, channels }) {
 }
 
 // Once the set has picked a channel it holds on to it, so an add that reorders your channels
-// does not move it: the id to hold, or null to leave the asked-for one. `mine` is left as asked:
-// with nothing on it the page shows how to start one, and it tunes in once its films are measured.
-export const pinTo = (currentId, current) => (current && current.id !== currentId && currentId !== MY_CHANNEL_ID ? current.id : null);
+// does not move it: the id to hold, or null to leave the asked-for one. keepMine: the old list can
+// still show, so `mine` is left as asked: with nothing on it the page shows how to start one, and it
+// tunes in once its films are measured.
+export const pinTo = (currentId, current, keepMine) => (current && current.id !== currentId && !(keepMine && currentId === MY_CHANNEL_ID) ? current.id : null);
 
 // Someone watching the old list (`mine`) when it is copied to their profile stays with it: the
 // old list stays on the set until the copy has loaded, then the copy stands in for it.

@@ -256,9 +256,9 @@ export default function TvPage({ channel = null, children }) {
     : channels.find(c => c.id === follow.id) || (mine?.lineup.length && window.location.search.includes('mine=') ? channels.find(c => c.id === mine.id) : null) || channels[0] || null), [channels, currentId, follow.id, mine, waiting, empty, channel, holding]);
   // Once the set has picked a channel it stays on it, even when an add reorders your channels
   useEffect(() => {
-    const pin = pinTo(currentId, current);
+    const pin = pinTo(currentId, current, personal.legacy || follow.keepOld);
     if (!channel && settled && stations.length && pin) setCurrentId(pin);
-  }, [channel, settled, stations.length, current, currentId]);
+  }, [channel, settled, stations.length, current, currentId, personal.legacy, follow.keepOld]);
   const tune = useCallback((to) => {
     setCurrentId(to.id);
     if (!channel) {

@@ -39,13 +39,19 @@ test('personal channels are numbered 0, 0b, 0c ...', () => {
   assert.deepEqual([0, 1, 2, 9].map(personalNumber), ['0', '0b', '0c', '0j']);
 });
 
-test('the set holds the channel it fell back to, but never replaces mine', () => {
+test('the set holds the channel it fell back to', () => {
   const station = { id: 'kung-fu-theater' };
   assert.equal(pinTo('gone', station), 'kung-fu-theater');
   assert.equal(pinTo(null, station), 'kung-fu-theater');
   assert.equal(pinTo('kung-fu-theater', station), null);
-  assert.equal(pinTo('mine', station), null, 'an empty /tv#mine keeps its panel');
   assert.equal(pinTo('gone', null), null);
+});
+
+test('mine is left as asked only while the old list can show', () => {
+  const station = { id: 'kung-fu-theater' };
+  assert.equal(pinTo('mine', station, true), null, 'an empty /tv#mine keeps its panel');
+  assert.equal(pinTo('mine', station, false), 'kung-fu-theater', 'otherwise held like any other');
+  assert.equal(pinTo('mine', { id: 'c-abc' }, false), 'c-abc');
 });
 
 test('watching the old list as it is copied: the old list stays until the copy is on the set', () => {
