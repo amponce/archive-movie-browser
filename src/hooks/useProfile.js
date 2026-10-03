@@ -65,10 +65,12 @@ export default function useProfile() {
       const res = await api(`/api/profile/${profile.id}/favourites/${encodeURIComponent(film)}`, { method: on ? 'PUT' : 'DELETE', profile });
       if (!res.ok) throw new Error(`favourite ${res.status}`);
       if (fresh) refreshProfile(); // the first save may have carried an old channel over
+      return true;
     } catch {
       entry.failed = true;
       set(had);
       refreshProfile();
+      return false;
     }
   }, []);
   return { get profile() { return readProfile(); }, data, tried, refresh: refreshProfile, toggleFavourite };
