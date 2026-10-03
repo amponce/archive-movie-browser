@@ -4,8 +4,7 @@ import { isTakenDown, isForbidden } from '../services/policy';
 import { identifierQueries } from '../services/archive';
 import tmdbService from '../services/tmdb';
 import { watchUrl } from '../services/reel';
-import { readMyChannel, toggleSaved, hasFilm, shareUrl } from '../services/myChannel';
-import { track } from '../services/analytics';
+import { shareUrl } from '../services/myChannel';
 import { CardGrid } from '../ui/Section';
 import FilmCard from '../ui/FilmCard';
 import FavouriteButton from '../components/FavouriteButton';
@@ -48,25 +47,16 @@ async function describe(identifiers) {
   return withPosters(items);
 }
 
-// Film cards that can each go on your own channel, which stays in this browser.
-// notes: an optional line of text under each card, by film id. saves: ♡ and + in place of the
-// browser-only channel toggle
-export function FilmGrid({ films, track: from, notes, saves = false, source }) {
-  const [mine, setMine] = useState(readMyChannel);
-  const toggle = (filmId) => { setMine(toggleSaved(filmId)); track('TV', { action: hasFilm(mine, filmId) ? 'remove from my channel' : 'add to my channel', film: filmId }); };
+// Film cards, each with ♡ and + to keep it in your favourites or on one of your channels.
+// notes: an optional line of text under each card, by film id
+export function FilmGrid({ films, track: from, notes, source }) {
   return (
     <CardGrid>
       {films.map(film => (
         <div key={film.id} className="flex flex-col gap-2" onClick={source ? () => { try { sessionStorage.setItem('played-from', JSON.stringify({ film: film.id, list: source })); } catch { /* ignore */ } } : undefined}>
           <FilmCard film={film} href={watchUrl(film.id)} track={from} />
           {notes?.[film.id] && <p className="text-sm text-muted break-words">{notes[film.id]}</p>}
-          {saves
-            ? <div className="flex items-center gap-1"><FavouriteButton film={film.id} /><AddToChannel film={film.id} /></div>
-            : (
-              <button type="button" onClick={() => toggle(film.id)} aria-pressed={hasFilm(mine, film.id)} className="nav-link text-left hover:text-signal">
-                {hasFilm(mine, film.id) ? 'On my channel' : 'Add to my channel'}
-              </button>
-            )}
+          <div className="flex items-center gap-1"><FavouriteButton film={film.id} /><AddToChannel film={film.id} /></div>
         </div>
       ))}
     </CardGrid>
@@ -74,7 +64,7 @@ export function FilmGrid({ films, track: from, notes, saves = false, source }) {
 }
 
 // /details/@someone/lists/1: a list someone keeps on Archive.org, read from Archive.org each visit
-// (nothing is kept here). The films in it can go on your own channel, which stays in this browser.
+// (nothing is kept here). The films in it can go on your own channels.
 export default function ArchiveListPage({ user, id }) {
   const [list, setList] = useState(null);
   const [error, setError] = useState(null);
@@ -125,7 +115,7 @@ export default function ArchiveListPage({ user, id }) {
               <section aria-labelledby="list-films" className="flex flex-col gap-5">
                 <div>
                   <h2 id="list-films" className="display text-2xl">The films</h2>
-                  <p className="text-muted mt-1">Add any of them to your own channel. It stays in this browser, private to you.</p>
+                  <p className="text-muted mt-1">Add any of them to a channel of your own.</p>
                 </div>
                 <FilmGrid films={films} track="archive-list-film" />
               </section>

@@ -59,7 +59,7 @@ export default function ArchiveProfilePage({ user }) {
           <section aria-labelledby="profile-favourites" className="flex flex-col gap-5">
             <div className="flex flex-col gap-3">
               <h2 id="profile-favourites" className="display text-2xl">Their favourite films ({favourites.length})</h2>
-              <p className="text-muted">Add any of them to your own channel. It stays in this browser, private to you.</p>
+              <p className="text-muted">Add any of them to a channel of your own.</p>
               <div><Button href={shareUrl(favourites.map(f => f.id))} size="lg" data-track="archive-profile-as-channel">Watch their favourites as a channel</Button></div>
             </div>
             <FilmGrid films={favourites} track="archive-profile-film" />

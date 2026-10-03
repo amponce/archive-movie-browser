@@ -22,7 +22,7 @@ export function EmptyChannel() {
   return (
     <section aria-labelledby="empty-channel" className="panel p-6 sm:p-8 flex flex-col gap-4 max-w-[720px]">
       <h2 id="empty-channel" className="display text-3xl">Channel 0 is yours</h2>
-      <p className="text-muted leading-relaxed">Open any film and choose Add to my channel. Your films play in order, round the clock, and anyone you send the link to lands on the same frame as you.</p>
+      <p className="text-muted leading-relaxed">Open any film and choose Add to a channel. Your films play in order, round the clock, and anyone you send the link to lands on the same frame as you.</p>
       <div className="flex flex-wrap gap-3">
         <a href="/lists" className="btn-primary">Pick from the lists</a>
         <a href="/browse" className="btn-ghost">Browse films</a>

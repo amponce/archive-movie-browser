@@ -68,7 +68,6 @@ export default function FromArchivePage() {
           </dl>
           <p className="text-muted leading-relaxed">
             Anything else from archive.org can go in the search box at the top of any page: paste the link and it opens what it points at.
-            A film added to your channel from someone else's list or favourites stays in this browser, private to you.
           </p>
         </section>
       </main>

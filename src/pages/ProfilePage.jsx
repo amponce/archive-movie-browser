@@ -112,7 +112,7 @@ export default function ProfilePage({ slug }) {
         )}
         <section>
           <h2 className="display text-xl mb-3">Favourites</h2>
-          <FilmGrid films={films} track="profile" saves />
+          <FilmGrid films={films} track="profile" />
         </section>
         {isOwner && (
           <section className="border border-line p-4">

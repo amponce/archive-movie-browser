@@ -69,7 +69,7 @@ export default function ChannelPage({ slug }) {
     window.history.replaceState(null, '', channelLink('', channel.id, to));
   };
   const list = view === 'list';
-  const grid = <FilmGrid films={cards} notes={notes} track="channel-film" saves source={`c-${channel.id}`} />;
+  const grid = <FilmGrid films={cards} notes={notes} track="channel-film" source={`c-${channel.id}`} />;
   const toggleSave = async () => {
     try {
       const profile = await ensureProfile();
