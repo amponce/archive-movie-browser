@@ -63,7 +63,7 @@ const API = {
   event: web(event, 'POST'),
   stats: web(stats, 'GET'),
   mcp: (request) => mcp(request),
-  community: (request, query, env) => community(request, { db: env.DB, flag: archiveFlag, minutes: redisMinutes, webauthn, now: Date.now() }),
+  community: (request, query, env) => community(request, { db: env.DB, flag: archiveFlag, minutes: redisMinutes, webauthn, netSalt: env.NET_SALT, now: Date.now() }),
 };
 
 // The share card's picture: the poster of the first film that has one
