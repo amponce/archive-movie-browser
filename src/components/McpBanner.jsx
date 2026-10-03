@@ -10,6 +10,7 @@ function wasDismissed() {
 
 // One-line announcement above the header. It scrolls away with the page (the header below it is
 // the sticky part) and stays gone once dismissed; the footer keeps a permanent link to the page.
+// Not shown on phones, where it took too much of the first screen.
 export default function McpBanner() {
   const [hidden, setHidden] = useState(wasDismissed);
   if (hidden) return null;
@@ -21,7 +22,7 @@ export default function McpBanner() {
   };
 
   return (
-    <div className="bg-signal text-ink">
+    <div className="hidden sm:block bg-signal text-ink">
       <div className="gutter py-2 flex items-center gap-3 text-sm">
         <p className="flex-1 min-w-0">
           <strong className="font-mono text-xs tracking-[0.1em] uppercase">New MCP server.</strong>{' '}
