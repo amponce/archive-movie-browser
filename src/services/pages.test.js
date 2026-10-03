@@ -18,5 +18,12 @@ test('channel, profile and community pages route', () => {
   assert.deepEqual(pageFor('/channels'), { key: '/channels' });
   assert.equal(pageFor('/c/NOPE'), null);
   assert.equal(pageFor('/c/abcdefghij/x'), null);
-  assert.equal(pageFor('/u/abcdefgh1j'), null);
+  assert.equal(pageFor('/c/abcdefgh1j'), null);
+});
+
+test('a profile page routes by handle too', () => {
+  assert.deepEqual(pageFor('/u/midnight-projector'), { key: '/u', slug: 'midnight-projector' });
+  assert.deepEqual(pageFor('/u/abcdefgh1j/'), { key: '/u', slug: 'abcdefgh1j' });
+  assert.equal(pageFor('/c/midnight-projector'), null);
+  for (const path of ['/u/ab', '/u/Midnight', '/u/-abc', '/u/a--b', `/u/${'a'.repeat(31)}`]) assert.equal(pageFor(path), null, path);
 });

@@ -77,7 +77,7 @@ test('share pages carry an escaped preview and noindex unless listed', async () 
   assert.equal(html.match(/name="description"/g).length, 1);
 
   env.ASSETS = { fetch: async () => new Response('spa', { status: 200 }) };
-  for (const path of ['/c/AAAAAAAAAA', '/u/bad']) {
+  for (const path of ['/c/AAAAAAAAAA', '/u/b', '/c/not-an-id']) {
     res = await get(path);
     assert.equal(res.status, 200);
     assert.equal(await res.text(), 'spa');
@@ -121,6 +121,58 @@ test('share pages fetch the site shell and show the first poster', async () => {
   html = await (await get(`/u/${owner}`)).text();
   assert.ok(html.includes(`<meta property="og:image" content="${image}">`));
   assert.ok(html.includes('summary_large_image'));
+});
+
+test('a profile handle serves the share page, names itself canonical, and an old one redirects', async () => {
+  const { default: worker } = await import('../../worker.js');
+  const { createProfile, updateProfile } = await import('../../api/_community.js');
+  const page = '<!doctype html><html><head><title>Orphaned Films</title></head><body><div id="root"></div></body></html>';
+  const db = await openTestDb();
+  const env = { DB: db, ASSETS: { fetch: async () => new Response(page, { headers: { 'Content-Type': 'text/html' } }) } };
+  const get = path => worker.fetch(new Request(`https://www.orphanedfilms.com${path}`), env, { waitUntil() {} });
+  const { id } = await createProfile(db, { now: Date.now() });
+  await updateProfile(db, id, { name: 'Night Owl', handle: 'night-owl' }, { now: Date.now() });
+  const canonical = '<link rel="canonical" href="https://www.orphanedfilms.com/u/night-owl">';
+
+  for (const path of ['/u/night-owl', '/u/night-owl/', `/u/${id}`]) {
+    const res = await get(path);
+    const html = await res.text();
+    assert.equal(res.status, 200, path);
+    assert.ok(html.includes('<title>Night Owl | Orphaned Films</title>'), path);
+    assert.ok(html.includes(canonical), path);
+    assert.ok(html.includes('<meta name="robots" content="noindex">'), path);
+    assert.equal(res.headers.get('X-Robots-Tag'), 'noindex');
+    assert.equal(res.headers.get('Cache-Control'), 'no-store');
+  }
+
+  await updateProfile(db, id, { handle: 'owl' }, { now: Date.now() });
+  let res = await get('/u/night-owl?x=1');
+  assert.equal(res.status, 308);
+  assert.equal(res.headers.get('Location'), 'https://www.orphanedfilms.com/u/owl?x=1');
+  assert.equal(res.headers.get('Cache-Control'), 'no-store');
+  await updateProfile(db, id, { handle: null }, { now: Date.now() });
+  res = await get('/u/owl');
+  assert.equal(res.status, 308);
+  assert.equal(res.headers.get('Location'), `https://www.orphanedfilms.com/u/${id}`);
+  res = await get(`/u/${id}`);
+  assert.ok(!(await res.text()).includes('canonical'));
+
+  assert.equal((await get('/u/nobody-here')).status, 404);
+  await updateProfile(db, id, { handle: 'owl' }, { now: Date.now() });
+  await db.prepare('UPDATE profiles SET hidden = 1 WHERE id = ?').bind(id).run();
+  for (const path of ['/u/owl', '/u/night-owl', `/u/${id}`]) assert.equal((await get(path)).status, 404, path);
+});
+
+test('handle lookups and profile reads are never cached', async () => {
+  const seen = [];
+  globalThis.caches = { default: { match: async (req) => { seen.push(req.url); }, put: async (req) => { seen.push(req.url); } } };
+  const { default: worker } = await import('../../worker.js');
+  const env = { DB: await openTestDb() };
+  for (const path of ['/api/handle/night-owl', '/api/profile/night-owl']) {
+    const res = await worker.fetch(new Request(`https://www.orphanedfilms.com${path}`, { headers: { 'cf-connecting-ip': '1.1.1.1' } }), env, { waitUntil() {} });
+    assert.equal(res.headers.get('Cache-Control'), 'no-store', path);
+  }
+  assert.deepEqual(seen, []);
 });
 
 test('a film is looked up on Archive.org once per instance; a failed lookup is asked again', async () => {

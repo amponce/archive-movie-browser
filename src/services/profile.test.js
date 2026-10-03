@@ -24,6 +24,12 @@ test('an edit link replaces whatever profile this browser had', () => {
   assert.equal(adoptFromLink('/c/abcdefghij', `#key=${KEY}`), false);
 });
 
+test('a handle address with a key is never adopted', () => {
+  writeProfile({ id: 'oldoldoldo', key: 'b'.repeat(64) });
+  for (const path of ['/u/night-owl', '/u/night-owl/', '/u/abcdefgh1j']) assert.equal(adoptFromLink(path, `#key=${KEY}`), false, path);
+  assert.deepEqual(readProfile(), { id: 'oldoldoldo', key: 'b'.repeat(64) });
+});
+
 test('an edit link with a trailing slash is adopted too', () => {
   writeProfile({ id: 'oldoldoldo', key: 'b'.repeat(64) });
   let replaced = null;

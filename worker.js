@@ -13,7 +13,8 @@ import * as webauthn from '@simplewebauthn/server';
 import { redis } from './api/_redis.js';
 import { isForbidden, isMature } from './src/services/policy.js';
 import { route } from './api/_routes.js';
-import { getChannel, getProfile, isListed } from './api/_community.js';
+import { getChannel, getProfile, isListed, movedHandle, ID } from './api/_community.js';
+import { HANDLE } from './src/services/handle.js';
 import posterIndex from './public/poster-index.json' with { type: 'json' };
 
 const months = (now = new Date()) => [0, 1].map(back => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - back, 1)).toISOString().slice(0, 7));
@@ -76,7 +77,9 @@ const posterOf = (films) => {
 
 const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// /c/<id> and /u/<id>: the app's page with a share preview; unlisted channels and profiles are noindex
+// /c/<id>, /u/<id> and /u/<handle>: the app's page with a share preview; unlisted channels and
+// profiles are noindex. A profile with a handle names /u/<handle> as its address; a handle it
+// gave up redirects to it while held.
 async function sharePage(request, env, kind, id) {
   const asset = await env.ASSETS.fetch(new Request(new URL('/', request.url)));
   const headers = new Headers(asset.headers);
@@ -85,16 +88,19 @@ async function sharePage(request, env, kind, id) {
   headers.set('X-Robots-Tag', 'noindex');
   let html = await asset.text();
   let data;
+  let moved;
   try {
     data = kind === 'c' ? await getChannel(env.DB, id) : await getProfile(env.DB, id);
+    moved = !data && kind === 'u' && await movedHandle(env.DB, id, Date.now());
   } catch {
     return new Response(html, { status: asset.status, headers });
   }
+  if (moved) return new Response(null, { status: 308, headers: { Location: new URL(`/u/${moved}${new URL(request.url).search}`, request.url).href, 'Cache-Control': 'no-store' } });
   const listed = kind === 'c' && !!data && isListed(data.status) && !data.films.some(f => f.flagged);
   const title = data ? `${data.name || 'A profile'} | Orphaned Films` : 'Orphaned Films';
   const description = data && kind === 'c' ? `${data.films.length} ${data.films.length === 1 ? 'film' : 'films'}${data.owner ? ` · by ${data.owner}` : ''}` : 'Forgotten films, found.';
   const image = data && posterOf(kind === 'c' ? data.films.map(f => f.film) : data.favourites);
-  const meta = `<meta property="og:title" content="${escapeHtml(title)}"><meta name="description" content="${escapeHtml(description)}"><meta property="og:description" content="${escapeHtml(description)}">${image ? `<meta property="og:image" content="${escapeHtml(image)}">` : ''}<meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">${listed ? '' : '<meta name="robots" content="noindex">'}`;
+  const meta = `<meta property="og:title" content="${escapeHtml(title)}"><meta name="description" content="${escapeHtml(description)}"><meta property="og:description" content="${escapeHtml(description)}">${image ? `<meta property="og:image" content="${escapeHtml(image)}">` : ''}<meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}">${listed ? '' : '<meta name="robots" content="noindex">'}${kind === 'u' && data?.handle ? `<link rel="canonical" href="${escapeHtml(new URL(`/u/${data.handle}`, request.url).href)}">` : ''}`;
   html = html.replace(/<meta (?:name="description"|property="og:(?:title|description|image[^"]*)"|name="twitter:card")[^>]*>\s*/g, '');
   if (data) html = html.replace(/<title>[^<]*<\/title>/, () => `<title>${escapeHtml(title)}</title>`);
   html = html.replace('</head>', () => `${meta}</head>`);
@@ -105,8 +111,8 @@ async function sharePage(request, env, kind, id) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const share = ['GET', 'HEAD'].includes(request.method) && url.pathname.match(/^\/(c|u)\/([a-z2-7]{10})\/?$/);
-    if (share) return sharePage(request, env, share[1], share[2]);
+    const share = ['GET', 'HEAD'].includes(request.method) && url.pathname.match(/^\/(c|u)\/([a-z0-9_-]+)\/?$/);
+    if (share && (ID.test(share[2]) || (share[1] === 'u' && HANDLE.test(share[2])))) return sharePage(request, env, share[1], share[2]);
     if (/^\/[cu]\//.test(url.pathname)) return env.ASSETS.fetch(request);
     const found = route(url.pathname);
     if (!found) return new Response('Not found', { status: 404 });
