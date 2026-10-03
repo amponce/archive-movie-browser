@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import useProfile from '../hooks/useProfile';
-import { editLink } from '../services/profile';
+import { editLink, justStarted } from '../services/profile';
 import { protectProfile } from '../services/passkey';
 import Button from '../ui/Button';
 
@@ -13,7 +13,8 @@ export default function SaveLinkPanel() {
   const [later, setLater] = useState(false); // hides it for this page only
   const [manual, setManual] = useState(false); // the clipboard was not available
   const [passkey, setPasskey] = useState(null); // busy | ok | cancelled | failed
-  if (closed || later || !profile || !data || (data.channels.length < 1 && data.favourites.length < 3)) return null;
+  // A profile started from the header is offered the link at once; others once they hold something
+  if (closed || later || !profile || !data || (!justStarted(profile.id) && data.channels.length < 1 && data.favourites.length < 3)) return null;
   const link = editLink(window.location.origin, profile);
   const canPasskey = typeof window.PublicKeyCredential !== 'undefined';
   const done = () => { try { localStorage.setItem(SEEN, '1'); } catch { /* ignore */ } setClosed(true); };

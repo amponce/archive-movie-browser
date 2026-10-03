@@ -18,6 +18,11 @@ export function writeProfile(p) {
 export function keyFromHash(hash) { const key = new URLSearchParams(String(hash).replace(/^#/, '')).get('key'); return key && KEY.test(key) ? { key } : null; }
 export const editLink = (origin, p) => `${origin}/u/${p.id}#key=${p.key}`;
 
+// Set when a profile is started from the header, so its page offers the edit link straight away
+const STARTED_KEY = 'profile-started';
+export function markStarted(id) { try { sessionStorage.setItem(STARTED_KEY, id); } catch { /* private mode */ } }
+export function justStarted(id) { try { return !!id && sessionStorage.getItem(STARTED_KEY) === id; } catch { return false; } }
+
 // A different profile this browser had is kept under PREVIOUS_KEY, so the owner can switch back
 export const PREVIOUS_KEY = 'profile-previous';
 export function readPrevious() {

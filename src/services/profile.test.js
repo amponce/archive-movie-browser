@@ -186,3 +186,21 @@ test('a 401 on a call with this browser\'s profile is reported; other calls are 
     assert.equal(seen, 1);
   } finally { globalThis.fetch = was; off(); }
 });
+
+test('a profile started here is remembered for this tab only, and only for its own id', async () => {
+  const { markStarted, justStarted } = await import('./profile.js');
+  const was = globalThis.sessionStorage;
+  try {
+    assert.equal(justStarted('abcdefghij'), false); // no sessionStorage at all
+    const tab = {};
+    globalThis.sessionStorage = { getItem: k => tab[k] ?? null, setItem: (k, v) => { tab[k] = String(v); } };
+    assert.equal(justStarted('abcdefghij'), false);
+    markStarted('abcdefghij');
+    assert.equal(justStarted('abcdefghij'), true);
+    assert.equal(justStarted('otherother'), false);
+    assert.equal(justStarted(null), false);
+    globalThis.sessionStorage = { getItem: () => { throw new Error('blocked'); }, setItem: () => { throw new Error('blocked'); } };
+    markStarted('abcdefghij');
+    assert.equal(justStarted('abcdefghij'), false);
+  } finally { globalThis.sessionStorage = was; }
+});
