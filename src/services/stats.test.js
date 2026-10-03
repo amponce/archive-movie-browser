@@ -13,6 +13,8 @@ test('TV events are accepted and counted per channel', () => {
 
   // Adding a film carries the film, not a channel
   assert.ok(validEvent({ name: 'TV', data: { action: 'add to my channel', film: 'hellhole.-1985' } }));
+  assert.deepEqual(validEvent({ name: 'TV', data: { action: 'on-demand', channel: 'c-ab12', film: 'hellhole.-1985' } }),
+    { name: 'TV', data: { action: 'on-demand', channel: 'c-ab12', film: 'hellhole.-1985' } });
 });
 
 test('TV events with an unknown action or a malformed channel are refused', () => {
@@ -48,6 +50,7 @@ test('the funnel counts visits, not events, and keeps no visit ids anywhere else
   assert.deepEqual(stage({ name: 'Click', data: { target: 'film-card', film: 'x' } }), ['stats:funnel:clicked:2026-09-23']);
   assert.deepEqual(stage({ name: 'Play', data: { film: 'x', player: 'own' } }), ['stats:funnel:played:2026-09-23']);
   assert.deepEqual(stage({ name: 'TV', data: { action: 'tune', channel: 'atomic-age' } }), ['stats:funnel:tuned in:2026-09-23'], 'surfing channels is not pressing play on a film');
+  assert.deepEqual(stage({ name: 'TV', data: { action: 'on-demand', channel: 'c-ab12', film: 'x' } }), ['stats:funnel:played:2026-09-23'], 'a film picked from a lineup is a play');
   // A viewing moves the visit through every threshold its running total has passed
   assert.deepEqual(stage({ name: 'Watched', data: { where: 'film', film: 'x', seconds: 60, total: 700 } }),
     ['stats:funnel:watched 1+ min:2026-09-23', 'stats:funnel:watched 10+ min:2026-09-23']);

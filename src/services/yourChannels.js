@@ -47,3 +47,8 @@ export function followCopy({ currentId, legacy, copied, onSet, left = [], known 
   const copy = `c-${copied}`;
   return onSet.includes(copy) ? { id: copy, keepOld: false } : { id: currentId, keepOld: true };
 }
+
+// The channels that play any of their films from the start on request, by id: the profile's own
+// channels, and channel 0 when it is this browser's own list or, on a channel page, one this
+// profile made or saved (kept). The stations play live only.
+export const onDemandIds = ({ own = [], mine = null, kept = false }) => new Set([...own, ...(mine && (mine.mine || kept) ? [mine.id] : [])]);

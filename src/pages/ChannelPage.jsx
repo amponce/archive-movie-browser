@@ -118,7 +118,7 @@ export default function ChannelPage({ slug }) {
   }
   return (
     <Suspense fallback={<div className="min-h-screen bg-ink" />}>
-      <TvPage channel={shared}>{about}</TvPage>
+      <TvPage channel={shared} kept={isOwner || saved}>{about}</TvPage>
     </Suspense>
   );
 }
