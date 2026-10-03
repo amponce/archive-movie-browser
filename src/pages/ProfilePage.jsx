@@ -105,10 +105,10 @@ export default function ProfilePage({ slug }) {
       <main className="gutter py-8 flex flex-col gap-8 text-bone">
         <div className="flex flex-col gap-3">
           {isOwner
-            ? <input key={`n-${p.name}-${reset}`} defaultValue={p.name} placeholder="Your display name" maxLength={40} aria-label="Display name" className={`${FIELD} display text-3xl`} onBlur={e => save('name', e)} />
+            ? <label className="flex flex-col gap-1"><span className="label">Display name</span><input key={`n-${p.name}-${reset}`} defaultValue={p.name} placeholder="Your display name" maxLength={40} className={`${FIELD} display text-3xl`} onBlur={e => save('name', e)} /></label>
             : <h1 className="display text-3xl break-words">{p.name || 'A profile'}</h1>}
-          {isOwner && <input key={`a-${p.archiveUser}-${reset}`} defaultValue={p.archiveUser} maxLength={60} placeholder="Archive.org username (optional)" aria-label="Archive.org username" className={FIELD} onBlur={e => save('archiveUser', e)} />}
           {isOwner && <HandleField key={p.handle || ''} profile={me} current={p.handle || ''} archiveUser={p.archiveUser} onSaved={() => { load(); refreshProfile(); }} />}
+          {isOwner && <label className="flex flex-col gap-1"><span className="label">Archive.org username: links to your page there</span><input key={`a-${p.archiveUser}-${reset}`} defaultValue={p.archiveUser} maxLength={60} placeholder="optional" className={FIELD} onBlur={e => save('archiveUser', e)} /></label>}
           {failed && <p role="alert" className="text-sm text-signal">Could not save</p>}
           {reserved && <p role="alert" className="text-sm text-signal">That name is reserved.</p>}
           {p.archiveUser && <a className="nav-link" href={`/details/@${encodeURIComponent(p.archiveUser)}`}>@{p.archiveUser} on Archive.org</a>}
@@ -172,7 +172,7 @@ function HandleField({ profile: { id, key }, current, archiveUser, onSaved }) {
   const handle = cleanHandle(value);
   const ask = useCallback(h => api(`/api/handle/${encodeURIComponent(h)}`, { profile })
     .then(r => (r.ok ? r.json() : null)).catch(() => null)
-    .then(out => setCheck({ handle: h, ...(out || { unknown: true }) })), [profile]);
+    .then(out => { const answer = { handle: h, ...(out || { unknown: true }) }; setCheck(answer); return answer; }), [profile]);
   useEffect(() => {
     if (!handle || handle === current) return undefined;
     const wait = setTimeout(() => ask(handle), 400);
@@ -193,11 +193,17 @@ function HandleField({ profile: { id, key }, current, archiveUser, onSaved }) {
   const fill = h => { setValue(h); setFailed(false); };
   return (
     <div className="flex flex-col gap-1">
+      <span className="label">Your address: a readable link to this page</span>
       <form className="flex items-center gap-3" onSubmit={e => { e.preventDefault(); if (ready && !busy) save(handle); }}>
         <label className="flex items-baseline flex-1 min-w-0 border-b border-line">
           <span className="text-muted">/u/</span>
-          <input value={value} onChange={e => fill(e.target.value.toLowerCase())} maxLength={30} placeholder="handle (optional)" aria-label="Handle"
-            autoCapitalize="none" autoCorrect="off" spellCheck={false} className="bg-transparent text-bone w-full py-1 min-w-0" />
+          <input value={value} onChange={e => fill(e.target.value.toLowerCase())} maxLength={30} placeholder="optional" aria-label="Your address"
+            autoCapitalize="none" autoCorrect="off" spellCheck={false} className="bg-transparent text-bone w-full py-1 min-w-0"
+            onBlur={async () => {
+              if (busy || !handle || handle === current) return;
+              const answer = check?.handle === handle ? check : await ask(handle);
+              if (answer?.available || answer?.unknown) save(handle);
+            }} />
         </label>
         {shown?.available && <Check size={18} className="text-muted shrink-0" aria-label="Available" />}
         {ready && <Button variant="ghost" type="submit" disabled={busy} className="disabled:opacity-50">Save</Button>}
