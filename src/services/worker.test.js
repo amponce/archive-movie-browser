@@ -145,6 +145,10 @@ test('a profile handle serves the share page, names itself canonical, and an old
     assert.equal(res.headers.get('Cache-Control'), 'no-store');
   }
 
+  const upper = await get('/u/Night-Owl?x=1');
+  assert.equal(upper.status, 308);
+  assert.equal(upper.headers.get('Location'), 'https://www.orphanedfilms.com/u/night-owl?x=1');
+
   await updateProfile(db, id, { handle: 'owl' }, { now: Date.now() });
   let res = await get('/u/night-owl?x=1');
   assert.equal(res.status, 308);

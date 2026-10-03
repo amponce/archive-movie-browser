@@ -172,14 +172,14 @@ function HandleField({ profile: { id, key }, current, archiveUser, onSaved }) {
   const handle = cleanHandle(value);
   const ask = useCallback(h => api(`/api/handle/${encodeURIComponent(h)}`, { profile })
     .then(r => (r.ok ? r.json() : null)).catch(() => null)
-    .then(out => out && setCheck({ handle: h, ...out })), [profile]);
+    .then(out => setCheck({ handle: h, ...(out || { unknown: true }) })), [profile]);
   useEffect(() => {
     if (!handle || handle === current) return undefined;
     const wait = setTimeout(() => ask(handle), 400);
     return () => clearTimeout(wait);
   }, [handle, current, ask]);
   const shown = handle && handle !== current && check?.handle === handle ? check : null;
-  const ready = !!shown?.available;
+  const ready = !!(shown?.available || shown?.unknown); // the server still checks on save
   const save = async (h) => {
     setBusy(true);
     const r = await api(`/api/profile/${profile.id}`, { method: 'PATCH', profile, body: { handle: h || null } }).catch(() => null);
@@ -199,12 +199,13 @@ function HandleField({ profile: { id, key }, current, archiveUser, onSaved }) {
           <input value={value} onChange={e => fill(e.target.value.toLowerCase())} maxLength={30} placeholder="handle (optional)" aria-label="Handle"
             autoCapitalize="none" autoCorrect="off" spellCheck={false} className="bg-transparent text-bone w-full py-1 min-w-0" />
         </label>
-        {ready && <Check size={18} className="text-muted shrink-0" aria-label="Available" />}
+        {shown?.available && <Check size={18} className="text-muted shrink-0" aria-label="Available" />}
         {ready && <Button variant="ghost" type="submit" disabled={busy} className="disabled:opacity-50">Save</Button>}
         {current && handle === current && <button type="button" className="nav-link hover:text-signal shrink-0" disabled={busy} onClick={() => save('')}>Remove</button>}
       </form>
       <div role="status" className="text-sm">
-        {shown && !shown.available && <p className="text-signal">{SAYS[shown.reason]}</p>}
+        {shown && !shown.available && !shown.unknown && <p className="text-signal">{SAYS[shown.reason]}</p>}
+        {shown?.unknown && <p className="text-muted">Couldn't check that handle just now. You can still save it.</p>}
         {shown?.suggestions?.length > 0 && (
           <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
             {shown.suggestions.map(s => <button key={s} type="button" className="text-bone underline hover:text-signal" onClick={() => fill(s)}>{s}</button>)}

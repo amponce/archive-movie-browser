@@ -113,6 +113,9 @@ export default {
     const url = new URL(request.url);
     const share = ['GET', 'HEAD'].includes(request.method) && url.pathname.match(/^\/(c|u)\/([a-z0-9_-]+)\/?$/);
     if (share && (ID.test(share[2]) || (share[1] === 'u' && HANDLE.test(share[2])))) return sharePage(request, env, share[1], share[2]);
+    // Handles are lower case; /u/Night-Owl goes to /u/night-owl
+    const upper = url.pathname.match(/^\/u\/([A-Za-z0-9_-]+)\/?$/);
+    if (upper && upper[1] !== upper[1].toLowerCase() && HANDLE.test(upper[1].toLowerCase())) return Response.redirect(new URL(`/u/${upper[1].toLowerCase()}${url.search}`, url).href, 308);
     if (/^\/[cu]\//.test(url.pathname)) return env.ASSETS.fetch(request);
     const found = route(url.pathname);
     if (!found) return new Response('Not found', { status: 404 });
