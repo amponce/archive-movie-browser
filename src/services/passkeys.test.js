@@ -164,3 +164,14 @@ test('a challenge name outside the signed data is not accepted', async () => {
   const o = await registrationOptions(db, w, p.id, { rp, now });
   assert.equal(await register(db, w, p.id, { id: 'tl-padding-xxxxxxxxx', challenge: o.challenge }, { rp, now }), 'expired');
 });
+
+test('a sign-in the key change did not reach hands back no key', async () => {
+  const db = await openTestDb(); const w = fake();
+  const p = await createProfile(db, { now });
+  const o = await registrationOptions(db, w, p.id, { rp, now });
+  await register(db, w, p.id, resp('rot-padding-xxxxxxxxx', o.challenge), { rp, now });
+  const so = await signinOptions(db, w, { rp, now });
+  // the profile is hidden after the credential lookup, just before the key change
+  const racing = { ...db, batch: async (s) => { await db.prepare('UPDATE profiles SET hidden = 1 WHERE id = ?').bind(p.id).run(); return db.batch(s); } };
+  assert.equal(await signin(racing, w, resp('rot-padding-xxxxxxxxx', so.challenge), { rp, now }), 'hidden');
+});

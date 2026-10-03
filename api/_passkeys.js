@@ -21,7 +21,7 @@ export function rpFor(origin, requestUrl) {
   return null;
 }
 
-export const isPasskeyId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{16,512}$/.test(id);
+export const isPasskeyId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{16,1364}$/.test(id);
 
 const liveProfile = (db, id) => db.prepare('SELECT id, webauthn_user, hidden FROM profiles WHERE id = ?').bind(id).first();
 
@@ -120,9 +120,10 @@ export async function signin(db, webauthn, response, { rp, now }) {
   if (!result?.verified) return 'invalid';
   if (row.hidden) return 'hidden';
   const key = newKey();
-  await db.batch([
+  const [, rotated] = await db.batch([
     db.prepare('UPDATE passkeys SET counter = MAX(counter, ?) WHERE credential_id = ?').bind(result.authenticationInfo.newCounter, row.credential_id),
     db.prepare('UPDATE profiles SET key_hash = ?, updated = ? WHERE id = ? AND hidden = 0').bind(await hashKey(key), now, row.profile_id),
   ]);
+  if (!rotated.meta.changes) return 'hidden';
   return { id: row.profile_id, key };
 }
