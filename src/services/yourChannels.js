@@ -29,9 +29,10 @@ export const pinTo = (currentId, current, keepMine) => (current && current.id !=
 // Someone watching the old list (`mine`) when it is copied to their profile stays with it: the
 // old list stays on the set until the copy has loaded, then the copy stands in for it.
 // copied: the id of the copy, if known. onSet: the ids of the channels on the set. left: the
-// profile's channels that will not air (empty, or past the first ten).
-export function followCopy({ currentId, legacy, copied, onSet, left = [] }) {
-  if (currentId !== MY_CHANNEL_ID || legacy || !copied || left.includes(copied)) return { id: currentId, keepOld: false };
+// profile's channels that will not air (empty, or past the first ten). known: the ids of all the
+// profile's channels, once loaded; a copy that is not among them is treated like one that will not air.
+export function followCopy({ currentId, legacy, copied, onSet, left = [], known = null }) {
+  if (currentId !== MY_CHANNEL_ID || legacy || !copied || left.includes(copied) || (known && !known.includes(copied))) return { id: currentId, keepOld: false };
   const copy = `c-${copied}`;
   return onSet.includes(copy) ? { id: copy, keepOld: false } : { id: currentId, keepOld: true };
 }

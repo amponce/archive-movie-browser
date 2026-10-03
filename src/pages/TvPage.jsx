@@ -227,7 +227,7 @@ export default function TvPage({ channel = null, children }) {
   // The channel in the link, else the one this browser watched last, else channel 1
   const [currentId, setCurrentId] = useState(() => { if (channel) return channel.id; try { return decodeURIComponent(window.location.hash.slice(1)) || readLast(); } catch { return readLast(); } });
   const follow = followCopy({ currentId, legacy: personal.legacy, copied: carriedChannel(), onSet: saved.channels.map(c => c.id),
-    left: (me?.channels || []).map(c => c.id).filter(id => !personal.saved.some(c => c.id === id)) });
+    left: (me?.channels || []).map(c => c.id).filter(id => !personal.saved.some(c => c.id === id)), known: me && (me.channels || []).map(c => c.id) });
   const mine = useMyChannel(6, channel, !personal.legacy && !follow.keepOld);
   const span = useGuideSpan();
   const [open, setOpen] = useState(null); // the guide row playing under itself

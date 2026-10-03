@@ -24,9 +24,14 @@ export function readPrevious() {
   try { const p = JSON.parse(localStorage.getItem(PREVIOUS_KEY) || 'null'); if (p && ID.test(p.id) && KEY.test(p.key)) return p; } catch { /* fall through */ }
   return null;
 }
-// Which profile the old browser-only list was copied into goes with it, so it is not copied twice
+// Which profile the old browser-only list was copied into goes with it, and the channel it was
+// copied into, so it is not copied twice
 function keepPrevious(p) {
-  try { localStorage.setItem(PREVIOUS_KEY, JSON.stringify({ id: p.id, key: p.key, carried: localStorage.getItem(CARRIED_KEY) === p.id })); } catch { /* private mode */ }
+  try {
+    const carried = localStorage.getItem(CARRIED_KEY) === p.id;
+    const copy = carried && localStorage.getItem(COPY_KEY);
+    localStorage.setItem(PREVIOUS_KEY, JSON.stringify({ id: p.id, key: p.key, carried, ...(copy && { copy }) }));
+  } catch { /* private mode */ }
 }
 
 export function adoptFromLink(pathname, hash) {
@@ -48,7 +53,7 @@ export function switchBack() {
   if (!previous) return false;
   if (current) keepPrevious(current); else try { localStorage.removeItem(PREVIOUS_KEY); } catch { /* private mode */ }
   writeProfile(previous);
-  if (previous.carried) markCarried(previous);
+  if (previous.carried) { markCarried(previous); rememberCopy(ID.test(String(previous.copy)) ? previous.copy : null); }
   return true;
 }
 
@@ -73,7 +78,7 @@ export const carriedInto = () => { try { const id = localStorage.getItem(CARRIED
 const COPY_KEY = 'profile-carried-channel';
 let copyMemory = null;
 export const carriedChannel = () => { try { const id = localStorage.getItem(COPY_KEY); if (id) return id; } catch { /* private mode */ } return copyMemory; };
-const rememberCopy = (id) => { copyMemory = id; try { localStorage.setItem(COPY_KEY, id); } catch { /* private mode */ } };
+const rememberCopy = (id) => { copyMemory = id; try { if (id) localStorage.setItem(COPY_KEY, id); else localStorage.removeItem(COPY_KEY); } catch { /* private mode */ } };
 let carrying = null;
 function carryOver(p) {
   if (carried(p)) return Promise.resolve();

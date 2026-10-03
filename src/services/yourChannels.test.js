@@ -67,3 +67,11 @@ test('nothing to follow: not on mine, still the old list, or the copy is not kno
   assert.deepEqual(followCopy({ currentId: 'mine', legacy: false, copied: null, onSet: [] }), { id: 'mine', keepOld: false });
   assert.deepEqual(followCopy({ currentId: 'mine', legacy: false, copied: 'abc', onSet: [], left: ['abc'] }), { id: 'mine', keepOld: false }, 'a copy that will not air');
 });
+
+test('a copy the loaded profile does not have (deleted, or another profile\'s) does not bring the old list back', () => {
+  const asked = { currentId: 'mine', legacy: false, copied: 'abc', onSet: ['c-other'] };
+  assert.deepEqual(followCopy({ ...asked, known: ['other'] }), { id: 'mine', keepOld: false });
+  assert.deepEqual(followCopy({ ...asked, known: [] }), { id: 'mine', keepOld: false });
+  assert.deepEqual(followCopy({ ...asked, known: ['other', 'abc'] }), { id: 'mine', keepOld: true }, 'known, still loading');
+  assert.deepEqual(followCopy({ ...asked, known: null }), { id: 'mine', keepOld: true }, 'profile not loaded yet');
+});

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 const store = {};
 globalThis.localStorage = { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; } };
-const { keyFromHash, editLink, readProfile, writeProfile, adoptFromLink, readPrevious, switchBack } = await import('./profile.js');
+const { keyFromHash, editLink, readProfile, writeProfile, adoptFromLink, readPrevious, switchBack, carriedChannel } = await import('./profile.js');
 const KEY = 'a'.repeat(64);
 
 test('the key comes only from a well-formed fragment', () => {
@@ -47,6 +47,37 @@ test('the profile an edit link replaced is kept, and switching back swaps them',
   assert.equal(store['profile-carried'], old.id, 'the old list is not copied into it again');
   assert.equal(switchBack(), true);
   assert.deepEqual(readProfile(), { id: 'abcdefghij', key: KEY });
+});
+
+test('switching back brings back the channel the old list was copied into', () => {
+  for (const k of Object.keys(store)) delete store[k];
+  const old = { id: 'oldoldoldo', key: 'b'.repeat(64) };
+  writeProfile(old);
+  store['profile-carried'] = old.id;
+  store['profile-carried-channel'] = 'oldcopyaaa';
+  globalThis.history = { replaceState: () => {} };
+  adoptFromLink('/u/abcdefghij', `#key=${KEY}`);
+  assert.deepEqual(readPrevious(), { ...old, carried: true, copy: 'oldcopyaaa' });
+  // the new profile gets a copy of its own
+  store['profile-carried'] = 'abcdefghij';
+  store['profile-carried-channel'] = 'newcopyaaa';
+  assert.equal(switchBack(), true);
+  assert.equal(carriedChannel(), 'oldcopyaaa');
+  assert.deepEqual(readPrevious(), { id: 'abcdefghij', key: KEY, carried: true, copy: 'newcopyaaa' });
+  assert.equal(switchBack(), true);
+  assert.equal(carriedChannel(), 'newcopyaaa');
+});
+
+test('switching back to a profile with no known copy forgets the other one', () => {
+  for (const k of Object.keys(store)) delete store[k];
+  const old = { id: 'oldoldoldo', key: 'b'.repeat(64) };
+  writeProfile({ id: 'abcdefghij', key: KEY });
+  store['profile-carried'] = 'abcdefghij';
+  store['profile-carried-channel'] = 'newcopyaaa';
+  store['profile-previous'] = JSON.stringify({ ...old, carried: true });
+  assert.equal(switchBack(), true);
+  assert.equal(store['profile-carried'], old.id);
+  assert.equal(store['profile-carried-channel'], undefined);
 });
 
 test('opening your own edit link again keeps nothing to switch back to', () => {
