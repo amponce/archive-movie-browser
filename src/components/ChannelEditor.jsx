@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { GripVertical, ArrowUp, X } from 'lucide-react';
 import { api, readProfile } from '../services/profile';
 import { serial } from '../services/serial';
 
@@ -88,13 +89,13 @@ export default function ChannelEditor({ channel, titles = {}, onChange }) {
             onDrop={e => { e.preventDefault(); if (drag !== null && drag !== i) move(drag, i); setDrag(null); }}
             onDragEnd={() => setDrag(null)}
             className={`flex flex-wrap sm:flex-nowrap items-center gap-2 border p-2 ${drag === i ? 'border-signal' : 'border-line'}`}>
-            <span aria-hidden="true" className="cursor-grab text-dim select-none">⋮⋮</span>
+            <GripVertical size={16} aria-hidden="true" className="cursor-grab text-dim shrink-0" />
             <span className="flex-1 min-w-0 truncate text-bone">{titles[f.film] || f.film}</span>
             <input defaultValue={f.note || ''} maxLength={280} placeholder="Why this film?" aria-label={`Note for ${titles[f.film] || f.film}`}
               className={`${field} sm:flex-1 text-sm`}
               onBlur={e => changed(e.target.value, f.note) && saveFilms(films.map((x, j) => (j === i ? { ...x, note: e.target.value } : x)))} />
-            <button type="button" className="btn-ghost px-3" aria-label={`Move ${titles[f.film] || f.film} up`} disabled={i === 0} onClick={() => move(i, i - 1)}>↑</button>
-            <button type="button" className="btn-ghost px-3" aria-label={`Remove ${titles[f.film] || f.film}`} onClick={() => saveFilms(films.filter((_, j) => j !== i))}>✕</button>
+            <button type="button" className="btn-ghost px-3" aria-label={`Move ${titles[f.film] || f.film} up`} disabled={i === 0} onClick={() => move(i, i - 1)}><ArrowUp size={16} aria-hidden="true" /></button>
+            <button type="button" className="btn-ghost px-3" aria-label={`Remove ${titles[f.film] || f.film}`} onClick={() => saveFilms(films.filter((_, j) => j !== i))}><X size={16} aria-hidden="true" /></button>
           </li>
         ))}
       </ol>
