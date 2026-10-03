@@ -79,7 +79,7 @@ export async function getProfile(db, idOrHandle) {
   // Oldest first, so each keeps its place as channels are edited
   const rows = (await db.prepare("SELECT id, name, status FROM channels WHERE profile_id = ? AND status != 'hidden' ORDER BY created, rowid").bind(id).all()).results;
   const shown = await shownFilms(db, 'c.profile_id = ?', [id]);
-  const channels = rows.map(c => ({ ...c, films: (shown.get(c.id) || []).length }));
+  const channels = rows.map(c => { const filmIds = shown.get(c.id) || []; return { ...c, films: filmIds.length, filmIds }; });
   const favourites = (await db.prepare('SELECT film_id FROM favourites WHERE profile_id = ? ORDER BY created DESC').bind(id).all()).results.map(r => r.film_id).filter(f => !isTakenDown(f));
   const saved = (await db.prepare("SELECT c.id, c.name FROM channel_saves s JOIN channels c ON c.id = s.channel_id JOIN profiles o ON o.id = c.profile_id WHERE s.profile_id = ? AND c.status != 'hidden' AND o.hidden = 0 ORDER BY s.created DESC").bind(id).all()).results;
   return { id: p.id, name: p.name, archiveUser: p.archive_user, handle: p.handle, channels, favourites, saved };
