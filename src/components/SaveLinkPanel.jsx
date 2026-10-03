@@ -18,6 +18,14 @@ export default function SaveLinkPanel() {
   const link = editLink(window.location.origin, profile);
   const canPasskey = typeof window.PublicKeyCredential !== 'undefined';
   const done = () => { try { localStorage.setItem(SEEN, '1'); } catch { /* ignore */ } setClosed(true); };
+  const canSend = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+  // The system share sheet: Mail, Messages, Notes, a password manager, wherever the person keeps things
+  const send = async () => {
+    try {
+      await navigator.share({ title: 'My Orphaned Films edit link (private)', text: 'The key to my Orphaned Films profile. Keep it private.', url: link });
+      done();
+    } catch { /* cancelled */ }
+  };
   const copy = async () => {
     try { await navigator.clipboard.writeText(link); done(); } catch { setManual(true); }
   };
@@ -52,7 +60,7 @@ export default function SaveLinkPanel() {
       )}
       <div className="flex flex-wrap gap-x-2 mt-3">
         <Button variant={canPasskey ? 'ghost' : 'primary'} onClick={copy}>Copy link</Button>
-        <a className="nav-link" href={`mailto:?subject=${encodeURIComponent('My Orphaned Films edit link (private)')}&body=${encodeURIComponent(link)}`} onClick={done}>Email it to myself</a>
+        {canSend && <button type="button" className="nav-link" onClick={send}>Send to myself</button>}
         <button type="button" className="nav-link ml-auto" onClick={() => setLater(true)}>Later</button>
       </div>
     </aside>
