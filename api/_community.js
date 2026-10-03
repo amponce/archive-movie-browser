@@ -46,7 +46,9 @@ export function submitProblem({ films, flagged, status }) {
 }
 
 export async function createProfile(db, { now }) {
-  const id = newId();
+  let id = newId();
+  // A new id never takes a handle already in use
+  while (await db.prepare('SELECT 1 FROM profiles WHERE handle = ?').bind(id).first()) id = newId();
   const key = newKey();
   await db.prepare('INSERT INTO profiles (id, key_hash, created, updated) VALUES (?, ?, ?, ?)').bind(id, await hashKey(key), now, now).run();
   return { id, key };
@@ -72,8 +74,9 @@ const shownFilms = async (db, where, args) => {
 // By id or by handle
 export async function getProfile(db, idOrHandle) {
   const key = cleanHandle(idOrHandle);
-  const column = ID.test(key) ? 'id' : HANDLE.test(key) ? 'handle' : null;
-  const p = column && await db.prepare(`SELECT id, name, archive_user, handle FROM profiles WHERE ${column} = ? AND hidden = 0`).bind(key).first();
+  // A ten-letter handle looks like an id: the id wins, then the handle
+  const find = column => db.prepare(`SELECT id, name, archive_user, handle FROM profiles WHERE ${column} = ? AND hidden = 0`).bind(key).first();
+  const p = (ID.test(key) && await find('id')) || (HANDLE.test(key) && await find('handle')) || null;
   if (!p) return null;
   const { id } = p;
   // Oldest first, so each keeps its place as channels are edited
@@ -97,17 +100,18 @@ export function isReservedName(name) {
 export const HOLD = 30 * 86_400_000;
 
 export function handleProblem(handle) {
-  if (!HANDLE.test(handle) || ID.test(handle)) return 'invalid';
+  if (!HANDLE.test(handle)) return 'invalid';
   if (isReservedName(handle) || isForbidden({ title: handle.replace(/[-_]+/g, ' ') })) return 'reserved';
   return null;
 }
 
-// Handles out of reach for `profileId`: in use by another profile, or held for one
+// Handles out of reach for `profileId`: in use by another profile, held for one, or a profile's id
 async function handlesTaken(db, handles, profileId, now) {
   const marks = handles.map(() => '?').join(', ');
   const rows = (await db.prepare(`SELECT handle FROM profiles WHERE handle IN (${marks}) AND id IS NOT ?
-    UNION SELECT handle FROM handle_holds WHERE handle IN (${marks}) AND profile_id IS NOT ? AND until > ?`)
-    .bind(...handles, profileId, ...handles, profileId, now).all()).results;
+    UNION SELECT handle FROM handle_holds WHERE handle IN (${marks}) AND profile_id IS NOT ? AND until > ?
+    UNION SELECT id FROM profiles WHERE id IN (${marks})`)
+    .bind(...handles, profileId, ...handles, profileId, now, ...handles).all()).results;
   return new Set(rows.map(r => r.handle));
 }
 
@@ -148,8 +152,8 @@ async function setHandle(db, id, value, now) {
     ON CONFLICT (handle) DO UPDATE SET profile_id = excluded.profile_id, until = excluded.until`).bind(current, id, now + HOLD, id, handle || null);
   try {
     const [claimed] = await db.batch([
-      db.prepare('UPDATE profiles SET handle = ?, updated = ? WHERE id = ? AND NOT EXISTS (SELECT 1 FROM handle_holds WHERE handle = ? AND profile_id != ? AND until > ?)')
-        .bind(handle || null, now, id, handle, id, now),
+      db.prepare('UPDATE profiles SET handle = ?, updated = ? WHERE id = ? AND NOT EXISTS (SELECT 1 FROM handle_holds WHERE handle = ? AND profile_id != ? AND until > ?) AND NOT EXISTS (SELECT 1 FROM profiles WHERE id = ?)')
+        .bind(handle || null, now, id, handle, id, now, handle),
       db.prepare('DELETE FROM handle_holds WHERE until <= ? OR (handle = ? AND profile_id = ?)').bind(now, handle, id),
       ...(hold ? [hold] : []),
     ]);

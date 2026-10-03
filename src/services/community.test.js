@@ -331,10 +331,10 @@ test('names that look like the site or its staff are reserved', () => {
   for (const n of ['Midnight Projector', 'Modern Times fan', 'The Teamsters', 'Night Owl']) assert.equal(isReservedName(n), false, n);
 });
 
-test('handles: shape, id-shaped, reserved and refused words', () => {
+test('handles: shape, reserved and refused words; ten letters are fine', () => {
   assert.equal(handleProblem('midnight-projector'), null);
-  for (const h of ['ab', 'Abc', 'a--b', '-abc', 'abcdefghij', 'x'.repeat(31), '']) assert.equal(handleProblem(h), 'invalid', h);
-  assert.equal(handleProblem('abcdefgh1j'), null, 'not id-shaped: 1 is not in the alphabet');
+  for (const h of ['ab', 'Abc', 'a--b', '-abc', 'x'.repeat(31), '']) assert.equal(handleProblem(h), 'invalid', h);
+  assert.equal(handleProblem('frightcore'), null, 'shaped like an id, still a handle');
   for (const h of ['admin', 'orphanedfilms-tv', 'the-staff', 'support']) assert.equal(handleProblem(h), 'reserved', h);
   assert.equal(handleProblem('rape-films'), 'reserved');
 });
@@ -350,7 +350,7 @@ test('handles: set, read by handle, unique whatever the case', async () => {
   assert.equal((await getProfile(db, b.id)).handle, null);
   assert.equal(await updateProfile(db, b.id, { handle: 'NIGHT-OWL' }, { now }), 'taken');
   assert.equal(await updateProfile(db, b.id, { handle: 'admin' }, { now }), 'reserved');
-  assert.equal(await updateProfile(db, b.id, { handle: b.id }, { now }), 'invalid');
+  assert.equal(await updateProfile(db, b.id, { handle: b.id }, { now }), 'taken');
   assert.equal(await updateProfile(db, a.id, { handle: 'night-owl', name: 'Owl' }, { now }), undefined, 'the same handle again is no change');
   assert.equal((await getProfile(db, a.id)).name, 'Owl');
   await assert.rejects(db.prepare("UPDATE profiles SET handle = 'Night-Owl' WHERE id = ?").bind(b.id).run(), /UNIQUE/);
@@ -421,5 +421,16 @@ test('handles: suggestions skip taken, held and refused variants', async () => {
   await updateProfile(db, ps[2].id, { handle: 'reel-other' }, { now });
   assert.deepEqual(await suggestHandles(db, 'reel', null, now), ['reel3', 'reel-tv', 'reel4']);
   assert.deepEqual(await suggestHandles(db, 'reel', ps[2].id, now), ['reel3', 'reel_films', 'reel-tv'], 'a hold of its own is free');
-  assert.ok((await suggestHandles(db, 'abcdefghi', null, now)).every(h => !/^[a-z2-7]{10}$/.test(h)), 'never id-shaped');
+});
+
+test('a ten-letter handle works unless it is a profile id', async () => {
+  const db = await openTestDb();
+  const a = await createProfile(db, { now });
+  const b = await createProfile(db, { now });
+  await updateProfile(db, a.id, { name: 'Fright', handle: 'frightcore' }, { now });
+  assert.equal((await getProfile(db, 'frightcore')).id, a.id);
+  assert.equal((await getProfile(db, a.id)).id, a.id, 'the id still opens it');
+  assert.equal((await checkHandle(db, b.id, a.id, now)).reason, 'taken', 'another profile\'s id is never a handle');
+  assert.equal(await updateProfile(db, a.id, { handle: b.id }, { now }), 'taken');
+  assert.equal((await getProfile(db, b.id)).id, b.id);
 });

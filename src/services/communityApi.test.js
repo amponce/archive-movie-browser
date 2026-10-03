@@ -253,7 +253,7 @@ test('profile: a handle is set by its owner, refused with a reason, read by hand
   const me = await (await call(c, 'POST', '/api/profile')).json();
   const other = await (await call(c, 'POST', '/api/profile', { ip: '2.2.2.2' })).json();
   assert.equal((await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: me, body: { handle: 'Night-Owl' } })).status, 204);
-  for (const [handle, error] of [['night-owl', 'taken'], ['admin', 'reserved'], ['a', 'invalid'], [other.id, 'invalid']]) {
+  for (const [handle, error] of [['night-owl', 'taken'], ['admin', 'reserved'], ['a', 'invalid'], [other.id, 'taken']]) {
     const res = await call(c, 'PATCH', `/api/profile/${other.id}`, { auth: other, body: { handle } });
     assert.equal(res.status, 400);
     assert.deepEqual(await res.json(), { error }, handle);
