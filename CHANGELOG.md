@@ -4,15 +4,35 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-03
+
 ### Added
 
+- **Profiles, with no email and no password.** Start one from the header, or just tap the heart or + on any film. A profile keeps your favourites and your channels. Its edit link is the key to it: keep it private, and use it to edit on another device.
+- **Passkeys.** Protect a profile with Face ID, a fingerprint or a device PIN, then sign in on any device. Signing in replaces the old edit link.
+- **Handles.** Give your profile a readable address, like `/u/nightjar`. Taken names come with a few free suggestions.
+- **Your own TV channels.** Add any film to a channel with +; it plays round the clock on [/tv](https://www.orphanedfilms.com/tv) as channel 0, and anyone you send the link to lands on the same frame. Channels you save from other people sit next to yours. On your own channels, tap any film to watch it from the start, then go back to live.
+- **Favourites.** The heart saves a film to your profile and says where it went.
+- **Decade ranges in Browse:** pick a starting decade and, optionally, a later one, like the 1980s through the 1990s.
+- **A new list and channel: Covens and candlelight,** occult horror from the sixties to the eighties.
 - **The Orphan Collection.** [/collection](https://www.orphanedfilms.com/collection): numbered case files, each telling how a film fell through the cracks and how it was found. Volume I opens 24 files, from 1922 to 1968. It has its own place in the nav, a row on the front page after Tonight's orphan, and Tonight's orphan links to its file when it has one. Every film now carries an accession number; File numbers belong to the collection.
 - **A movie library for Kodi, Jellyfin and Emby.** `/api/tv/library.zip` is every film as a folder of small link files, each matched to its TMDB entry, so the apps show the catalogue like your own movies: posters, plots, genres, resume. Steps on [/iptv](https://www.orphanedfilms.com/iptv).
 - **Every film as one playlist.** `/api/tv/films.m3u` has the whole catalogue, not just what the channels air: about 4,200 films with posters, grouped by genre, for VLC, Kodi and IPTV apps. Each film plays from the start. Listed on [/iptv](https://www.orphanedfilms.com/iptv).
 - **Install it on your phone.** Orphaned Films is now an installable web app: Add to Home Screen (Safari's Share menu on iPhone, Chrome's menu or install prompt on Android) puts the Orphaned Films icon on your home screen, and it opens full screen without the browser around it.
 
+### Changed
+
+- **The site runs on Cloudflare Workers,** with profiles and channels in Cloudflare D1. The README's Privacy section says what is kept, for how long, and why.
+- Poster lookups are tried once more when the service is busy, and a page sorted by rating never waits long for a slow one.
+- The announcement banner is hidden on phones, so films start higher on the first screen.
+- Profile pages label their fields, and the address saves when you leave the field.
+
 ### Fixed
 
+- A shared channel no longer loses films for a minute when Archive.org is slow to answer.
+- The + on a film shows a check once the film is in one of your channels; choosing that channel again takes it out.
+- Archive.org profile links with an encoded @ open as profiles.
+- A browser that opens a profile by its edit link no longer asks to save the link when a passkey already protects the profile.
 - Films opened from curated lists reopen on reload, shared links, and browser Forward; subsequent film selections keep their own address.
 - Browse no longer shows "No movies found" and Load more together when strict filters find nothing in the first uploads. It says how many uploads it has checked ("Checked 250 of 4,812") and offers Keep looking, which moves the count on each time.
 
