@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { tvPersonal, personalNumber, pinTo, MAX_ON_TV } from './yourChannels.js';
+import { tvPersonal, personalNumber, pinTo, followCopy, MAX_ON_TV } from './yourChannels.js';
 
 const ch = (id, films, created = 0) => ({ id, name: `Channel ${id}`, status: 'private', films, created });
 
@@ -46,4 +46,18 @@ test('the set holds the channel it fell back to, but never replaces mine', () =>
   assert.equal(pinTo('kung-fu-theater', station), null);
   assert.equal(pinTo('mine', station), null, 'an empty /tv#mine keeps its panel');
   assert.equal(pinTo('gone', null), null);
+});
+
+test('watching the old list as it is copied: the old list stays until the copy is on the set', () => {
+  const asked = { currentId: 'mine', legacy: false, copied: 'abc' };
+  assert.deepEqual(followCopy({ ...asked, onSet: [] }), { id: 'mine', keepOld: true });
+  assert.deepEqual(followCopy({ ...asked, onSet: ['c-other', 'kung-fu-theater'] }), { id: 'mine', keepOld: true });
+  assert.deepEqual(followCopy({ ...asked, onSet: ['c-other', 'c-abc'] }), { id: 'c-abc', keepOld: false });
+});
+
+test('nothing to follow: not on mine, still the old list, or the copy is not known', () => {
+  assert.deepEqual(followCopy({ currentId: 'kung-fu-theater', legacy: false, copied: 'abc', onSet: [] }), { id: 'kung-fu-theater', keepOld: false });
+  assert.deepEqual(followCopy({ currentId: 'mine', legacy: true, copied: 'abc', onSet: [] }), { id: 'mine', keepOld: false });
+  assert.deepEqual(followCopy({ currentId: 'mine', legacy: false, copied: null, onSet: [] }), { id: 'mine', keepOld: false });
+  assert.deepEqual(followCopy({ currentId: 'mine', legacy: false, copied: 'abc', onSet: [], left: ['abc'] }), { id: 'mine', keepOld: false }, 'a copy that will not air');
 });

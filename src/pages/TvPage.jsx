@@ -20,8 +20,8 @@ import FavouriteButton from '../components/FavouriteButton';
 import AddToChannel from '../components/AddToChannel';
 import useProfile from '../hooks/useProfile';
 import useSavedChannels from '../hooks/useSavedChannels';
-import { carriedInto } from '../services/profile';
-import { tvPersonal, personalNumber, pinTo } from '../services/yourChannels';
+import { carriedInto, carriedChannel } from '../services/profile';
+import { tvPersonal, personalNumber, pinTo, followCopy } from '../services/yourChannels';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
 // the same for everyone. The page keeps its own clock: /api/tv gives the lineups once, and the
@@ -224,7 +224,11 @@ export default function TvPage({ channel = null, children }) {
   const personal = useMemo(() => (channel ? { legacy: true, saved: [] } : tvPersonal({ profileId, carriedId: carriedInto(), channels: me?.channels })), [channel, profileId, me]);
   const saved = useSavedChannels(personal.saved);
   const savedPending = !!profileId && (!me || saved.pending);
-  const mine = useMyChannel(6, channel, !personal.legacy);
+  // The channel in the link, else the one this browser watched last, else channel 1
+  const [currentId, setCurrentId] = useState(() => { if (channel) return channel.id; try { return decodeURIComponent(window.location.hash.slice(1)) || readLast(); } catch { return readLast(); } });
+  const follow = followCopy({ currentId, legacy: personal.legacy, copied: carriedChannel(), onSet: saved.channels.map(c => c.id),
+    left: (me?.channels || []).map(c => c.id).filter(id => !personal.saved.some(c => c.id === id)) });
+  const mine = useMyChannel(6, channel, !personal.legacy && !follow.keepOld);
   const span = useGuideSpan();
   const [open, setOpen] = useState(null); // the guide row playing under itself
   // The personal channels go first, numbered 0, 0b, 0c..., when they have anything on them
@@ -235,8 +239,6 @@ export default function TvPage({ channel = null, children }) {
     const own = [...saved.channels, ...(mine && mine.lineup.length && !waiting ? [mine] : [])];
     return [...(channel ? own : own.map((c, i) => ({ ...c, number: personalNumber(i) }))), ...stations];
   }, [saved.channels, mine, stations, waiting, channel]);
-  // The channel in the link, else the one this browser watched last, else channel 1
-  const [currentId, setCurrentId] = useState(() => { if (channel) return channel.id; try { return decodeURIComponent(window.location.hash.slice(1)) || readLast(); } catch { return readLast(); } });
   const [now, setNow] = useState(Date.now);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(t); }, []);
   useEffect(() => { if (!channel) document.title = 'TV | Orphaned Films'; }, [channel]);
@@ -251,7 +253,7 @@ export default function TvPage({ channel = null, children }) {
   const holding = !settled && savedPending && !stations.some(s => s.id === currentId);
 
   const current = useMemo(() => (((waiting || empty) && currentId === channel.id) || holding ? null
-    : channels.find(c => c.id === currentId) || (mine?.lineup.length && window.location.search.includes('mine=') ? channels.find(c => c.id === mine.id) : null) || channels[0] || null), [channels, currentId, mine, waiting, empty, channel, holding]);
+    : channels.find(c => c.id === follow.id) || (mine?.lineup.length && window.location.search.includes('mine=') ? channels.find(c => c.id === mine.id) : null) || channels[0] || null), [channels, currentId, follow.id, mine, waiting, empty, channel, holding]);
   // Once the set has picked a channel it stays on it, even when an add reorders your channels
   useEffect(() => {
     const pin = pinTo(currentId, current);

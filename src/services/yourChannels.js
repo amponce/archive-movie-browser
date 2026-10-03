@@ -24,3 +24,13 @@ export function tvPersonal({ profileId, carriedId, channels }) {
 // does not move it: the id to hold, or null to leave the asked-for one. `mine` is left as asked:
 // with nothing on it the page shows how to start one, and it tunes in once its films are measured.
 export const pinTo = (currentId, current) => (current && current.id !== currentId && currentId !== MY_CHANNEL_ID ? current.id : null);
+
+// Someone watching the old list (`mine`) when it is copied to their profile stays with it: the
+// old list stays on the set until the copy has loaded, then the copy stands in for it.
+// copied: the id of the copy, if known. onSet: the ids of the channels on the set. left: the
+// profile's channels that will not air (empty, or past the first ten).
+export function followCopy({ currentId, legacy, copied, onSet, left = [] }) {
+  if (currentId !== MY_CHANNEL_ID || legacy || !copied || left.includes(copied)) return { id: currentId, keepOld: false };
+  const copy = `c-${copied}`;
+  return onSet.includes(copy) ? { id: copy, keepOld: false } : { id: currentId, keepOld: true };
+}

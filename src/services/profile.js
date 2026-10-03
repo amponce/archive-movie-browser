@@ -69,6 +69,11 @@ const carried = (p) => { try { if (localStorage.getItem(CARRIED_KEY) === p.id) r
 const markCarried = (p) => { carriedMemory = p.id; try { localStorage.setItem(CARRIED_KEY, p.id); } catch { /* private mode */ } };
 // The profile the old list was copied into, if any
 export const carriedInto = () => { try { const id = localStorage.getItem(CARRIED_KEY); if (id) return id; } catch { /* private mode */ } return carriedMemory; };
+// The channel it was copied into, if known
+const COPY_KEY = 'profile-carried-channel';
+let copyMemory = null;
+export const carriedChannel = () => { try { const id = localStorage.getItem(COPY_KEY); if (id) return id; } catch { /* private mode */ } return copyMemory; };
+const rememberCopy = (id) => { copyMemory = id; try { localStorage.setItem(COPY_KEY, id); } catch { /* private mode */ } };
 let carrying = null;
 function carryOver(p) {
   if (carried(p)) return Promise.resolve();
@@ -77,7 +82,11 @@ function carryOver(p) {
   carrying ||= (async () => {
     try {
       const res = await api('/api/channel', { method: 'POST', profile: p, body: { name: 'My channel', films: legacy.map(film => ({ film })) } });
-      if (res.ok) markCarried(p);
+      if (res.ok) {
+        markCarried(p);
+        const { id } = await res.json().catch(() => ({}));
+        if (id) rememberCopy(id);
+      }
     } catch { /* try again next time */ }
   })().finally(() => { carrying = null; });
   return carrying;

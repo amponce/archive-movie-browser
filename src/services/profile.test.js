@@ -103,6 +103,7 @@ test('a successful carry-over keeps the old list and happens once per profile', 
   await fresh.ensureProfile();
   assert.equal(channelPosts, 1);
   assert.equal(store['tv-my-channel'], JSON.stringify(['film-one', 'film-two']));
+  assert.equal(fresh.carriedChannel(), 'chan', 'the copy is remembered, so the TV can stay on it');
   await fresh.ensureProfile();
   await new Promise(r => setTimeout(r, 10));
   assert.equal(channelPosts, 1);
