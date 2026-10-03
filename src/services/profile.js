@@ -38,12 +38,17 @@ export function adoptFromLink(pathname, hash) {
   const id = pathname.match(/^\/u\/([a-z2-7]{10})\/?$/)?.[1];
   const found = keyFromHash(hash);
   if (!id || !found) return false;
-  const had = readProfile();
-  if (had && had.id !== id) keepPrevious(had);
-  writeProfile({ id, key: found.key });
-  keepStorage();
+  switchToProfile({ id, key: found.key });
   try { history.replaceState(null, '', pathname + (globalThis.location?.search || '')); } catch { /* not in a browser */ }
   return true;
+}
+
+// Make p this browser's profile, keeping a different one it had so the owner can switch back
+export function switchToProfile(p) {
+  const had = readProfile();
+  if (had && had.id !== p.id) keepPrevious(had);
+  writeProfile(p);
+  keepStorage();
 }
 
 // Swap this browser's profile with the one kept by adoptFromLink. False when there is none.
@@ -57,12 +62,21 @@ export function switchBack() {
   return true;
 }
 
+// A 401 on a call made with this browser's profile means its key was changed elsewhere (a
+// passkey sign-in on another device); listeners show a notice
+const staleListeners = new Set();
+export function onStaleKey(fn) { staleListeners.add(fn); return () => staleListeners.delete(fn); }
+export function noteStale(res, profile) {
+  if (res.status === 401 && profile && profile.id === readProfile()?.id) staleListeners.forEach(fn => fn());
+  return res;
+}
+
 export function api(path, { method = 'GET', body, profile } = {}) {
   return fetch(path, {
     method,
     headers: { ...(body && { 'Content-Type': 'application/json' }), ...(profile && { Authorization: `Bearer ${profile.id}.${profile.key}` }) },
     body: body && JSON.stringify(body),
-  });
+  }).then(res => noteStale(res, profile));
 }
 
 // Copy the old browser-only list into a channel, once per profile. Never throws. The old list

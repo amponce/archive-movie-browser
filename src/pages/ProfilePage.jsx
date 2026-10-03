@@ -5,6 +5,7 @@ import Button from '../ui/Button';
 import { FilmGrid, withPosters } from './ArchiveListPage';
 import { api, readProfile, editLink, readPrevious, switchBack } from '../services/profile';
 import { refreshProfile } from '../hooks/useProfile';
+import { protectProfile, listPasskeys, removePasskey } from '../services/passkey';
 
 const LABEL = { unlisted: 'Unlisted', submitted: 'In review', public: 'Public', featured: 'Featured' };
 const FIELD = 'bg-transparent border-b border-line text-bone w-full py-1';
@@ -130,8 +131,62 @@ export default function ProfilePage({ slug }) {
             )}
           </section>
         )}
+        {isOwner && <Passkeys profile={me} />}
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+const MAX_PASSKEYS = 5;
+const ADDED = { cancelled: 'No passkey added.', full: 'Five is the most.', failed: "Couldn't add a passkey." };
+// The owner's passkeys: each signs in to this profile on any device that has it
+function Passkeys({ profile }) {
+  const [keys, setKeys] = useState(null);
+  const [state, setState] = useState(null); // busy | cancelled | full | failed
+  const [confirm, setConfirm] = useState(null); // the passkey waiting for a second tap on Remove
+  const [removeFailed, setRemoveFailed] = useState(false);
+  const reload = useCallback(() => listPasskeys(profile).then(setKeys), [profile]);
+  useEffect(() => { reload(); }, [reload]);
+  const add = async () => {
+    setState('busy');
+    const out = await protectProfile(profile);
+    setState(out === 'ok' ? null : out);
+    reload();
+  };
+  const remove = async (id) => {
+    setConfirm(null);
+    setRemoveFailed(!(await removePasskey(profile, id)));
+    reload();
+  };
+  if (!keys) return null;
+  const full = keys.length >= MAX_PASSKEYS;
+  return (
+    <section className="border border-line p-4">
+      <h2 className="display text-xl">Passkeys</h2>
+      <p className="text-sm mt-1">Sign in to this profile on any device with your passkey. Your edit link keeps working.</p>
+      {keys.length > 0 && (
+        <ul className="mt-3 flex flex-col gap-1">
+          {keys.map(k => (
+            <li key={k.id} className="flex flex-wrap items-center gap-x-3">
+              <span>Passkey added {new Date(k.created).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+              {confirm === k.id
+                ? <>
+                    <button type="button" className="nav-link text-signal hover:text-bone" onClick={() => remove(k.id)}>Remove it</button>
+                    <button type="button" className="nav-link" onClick={() => setConfirm(null)}>Keep</button>
+                  </>
+                : <button type="button" className="nav-link hover:text-signal" onClick={() => setConfirm(k.id)}>Remove</button>}
+            </li>
+          ))}
+        </ul>
+      )}
+      {removeFailed && <p role="alert" className="text-sm text-signal mt-2">Could not remove</p>}
+      {typeof window.PublicKeyCredential !== 'undefined' && (
+        <div className="mt-3">
+          <Button variant="ghost" onClick={add} disabled={full || state === 'busy'} className="disabled:opacity-50">Add a passkey</Button>
+          <p role="status" className="text-sm text-muted mt-2">{full ? ADDED.full : ADDED[state] || ''}</p>
+        </div>
+      )}
+    </section>
   );
 }

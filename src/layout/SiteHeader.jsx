@@ -4,6 +4,7 @@ import Button from '../ui/Button';
 import SearchField from '../ui/SearchField';
 import { spin } from '../services/reel';
 import { useProfileId } from '../hooks/useProfile';
+import PasskeySignIn from '../components/PasskeySignIn';
 
 const NAV = [
   ['/', 'Tonight'],
@@ -38,6 +39,8 @@ export default function SiteHeader({ current = '/', search, children }) {
   // A browser with a profile gets a link to its own page, with its channels (the search box
   // gives up a little width for it, so the header keeps to one line)
   const yours = profileId && `/u/${profileId}`;
+  // Without one, a passkey can bring a profile back, where the browser supports them
+  const signIn = !yours && typeof window.PublicKeyCredential !== 'undefined';
   return (
     <header className="rule">
       <div className="gutter flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-5">
@@ -48,7 +51,7 @@ export default function SiteHeader({ current = '/', search, children }) {
           ))}
         </nav>
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className={`flex-1 md:flex-none md:w-[240px] ${yours ? 'xl:w-[280px]' : 'xl:w-[300px]'}`}>{search || <SearchField />}</div>
+          <div className={`flex-1 md:flex-none md:w-[240px] ${yours || signIn ? 'xl:w-[280px]' : 'xl:w-[300px]'}`}>{search || <SearchField />}</div>
           <Button variant="light" onClick={spin} data-track="spin" aria-label="Spin the reel: a random film">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 3h5v5" /><path d="M4 20L21 3" /><path d="M21 16v5h-5" /><path d="M15 15l6 6" /><path d="M4 4l5 5" /></svg>
             <span className="hidden sm:inline">Spin the reel</span><span className="sm:hidden">Spin</span>
@@ -58,6 +61,7 @@ export default function SiteHeader({ current = '/', search, children }) {
               <ListVideo size={16} aria-hidden="true" />
             </Button>
           )}
+          {signIn && <PasskeySignIn />}
         </div>
       </div>
       <nav className="md:hidden gutter flex gap-5 overflow-x-auto pb-3 -mt-1" aria-label="Site">

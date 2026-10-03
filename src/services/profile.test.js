@@ -159,3 +159,23 @@ test('asking to keep storage never throws, with or without browser support', asy
   assert.equal(await keepStorage({}), undefined);
   assert.equal(await keepStorage(undefined), undefined);
 });
+
+test('a 401 on a call with this browser\'s profile is reported; other calls are not', async () => {
+  const { api, onStaleKey } = await import('./profile.js');
+  const me = { id: 'abcdefghij', key: KEY };
+  writeProfile(me);
+  let seen = 0;
+  const off = onStaleKey(() => { seen++; });
+  const was = globalThis.fetch;
+  let status = 401;
+  globalThis.fetch = async () => new Response(null, { status });
+  try {
+    assert.equal((await api('/api/profile/abcdefghij', { method: 'PATCH', profile: me, body: {} })).status, 401);
+    assert.equal(seen, 1);
+    await api('/api/profile', { method: 'POST' }); // no profile sent
+    await api('/x', { profile: { id: 'otherother', key: KEY } }); // not this browser's profile
+    status = 204;
+    await api('/api/profile/abcdefghij', { method: 'PATCH', profile: me, body: {} });
+    assert.equal(seen, 1);
+  } finally { globalThis.fetch = was; off(); }
+});

@@ -200,6 +200,18 @@ test('passkey: anonymous cannot register or list; other origins refused', async 
   assert.equal(res.status, 403);
 });
 
+test('passkey: anonymous register is refused; a cross-site options call is refused even with a valid key', async () => {
+  const c = { ...(await ctx()), webauthn: fakeWebauthn() };
+  assert.equal((await call(c, 'POST', '/api/passkey', { body: resp('credA-padding-xxxx', 'reg1') })).status, 401);
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  const authorization = `Bearer ${me.id}.${me.key}`;
+  const evil = await handle(new Request(`${ORIGIN}/api/passkey/options`, { method: 'POST', headers: { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site', authorization } }), c);
+  assert.equal(evil.status, 403);
+  const noOrigin = await handle(new Request(`${ORIGIN}/api/passkey/options`, { method: 'POST', headers: { 'sec-fetch-site': 'cross-site', authorization } }), c);
+  assert.equal(noOrigin.status, 403);
+  assert.equal((await call(c, 'POST', '/api/passkey/options', { auth: me })).status, 200);
+});
+
 test('passkey: limits apply to challenges', async () => {
   const c = { ...(await ctx()), webauthn: fakeWebauthn() };
   for (let i = 0; i < 30; i++) assert.equal((await call(c, 'POST', '/api/passkey/challenge', { ip: '8.8.8.8' })).status, 200);
