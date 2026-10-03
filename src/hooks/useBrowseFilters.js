@@ -17,6 +17,7 @@ export default function useBrowseFilters({ onOpenFilmLink, onReopenFilm } = {}) 
   const [contentType, setContentType] = useState(urlFilters.type); // 'features' or 'trailers'
   const [sort, setSort] = useState(urlFilters.sort);
   const [decade, setDecade] = useState(urlFilters.decade);
+  const [decadeTo, setDecadeTo] = useState(urlFilters.decadeTo); // null: the start decade alone
   const [category, setCategory] = useState(urlFilters.collection);
 
   const currentCategory = VIDEO_CATEGORIES.find(c => c.id === category)
@@ -47,7 +48,12 @@ export default function useBrowseFilters({ onOpenFilmLink, onReopenFilm } = {}) 
 
   const changeGenre = (next) => { track('Filter', { type: 'genre', value: next }); setGenre(next); };
   const changeSort = (next) => { track('Filter', { type: 'sort', value: next }); setSort(next); };
-  const changeDecade = (next) => { track('Filter', { type: 'decade', value: next || 'any' }); setDecade(next); };
+  // A new start keeps the end of the range only while the end is still later
+  const changeDecade = (next, to = next && decadeTo > next ? decadeTo : null) => {
+    track('Filter', { type: 'decade', value: next ? (to ? `${next}-${to}` : String(next)) : 'any' });
+    setDecade(next); setDecadeTo(to);
+  };
+  const changeDecadeTo = (to) => changeDecade(decade, to);
   const changeType = (next) => { setContentType(next); setMinRuntime(next === 'trailers' ? 0 : defaultMinRuntime(category)); };
   const pickGenre = (next) => { setSearchQuery(''); setActiveSearch(''); changeGenre(next); };
   const widen = () => { track('Filter', { type: 'collection', value: 'all (widened)' }); setCategory(ALL_FILMS); };
@@ -73,7 +79,7 @@ export default function useBrowseFilters({ onOpenFilmLink, onReopenFilm } = {}) 
   // #identifier hash so film links and query filters coexist (#43).
   const urlSynced = useRef(false); // false until the arrival URL has been tidied
   const writeFiltersToUrl = (mode) => {
-    const query = filtersToQuery({ collection: category, genre, q: activeSearch, decade, sort, runtime: minRuntime, type: contentType });
+    const query = filtersToQuery({ collection: category, genre, q: activeSearch, decade, decadeTo, sort, runtime: minRuntime, type: contentType });
     const currentSearch = window.location.search.replace(/^\?/, '');
     // Already in sync: nothing to write. This also makes the sync effects safe on mount and
     // when popstate has just restored the state (no history spam).
@@ -84,7 +90,7 @@ export default function useBrowseFilters({ onOpenFilmLink, onReopenFilm } = {}) 
   };
   // Deliberate changes (collection, genre, search, decade) add a history entry so Back returns
   // to the previous view; minor ones only rewrite the current entry.
-  useEffect(() => { writeFiltersToUrl('push'); urlSynced.current = true; }, [category, genre, activeSearch, decade]);
+  useEffect(() => { writeFiltersToUrl('push'); urlSynced.current = true; }, [category, genre, activeSearch, decade, decadeTo]);
   useEffect(() => { writeFiltersToUrl('replace'); }, [sort, minRuntime, contentType]);
 
   // Back/Forward between filter views: restore the state from the URL. Forward can also land on
@@ -97,7 +103,7 @@ export default function useBrowseFilters({ onOpenFilmLink, onReopenFilm } = {}) 
       const restored = parseFilters(window.location.search);
       setCategory(restored.collection); setGenre(restored.genre);
       setActiveSearch(restored.q); setSearchQuery(restored.q);
-      setSort(restored.sort); setDecade(restored.decade);
+      setSort(restored.sort); setDecade(restored.decade); setDecadeTo(restored.decadeTo);
       setMinRuntime(restored.runtime); setContentType(restored.type);
     };
     window.addEventListener('popstate', onPopState);
@@ -105,9 +111,9 @@ export default function useBrowseFilters({ onOpenFilmLink, onReopenFilm } = {}) 
   }, []);
 
   return {
-    filters: { searchQuery, activeSearch, genre, minRuntime, contentType, sort, decade, category },
+    filters: { searchQuery, activeSearch, genre, minRuntime, contentType, sort, decade, decadeTo, category },
     currentCategory, acrossCollections, collectionDescription,
     canWiden: !activeSearch && category !== ALL_FILMS,
-    search, typeSearch, pickGenre, changeGenre, changeSort, changeDecade, changeType, changeCategory, setMinRuntime, widen,
+    search, typeSearch, pickGenre, changeGenre, changeSort, changeDecade, changeDecadeTo, changeType, changeCategory, setMinRuntime, widen,
   };
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, Filter, Settings, Grid, List, SlidersHorizontal, Library, ChevronDown, Calendar } from 'lucide-react';
-import { BROWSABLE_COLLECTIONS, DECADES, ALL_FILMS, collectionName } from '../../services/archive';
+import { BROWSABLE_COLLECTIONS, DECADES, ALL_FILMS, collectionName, decadeLabel } from '../../services/archive';
 import { SORT_OPTIONS, RUNTIME_OPTIONS } from '../../services/urlFilters';
 
 // The sticky bar under the header: what you are looking at, grid or list, the settings dialog,
@@ -8,7 +8,7 @@ import { SORT_OPTIONS, RUNTIME_OPTIONS } from '../../services/urlFilters';
 // behind a one-line summary. Everything it shows comes from useBrowseFilters.
 export default function FilterBar({ browse, viewMode, onViewMode, onOpenSettings }) {
   const { filters, currentCategory, acrossCollections, collectionDescription } = browse;
-  const { activeSearch, category, contentType, minRuntime, decade, sort } = filters;
+  const { activeSearch, category, contentType, minRuntime, decade, decadeTo, sort } = filters;
   const [open, setOpen] = useState(false);
 
   return (
@@ -34,7 +34,7 @@ export default function FilterBar({ browse, viewMode, onViewMode, onOpenSettings
         {/* Mobile disclosure keeps active choices visible without a tall sticky header. */}
         <button className="md:hidden flex items-center gap-2 w-full text-left text-xs text-muted" aria-expanded={open} aria-controls="catalogue-filters" onClick={() => setOpen(o => !o)}>
           <Filter className="w-4 h-4 shrink-0" />
-          <span className="flex-1">Filters: {acrossCollections ? 'All collections' : currentCategory.name} · {contentType === 'trailers' ? 'Shorts, ≤30 min' : `Full Movies, ${minRuntime ? `${minRuntime}+ min` : 'any length'}`} · {decade ? `${decade}s · ` : ''}{SORT_OPTIONS[sort]}</span>
+          <span className="flex-1">Filters: {acrossCollections ? 'All collections' : currentCategory.name} · {contentType === 'trailers' ? 'Shorts, ≤30 min' : `Full Movies, ${minRuntime ? `${minRuntime}+ min` : 'any length'}`} · {decade ? `${decadeLabel(decade, decadeTo)} · ` : ''}{SORT_OPTIONS[sort]}</span>
           <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
 
@@ -75,6 +75,12 @@ export default function FilterBar({ browse, viewMode, onViewMode, onOpenSettings
               <option value="">Any decade</option>
               {[...DECADES].reverse().map(d => <option key={d} value={d}>{d}s</option>)}
             </select>
+            {decade && decade < DECADES.at(-1) && (
+              <select value={decadeTo ?? ''} aria-label="Through decade" onChange={(e) => browse.changeDecadeTo(e.target.value ? Number(e.target.value) : null)}>
+                <option value="">Only the {decade}s</option>
+                {DECADES.filter(d => d > decade).map(d => <option key={d} value={d}>to the {d}s</option>)}
+              </select>
+            )}
           </div>
 
           <div className="control">

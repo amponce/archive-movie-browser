@@ -2,7 +2,7 @@
 // genre when its uploader typed one in, and most did not: it returns 37 comedies from the 1980s
 // where the index knows 130. So when a genre is picked the list comes from the index, which every
 // visitor already has, and Archive.org's own tagged results follow once the index is exhausted.
-import { ALL_FILMS, byAudience } from './archive.js';
+import { ALL_FILMS, byAudience, decadeYears } from './archive.js';
 import { cartoonOutOfPlace } from './posterIndex.js';
 
 export const PAGE = 24;
@@ -42,12 +42,13 @@ export const betterUpload = (a, b) => (isFeature(b) - isFeature(a)) || -byAudien
 // list is and sorted the way the menu says.
 // ponytail: filters and sorts the whole index on every page; a few ms for 11k entries. Cache
 // per filter set if the index grows past ~50k.
-export function indexFilms(index, { genre, decade, shorts = false, minRuntime = 0, sort = 'downloads' }) {
+export function indexFilms(index, { genre, decade, decadeTo = null, shorts = false, minRuntime = 0, sort = 'downloads' }) {
   const best = new Map();
+  const span = decadeYears(decade, decadeTo);
   for (const pair of Object.entries(index)) {
     const e = pair[1];
     if (!e.i || !e.g?.includes(genre) || cartoonOutOfPlace(e.g, genre)) continue;
-    if (decade && !(e.y >= Number(decade) && e.y < Number(decade) + 10)) continue;
+    if (span && !(e.y >= span.from && e.y <= span.to)) continue;
     if (shorts ? isFeature(pair) || e.d > 30 : (e.d > 0 ? e.d < minRuntime : !isFeature(pair))) continue;
     const kept = best.get(e.i);
     if (!kept || betterUpload(pair, kept) < 0) best.set(e.i, pair);

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collectionUploads, bestOfCollection, loadRankedCollections, showable } from '../../services/collectionBest';
 import { loadPosterIndex, cartoonOutOfPlace } from '../../services/posterIndex';
 import { shareUrl } from '../../services/myChannel';
-import { collectionName, VIDEO_CATEGORIES } from '../../services/archive';
+import { collectionName, VIDEO_CATEGORIES, decadeYears, decadeLabel } from '../../services/archive';
 import Shelf from '../home/Shelf';
 
 const SEARCH = 'https://archive.org/advancedsearch.php';
@@ -21,9 +21,9 @@ async function titleOf(id) {
 // Nothing shows until there are at least six.
 // A genre on All Films ('genre:Horror', 'genre:all') ranks the index; a collection ranks its
 // uploads. With no decade picked, Jev's ranking from public/collections.json when there is one;
-// with a decade, the films from that decade only, best known first, so the shelf follows the
+// with a decade (or a range of them), the films from those years only, best known first, so the shelf follows the
 // filters like the grid below it does.
-async function bestFor(id, decade) {
+async function bestFor(id, decade, decadeTo) {
   const [rankings, index] = await Promise.all([loadRankedCollections(), loadPosterIndex()]);
   const judged = rankings[id];
   if (judged && !decade) {
@@ -32,7 +32,8 @@ async function bestFor(id, decade) {
   }
   // Films Jev was sure do not belong stay out whatever the filters
   const strays = new Set((judged?.strays || []).map(([fid]) => fid));
-  const inDecade = fid => !strays.has(fid) && (!decade || (index[fid]?.y >= Number(decade) && index[fid]?.y < Number(decade) + 10));
+  const span = decadeYears(decade, decadeTo);
+  const inDecade = fid => !strays.has(fid) && (!span || (index[fid]?.y >= span.from && index[fid]?.y <= span.to));
   if (id.startsWith('genre:')) {
     const genre = id.slice('genre:'.length);
     const ids = Object.keys(index).filter(fid => inDecade(fid) && (genre === 'all' || (index[fid].g?.includes(genre) && !cartoonOutOfPlace(index[fid].g, genre))));
@@ -42,27 +43,28 @@ async function bestFor(id, decade) {
   return { ...bestOfCollection(index, identifiers.filter(inDecade)), total, title, byJev: false };
 }
 
-export default function CollectionBest({ id, decade = null }) {
+export default function CollectionBest({ id, decade = null, decadeTo = null }) {
   const [best, setBest] = useState(null);
   useEffect(() => {
     let cancelled = false;
     setBest(null);
-    bestFor(id, decade)
+    bestFor(id, decade, decadeTo)
       .then(found => { if (!cancelled) setBest(found); })
       .catch(() => { /* Archive.org did not answer: the collection's page still works without it */ });
     return () => { cancelled = true; };
-  }, [id, decade]);
+  }, [id, decade, decadeTo]);
 
   if (!best || best.films.length < 6) return null;
   const index = Object.fromEntries(best.films.map(f => [f.id, f.entry]));
   const genre = id.startsWith('genre:');
+  const years = decadeLabel(decade, decadeTo);
   const list = {
     slug: `collection-${id.replace(':', '-')}`,
     title: decade
-      ? (genre ? (id === 'genre:all' ? `The best of the ${decade}s` : `The best of ${decade}s ${best.title.toLowerCase()}`) : `The best of ${best.title} from the ${decade}s`)
+      ? (genre ? (id === 'genre:all' ? `The best of the ${years}` : `The best of ${years} ${best.title.toLowerCase()}`) : `The best of ${best.title} from the ${years}`)
       : `The best of ${best.title}`,
     blurb: genre
-      ? `${best.identified.toLocaleString('en-US')} ${id === 'genre:all' ? '' : `${best.title.toLowerCase()} `}films${decade ? ` from the ${decade}s` : ''} on the Archive that we have identified. ${best.byJev ? 'These are the highlights, then the best known of the rest.' : 'These are the best known of them.'}`
+      ? `${best.identified.toLocaleString('en-US')} ${id === 'genre:all' ? '' : `${best.title.toLowerCase()} `}films${decade ? ` from the ${years}` : ''} on the Archive that we have identified. ${best.byJev ? 'These are the highlights, then the best known of the rest.' : 'These are the best known of them.'}`
       : `${best.identified.toLocaleString('en-US')} of the ${best.total.toLocaleString('en-US')} uploads in this collection are films we have identified. ${best.byJev ? 'These are its highlights, then the best known of the rest.' : 'These are the best known of them.'}`,
     films: best.films.map(f => ({ id: f.id })),
   };

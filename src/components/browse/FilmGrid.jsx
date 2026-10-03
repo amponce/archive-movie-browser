@@ -5,6 +5,7 @@ import tmdbService from '../../services/tmdb';
 import { track } from '../../services/analytics';
 import { loadPosterIndex } from '../../services/posterIndex';
 import { closeTitles } from '../../services/suggest';
+import { decadeLabel } from '../../services/archive';
 
 // The films, and every state around them: the line that says what is showing, errors, the
 // first-batch spinner, the grid or list, the empty state, the end of the list, and Load more.
@@ -12,7 +13,7 @@ import { closeTitles } from '../../services/suggest';
 export default function FilmGrid({ films, browse, viewMode, onOpen, linkError }) {
   const { movies, loading, error, nextPage, loadMore, retry, closeSpellings } = films;
   const { filters, currentCategory, canWiden, widen, search, typeSearch } = browse;
-  const { activeSearch, genre, contentType, minRuntime, decade, sort } = filters;
+  const { activeSearch, genre, contentType, minRuntime, decade, decadeTo, sort } = filters;
 
   // Load more keeps focus on the button and tells a screen reader how many arrived (#177)
   const loadMoreStart = useRef(null);
@@ -90,7 +91,7 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
             </span>
           </>
         )}
-        {decade && <><span className="text-line">|</span><span>{decade}s</span></>}
+        {decade && <><span className="text-line">|</span><span>{decadeLabel(decade, decadeTo)}</span></>}
         {sort.startsWith('date') && (
           <><span className="text-line">|</span><span>Films with a known release date. Uploads dated the year they were uploaded are left out: that date is usually not the film's.</span></>
         )}

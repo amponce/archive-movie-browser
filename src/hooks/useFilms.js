@@ -11,7 +11,7 @@ const FIRST = { from: 'archive', page: 1 };
 // filters change; appending for later pages; ignoring responses that arrive after a newer request.
 // A genre browse is answered from the poster index first (it knows every identified film's genre,
 // Archive.org only knows the tagged ones), then continues into Archive.org's own results.
-export default function useFilms({ search, sort, genre, collection, decade, contentType, minRuntime }) {
+export default function useFilms({ search, sort, genre, collection, decade, decadeTo, contentType, minRuntime }) {
   const [movies, setMovies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -45,7 +45,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
       if (from === 'index') {
         const index = await loadPosterIndex();
         if (requestId !== latestRequest.current) return;
-        const all = indexFilms(index, { genre, decade, shorts: contentType === 'trailers', minRuntime, sort });
+        const all = indexFilms(index, { genre, decade, decadeTo, shorts: contentType === 'trailers', minRuntime, sort });
         const { movies: batch, more } = pageOf(all, startPage);
         for (const movie of batch) seenFilms.current.add(index[movie.identifier].i);
         if (batch.length) {
@@ -68,6 +68,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
         genre: genre !== 'all' ? genre : null,
         collection,
         decade,
+        decadeTo,
         seenTitles: seenTitles.current,
         fuzzy: Boolean(target.fuzzy), // Load more after a close-spellings answer keeps to close spellings
         // The server query already applied the genre, so only runtime is checked here, and
@@ -95,7 +96,7 @@ export default function useFilms({ search, sort, genre, collection, decade, cont
     } finally {
       if (requestId === latestRequest.current) setLoading(false);
     }
-  }, [search, sort, genre, collection, decade, contentType, minRuntime]);
+  }, [search, sort, genre, collection, decade, decadeTo, contentType, minRuntime]);
 
   // Fetch from the start whenever filters change
   useEffect(() => {

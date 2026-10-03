@@ -63,7 +63,7 @@ export default function ArchiveMovieBrowser() {
     onReopenFilm: (identifier) => { if (!selectedRef.current) openFilmLink(identifier); },
   });
   const { filters } = browse;
-  const films = useFilms({ search: filters.activeSearch, sort: filters.sort, genre: filters.genre, collection: filters.category, decade: filters.decade, contentType: filters.contentType, minRuntime: filters.minRuntime });
+  const films = useFilms({ search: filters.activeSearch, sort: filters.sort, genre: filters.genre, collection: filters.category, decade: filters.decade, decadeTo: filters.decadeTo, contentType: filters.contentType, minRuntime: filters.minRuntime });
 
   // A #identifier in the URL opens that film: on load (a shared link), and whenever the hash
   // changes while the page is open (Spin the reel, a link from the header's search).
@@ -129,8 +129,8 @@ export default function ArchiveMovieBrowser() {
 
       {/* A collection opens on the best films in it, then everything in it below; All Films on the
           best of the genre picked in the pills. Both follow the decade filter. */}
-      {filters.category !== ALL_FILMS && filters.category !== EVERYTHING && !filters.activeSearch && <CollectionBest key={`${filters.category}-${filters.decade}`} id={filters.category} decade={filters.decade} />}
-      {filters.category === ALL_FILMS && !filters.activeSearch && <CollectionBest key={`${filters.genre}-${filters.decade}`} id={genreShelf(filters.genre)} decade={filters.decade} />}
+      {filters.category !== ALL_FILMS && filters.category !== EVERYTHING && !filters.activeSearch && <CollectionBest key={`${filters.category}-${filters.decade}-${filters.decadeTo}`} id={filters.category} decade={filters.decade} decadeTo={filters.decadeTo} />}
+      {filters.category === ALL_FILMS && !filters.activeSearch && <CollectionBest key={`${filters.genre}-${filters.decade}-${filters.decadeTo}`} id={genreShelf(filters.genre)} decade={filters.decade} decadeTo={filters.decadeTo} />}
       <main className="gutter py-6">
         <GenrePills genre={filters.genre} onChange={browse.changeGenre} />
         <FilmGrid films={films} browse={browse} viewMode={viewMode} onOpen={setSelectedMovie} linkError={linkError} />

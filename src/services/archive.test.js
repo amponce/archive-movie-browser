@@ -1,6 +1,6 @@
 import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import archiveService from './archive.js';
+import archiveService, { decadeLabel, decadeYears } from './archive.js';
 
 beforeEach(() => archiveService.movieResponses.clear());
 
@@ -596,6 +596,27 @@ test('buildQuery: a decade matches a release date in it, or a year from it in th
   assert.match(query, /AND \(\(date:\[1980-01-01 TO 1989-12-31\]\) OR title:\(1980 OR 1981 OR 1982 OR 1983 OR 1984 OR 1985 OR 1986 OR 1987 OR 1988 OR 1989\)\)/);
   assert.doesNotMatch(archiveService.buildQuery({ collection: 'feature_films' }), /date:/);
   assert.doesNotMatch(archiveService.buildQuery({ collection: 'feature_films', decade: 'abc' }), /date:/, 'junk from a URL is ignored');
+});
+
+test('buildQuery: a decade range covers every year from the first decade through the last', () => {
+  const query = archiveService.buildQuery({ collection: 'feature_films', decade: 1980, decadeTo: 1990 });
+  const years = Array.from({ length: 20 }, (_, i) => 1980 + i).join(' OR ');
+  assert.ok(query.includes(`AND ((date:[1980-01-01 TO 1999-12-31]) OR title:(${years}))`));
+  assert.ok(archiveService.buildQuery({ collection: 'feature_films', decade: 1980, decadeTo: 1970 }).includes('date:[1980-01-01 TO 1989-12-31]'), 'an earlier end is ignored');
+  // Over 30 years the title years are left out and the date range alone decides
+  const wide = archiveService.buildQuery({ collection: 'feature_films', decade: 1920, decadeTo: 1950 });
+  assert.match(wide, /AND date:\[1920-01-01 TO 1959-12-31\] AND NOT mediatype/);
+  assert.doesNotMatch(wide, /title:\(/);
+  assert.ok(archiveService.buildQuery({ collection: 'feature_films', decade: 1920, decadeTo: 1940 }).includes('title:(1920 OR'), 'thirty years still lists them');
+});
+
+test('decadeLabel names a decade or a range of them', () => {
+  assert.equal(decadeLabel(1980), '1980s');
+  assert.equal(decadeLabel(1980, 1990), '1980s–1990s');
+  assert.equal(decadeLabel(1980, 1980), '1980s');
+  assert.equal(decadeLabel(1980, 1970), '1980s');
+  assert.equal(decadeLabel(null, 1990), '');
+  assert.deepEqual(decadeYears(1910, 2020), { from: 1910, to: 2029 });
 });
 
 test('buildQuery: sorting by release date leaves out dates that are really upload dates', () => {

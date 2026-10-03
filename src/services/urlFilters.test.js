@@ -9,6 +9,7 @@ test('parseFilters and filtersToQuery round-trip a full set of filters', () => {
     q: 'nosferatu',
     sort: 'date desc',
     decade: 1920,
+    decadeTo: null,
     runtime: 60,
     type: 'features',
   };
@@ -64,6 +65,18 @@ test('a decade survives the round trip, and a junk one is ignored', () => {
   assert.equal(filtersToQuery(parseFilters('?decade=1980')), 'decade=1980');
   assert.equal(parseFilters('?decade=1985').decade, null);
   assert.equal(parseFilters('?decade=abc').decade, null);
+});
+
+test('a decade range survives the round trip; a junk or earlier end is ignored', () => {
+  assert.equal(parseFilters('?decade=1980&to=1990').decadeTo, 1990);
+  assert.equal(filtersToQuery(parseFilters('?decade=1980&to=1990')), 'decade=1980&to=1990');
+  assert.equal(parseFilters('?decade=1980').decadeTo, null, 'an old single-decade link is unchanged');
+  for (const to of ['1980', '1970', '1985', 'abc', '']) {
+    assert.equal(parseFilters(`?decade=1980&to=${to}`).decadeTo, null, `to=${to}`);
+    assert.equal(filtersToQuery(parseFilters(`?decade=1980&to=${to}`)), 'decade=1980');
+  }
+  assert.equal(parseFilters('?to=1990').decadeTo, null, 'no end without a start');
+  assert.equal(filtersToQuery({ decade: null, decadeTo: 1990 }), '');
 });
 
 test('All Films is the default, so it stays out of the URL; a named collection is written', () => {

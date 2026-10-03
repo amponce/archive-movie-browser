@@ -35,6 +35,8 @@ test('indexFilms gives every film of the genre, one upload per film: the full-le
 
 test('indexFilms filters by decade and by length like the Archive.org list', () => {
   assert.deepEqual(indexFilms(index, { genre: 'Comedy', decade: 1980 }).map(f => f.identifier).sort(), ['peewee', 'reanimator_dvd']);
+  assert.deepEqual(indexFilms(index, { genre: 'Comedy', decade: 1910, decadeTo: 1950 }).map(f => f.identifier).sort(), ['chaplin_short', 'no_length'], 'a range covers every decade in it, through the end of the last');
+  assert.deepEqual(indexFilms(index, { genre: 'Comedy', decade: 1910, decadeTo: 1900 }).map(f => f.identifier), ['chaplin_short'], 'an earlier end is the start decade alone');
   assert.deepEqual(indexFilms(index, { genre: 'Comedy', minRuntime: 40 }).map(f => f.identifier).sort(), ['no_length', 'peewee', 'reanimator_dvd'], 'a short goes, an unknown length stays');
   assert.deepEqual(indexFilms(index, { genre: 'Comedy', shorts: true }).map(f => f.identifier).sort(), ['chaplin_short', 'reanimator_trailer'], 'Shorts shows the trailer, since it is one');
   assert.deepEqual(indexFilms(index, { genre: 'Horror', minRuntime: 40 }).map(f => f.identifier), ['reanimator_dvd'], 'a one-minute upload of The Shining is not The Shining, and an unmeasured turner_video or -trailer upload is taken at its name');

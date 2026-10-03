@@ -119,6 +119,22 @@ export function runtimeFilter({ shorts = false, minRuntime = 0 } = {}) {
 // Decades offered as a filter
 export const DECADES = [1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
 
+// The years a decade filter covers: from the start decade through the end one (the same decade
+// when there is no later end). Null when the start is not one of DECADES.
+export function decadeYears(decade, decadeTo = null) {
+  const from = Number(decade);
+  if (!DECADES.includes(from)) return null;
+  const last = DECADES.includes(Number(decadeTo)) && Number(decadeTo) > from ? Number(decadeTo) : from;
+  return { from, to: last + 9 };
+}
+
+// "1980s", or "1980s–1990s" for a range
+export function decadeLabel(decade, decadeTo = null) {
+  const span = decadeYears(decade, decadeTo);
+  if (!span) return '';
+  return span.to - span.from === 9 ? `${span.from}s` : `${span.from}s–${span.to - 9}s`;
+}
+
 // Uploaders often leave "date" at the upload date, or the year before it (Drunken Master, 1978,
 // was dated 2026), so such a date says nothing about the film. Nothing was uploaded to
 // Archive.org before 2000, which makes every earlier date trustworthy. Lucene cannot compare two
@@ -455,6 +471,7 @@ class ArchiveService {
       year = null,
       genre = null,
       decade = null, // one of DECADES
+      decadeTo = null, // a later one of DECADES, for a range
       dated = false, // only films whose release date can be trusted (for sorting by it)
       shorts = false,
       fuzzy = false, // close spellings too (fetchFiltered's second try when nothing matched)
@@ -496,13 +513,15 @@ class ArchiveService {
       query += ` AND year:${year}`;
     }
 
-    if (DECADES.includes(Number(decade))) {
-      const from = Number(decade);
-      const range = `date:[${from}-01-01 TO ${from + 9}-12-31]${uploadDates(from, from + 9)}`;
+    const span = decadeYears(decade, decadeTo);
+    if (span) {
+      const { from, to } = span;
+      const range = `date:[${from}-01-01 TO ${to}-12-31]${uploadDates(from, to)}`;
       // A year in the title ("Hellhole (1985)") counts too, except when sorting by date:
-      // those uploads carry an upload date and would sort ahead of everything
-      const years = Array.from({ length: 10 }, (_, i) => from + i).join(' OR ');
-      query += dated ? ` AND ${range}` : ` AND ((${range}) OR title:(${years}))`;
+      // those uploads carry an upload date and would sort ahead of everything. Over 30 years
+      // the list of title years gets long, so a wide range goes by date only.
+      const years = Array.from({ length: to - from + 1 }, (_, i) => from + i).join(' OR ');
+      query += dated || to - from >= 30 ? ` AND ${range}` : ` AND ((${range}) OR title:(${years}))`;
     } else if (dated) {
       query += ` AND date:[1880-01-01 TO ${new Date().getFullYear()}-12-31]${uploadDates(2000, 9999)}`;
     }
@@ -630,6 +649,7 @@ class ArchiveService {
       genre = null,
       collection = 'moviesandfilms',
       decade = null,
+      decadeTo = null,
       retryDelayMs = 600,
       timeoutMs = 20000, // Archive.org usually answers in 1.5-4 s; a request that never answers must not spin forever
       signal,
@@ -638,7 +658,7 @@ class ArchiveService {
       fuzzy = false,
     } = options;
 
-    const query = queryOverride || this.buildQuery({ searchQuery, genre, collection, decade, dated: sortBy === 'date', fuzzy });
+    const query = queryOverride || this.buildQuery({ searchQuery, genre, collection, decade, decadeTo, dated: sortBy === 'date', fuzzy });
 
     const fields = [
       'identifier',

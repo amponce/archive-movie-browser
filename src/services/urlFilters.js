@@ -27,6 +27,7 @@ export const URL_FILTER_DEFAULTS = {
   q: '',
   sort: 'downloads',
   decade: null,
+  decadeTo: null,
   runtime: 40,
   type: 'features',
 };
@@ -56,7 +57,12 @@ export function parseFilters(search) {
   if (q) filters.q = q.slice(0, 200); // as long as the search box takes: a longer one is refused by Archive.org
 
   const decade = Number(params.get('decade'));
-  if (DECADES.includes(decade)) filters.decade = decade;
+  if (DECADES.includes(decade)) {
+    filters.decade = decade;
+    // The end of a range: a later decade, or it is the start decade alone
+    const to = Number(params.get('to'));
+    if (DECADES.includes(to) && to > decade) filters.decadeTo = to;
+  }
 
   const sort = params.get('sort');
   if (sort && Object.prototype.hasOwnProperty.call(SORT_OPTIONS, sort)) {
@@ -93,6 +99,7 @@ export function filtersToQuery(filters = {}) {
   const genre = filters.genre ?? defaultGenre(filters.q);
   const q = filters.q ?? URL_FILTER_DEFAULTS.q;
   const decade = filters.decade ?? URL_FILTER_DEFAULTS.decade;
+  const decadeTo = filters.decadeTo ?? URL_FILTER_DEFAULTS.decadeTo;
   const sort = filters.sort ?? URL_FILTER_DEFAULTS.sort;
   const type = filters.type ?? URL_FILTER_DEFAULTS.type;
   const minRuntime = filters.runtime;
@@ -102,6 +109,7 @@ export function filtersToQuery(filters = {}) {
   if (genre !== defaultGenre(q)) params.set('genre', genre);
   if (q) params.set('q', q);
   if (decade) params.set('decade', String(decade));
+  if (decade && decadeTo > decade) params.set('to', String(decadeTo));
   if (sort !== URL_FILTER_DEFAULTS.sort) params.set('sort', sort);
   const defaultRuntime = type === 'trailers' ? 0 : defaultMinRuntime(collection);
   if ((minRuntime ?? defaultRuntime) !== defaultRuntime) params.set('runtime', String(minRuntime));
