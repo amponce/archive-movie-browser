@@ -20,6 +20,17 @@ async function addFilm(profile, channelId, film) {
   return patch.ok ? 'added' : 'failed';
 }
 
+// Returns 'removed' or 'failed'. A film already gone counts as removed.
+async function removeFilm(profile, channelId, film) {
+  const res = await api(`/api/channel/${channelId}`, { profile });
+  if (!res.ok) return 'failed';
+  const current = await res.json();
+  if (!current.films.some(f => f.film === film)) return 'removed';
+  const films = current.films.filter(f => f.film !== film).map(({ film: id, note }) => ({ film: id, note }));
+  const patch = await api(`/api/channel/${channelId}`, { method: 'PATCH', profile, body: { films } });
+  return patch.ok ? 'removed' : 'failed';
+}
+
 export default function AddToChannel({ film, variant = 'overlay', className = '' }) {
   const { data, refresh } = useProfile();
   const [open, setOpen] = useState(false);
@@ -54,6 +65,12 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
     close();
     try {
       const profile = await ensureProfile();
+      if (holds(channel)) {
+        const result = await serial(channel.id, () => removeFilm(profile, channel.id, film));
+        setStatus(result === 'removed' ? `Removed from ${channel.name}` : 'Could not remove');
+        refresh();
+        return;
+      }
       const result = await serial(channel.id, () => addFilm(profile, channel.id, film));
       if (result !== 'failed') writeLast(channel.id);
       const reviewed = channel.status === 'public' || channel.status === 'featured';
@@ -97,7 +114,7 @@ export default function AddToChannel({ film, variant = 'overlay', className = ''
       {open && (
         <div className={`absolute ${alignLeft ? 'left-0' : 'right-0'} mt-1 w-56 bg-ink border border-line z-30 text-sm text-bone`}>
           {channels.map(c => (
-            <button key={c.id} type="button" className="flex w-full items-center gap-2 text-left px-3 py-2 hover:bg-line focus-visible:outline-none focus-visible:bg-line" onClick={() => pick(c)}><span className="truncate flex-1">{c.name}</span>{holds(c) && <Check size={14} aria-label="Added" className="shrink-0 text-signal" />}</button>
+            <button key={c.id} type="button" className="flex w-full items-center gap-2 text-left px-3 py-2 hover:bg-line focus-visible:outline-none focus-visible:bg-line" title={holds(c) ? `Remove from ${c.name}` : undefined} onClick={() => pick(c)}><span className="truncate flex-1">{c.name}</span>{holds(c) && <Check size={14} aria-label="Added. Choose to remove" className="shrink-0 text-signal" />}</button>
           ))}
           {naming
             ? (

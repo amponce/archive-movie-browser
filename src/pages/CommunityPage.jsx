@@ -47,7 +47,7 @@ export default function CommunityPage() {
       <SiteHeader current="/channels" />
       <main className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="display text-5xl sm:text-6xl leading-none text-bone mb-4">Community channels</h1>
-        <p className="text-lg text-muted leading-relaxed">Build your own channel from any film here. Share it. If the mods like it, it's featured here.</p>
+        <p className="text-lg text-muted leading-relaxed">Build your own channel from any film here. Share it. If we like it, we'll feature it here.</p>
         {channels && (channels.length === 0
           ? <p className="text-muted mt-10">Channels made by viewers will appear here.</p>
           : (

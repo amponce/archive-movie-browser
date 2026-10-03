@@ -52,8 +52,8 @@ export default function SubmitForReview({ channel, onChange }) {
     <div ref={box} className="mt-8 border border-line p-4">
       {agreeing ? (
         <>
-          <p ref={agreeText} tabIndex={-1}>Channels are collections of films, not adult content. Anything can be hidden by the mods. A featured channel may appear on the TV guide with your display name.</p>
-          <div className="flex gap-3 mt-3"><Button onClick={agree} disabled={busy}>I agree, submit</Button><button type="button" className="nav-link" onClick={cancel}>Cancel</button></div>
+          <p ref={agreeText} tabIndex={-1}>We look at every channel before it is listed. If we feature yours, it can appear on the TV guide with your display name.</p>
+          <div className="flex gap-3 mt-3"><Button onClick={agree} disabled={busy}>Submit</Button><button type="button" className="nav-link" onClick={cancel}>Cancel</button></div>
           {message && <p role="status" className="text-sm mt-2">{message}</p>}
         </>
       ) : (
