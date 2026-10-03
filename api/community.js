@@ -1,6 +1,6 @@
 // /api/profile, /api/channel, /api/channels, /api/passkey, /api/handle
 import { createProfile, authProfile, getProfile, updateProfile, checkHandle, movedHandle, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels, hashKey, isListed } from './_community.js';
-import { netTag, record, channelSnapshot, channelChanges, profileChanges, snapshotDetail } from './_history.js';
+import { record, channelSnapshot, channelChanges, profileChanges } from './_history.js';
 import { rpFor, isPasskeyId, registrationOptions, register, listPasskeys, removePasskey, signinOptions, signin } from './_passkeys.js';
 
 const MAX_BODY = 20_000;
@@ -114,13 +114,12 @@ async function route(request, deps) {
   if (!sameSite(request)) return empty(403);
   const address = await addressKey(request.headers.get('cf-connecting-ip') || 'unknown', now);
   if (await overLimit(db, `w:${address}`, 120, 60_000, now)) return empty(429);
-  const net = await netTag(request.headers.get('cf-connecting-ip'), netSalt);
-  const log = entry => record(db, { at: now, net, ...entry });
+  const log = build => record(db, build, { at: now, ip: request.headers.get('cf-connecting-ip'), salt: netSalt });
 
   if (method === 'POST' && parts[0] === 'profile' && parts.length === 1) {
     if (await overLimit(db, `p:${address}`, 5, 3_600_000, now)) return empty(429);
     const made = await createProfile(db, { now });
-    await log({ kind: 'profile-created', profileId: made.id });
+    await log(() => ({ kind: 'profile-created', profileId: made.id }));
     return json(made, 201);
   }
 
@@ -134,8 +133,10 @@ async function route(request, deps) {
     if (method === 'PATCH' && parts.length === 2) {
       const error = await updateProfile(db, me.id, body, { now });
       if (error) return json({ error }, 400);
-      const changed = profileChanges(me, await db.prepare('SELECT name, archive_user, handle FROM profiles WHERE id = ?').bind(me.id).first());
-      if (Object.keys(changed).length) await log({ kind: 'profile-edited', profileId: me.id, detail: changed });
+      await log(async () => {
+        const changed = profileChanges(me, await db.prepare('SELECT name, archive_user, handle FROM profiles WHERE id = ?').bind(me.id).first());
+        return Object.keys(changed).length ? { kind: 'profile-edited', profileId: me.id, detail: changed } : null;
+      });
       return empty(204);
     }
     if (parts[2] === 'favourites' && parts.length === 4 && (method === 'PUT' || method === 'DELETE')) {
@@ -152,27 +153,32 @@ async function route(request, deps) {
     if (method === 'POST' && parts.length === 1) {
       const id = await looked(f => createChannel(db, me.id, body, { now, flag: f }));
       if (!id) return empty(409);
-      await log({ kind: 'channel-created', profileId: me.id, channelId: id, detail: snapshotDetail(await channelSnapshot(db, id)) });
+      await log(async () => ({ kind: 'channel-created', profileId: me.id, channelId: id, detail: await channelSnapshot(db, id) }));
       return json({ id }, 201);
     }
     const id = parts[1];
     if (parts.length === 2 && method === 'PATCH') {
-      const before = await channelSnapshot(db, id);
+      const before = await channelSnapshot(db, id).catch(() => null);
       if (!await looked(f => updateChannel(db, id, me.id, body, { now, flag: f }))) return empty(404);
-      const changed = channelChanges(before, await channelSnapshot(db, id));
-      if (Object.keys(changed).length) await log({ kind: 'channel-edited', profileId: me.id, channelId: id, detail: changed });
+      await log(async () => {
+        const changed = before && channelChanges(before, await channelSnapshot(db, id));
+        return changed && !Object.keys(changed).length ? null : { kind: 'channel-edited', profileId: me.id, channelId: id, detail: changed };
+      });
       return empty(204);
     }
     if (parts.length === 2 && method === 'DELETE') {
-      const before = await channelSnapshot(db, id);
+      const before = await channelSnapshot(db, id).catch(() => null);
       if (!await deleteChannel(db, id, me.id)) return empty(404);
-      await log({ kind: 'channel-deleted', profileId: me.id, channelId: id, detail: snapshotDetail(before) });
+      await log(() => ({ kind: 'channel-deleted', profileId: me.id, channelId: id, detail: before }));
       return empty(204);
     }
     if (parts[2] === 'submit' && method === 'POST') {
+      const status = async () => (await db.prepare('SELECT status FROM channels WHERE id = ?').bind(id).first())?.status;
+      const was = await status().catch(() => null);
       const problem = await looked(f => submitChannel(db, id, me.id, { now, flag: f }));
       if (problem) return json({ problem }, 409);
-      await log({ kind: 'channel-submitted', profileId: me.id, channelId: id });
+      // Only when this request moved the channel from unlisted to submitted
+      await log(async () => (was === 'unlisted' && await status() === 'submitted' ? { kind: 'channel-submitted', profileId: me.id, channelId: id } : null));
       return empty(204);
     }
     if (parts[2] === 'save' && (method === 'PUT' || method === 'DELETE')) return empty(await setSaved(db, me.id, id, method === 'PUT', { now }) ? 204 : 404);
