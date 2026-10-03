@@ -9,6 +9,7 @@ import { POST as event } from './api/event.js';
 import { GET as stats } from './api/stats.js';
 import { handle as mcp } from './api/mcp.js';
 import { handle as community } from './api/community.js';
+import * as webauthn from '@simplewebauthn/server';
 import { redis } from './api/_redis.js';
 import { isForbidden, isMature } from './src/services/policy.js';
 import { route } from './api/_routes.js';
@@ -61,7 +62,7 @@ const API = {
   event: web(event, 'POST'),
   stats: web(stats, 'GET'),
   mcp: (request) => mcp(request),
-  community: (request, query, env) => community(request, { db: env.DB, flag: archiveFlag, minutes: redisMinutes, now: Date.now() }),
+  community: (request, query, env) => community(request, { db: env.DB, flag: archiveFlag, minutes: redisMinutes, webauthn, now: Date.now() }),
 };
 
 // The share card's picture: the poster of the first film that has one
