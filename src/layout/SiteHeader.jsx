@@ -1,4 +1,5 @@
 import React from 'react';
+import { ListVideo } from 'lucide-react';
 import Button from '../ui/Button';
 import SearchField from '../ui/SearchField';
 import { spin } from '../services/reel';
@@ -11,8 +12,6 @@ const NAV = [
   ['/lists', 'Lists'],
   ['/collection', 'Collection'],
 ];
-// Shown only to a browser that has a profile: its own page, with its channels
-const yours = id => [`/u/${id}`, 'Your channels', 'nav-yours'];
 // The link that stands out in the nav: signal, with the on-air dot
 const FEATURED = '/collection';
 const Dot = () => <span className="inline-block w-1.5 h-1.5 rounded-full bg-signal mr-2" aria-hidden="true" />;
@@ -30,33 +29,40 @@ export function Logo() {
 }
 
 // The same header on every page: name, nav, search, spin.
-// On phones the same links sit in a row under the search box, wrapping to a second line when
-// they do not fit: no drawer to open, nothing hidden off the edge. It stops scaling past eight
-// or so destinations. `search` replaces the plain search box when a page has a richer one (the
-// browser passes its type-ahead). `current` is the nav path to mark.
+// On phones the same links sit in a scrollable row under the search box: no drawer to open,
+// nothing to get stuck. It stops scaling past eight or so destinations. `search` replaces the plain search
+// box when a page has a richer one (the browser passes its type-ahead). `current` is the nav
+// path to mark.
 export default function SiteHeader({ current = '/', search, children }) {
   const profileId = useProfileId();
-  const nav = profileId ? [...NAV, yours(profileId)] : NAV;
+  // A browser with a profile gets a link to its own page, with its channels (the search box
+  // gives up a little width for it, so the header keeps to one line)
+  const yours = profileId && `/u/${profileId}`;
   return (
     <header className="rule">
       <div className="gutter flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-5">
         <Logo />
         <nav className="hidden md:flex items-center gap-6" aria-label="Site">
-          {nav.map(([href, name, id]) => (
-            <a key={href} href={href} data-track={id || `nav-${name.toLowerCase()}`} className={`nav-link ${href === FEATURED ? 'text-signal hover:text-bone flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
+          {NAV.map(([href, name]) => (
+            <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link ${href === FEATURED ? 'text-signal hover:text-bone flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
           ))}
         </nav>
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="flex-1 md:flex-none md:w-[240px] xl:w-[300px]">{search || <SearchField />}</div>
+          <div className={`flex-1 md:flex-none md:w-[240px] ${yours ? 'xl:w-[280px]' : 'xl:w-[300px]'}`}>{search || <SearchField />}</div>
           <Button variant="light" onClick={spin} data-track="spin" aria-label="Spin the reel: a random film">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 3h5v5" /><path d="M4 20L21 3" /><path d="M21 16v5h-5" /><path d="M15 15l6 6" /><path d="M4 4l5 5" /></svg>
             <span className="hidden sm:inline">Spin the reel</span><span className="sm:hidden">Spin</span>
           </Button>
+          {yours && (
+            <Button variant="ghost" href={yours} data-track="nav-yours" aria-label="Your channels" title="Your channels" aria-current={yours === current ? 'page' : undefined} className={`w-11 px-0 ${yours === current ? 'border-bone' : ''}`}>
+              <ListVideo size={16} aria-hidden="true" />
+            </Button>
+          )}
         </div>
       </div>
-      <nav className="md:hidden gutter flex flex-wrap gap-x-5 gap-y-2 pb-3 -mt-1" aria-label="Site">
-        {nav.map(([href, name, id]) => (
-          <a key={href} href={href} data-track={id || `nav-${name.toLowerCase()}`} className={`nav-link shrink-0 ${href === FEATURED ? 'text-signal flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
+      <nav className="md:hidden gutter flex gap-5 overflow-x-auto pb-3 -mt-1" aria-label="Site">
+        {NAV.map(([href, name]) => (
+          <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link shrink-0 ${href === FEATURED ? 'text-signal flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
         ))}
       </nav>
       {children}
