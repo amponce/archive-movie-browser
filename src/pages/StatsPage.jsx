@@ -141,7 +141,7 @@ function Community({ community }) {
           <tbody>
             {[...days].reverse().map(day => (
               <tr key={day.day} className="border-t border-gray-700 tabular-nums">
-                <td className="pr-4 py-1">{day.day}</td>
+                <td className="pr-4 py-1 whitespace-nowrap">{day.day}</td>
                 {['profiles', 'channels', 'edits', 'deleted'].map(key => <td key={key} className="text-right pr-4">{fmt(day[key])}</td>)}
               </tr>
             ))}
@@ -155,8 +155,8 @@ function Community({ community }) {
             <table className="text-sm w-full">
               <tbody>
                 {networks.map(row => (
-                  <tr key={row.tag} className="border-b border-gray-700 tabular-nums">
-                    <td className="py-1 pr-3 font-mono">{row.tag}</td>
+                  <tr key={row.net} className="border-b border-gray-700 tabular-nums">
+                    <td className="py-1 pr-3 font-mono">{row.net.slice(0, 6)}</td>
                     <td className="text-right">{fmt(row.profiles)} profiles</td>
                   </tr>
                 ))}

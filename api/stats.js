@@ -100,8 +100,8 @@ export async function savesOf(db) {
   }
 }
 
-// Changes from the history table: counts per Pacific day, networks (by the first 6 characters
-// of their tag) that made 2 or more profiles in 7 days, and the latest 20 changes
+// Changes from the history table: counts per Pacific day, networks (by tag) that made 2 or more
+// profiles in 7 days, and the latest 20 changes with the first 6 characters of their tag
 export async function communityOf(db, days, now = Date.now()) {
   if (!db) return null;
   try {
@@ -110,7 +110,7 @@ export async function communityOf(db, days, now = Date.now()) {
     const since = Date.parse(`${days[0]}T00:00:00Z`) - 86_400_000;
     const [hours, networks, latest] = await db.batch([
       db.prepare(`SELECT kind, at / 3600000 AS hour, COUNT(*) n FROM history WHERE at >= ? AND kind IN (${kinds.map(() => '?').join(', ')}) GROUP BY kind, hour`).bind(since, ...kinds),
-      db.prepare("SELECT substr(net, 1, 6) tag, COUNT(*) profiles FROM history WHERE kind = 'profile-created' AND net IS NOT NULL AND at >= ? GROUP BY net HAVING COUNT(*) >= 2 ORDER BY profiles DESC, MAX(at) DESC LIMIT 10").bind(now - 7 * 86_400_000),
+      db.prepare("SELECT net, COUNT(*) profiles FROM history WHERE kind = 'profile-created' AND net IS NOT NULL AND at >= ? GROUP BY net HAVING COUNT(*) >= 2 ORDER BY profiles DESC, MAX(at) DESC LIMIT 10").bind(now - 7 * 86_400_000),
       db.prepare("SELECT h.at, h.kind, substr(h.net, 1, 6) net, CASE WHEN h.channel_id IS NOT NULL THEN COALESCE(c.name, json_extract(h.detail, '$.name')) END channel, p.name, p.handle FROM history h LEFT JOIN channels c ON c.id = h.channel_id LEFT JOIN profiles p ON p.id = h.profile_id ORDER BY h.id DESC LIMIT 20"),
     ]);
     // Pacific time is a whole number of hours from UTC, so each hour falls in one Pacific day

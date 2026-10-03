@@ -10,3 +10,4 @@ CREATE TABLE history (
 CREATE INDEX history_at ON history(at);
 CREATE INDEX history_profile ON history(profile_id);
 CREATE INDEX history_net ON history(net, at);
+CREATE INDEX history_kind ON history(kind, at);
