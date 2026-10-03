@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { tvPersonal, personalNumber, pinTo, followCopy, awaitingSaved, toFetch, MAX_ON_TV } from './yourChannels.js';
+import { tvPersonal, personalNumber, pinTo, followCopy, awaitingSaved, toFetch, airable, MAX_ON_TV } from './yourChannels.js';
 
 const ch = (id, films) => ({ id, name: `Channel ${id}`, status: 'private', films });
 
@@ -92,4 +92,11 @@ test('only new channels, and ones whose films changed, are loaded again', () => 
   assert.deepEqual(toFetch(list, { a: 2, b: 3, c: 1 }).map(c => c.id), ['b'], 'a film was added to b');
   assert.deepEqual(toFetch(list, { a: 2, b: 4 }).map(c => c.id), ['c']);
   assert.deepEqual(toFetch(list, { a: 2, b: 4, c: 1 }), []);
+});
+
+test('a saved channel that failed or has nothing on leaves a gap; the rest keep their numbers', () => {
+  const list = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
+  const loaded = { a: [1], b: [], d: [1] };
+  assert.deepEqual(airable(list, loaded).map(c => [c.id, c.number]), [['a', '0'], ['d', '0d']]);
+  assert.deepEqual(airable(list, {}), []);
 });

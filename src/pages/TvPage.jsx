@@ -236,9 +236,9 @@ export default function TvPage({ channel = null, children }) {
   const waiting = !!channel && !!mine?.pending;
   const empty = !!channel && !waiting && !mine?.lineup.length;
   const channels = useMemo(() => {
-    const own = [...saved.channels, ...(mine && mine.lineup.length && !waiting ? [mine] : [])];
-    return [...(channel ? own : own.map((c, i) => ({ ...c, number: personalNumber(i) }))), ...stations];
-  }, [saved.channels, mine, stations, waiting, channel]);
+    const own = mine && mine.lineup.length && !waiting ? [channel ? mine : { ...mine, number: personalNumber(personal.saved.length) }] : [];
+    return [...saved.channels, ...own, ...stations];
+  }, [saved.channels, personal.saved.length, mine, stations, waiting, channel]);
   const [now, setNow] = useState(Date.now);
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(t); }, []);
   useEffect(() => { if (!channel) document.title = 'TV | Orphaned Films'; }, [channel]);

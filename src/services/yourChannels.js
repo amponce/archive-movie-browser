@@ -19,6 +19,10 @@ export function tvPersonal({ profileId, carriedId, channels }) {
   };
 }
 
+// The saved channels that have something to air, numbered by their place in the whole list, so
+// one that fails or has nothing on leaves a gap and the rest keep their numbers. loaded: id -> lineup.
+export const airable = (list, loaded) => list.map((c, i) => ({ ...c, number: personalNumber(i) })).filter(c => loaded[c.id]?.length);
+
 // The saved channels whose lineup has to be loaded: new ones, and ones whose film count changed
 // since it was asked for. asked: id -> the film count it was last asked for at.
 export const toFetch = (list, asked) => list.filter(c => asked[c.id] !== c.films);
