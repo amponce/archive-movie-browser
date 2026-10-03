@@ -220,6 +220,13 @@ export default function StatsPage() {
               <div className="max-h-72 overflow-y-auto"><Latest events={data.recent || []} titles={data.titles || {}} /></div>
             </Panel>
 
+            {data.saves?.totals && (
+              <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(19rem,1fr))]">
+                <Panel title="Hearted films" note={`(all time; ${fmt(data.saves.totals.hearts)} hearts from ${fmt(data.saves.totals.hearters)} people)`}><Board rows={data.saves.hearted} films titles={data.titles || {}} /></Panel>
+                <Panel title="Films in people's channels" note={`(all time; ${fmt(data.saves.totals.channels)} channels, ${fmt(data.saves.totals.profiles)} profiles)`}><Board rows={data.saves.channels} films titles={data.titles || {}} /></Panel>
+              </div>
+            )}
+
             <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(19rem,1fr))]">
               {BOARDS.map(([key, title]) => (
                 <Panel key={key} title={title}><Board rows={data.boards[key] || []} films={FILM_BOARDS.includes(key)} titles={data.titles || {}} /></Panel>

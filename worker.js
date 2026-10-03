@@ -52,7 +52,7 @@ const node = (handler) => async (request, query, env) => {
   return new Response(body, { status, headers });
 };
 
-const web = (handler, method) => (request) => (request.method === method ? handler(request) : new Response(null, { status: 405 }));
+const web = (handler, method) => (request, query, env) => (request.method === method ? handler(request, env) : new Response(null, { status: 405 }));
 
 const API = {
   'archive-list': node(archiveList),
