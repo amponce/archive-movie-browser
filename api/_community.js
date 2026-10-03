@@ -80,7 +80,16 @@ export async function getProfile(db, id) {
   return { id: p.id, name: p.name, archiveUser: p.archive_user, channels, favourites, saved };
 }
 
+const BRAND = ['orphanedfilms', 'admin', 'administrator', 'moderator', 'official'];
+const WORDS = new Set(['mod', 'mods', 'staff', 'team', 'support', 'system', 'admin', 'official']);
+export function isReservedName(name) {
+  const flat = String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  if (BRAND.some(w => flat.startsWith(w))) return true;
+  return String(name || '').toLowerCase().split(/[^a-z0-9]+/).some(w => WORDS.has(w));
+}
+
 export async function updateProfile(db, id, { name, archiveUser, agreed }, { now }) {
+  if (name !== undefined && isReservedName(name)) return 'reserved';
   const sets = [];
   const args = [];
   if (name !== undefined) { sets.push('name = ?'); args.push(cleanText(name, LIMITS.displayName)); }

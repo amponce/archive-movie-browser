@@ -115,7 +115,7 @@ async function route(request, deps) {
   if (!me) return empty(401);
 
   if (parts[0] === 'profile' && parts[1] === me.id) {
-    if (method === 'PATCH' && parts.length === 2) { await updateProfile(db, me.id, body, { now }); return empty(204); }
+    if (method === 'PATCH' && parts.length === 2) { return (await updateProfile(db, me.id, body, { now })) === 'reserved' ? json({ error: 'reserved' }, 400) : empty(204); }
     if (parts[2] === 'favourites' && parts.length === 4 && (method === 'PUT' || method === 'DELETE')) {
       let film;
       try { film = decodeURIComponent(parts[3]); } catch { return empty(400); }

@@ -20,6 +20,7 @@ export default function ProfilePage({ slug }) {
   const [manual, setManual] = useState(false); // the clipboard was not available
   const [copied, setCopied] = useState(false);
   const [failed, setFailed] = useState(false); // the last save did not go through
+  const [reserved, setReserved] = useState(false); // the name was refused as reserved
   const [reset, setReset] = useState(0); // remounts the inputs back to the stored values
   const me = readProfile();
   const isOwner = me?.id === slug;
@@ -57,10 +58,11 @@ export default function ProfilePage({ slug }) {
 
   const patch = body => api(`/api/profile/${slug}`, { method: 'PATCH', profile: me, body })
     .then(r => {
+      if (r.status === 400) return r.json().catch(() => ({})).then(d => { if (d.error !== 'reserved') throw new Error('save failed'); setFailed(false); setReserved(true); setReset(n => n + 1); });
       if (!r.ok) throw new Error('save failed');
-      setFailed(false); load(); refreshProfile();
+      setFailed(false); setReserved(false); load(); refreshProfile();
     })
-    .catch(() => { setFailed(true); setReset(n => n + 1); });
+    .catch(() => { setFailed(true); setReserved(false); setReset(n => n + 1); });
   const save = (field, e) => {
     const value = e.target.value.trim();
     if (value !== (p[field] || '')) patch({ [field]: value });
@@ -92,6 +94,7 @@ export default function ProfilePage({ slug }) {
             : <h1 className="display text-3xl break-words">{p.name || 'A profile'}</h1>}
           {isOwner && <input key={`a-${p.archiveUser}-${reset}`} defaultValue={p.archiveUser} maxLength={60} placeholder="Archive.org username (optional)" aria-label="Archive.org username" className={FIELD} onBlur={e => save('archiveUser', e)} />}
           {failed && <p role="alert" className="text-sm text-signal">Could not save</p>}
+          {reserved && <p role="alert" className="text-sm text-signal">That name is reserved.</p>}
           {p.archiveUser && <a className="nav-link" href={`/details/@${encodeURIComponent(p.archiveUser)}`}>@{p.archiveUser} on Archive.org</a>}
           <a className="nav-link hover:text-signal self-start" href={`mailto:${REPORT_TO}?subject=${encodeURIComponent('Report')}&body=${encodeURIComponent(window.location.href)}`}>Report</a>
         </div>

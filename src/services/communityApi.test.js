@@ -238,3 +238,12 @@ test('passkey: a failed sign-in, a removal, and a full profile', async () => {
   const other = await (await call(c, 'POST', '/api/profile', { ip: '2.2.2.2' })).json();
   assert.equal((await call(c, 'DELETE', '/api/passkey/k1-padding-xxxxxxxx', { auth: other })).status, 404);
 });
+
+test('profile: reserved names are refused', async () => {
+  const c = await ctx();
+  const me = await (await call(c, 'POST', '/api/profile')).json();
+  const bad = await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: me, body: { name: 'Admin' } });
+  assert.equal(bad.status, 400);
+  assert.deepEqual(await bad.json(), { error: 'reserved' });
+  assert.equal((await call(c, 'PATCH', `/api/profile/${me.id}`, { auth: me, body: { name: 'Night Owl' } })).status, 204);
+});

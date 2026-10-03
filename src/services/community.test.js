@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { newId, newKey, hashKey, cleanText, cleanLines, cleanFilms, afterContentEdit, submitProblem, isListed, LIMITS, createProfile, authProfile, getProfile, updateProfile, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels } from '../../api/_community.js';
+import { newId, newKey, hashKey, cleanText, cleanLines, cleanFilms, afterContentEdit, submitProblem, isListed, LIMITS, createProfile, authProfile, getProfile, updateProfile, isReservedName, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels } from '../../api/_community.js';
 import { openTestDb } from './testDb.js';
 import { TAKEN_DOWN } from './policy.js';
 
@@ -322,4 +322,9 @@ test("a hidden owner's channel is neither shown nor savable under other profiles
   assert.deepEqual((await getProfile(db, fan)).saved, []);
   await setSaved(db, fan, id, false, { now });
   assert.equal(await setSaved(db, fan, id, true, { now }), false);
+});
+
+test('names that look like the site or its staff are reserved', () => {
+  for (const n of ['Orphaned Films', 'orphanedfilms', 'Orphaned-Films Team', 'ADMIN', 'Mod', 'moderator42', 'Staff picks', 'Official', 'support', 'team', 'System']) assert.equal(isReservedName(n), true, n);
+  for (const n of ['Midnight Projector', 'Modern Times fan', 'The Teamsters', 'Night Owl']) assert.equal(isReservedName(n), false, n);
 });
