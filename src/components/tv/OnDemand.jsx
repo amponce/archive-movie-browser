@@ -17,17 +17,17 @@ export default function OnDemand({ channel, playing, onPlay }) {
       <ol className="flex flex-col gap-1 mt-2 max-h-[420px] overflow-y-auto pr-1">
         {channel.lineup.map((film, i) => (
           <li key={`${film.id}-${i}`}>
-            <button type="button" onClick={() => onPlay(film)} aria-current={playing === film.id ? 'true' : undefined} aria-label={`Play ${film.title} from the start`}
+            <button type="button" onClick={() => onPlay(film)} aria-current={playing === film.id ? 'true' : undefined}
               className={`group/row w-full flex items-center gap-3 p-2 rounded-lg border text-left transition-colors focus-visible:outline-none focus-visible:border-signal ${playing === film.id ? 'border-signal bg-panel' : 'border-transparent hover:border-line'}`}>
               <span className="w-6 shrink-0 text-right label tabular-nums">{i + 1}</span>
               <span className="relative w-8 aspect-[2/3] shrink-0 rounded-sm overflow-hidden bg-line">
                 {film.poster && <img src={film.poster} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm text-bone truncate">{film.title}{film.year ? <span className="text-dim"> {film.year}</span> : null}</span>
+                <span className="block text-sm text-bone truncate"><span className="sr-only">Play from the start: </span>{film.title}{film.year ? <span className="text-dim"> {film.year}</span> : null}</span>
                 <span className="block label truncate">{length(film.seconds)}{live === film.id ? ' · on now' : ''}</span>
               </span>
-              <Play size={16} aria-hidden="true" className="shrink-0 text-muted group-hover/row:text-signal" />
+              <Play size={16} aria-hidden="true" className="shrink-0 text-muted [@media(hover:hover)]:group-hover/row:text-signal" />
             </button>
           </li>
         ))}

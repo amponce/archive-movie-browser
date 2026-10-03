@@ -183,7 +183,7 @@ function NowPlaying({ channel, tuning, subtitles }) {
 // onDemand: this channel's films can each be played from the start, from a list under the set
 function Stage({ channel, channels, onTune, onNext, onDemand }) {
   const tuning = useTuning(channel, onNext);
-  const play = (film) => { track('TV', { action: 'on-demand', channel: channel.id, film: film.id }); tuning.pick(film); };
+  const play = (film) => { if (tuning.picked?.id === film.id) return; track('TV', { action: 'on-demand', channel: channel.id, film: film.id }); tuning.pick(film); };
   const subtitles = useSubtitles(tuning.film?.id, tuning.film?.url);
   return (
     <div data-stage className="grid grid-cols-1 lg:grid-cols-12 gap-x-8 gap-y-4">
