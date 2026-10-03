@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { tvPersonal, personalNumber, MAX_ON_TV } from './yourChannels.js';
+import { tvPersonal, personalNumber, pinTo, MAX_ON_TV } from './yourChannels.js';
 
 const ch = (id, films, created = 0) => ({ id, name: `Channel ${id}`, status: 'private', films, created });
 
@@ -37,4 +37,13 @@ test('profile data not loaded yet: nothing saved, no crash', () => {
 
 test('personal channels are numbered 0, 0b, 0c ...', () => {
   assert.deepEqual([0, 1, 2, 9].map(personalNumber), ['0', '0b', '0c', '0j']);
+});
+
+test('the set holds the channel it fell back to, but never replaces mine', () => {
+  const station = { id: 'kung-fu-theater' };
+  assert.equal(pinTo('gone', station), 'kung-fu-theater');
+  assert.equal(pinTo(null, station), 'kung-fu-theater');
+  assert.equal(pinTo('kung-fu-theater', station), null);
+  assert.equal(pinTo('mine', station), null, 'an empty /tv#mine keeps its panel');
+  assert.equal(pinTo('gone', null), null);
 });

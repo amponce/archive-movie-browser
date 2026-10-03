@@ -21,7 +21,7 @@ import AddToChannel from '../components/AddToChannel';
 import useProfile from '../hooks/useProfile';
 import useSavedChannels from '../hooks/useSavedChannels';
 import { carriedInto } from '../services/profile';
-import { tvPersonal, personalNumber } from '../services/yourChannels';
+import { tvPersonal, personalNumber, pinTo } from '../services/yourChannels';
 
 // Television. Every channel is a list playing in order from a fixed moment, so what is on is
 // the same for everyone. The page keeps its own clock: /api/tv gives the lineups once, and the
@@ -254,7 +254,8 @@ export default function TvPage({ channel = null, children }) {
     : channels.find(c => c.id === currentId) || (mine?.lineup.length && window.location.search.includes('mine=') ? channels.find(c => c.id === mine.id) : null) || channels[0] || null), [channels, currentId, mine, waiting, empty, channel, holding]);
   // Once the set has picked a channel it stays on it, even when an add reorders your channels
   useEffect(() => {
-    if (!channel && settled && stations.length && current && current.id !== currentId) setCurrentId(current.id);
+    const pin = pinTo(currentId, current);
+    if (!channel && settled && stations.length && pin) setCurrentId(pin);
   }, [channel, settled, stations.length, current, currentId]);
   const tune = useCallback((to) => {
     setCurrentId(to.id);
