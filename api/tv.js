@@ -95,16 +95,23 @@ export default async function handler(req, res, env = {}) {
     const hours = format === 'xml' ? 72 : 6;
     const hoursBack = format === 'xml' ? 6 : 0;
     let data;
+    let missed = false;
     if (community) {
       const saved = env.DB ? await getChannel(env.DB, community) : null;
       if (!saved) { res.status(404).json({ error: 'No such channel.' }); return; }
-      const channel = await personalChannel(saved.films.map(f => f.film), { hours });
+      const { missed: short, ...channel } = await personalChannel(saved.films.map(f => f.film), { hours });
+      missed = short;
       data = { now: Date.now(), channels: [{ ...channel, id: `c-${saved.id}`, name: saved.name, blurb: '' }] };
+    } else if (mine) {
+      const { missed: short, ...channel } = await personalChannel(mine.split(','), { hours });
+      missed = short;
+      data = { now: Date.now(), channels: [channel] };
     } else {
-      data = mine ? { now: Date.now(), channels: [await personalChannel(mine.split(','), { hours })] } : schedule({ hours, hoursBack });
+      data = schedule({ hours, hoursBack });
     }
-    // A community channel's owner can edit it, so it is kept for a minute only
-    res.setHeader('Cache-Control', community ? 'public, s-maxage=60' : mine ? 'public, s-maxage=300' : 'public, s-maxage=60, stale-while-revalidate=300');
+    // A community channel's owner can edit it, so it is kept for a minute only; a lineup missing a
+    // film that Archive.org was too slow to answer for is not kept at all
+    res.setHeader('Cache-Control', missed ? 'no-store' : community ? 'public, s-maxage=60' : mine ? 'public, s-maxage=300' : 'public, s-maxage=60, stale-while-revalidate=300');
     res.setHeader('Access-Control-Allow-Origin', '*');
     if (format === 'channels') {
       res.setHeader('Content-Type', 'audio/x-mpegurl; charset=utf-8');

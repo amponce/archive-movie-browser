@@ -83,11 +83,13 @@ export async function personalChannel(ids, { now = Date.now(), hours = 6 } = {})
   // live lookup below would otherwise fetch and air it
   const clean = [...new Set(ids.map(String).filter(id => /^[\w.-]+$/.test(id) && !isTakenDown(id)))].slice(0, 40);
   const films = await Promise.all(clean.map(id => record(id) || recordLive(id)));
+  // A film whose lookup failed this time (not one refused) may air on the next ask
+  const missed = clean.some((id, i) => !films[i] && !measured.has(id));
   const lineup = airable(films.filter(Boolean));
   const slot = onAirAt(lineup, now);
   const to = now + hours * 3600_000;
   return {
-    number: 0, id: 'mine', name: 'A shared channel', blurb: 'A channel someone made and shared.', lineup,
+    number: 0, id: 'mine', name: 'A shared channel', blurb: 'A channel someone made and shared.', lineup, missed,
     now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
     programmes: programmesBetween(lineup, now, to).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, genres: p.film.genres || [], note: p.film.note || null, startsAt: p.startsAt, endsAt: p.endsAt })),
   };

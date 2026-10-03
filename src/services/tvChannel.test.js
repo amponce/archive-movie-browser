@@ -74,6 +74,8 @@ test('a film whose record cannot be read is left out and asked again next time',
   try {
     const first = await get(db, id);
     assert.deepEqual(first.body.channels[0].lineup.map(f => f.id), [listFilm.id]);
+    assert.equal(first.headers['Cache-Control'], 'no-store', 'a short lineup is not kept');
+    assert.equal('missed' in first.body.channels[0], false);
     await get(db, id);
     assert.equal(archive.calls['tvchannel-unknown-b'], 2, 'a failure is not remembered');
   } finally { archive.restore(); }
@@ -81,6 +83,7 @@ test('a film whose record cannot be read is left out and asked again next time',
   try {
     const again = await get(db, id);
     assert.equal(again.body.channels[0].lineup.length, 2);
+    assert.equal(again.headers['Cache-Control'], 'public, s-maxage=60');
   } finally { later.restore(); }
 });
 
