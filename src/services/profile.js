@@ -63,11 +63,13 @@ export function switchBack() {
 }
 
 // A 401 on a call made with this browser's profile means its key was changed elsewhere (a
-// passkey sign-in on another device); listeners show a notice
+// passkey sign-in on another device); listeners show a notice. A key older than the stored one
+// was replaced in this browser, so it needs no notice.
 const staleListeners = new Set();
 export function onStaleKey(fn) { staleListeners.add(fn); return () => staleListeners.delete(fn); }
 export function noteStale(res, profile) {
-  if (res.status === 401 && profile && profile.id === readProfile()?.id) staleListeners.forEach(fn => fn());
+  const stored = readProfile();
+  if (res.status === 401 && profile && profile.id === stored?.id && profile.key === stored.key) staleListeners.forEach(fn => fn());
   return res;
 }
 

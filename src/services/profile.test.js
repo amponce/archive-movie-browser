@@ -174,6 +174,7 @@ test('a 401 on a call with this browser\'s profile is reported; other calls are 
     assert.equal(seen, 1);
     await api('/api/profile', { method: 'POST' }); // no profile sent
     await api('/x', { profile: { id: 'otherother', key: KEY } }); // not this browser's profile
+    await api('/x', { profile: { id: 'abcdefghij', key: 'c'.repeat(64) } }); // an older key, already replaced here
     status = 204;
     await api('/api/profile/abcdefghij', { method: 'PATCH', profile: me, body: {} });
     assert.equal(seen, 1);

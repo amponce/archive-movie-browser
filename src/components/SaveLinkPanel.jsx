@@ -4,7 +4,7 @@ import { editLink } from '../services/profile';
 import { protectProfile } from '../services/passkey';
 import Button from '../ui/Button';
 
-const SEEN = 'profile-link-seen';
+export const SEEN = 'profile-link-seen';
 const seen = () => { try { return !!localStorage.getItem(SEEN); } catch { return true; } };
 
 export default function SaveLinkPanel() {

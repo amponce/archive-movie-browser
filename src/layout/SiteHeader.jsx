@@ -61,7 +61,7 @@ export default function SiteHeader({ current = '/', search, children }) {
               <ListVideo size={16} aria-hidden="true" />
             </Button>
           )}
-          {signIn && <PasskeySignIn />}
+          {signIn && <PasskeySignIn icon />}
         </div>
       </div>
       <nav className="md:hidden gutter flex gap-5 overflow-x-auto pb-3 -mt-1" aria-label="Site">

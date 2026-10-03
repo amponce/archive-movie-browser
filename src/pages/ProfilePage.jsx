@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import Button from '../ui/Button';
 import { FilmGrid, withPosters } from './ArchiveListPage';
 import { api, readProfile, editLink, readPrevious, switchBack } from '../services/profile';
 import { refreshProfile } from '../hooks/useProfile';
-import { protectProfile, listPasskeys, removePasskey } from '../services/passkey';
+import { protectProfile, listPasskeys, removePasskey, NEW_LINK } from '../services/passkey';
 
 const LABEL = { unlisted: 'Unlisted', submitted: 'In review', public: 'Public', featured: 'Featured' };
 const FIELD = 'bg-transparent border-b border-line text-bone w-full py-1';
@@ -24,6 +24,9 @@ export default function ProfilePage({ slug }) {
   const me = readProfile();
   const isOwner = me?.id === slug;
   const previous = isOwner && readPrevious();
+  // A sign-in just replaced the edit key: show the new link, once
+  const [newLink] = useState(() => { try { return sessionStorage.getItem(NEW_LINK) === slug; } catch { return false; } });
+  useEffect(() => { if (newLink) { try { sessionStorage.removeItem(NEW_LINK); } catch { /* private mode */ } } }, [newLink]);
 
   const loads = useRef(0);
   const load = useCallback(() => {
@@ -119,7 +122,8 @@ export default function ProfilePage({ slug }) {
           <section className="border border-line p-4">
             <h2 className="display text-xl">Your edit link</h2>
             <p className="text-sm mt-1">Open it on another device to edit there. Keep it private: anyone with it can edit your profile.</p>
-            {manual && (
+            {newLink && <p role="status" className="text-sm mt-2 text-signal">Signing in gave this profile a new edit link. The old one no longer works.</p>}
+            {(manual || newLink) && (
               <input readOnly value={link} aria-label="Your edit link" onFocus={e => e.target.select()}
                 className="mt-3 w-full bg-ink border border-line px-2 py-2 font-mono text-xs text-bone" />
             )}
@@ -139,11 +143,12 @@ export default function ProfilePage({ slug }) {
 }
 
 const MAX_PASSKEYS = 5;
-const ADDED = { cancelled: 'No passkey added.', full: 'Five is the most.', failed: "Couldn't add a passkey." };
+const ADDED = { cancelled: 'No passkey added.', full: 'Five is the most.', exists: 'This device already has a passkey for this profile.', failed: "Couldn't add a passkey." };
 // The owner's passkeys: each signs in to this profile on any device that has it
-function Passkeys({ profile }) {
+function Passkeys({ profile: { id, key } }) {
+  const profile = useMemo(() => ({ id, key }), [id, key]);
   const [keys, setKeys] = useState(null);
-  const [state, setState] = useState(null); // busy | cancelled | full | failed
+  const [state, setState] = useState(null); // busy | cancelled | full | exists | failed
   const [confirm, setConfirm] = useState(null); // the passkey waiting for a second tap on Remove
   const [removeFailed, setRemoveFailed] = useState(false);
   const reload = useCallback(() => listPasskeys(profile).then(setKeys), [profile]);
@@ -154,9 +159,9 @@ function Passkeys({ profile }) {
     setState(out === 'ok' ? null : out);
     reload();
   };
-  const remove = async (id) => {
+  const remove = async (credential) => {
     setConfirm(null);
-    setRemoveFailed(!(await removePasskey(profile, id)));
+    setRemoveFailed(!(await removePasskey(profile, credential)));
     reload();
   };
   if (!keys) return null;
@@ -164,7 +169,7 @@ function Passkeys({ profile }) {
   return (
     <section className="border border-line p-4">
       <h2 className="display text-xl">Passkeys</h2>
-      <p className="text-sm mt-1">Sign in to this profile on any device with your passkey. Your edit link keeps working.</p>
+      <p className="text-sm mt-1">Sign in to this profile on any device that has your passkey. Each sign-in replaces your edit link, so copy the new one afterwards.</p>
       {keys.length > 0 && (
         <ul className="mt-3 flex flex-col gap-1">
           {keys.map(k => (
