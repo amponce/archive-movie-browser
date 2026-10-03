@@ -140,7 +140,7 @@ export default function ProfilePage({ slug }) {
         {isOwner && (
           <section className="border border-line p-4">
             <h2 className="display text-xl">Your edit link</h2>
-            <p className="text-sm mt-1">Open it on another device to edit there. Keep it private: anyone with it can edit your profile.</p>
+            <p className="text-sm mt-1">This link is the key to your profile, and only you have it. Open it on another device to edit there. Never share it: anyone with it can change or delete your profile. To show people your page, share its address instead.</p>
             {newLink && <p role="status" className="text-sm mt-2 text-signal">Signing in gave this profile a new edit link. The old one no longer works.</p>}
             {(manual || newLink) && (
               <input readOnly value={link} aria-label="Your edit link" onFocus={e => e.target.select()}
