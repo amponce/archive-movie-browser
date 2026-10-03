@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useProfile from '../hooks/useProfile';
 import { editLink, justStarted } from '../services/profile';
-import { protectProfile } from '../services/passkey';
+import { protectProfile, listPasskeys } from '../services/passkey';
 import Button from '../ui/Button';
 
 export const SEEN = 'profile-link-seen';
@@ -13,8 +13,17 @@ export default function SaveLinkPanel() {
   const [later, setLater] = useState(false); // hides it for this page only
   const [manual, setManual] = useState(false); // the clipboard was not available
   const [passkey, setPasskey] = useState(null); // busy | ok | cancelled | failed
+  const [hasPasskey, setHasPasskey] = useState(null); // a passkey already protects the profile
+  const id = profile?.id;
+  const key = profile?.key;
+  useEffect(() => {
+    if (closed || !id || !key) return undefined;
+    let live = true;
+    listPasskeys({ id, key }).then(list => { if (live) setHasPasskey(Array.isArray(list) && list.length > 0); });
+    return () => { live = false; };
+  }, [closed, id, key]);
   // A profile started from the header is offered the link at once; others once they hold something
-  if (closed || later || !profile || !data || (!justStarted(profile.id) && data.channels.length < 1 && data.favourites.length < 3)) return null;
+  if (closed || later || hasPasskey !== false || !profile || !data || (!justStarted(profile.id) && data.channels.length < 1 && data.favourites.length < 3)) return null;
   const link = editLink(window.location.origin, profile);
   const canPasskey = typeof window.PublicKeyCredential !== 'undefined';
   const done = () => { try { localStorage.setItem(SEEN, '1'); } catch { /* ignore */ } setClosed(true); };
