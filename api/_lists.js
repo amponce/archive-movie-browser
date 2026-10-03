@@ -58,6 +58,7 @@ import l53 from '../src/lists/thrills-and-spills.json' with { type: 'json' };
 import l54 from '../src/lists/universal-years.json' with { type: 'json' };
 import l55 from '../src/lists/war-stories.json' with { type: 'json' };
 import l56 from '../src/lists/where-horror-started.json' with { type: 'json' };
+import l57 from '../src/lists/covens-and-candles.json' with { type: 'json' };
 
-export const LIST_FILES = [l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22, l23, l24, l25, l26, l27, l28, l29, l30, l31, l32, l33, l34, l35, l36, l37, l38, l39, l40, l41, l42, l43, l44, l45, l46, l47, l48, l49, l50, l51, l52, l53, l54, l55, l56];
+export const LIST_FILES = [l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, l17, l18, l19, l20, l21, l22, l23, l24, l25, l26, l27, l28, l29, l30, l31, l32, l33, l34, l35, l36, l37, l38, l39, l40, l41, l42, l43, l44, l45, l46, l47, l48, l49, l50, l51, l52, l53, l54, l55, l56, l57];
 export const LISTS = collectLists(LIST_FILES);

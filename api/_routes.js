@@ -4,7 +4,7 @@ const NAMES = ['archive-list', 'sitemap', 'subtitles', 'tmdb', 'tv', 'event', 's
 
 const TV_PATHS = { 'playlist.m3u': { format: 'm3u' }, 'guide.xml': { format: 'xml' }, 'channels.m3u': { format: 'channels' }, 'films.m3u': { format: 'films' }, 'library.zip': { format: 'library' } };
 export function route(pathname) {
-  if (/^\/api\/(profile|channel|channels|passkey)(\/|$)/.test(pathname)) return { name: 'community', query: {} };
+  if (/^\/api\/(profile|channel|channels|passkey|handle)(\/|$)/.test(pathname)) return { name: 'community', query: {} };
   if (pathname === '/sitemap.xml') return { name: 'sitemap', query: {} };
   const tvPath = pathname.match(/^\/api\/tv\/(.+)$/)?.[1];
   if (tvPath) {

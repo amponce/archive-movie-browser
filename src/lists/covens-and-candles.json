@@ -1,0 +1,19 @@
+{
+  "slug": "covens-and-candles",
+  "title": "Covens and candlelight",
+  "blurb": "Start with Black Candles and keep going. Country houses with something in the cellar, cults that seem polite at first, and European horror from the years when nobody was holding back.",
+  "curator": "amponce",
+  "films": [
+    { "id": "los-ritos-sexuales-del-diablo-1982", "note": "A funeral in the English countryside, and a sister-in-law with a coven. José Ramón Larraz at his most lurid." },
+    { "id": "daughters-of-darkness-1971", "note": "Delphine Seyrig as Countess Báthory, holding court in an empty seaside hotel out of season." },
+    { "id": "the-devils-nightmare-1971", "note": "Seven tourists, a castle with a family curse, and one for each deadly sin." },
+    { "id": "the.-wicker.-man.-1973", "note": "A policeman lands on Summerisle to find a missing girl. Christopher Lee is very welcoming." },
+    { "id": "witchfinder-general", "note": "Vincent Price as Matthew Hopkins, with no camp at all. Michael Reeves was 24 when he made it." },
+    { "id": "MessiahOfEvil1973Widescreen", "note": "A seaside town waiting for the blood moon. Written by the pair who wrote American Graffiti." },
+    { "id": "LetsScareJessicaToDeath1971", "note": "A Connecticut farmhouse, a stranger who won't leave, and a heroine nobody believes." },
+    { "id": "alucarda-1977_202412", "note": "Two orphans in a convent, and a possession that takes the whole place with it." },
+    { "id": "baron-blood-1972", "note": "Mario Bava. Someone reads the incantation aloud in an Austrian castle, which is always a mistake." },
+    { "id": "NIGHTMARECASTLEUNCUT", "note": "Barbara Steele twice over: the murdered wife, and the new one living in her house." },
+    { "id": "the-satanic-rites-of-dracula-1973", "note": "Lee and Cushing one more time, with Dracula hiding in a London property company." }
+  ]
+}
