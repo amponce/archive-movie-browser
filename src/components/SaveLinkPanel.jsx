@@ -38,7 +38,7 @@ export default function SaveLinkPanel() {
   return (
     <aside role="region" aria-label="Save your edit link" className="fixed bottom-4 inset-x-4 sm:left-auto sm:w-96 z-40 bg-ink border border-line p-4 text-bone">
       <p className="font-semibold">Save your edit link</p>
-      <p className="text-sm mt-1">It's the only way back to your channels and favourites on another device, or if this browser clears its data. Nobody else can edit without it.</p>
+      <p className="text-sm mt-1">This link is the key to your profile, and only you have it. Keep it safe and never share it: anyone with it can change or delete your profile. To show people a channel, share the channel's link instead.</p>
       {manual && (
         <input readOnly value={link} aria-label="Your edit link" onFocus={(e) => e.target.select()}
           className="mt-3 w-full bg-ink border border-line px-2 py-2 font-mono text-xs text-bone" />
@@ -52,7 +52,7 @@ export default function SaveLinkPanel() {
       )}
       <div className="flex flex-wrap gap-x-2 mt-3">
         <Button variant={canPasskey ? 'ghost' : 'primary'} onClick={copy}>Copy link</Button>
-        <a className="nav-link" href={`mailto:?subject=${encodeURIComponent('My Orphaned Films edit link')}&body=${encodeURIComponent(link)}`} onClick={done}>Email it to myself</a>
+        <a className="nav-link" href={`mailto:?subject=${encodeURIComponent('My Orphaned Films edit link (private)')}&body=${encodeURIComponent(link)}`} onClick={done}>Email it to myself</a>
         <button type="button" className="nav-link ml-auto" onClick={() => setLater(true)}>Later</button>
       </div>
     </aside>
