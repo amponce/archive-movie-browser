@@ -1,11 +1,13 @@
 // Passkeys for profiles: options, registration, sign-in. `webauthn` is @simplewebauthn/server
 // (or a stand-in with the same four functions).
-import { hashKey, newKey } from './_community.js';
+import { hashKey, newKey, authProfile, LIMITS } from './_community.js';
 
 export const MAX_PASSKEYS = 5;
 export const CHALLENGE_MS = 300_000;
 export const RP_NAME = 'Orphaned Films';
 export const PASSKEY_USER = 'Orphaned Films profile';
+// A profile this young, with no passkey and no handle, is folded into the one signed in to
+export const FRESH_MS = 7 * 86_400_000;
 
 const b64u = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const fromB64u = text => Uint8Array.from(atob(text.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
@@ -104,12 +106,14 @@ export async function signinOptions(db, webauthn, { rp, now }) {
   return options;
 }
 
-export async function signin(db, webauthn, response, { rp, now }) {
+// `from` is the profile the browser held before; see mergeFresh. 'unknown' means no passkey
+// has this credential id (it was removed), so the browser can forget it.
+export async function signin(db, webauthn, response, { rp, now, from }) {
   const challenge = clientChallenge(response);
   if (!(await takeChallenge(db, challenge, 'signin', null, now))) return 'expired';
   if (!isPasskeyId(response?.id)) return 'invalid';
   const row = await db.prepare('SELECT k.*, p.hidden FROM passkeys k JOIN profiles p ON p.id = k.profile_id WHERE k.credential_id = ?').bind(response.id).first();
-  if (!row) return 'invalid';
+  if (!row) return 'unknown';
   let result;
   try {
     result = await webauthn.verifyAuthenticationResponse({
@@ -125,5 +129,46 @@ export async function signin(db, webauthn, response, { rp, now }) {
     db.prepare('UPDATE profiles SET key_hash = ?, updated = ? WHERE id = ? AND hidden = 0').bind(await hashKey(key), now, row.profile_id),
   ]);
   if (!rotated.meta.changes) return 'hidden';
-  return { id: row.profile_id, key };
+  const moved = from ? await mergeFresh(db, row.profile_id, from, { now }) : null;
+  return { id: row.profile_id, key, merged: moved ? moved.merged : 'none', ...(moved && { moved }) };
+}
+
+// Folds `from` into profile `into` when its key is right and it is fresh: another profile, no
+// passkey, no handle, made within FRESH_MS. Its favourites are copied, its channels (same ids,
+// status and films) and saves move over, and it is deleted. When its channels or favourites
+// would go past the limits, only the favourites that fit are copied and it stays ('partial').
+// Null when nothing was done.
+export async function mergeFresh(db, into, from, { now }) {
+  const p = await authProfile(db, from?.id, from?.key);
+  if (!p || p.id === into || p.handle || now - p.created > FRESH_MS) return null;
+  if (await db.prepare('SELECT 1 FROM passkeys WHERE profile_id = ?').bind(p.id).first()) return null;
+  const count = (table, id) => db.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE profile_id = ?`).bind(id).first().then(r => r.n);
+  const [channels, mine] = [await count('channels', p.id), await count('channels', into)];
+  const { n: newFavourites } = await db.prepare('SELECT COUNT(*) AS n FROM favourites WHERE profile_id = ? AND film_id NOT IN (SELECT film_id FROM favourites WHERE profile_id = ?)').bind(p.id, into).first();
+  const room = Math.max(0, LIMITS.favourites - await count('favourites', into));
+  const all = channels + mine <= LIMITS.channels && newFavourites <= room;
+  const copyFavourites = db.prepare(`INSERT OR IGNORE INTO favourites (profile_id, film_id, created)
+    SELECT ?, film_id, created FROM favourites WHERE profile_id = ? AND film_id NOT IN (SELECT film_id FROM favourites WHERE profile_id = ?) ORDER BY created DESC LIMIT ?`).bind(into, p.id, into, room);
+  try {
+    if (!all) {
+      const { meta } = await copyFavourites.run();
+      return { merged: 'partial', from: p.id, favourites: meta.changes, channels: 0 };
+    }
+    // Saves of what is now the profile's own channel are dropped. A passkey or channel added to
+    // `from` since the checks above makes the profile delete fail, which undoes the whole batch.
+    const out = await db.batch([
+      copyFavourites,
+      db.prepare('UPDATE channels SET profile_id = ? WHERE profile_id = ? AND (SELECT COUNT(*) FROM channels WHERE profile_id IN (?, ?)) <= ?').bind(into, p.id, into, p.id, LIMITS.channels),
+      db.prepare(`INSERT OR IGNORE INTO channel_saves (profile_id, channel_id, created)
+        SELECT ?, channel_id, created FROM channel_saves WHERE profile_id = ? AND channel_id NOT IN (SELECT id FROM channels WHERE profile_id = ?)`).bind(into, p.id, into),
+      db.prepare('DELETE FROM favourites WHERE profile_id = ?').bind(p.id),
+      db.prepare('DELETE FROM channel_saves WHERE profile_id = ?').bind(p.id),
+      db.prepare('DELETE FROM handle_holds WHERE profile_id = ?').bind(p.id),
+      db.prepare('DELETE FROM profiles WHERE id = ?').bind(p.id),
+    ]);
+    return { merged: 'all', from: p.id, favourites: out[0].meta.changes, channels: out[1].meta.changes };
+  } catch (error) {
+    console.error('merge:', error.message);
+    return null;
+  }
 }

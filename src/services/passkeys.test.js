@@ -54,7 +54,7 @@ test('a registration challenge belongs to its profile', async () => {
   assert.equal(await register(db, w, b.id, resp('x-padding-xxxxxxxxx', opts.challenge), { rp, now }), 'expired');
 });
 
-test('five passkeys at most; removing works; unknown credential is invalid', async () => {
+test('five passkeys at most; removing works; an unknown credential reads as unknown', async () => {
   const db = await openTestDb(); const w = fake();
   const p = await createProfile(db, { now });
   for (let i = 0; i < MAX_PASSKEYS; i++) {
@@ -65,7 +65,7 @@ test('five passkeys at most; removing works; unknown credential is invalid', asy
   assert.equal(await removePasskey(db, p.id, 'k0-padding-xxxxxxxx'), true);
   assert.equal(await removePasskey(db, p.id, 'nope-padding-xxxxxx'), false);
   const so = await signinOptions(db, w, { rp, now });
-  assert.equal(await signin(db, w, resp('nope-padding-xxxxxx', so.challenge), { rp, now }), 'invalid');
+  assert.equal(await signin(db, w, resp('nope-padding-xxxxxx', so.challenge), { rp, now }), 'unknown');
 });
 
 test('a hidden profile cannot register or sign in', async () => {
@@ -135,7 +135,7 @@ test('a challenge belongs to its kind', async () => {
 test('an unknown credential or profile is refused', async () => {
   const db = await openTestDb(); const w = fake();
   const so = await signinOptions(db, w, { rp, now });
-  assert.equal(await signin(db, w, resp('unknown-padding-xxxxx', so.challenge), { rp, now }), 'invalid');
+  assert.equal(await signin(db, w, resp('unknown-padding-xxxxx', so.challenge), { rp, now }), 'unknown');
   assert.equal(await register(db, w, 'zzzzzzzzzz', resp('u2-padding-xxxxxxxxx', 'nope'), { rp, now }), 'expired');
 });
 

@@ -187,7 +187,7 @@ async function route(request, deps) {
 }
 
 // Passkeys: an owner adds them to a profile; anyone holding one gets that profile's new edit key
-async function passkeyRoute(request, parts, { db, webauthn, now }) {
+async function passkeyRoute(request, parts, { db, webauthn, now, netSalt }) {
   const method = request.method;
   const rp = rpFor(request.headers.get('origin') || new URL(request.url).origin, request.url);
   if (!rp) return empty(403);
@@ -207,9 +207,17 @@ async function passkeyRoute(request, parts, { db, webauthn, now }) {
     const { body, tooBig } = await readBody(request);
     if (tooBig) return empty(413);
     if (!body) return empty(400);
-    const out = await signin(db, webauthn, body, { rp, now });
+    // `from`: the profile this browser held, folded in when it is fresh
+    const { from, ...response } = body;
+    const out = await signin(db, webauthn, response, { rp, now, from });
     if (out === 'hidden') return empty(403);
-    return typeof out === 'string' ? json({ error: out }, 400) : json(out);
+    if (typeof out === 'string') return json({ error: out }, 400);
+    const { moved, ...answer } = out;
+    if (moved) {
+      await record(db, () => ({ kind: 'profile-merged', profileId: out.id, detail: { from: moved.from, favourites: moved.favourites, channels: moved.channels } }),
+        { at: now, ip: request.headers.get('cf-connecting-ip'), salt: netSalt });
+    }
+    return json(answer);
   }
   const me = await owner(request, db);
   if (!me) return empty(401);

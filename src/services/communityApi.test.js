@@ -225,7 +225,7 @@ test('passkey: a failed sign-in, a removal, and a full profile', async () => {
   const bad = await call(c, 'POST', '/api/passkey/verify', { body: resp('unknown-padding-xxxx', so.challenge) });
   assert.equal(bad.status, 400);
   assert.equal(bad.headers.get('cache-control'), 'no-store');
-  assert.deepEqual(await bad.json(), { error: 'invalid' });
+  assert.deepEqual(await bad.json(), { error: 'unknown' });
   for (let i = 0; i < 5; i++) {
     const o = await (await call(c, 'POST', '/api/passkey/options', { auth: me })).json();
     assert.equal((await call(c, 'POST', '/api/passkey', { auth: me, body: resp(`k${i}-padding-xxxxxxxx`, o.challenge) })).status, 204);
