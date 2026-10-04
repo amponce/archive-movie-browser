@@ -68,7 +68,7 @@ export default function ProfileButton({ current }) {
           {label}
         </Button>
         {open && (
-          <div role="dialog" aria-label="Your profile" className="absolute right-0 top-full mt-2 w-72 bg-ink border border-line z-30 p-4 text-bone flex flex-col gap-3">
+          <div role="dialog" aria-label="Your profile" className="absolute right-0 top-full mt-2 w-72 bg-ink border border-line z-50 p-4 text-bone flex flex-col gap-3">
             <Button ref={first} href={href} data-track="profile-open" aria-current={own ? 'page' : undefined} className="w-full">Your profile</Button>
             {signIn}
           </div>
@@ -96,7 +96,7 @@ export default function ProfileButton({ current }) {
         {label}
       </Button>
       {open && (
-        <div role="dialog" aria-label="Your profile" className="absolute right-0 top-full mt-2 w-72 bg-ink border border-line z-30 p-4 text-bone flex flex-col gap-3">
+        <div role="dialog" aria-label="Your profile" className="absolute right-0 top-full mt-2 w-72 bg-ink border border-line z-50 p-4 text-bone flex flex-col gap-3">
           <Button ref={first} onClick={start} disabled={starting} data-track="profile-start" className="w-full disabled:opacity-50">Start your profile</Button>
           <p className="text-sm">Save films, build channels. No email, no password.</p>
           {failed && <p role="status" className="text-sm text-signal">We couldn't start it just now. Try again.</p>}

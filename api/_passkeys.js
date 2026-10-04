@@ -129,7 +129,8 @@ export async function signin(db, webauthn, response, { rp, now, from }) {
     db.prepare('UPDATE profiles SET key_hash = ?, updated = ? WHERE id = ? AND hidden = 0').bind(await hashKey(key), now, row.profile_id),
   ]);
   if (!rotated.meta.changes) return 'hidden';
-  const moved = from ? await mergeFresh(db, row.profile_id, from, { now }) : null;
+  // A merge that fails leaves both profiles as they were; the sign-in still succeeds
+  const moved = from ? await mergeFresh(db, row.profile_id, from, { now }).catch(() => null) : null;
   return { id: row.profile_id, key, merged: moved ? moved.merged : 'none', ...(moved && { moved }) };
 }
 
