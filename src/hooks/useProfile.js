@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { readProfile, ensureProfile, api } from '../services/profile';
+import { readProfile, ensureProfile, api, forgetProfile } from '../services/profile';
 
 let cache = null;
 const listeners = new Set();
@@ -15,6 +15,9 @@ const toggles = [];
 const applyToggles = (favourites, from) => toggles.slice(from).filter(t => !t.failed)
   .reduce((list, t) => (t.on ? [t.film, ...list.filter(f => f !== t.film)] : list.filter(f => f !== t.film)), favourites);
 
+// Drop a profile the site no longer has, and tell every component
+export function forgetCurrentProfile() { forgetProfile(); publish(null); }
+
 export function refreshProfile() {
   inflight ||= (async () => {
     const from = toggles.length;
@@ -22,6 +25,7 @@ export function refreshProfile() {
       const p = readProfile();
       if (!p) return;
       const res = await api(`/api/profile/${p.id}`);
+      if (res.status === 404) { forgetCurrentProfile(); return; }
       if (!res.ok) return;
       const data = await res.json();
       publish({ ...data, favourites: applyToggles(data.favourites || [], from) });
