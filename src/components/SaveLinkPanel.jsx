@@ -3,6 +3,7 @@ import useProfile from '../hooks/useProfile';
 import { editLink, justStarted } from '../services/profile';
 import { protectProfile, listPasskeys } from '../services/passkey';
 import Button from '../ui/Button';
+import { usePasskeySignIn } from './PasskeySignIn';
 
 export const SEEN = 'profile-link-seen';
 const seen = () => { try { return !!localStorage.getItem(SEEN); } catch { return true; } };
@@ -14,6 +15,7 @@ export default function SaveLinkPanel() {
   const [manual, setManual] = useState(false); // the clipboard was not available
   const [passkey, setPasskey] = useState(null); // busy | ok | cancelled | failed
   const [hasPasskey, setHasPasskey] = useState(null); // a passkey already protects the profile
+  const signIn = usePasskeySignIn();
   const id = profile?.id;
   const key = profile?.key;
   useEffect(() => {
@@ -72,6 +74,13 @@ export default function SaveLinkPanel() {
         {canSend && <button type="button" className="nav-link" onClick={send}>Send to myself</button>}
         <button type="button" className="nav-link ml-auto" onClick={() => setLater(true)}>Later</button>
       </div>
+      {canPasskey && (
+        <div className="mt-3 border-t border-line pt-3 text-sm">
+          <span className="text-muted">Already have a profile? </span>
+          <button type="button" className="underline underline-offset-2 hover:text-signal disabled:opacity-50" onClick={signIn.go} disabled={signIn.busy} data-track="save-link-sign-in">Sign in with a passkey</button>
+          <p role="status" className={signIn.note ? 'text-muted mt-1' : 'sr-only'}>{signIn.note}</p>
+        </div>
+      )}
     </aside>
   );
 }
