@@ -1,5 +1,5 @@
 import { startRegistration as sr, startAuthentication as sa } from '@simplewebauthn/browser';
-import { switchToProfile, noteStale } from './profile.js';
+import { switchToProfile, replaceProfile, readProfile, noteStale } from './profile.js';
 
 const auth = profile => profile && { Authorization: `Bearer ${profile.id}.${profile.key}` };
 const post = (f, path, body, profile) => f(path, {
@@ -26,18 +26,31 @@ export async function protectProfile(profile, { fetch: f = fetch, startRegistrat
   } catch (e) { return cancelled(e) ? 'cancelled' : exists(e) ? 'exists' : 'failed'; }
 }
 
-// On success this browser holds the profile, with a new edit key; a different profile it had is
-// kept so the owner can switch back
+// Tells the platform's passkey manager that the site no longer knows this credential
+export function forgetCredential(credentialId) {
+  try {
+    globalThis.PublicKeyCredential?.signalUnknownCredential?.({ rpId: location.hostname.replace(/^www\./, ''), credentialId })?.catch?.(() => {});
+  } catch { /* not supported */ }
+}
+
+// On success this browser holds the profile, with a new edit key. The profile it had goes along
+// as `from`: the server folds a fresh one in, and then it is gone; any other is kept so the
+// owner can switch back.
 export async function signInWithPasskey({ fetch: f = fetch, startAuthentication = sa } = {}) {
   try {
     const o = await post(f, '/api/passkey/challenge');
     if (!o.ok) return 'failed';
     const response = await startAuthentication({ optionsJSON: await o.json() });
-    const r = await post(f, '/api/passkey/verify', response);
-    if (r.status === 400) return (await r.json().catch(() => ({}))).error === 'expired' ? 'expired' : 'none';
+    const had = readProfile();
+    const r = await post(f, '/api/passkey/verify', had ? { ...response, from: { id: had.id, key: had.key } } : response);
+    if (r.status === 400) {
+      const { error } = await r.json().catch(() => ({}));
+      if (error === 'unknown') forgetCredential(response.id);
+      return error === 'expired' ? 'expired' : 'none';
+    }
     if (!r.ok) return 'failed';
-    const p = await r.json();
-    switchToProfile(p);
+    const { merged, ...p } = await r.json();
+    if (merged === 'all') replaceProfile(p); else switchToProfile(p);
     try { sessionStorage.setItem(NEW_LINK, p.id); } catch { /* private mode */ }
     return { id: p.id };
   } catch (e) { return cancelled(e) ? 'cancelled' : 'failed'; }
@@ -53,6 +66,7 @@ export async function listPasskeys(profile, { fetch: f = fetch } = {}) {
 export async function removePasskey(profile, id, { fetch: f = fetch } = {}) {
   try {
     const r = noteStale(await f(`/api/passkey/${encodeURIComponent(id)}`, { method: 'DELETE', headers: auth(profile) }), profile);
+    if (r.status === 204) forgetCredential(id);
     return r.status === 204;
   } catch { return false; }
 }

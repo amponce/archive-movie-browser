@@ -56,6 +56,15 @@ export function switchToProfile(p) {
   keepStorage();
 }
 
+// p took in this browser's profile, which no longer exists: nothing to switch back to, and
+// what was copied into it went with it
+export function replaceProfile(p) {
+  const had = readProfile();
+  if (had && carried(had)) markCarried(p);
+  writeProfile(p);
+  keepStorage();
+}
+
 // Swap this browser's profile with the one kept by adoptFromLink. False when there is none.
 export function switchBack() {
   const previous = readPrevious();
