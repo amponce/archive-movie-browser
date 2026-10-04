@@ -204,3 +204,10 @@ test('a profile started here is remembered for this tab only, and only for its o
     assert.equal(justStarted('abcdefghij'), false);
   } finally { globalThis.sessionStorage = was; }
 });
+
+test('a removed profile is forgotten', async () => {
+  const { forgetProfile, readProfile, writeProfile } = await import('./profile.js');
+  writeProfile({ id: 'abcdefghij', key: 'a'.repeat(64) });
+  forgetProfile();
+  assert.equal(readProfile(), null);
+});

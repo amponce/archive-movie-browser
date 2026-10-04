@@ -1,7 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import ArchiveMovieBrowser from './components/ArchiveMovieBrowser';
 import SaveLinkPanel from './components/SaveLinkPanel';
-import StaleKeyNotice from './components/StaleKeyNotice';
 import { parseSitePath, redirectFor } from './services/archiveUrl';
 import { adoptFromLink } from './services/profile';
 import { pageFor } from './services/pages';
@@ -29,7 +28,7 @@ export default function App() {
   if (adoptFromLink(window.location.pathname, window.location.hash)) { window.location.replace(window.location.pathname); return null; }
   // The panel would sit over the TV player's controls
   const onTv = /^\/(tv|c\/[^/]+)$/.test(window.location.pathname.replace(/\/+$/, ''));
-  return <><Routed />{!onTv && <SaveLinkPanel />}<StaleKeyNotice /></>;
+  return <><Routed />{!onTv && <SaveLinkPanel />}</>;
 }
 
 function Routed() {

@@ -15,6 +15,11 @@ export function writeProfile(p) {
   memory = { id: p.id, key: p.key };
   try { localStorage.setItem(PROFILE_KEY, JSON.stringify(memory)); } catch { /* private mode */ }
 }
+// A profile the site no longer has (removed or hidden) is dropped from this browser
+export function forgetProfile() {
+  memory = null;
+  try { localStorage.removeItem(PROFILE_KEY); } catch { /* private mode */ }
+}
 export function keyFromHash(hash) { const key = new URLSearchParams(String(hash).replace(/^#/, '')).get('key'); return key && KEY.test(key) ? { key } : null; }
 export const editLink = (origin, p) => `${origin}/u/${p.id}#key=${p.key}`;
 

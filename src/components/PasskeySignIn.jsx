@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { signInWithPasskey } from '../services/passkey';
 import { SEEN } from './SaveLinkPanel';
 
-const NOTE = { none: 'No passkey found for this site.', expired: 'That took too long. Try again.', cancelled: 'Sign-in cancelled.', failed: "Couldn't sign in." };
+const NOTE = { none: "That passkey isn't linked to a profile here. If you have more than one, try another.", expired: 'That took too long. Try again.', cancelled: 'Sign-in cancelled.', failed: "Couldn't sign in." };
 
 // Signs in with a passkey and opens the profile; `note` says why not
 export function usePasskeySignIn() {
