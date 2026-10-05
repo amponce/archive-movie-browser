@@ -122,6 +122,10 @@ test('filmsInUpload finds the separate films in one upload, one entry per film',
   assert.equal(Math.round(films[0].seconds / 60), 128);
   // One film with its derivatives is an ordinary upload, not a list
   assert.equal(filmsInUpload(files.filter(f => f.name.startsWith('Aladdin'))), null);
+  assert.equal(filmsInUpload([
+    { name: 'film.mp4', source: 'original', format: 'MPEG4', length: '7678.98', size: '900000000' },
+    { name: 'film_512kb.mp4', source: 'derivative', format: '512Kb MPEG4', length: '7678.9', size: '300000000' }
+  ]), null);
   assert.equal(filmsInUpload([]), null);
 });
 
