@@ -3,11 +3,11 @@ import { Lock } from 'lucide-react';
 import { DAYS } from '../../halloween/days';
 import { posterOf, titleOf } from './parts';
 
-// Tapes per shelf: the whole month on one shelf on a wide screen, two shelves on a tablet, three
-// on a phone, so every spine is wide enough to read and nothing scrolls sideways
+// Tapes per shelf: the whole month on one shelf on a wide screen, 12 on a tablet, 8 on a phone,
+// so every spine is wide enough to read and nothing scrolls sideways
 const WIDE = '(min-width: 1280px)';
 const MEDIUM = '(min-width: 640px)';
-const perShelf = () => (window.matchMedia?.(WIDE).matches ? 31 : window.matchMedia?.(MEDIUM).matches ? 16 : 11);
+const perShelf = () => (window.matchMedia?.(WIDE).matches ? 31 : window.matchMedia?.(MEDIUM).matches ? 12 : 8);
 function usePerShelf() {
   const [count, setCount] = useState(perShelf);
   useEffect(() => {
@@ -49,12 +49,33 @@ function LockedSpine({ day }) {
   );
 }
 
+// Nights still to come off the shelf, as one compact block of dates
+function StillToCome({ days }) {
+  return (
+    <div>
+      <p className="label mb-3">Still to come</p>
+      <ol className="grid grid-cols-9 sm:grid-cols-[repeat(14,minmax(0,1fr))] gap-1">
+        {days.map(day => (
+          <li key={day.day} className="h-10 rounded-[3px] border border-line/70 bg-panel/50 flex flex-col items-center justify-center gap-0.5 text-dim">
+            <span className="font-mono text-[11px] leading-none tabular-nums" aria-hidden="true">{day.day}</span>
+            <Lock className="w-2.5 h-2.5" aria-hidden="true" />
+            <span className="sr-only">Night {day.day}, opens October {day.day}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 // The month as a video-store shelf: an opened night is a tape spine that slides out and opens
-// the night's card; a night still to come is a dark spine with its date
+// the night's card. On a wide screen the nights to come stand on the same shelf as dark spines;
+// narrower, they wait below as a block of dates, so the page is not a wall of empty tapes.
 export default function Shelf({ index, opened, tonightDay, seen, onOpen }) {
   const count = usePerShelf();
+  const whole = count >= DAYS.length;
+  const onShelf = whole ? DAYS : DAYS.slice(0, opened);
   const shelves = [];
-  for (let i = 0; i < DAYS.length; i += count) shelves.push(DAYS.slice(i, i + count));
+  for (let i = 0; i < onShelf.length; i += count) shelves.push(onShelf.slice(i, i + count));
   return (
     <div className="flex flex-col gap-10">
       {shelves.map(row => (
@@ -71,6 +92,7 @@ export default function Shelf({ index, opened, tonightDay, seen, onOpen }) {
           <div className="h-2.5 rounded-[2px] bg-line border-t border-white/10 shadow-[0_10px_20px_-6px_rgba(0,0,0,0.9)]" aria-hidden="true" />
         </div>
       ))}
+      {!whole && opened < DAYS.length && <StillToCome days={DAYS.slice(opened)} />}
     </div>
   );
 }
