@@ -1,4 +1,6 @@
 import React, { useMemo } from 'react';
+import { Ghost } from 'lucide-react';
+import { tonight } from '../halloween/days';
 import { LISTS } from '../lists/index';
 import PICKS from '../programme/featured.json';
 import SHELVES from '../programme/shelves.json';
@@ -43,6 +45,8 @@ export default function HomePage() {
 
   if (!programme) return <div className="min-h-screen"><McpBanner /><SiteHeader current="/" /></div>;
   const { featured, wall, shelf, short, heardOf, counts } = programme;
+  // October: tonight's 31 Days of Horror film, on phones (wider screens have the banner)
+  const night = tonight(new Date());
   // ponytail: the file number is the film's position in the index, which moves when the index is
   // rebuilt; a stable number needs a field in the index
   const fileNumber = featured && String(Object.keys(index).indexOf(featured.id) + 1).padStart(5, '0');
@@ -51,6 +55,12 @@ export default function HomePage() {
     <div className="min-h-screen">
       <McpBanner />
       <SiteHeader current="/" />
+      {night && index[night.film] && (
+        <a href="/halloween" data-track="home-halloween" className="sm:hidden gutter rule py-3 flex items-center gap-2.5 text-sm text-muted hover:text-bone">
+          <Ghost className="w-4 h-4 shrink-0 text-signal" aria-hidden="true" />
+          <span className="min-w-0 truncate"><span className="text-bone font-medium">31 Days of Horror.</span> Tonight: {index[night.film].t} →</span>
+        </a>
+      )}
       {lead && <Shelf list={lead} index={index} more={today.more} range={SHELVES.range}
         next={upcoming && { at: upcoming.at, title: LISTS.find(l => l.slug === upcoming.lead.list)?.title }} />}
       <ContinueWatching index={index} />
