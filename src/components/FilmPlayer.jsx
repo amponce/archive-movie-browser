@@ -162,7 +162,7 @@ export default function FilmPlayer({ movie, files }) {
       >
         <SubtitleTracks identifier={movie.identifier} tracks={subtitles} />
       </video>
-      {subtitleNote(subtitles) && <p className="absolute left-3 top-3 font-mono text-[10px] tracking-[0.1em] uppercase text-bone/80 bg-ink/70 px-2 py-1 rounded-sm pointer-events-none">{subtitleNote(subtitles)}</p>}
+      {subtitleNote(subtitles) && <p className="subtitle-note absolute left-3 top-3 font-mono text-[10px] tracking-[0.1em] uppercase text-bone/80 bg-ink/70 px-2 py-1 rounded-sm pointer-events-none">{subtitleNote(subtitles)}</p>}
       {frames.length > 0 && (
         <div
           className="absolute left-0 right-0 bottom-[52px] h-7 cursor-pointer"
