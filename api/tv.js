@@ -13,6 +13,11 @@ import { schedule, personalChannel, toM3U, toChannelsM3U, liveStreams, toXMLTV, 
 import { pickPlayableFile, videoUrl } from '../src/services/playback.js';
 import { libraryFiles, zip } from './_library.js';
 import { getChannel } from './_community.js';
+import { seenCounts } from './halloween.js';
+import { isFinaleDay } from '../src/halloween/days.js';
+
+// On October 31 the Halloween channel airs its films by how many have seen them
+const finaleSeen = async () => (isFinaleDay(new Date()) ? (await seenCounts().catch(() => null))?.seen : undefined);
 
 let pack; // the library zip, built once per instance: the catalogue only changes with a deploy
 
@@ -49,7 +54,7 @@ export default async function handler(req, res, env = {}) {
   const format = String(req.query?.format || 'json');
   try {
     if (req.query?.live) {
-      const candidates = liveStreams(schedule({ hours: 6 }), String(req.query.live));
+      const candidates = liveStreams(schedule({ hours: 6, seen: await finaleSeen() }), String(req.query.live));
       if (!candidates.length) { res.status(404).json({ error: 'No such channel, or nothing on it now.' }); return; }
       // The film on now, or the next one whose file still answers
       let url = candidates[0];
@@ -107,7 +112,7 @@ export default async function handler(req, res, env = {}) {
       missed = short;
       data = { now: Date.now(), channels: [channel] };
     } else {
-      data = schedule({ hours, hoursBack });
+      data = schedule({ hours, hoursBack, seen: await finaleSeen() });
     }
     // A community channel's owner can edit it, so it is kept for a minute only; a lineup missing a
     // film that Archive.org was too slow to answer for is not kept at all

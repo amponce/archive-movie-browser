@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-// Builds public/tv-lineups.json: for every film on a curated list, the stream a browser can
-// play and how long it runs, from its Archive.org record. The television schedule needs a
-// length for every film, and asking Archive.org at request time is too slow.
+// Builds public/tv-lineups.json: for every film on a curated list or the Halloween calendar, the
+// stream a browser can play and how long it runs, from its Archive.org record. The television
+// schedule needs a length for every film, and asking Archive.org at request time is too slow.
 //
 //   npm run tv            measure films not yet recorded
 //   npm run tv -- --fresh  ask Archive.org about every film again
@@ -13,7 +13,8 @@ import { loadLineups, saveLineups, measure } from './measure.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fresh = process.argv.includes('--fresh');
 const listsDir = path.join(root, 'src/lists');
-const ids = [...new Set(fs.readdirSync(listsDir).filter(f => f.endsWith('.json')).flatMap(f => JSON.parse(fs.readFileSync(path.join(listsDir, f), 'utf8')).films.map(x => x.id)))];
+const halloween = JSON.parse(fs.readFileSync(path.join(root, 'src/halloween/31-days.json'), 'utf8')).days.map(d => d.film);
+const ids = [...new Set([...fs.readdirSync(listsDir).filter(f => f.endsWith('.json')).flatMap(f => JSON.parse(fs.readFileSync(path.join(listsDir, f), 'utf8')).films.map(x => x.id)), ...halloween])];
 const lineups = fresh ? {} : loadLineups();
 
 let asked = 0;

@@ -10,6 +10,7 @@ import { onAirAt, programmesBetween, airable } from '../src/services/schedule.js
 import { pickPlayableFile } from '../src/services/playback.js';
 import { isTakenDown, isRecent, isForbidden, neverOnAir } from '../src/services/policy.js';
 import { isFeature, betterUpload } from '../src/services/indexBrowse.js';
+import { DAYS, ranked, inOctober, isFinaleDay } from '../src/halloween/days.js';
 
 const SITE = 'https://www.orphanedfilms.com';
 const TMDB_IMAGE = 'https://image.tmdb.org/t/p/w342';
@@ -49,7 +50,23 @@ function record(id) {
   };
 }
 
-const lineupOf = channel => airable(channel.films.map(record).filter(Boolean));
+// A channel's own notes (the Halloween calendar's) take the place of a list's
+const lineupOf = channel => airable(channel.films.map(id => {
+  const film = record(id);
+  return film && channel.notes?.[id] ? { ...film, note: channel.notes[id] } : film;
+}).filter(Boolean));
+
+// October only (Pacific time): a seasonal channel after the lineup, so no other channel changes
+// number. It airs the 31 Days of Horror films in calendar order; on October 31, by how many have
+// seen them (`seen`: film -> count), or in calendar order when the counts are not there.
+// ponytail: the order on October 31 follows live counts, so a change in rank moves what is on air
+const HALLOWEEN_NOTES = Object.fromEntries(DAYS.map(d => [d.film, d.note]));
+export function seasonalChannels(now, seen) {
+  const date = new Date(now);
+  if (!inOctober(date)) return [];
+  const days = isFinaleDay(date) && seen ? ranked(seen) : DAYS;
+  return [{ number: CHANNELS.length + 1, id: 'halloween', call: 'HWN', name: 'Halloween', blurb: 'The 31 Days of Horror films, back to back.', films: days.map(d => d.film), notes: HALLOWEEN_NOTES }];
+}
 
 // A personal channel from a link's identifiers. Films on a list are already measured; the rest
 // are read from their Archive.org records, in parallel, and remembered for this instance. A record
@@ -98,9 +115,9 @@ export async function personalChannel(ids, { now = Date.now(), hours = 6 } = {})
 // The whole service in one call: every channel with its lineup, what is on now, and the
 // programmes for the next `hours` (and the last `hoursBack`, so a guide opened now has no gap
 // before the film on air)
-export function schedule({ now = Date.now(), hours = 6, hoursBack = 0 } = {}) {
+export function schedule({ now = Date.now(), hours = 6, hoursBack = 0, seen } = {}) {
   const to = now + hours * 3600_000;
-  const channels = CHANNELS.map(channel => {
+  const channels = [...CHANNELS, ...seasonalChannels(now, seen)].map(channel => {
     const lineup = lineupOf(channel);
     const slot = onAirAt(lineup, now);
     return {
@@ -108,6 +125,7 @@ export function schedule({ now = Date.now(), hours = 6, hoursBack = 0 } = {}) {
       id: channel.id,
       name: channel.name,
       blurb: channel.blurb,
+      ...(channel.call && { call: channel.call }),
       lineup,
       now: slot && { film: slot.film, offset: slot.offset, startsAt: slot.startedAt, endsAt: slot.endsAt },
       programmes: programmesBetween(lineup, now - hoursBack * 3600_000, to).map(p => ({ id: p.film.id, title: p.film.title, year: p.film.year, poster: p.film.poster, genres: p.film.genres || [], note: p.film.note || null, startsAt: p.startsAt, endsAt: p.endsAt })),
