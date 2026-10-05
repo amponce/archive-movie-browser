@@ -122,6 +122,12 @@ select {
 }
 .spine-text { writing-mode: vertical-rl; transform: rotate(180deg); }
 
+/* The banner's messages take turns; each one fades in, unless less motion was asked for */
+@keyframes banner-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  .banner-in { animation: banner-in 400ms ease-out; }
+}
+
 /* Skeleton loading animation */
 @keyframes shimmer {
   0% {
