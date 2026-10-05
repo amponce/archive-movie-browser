@@ -21,6 +21,28 @@ export function openedDays(now) {
 // Tonight's film, from October 1 to 31; null outside October
 export const tonight = now => (pacificDay(now).startsWith(MONTH) ? DAYS[openedDays(now) - 1] : null);
 export const inOctober = now => pacificDay(now).startsWith(MONTH);
+// Midnight in Los Angeles at the start of `date` (YYYY-MM-DD): 07:00 or 08:00 UTC
+function pacificMidnight(date) {
+  const base = Date.parse(`${date}T07:00:00Z`);
+  return [base, base + 3600_000].find(t => pacificDay(new Date(t)) === date && pacificDay(new Date(t - 60_000)) !== date);
+}
+
+// The next night to open and when: { night, at } (ms), or null once all 31 are open
+export function nextOpening(now) {
+  const opened = openedDays(now);
+  if (opened >= DAYS.length) return null;
+  return { night: opened + 1, at: pacificMidnight(`${MONTH}-${String(opened + 1).padStart(2, '0')}`) };
+}
+
+// "7 h 12 min", "3 d 4 h", "12 min"
+export function untilText(ms) {
+  const minutes = Math.max(1, Math.ceil(ms / 60_000));
+  const d = Math.floor(minutes / 1440), h = Math.floor((minutes % 1440) / 60), m = minutes % 60;
+  if (d) return `${d} d ${h} h`;
+  if (h) return m ? `${h} h ${m} min` : `${h} h`;
+  return `${m} min`;
+}
+
 // From October 31 the page is the scoreboard
 export const isFinale = now => pacificDay(now) >= `${MONTH}-31`;
 export const isFinaleDay = now => pacificDay(now) === `${MONTH}-31`;

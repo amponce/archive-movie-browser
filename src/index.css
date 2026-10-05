@@ -108,6 +108,20 @@ select {
   transform: scale(1.05);
 }
 
+/* /halloween: a tube warming up on tonight's number, and tape spines whose titles run up the
+   spine. Still for anyone who asked for less motion. */
+@keyframes flicker {
+  0%, 90%, 100% { opacity: 1; }
+  91% { opacity: 0.45; }
+  92% { opacity: 1; }
+  94% { opacity: 0.7; }
+  95% { opacity: 1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .flicker { animation: flicker 6s infinite; }
+}
+.spine-text { writing-mode: vertical-rl; transform: rotate(180deg); }
+
 /* Skeleton loading animation */
 @keyframes shimmer {
   0% {

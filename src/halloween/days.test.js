@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { DAYS, FILMS, bannerKey, pacificDay, openedDays, tonight, inOctober, isFinale, isFinaleDay, ranked, crowdShare, loadSeen, toggleSeen, SEEN_KEY } from './days.js';
+import { DAYS, FILMS, bannerKey, nextOpening, untilText, pacificDay, openedDays, tonight, inOctober, isFinale, isFinaleDay, ranked, crowdShare, loadSeen, toggleSeen, SEEN_KEY } from './days.js';
 
 // Pacific daylight time is UTC-7 through October 2026; standard time (UTC-8) starts November 1
 const at = iso => new Date(iso);
@@ -85,4 +85,20 @@ test("the banner shows tonight's film through October 31 and is dismissed a day 
   assert.notEqual(bannerKey(at('2026-10-05T07:00:00Z')), bannerKey(at('2026-10-05T06:59:00Z')), 'a new key at Pacific midnight');
   assert.ok(tonight(at('2026-11-01T06:59:00Z')), 'still October 31 in Los Angeles: the banner shows');
   assert.equal(tonight(at('2026-11-01T07:00:00Z')), null, 'from November 1 the MCP banner is back');
+});
+
+test('the next night opens at Pacific midnight', () => {
+  assert.deepEqual(nextOpening(at('2026-10-04T19:00:00Z')), { night: 5, at: Date.parse('2026-10-05T07:00:00Z') });
+  assert.deepEqual(nextOpening(at('2026-09-20T12:00:00Z')), { night: 1, at: Date.parse('2026-10-01T07:00:00Z') });
+  assert.deepEqual(nextOpening(at('2026-10-30T12:00:00Z')), { night: 31, at: Date.parse('2026-10-31T07:00:00Z') });
+  assert.equal(nextOpening(at('2026-10-31T12:00:00Z')), null);
+  assert.equal(nextOpening(at('2026-11-05T12:00:00Z')), null);
+});
+
+test('time until it opens reads short', () => {
+  assert.equal(untilText((7 * 60 + 12) * 60_000), '7 h 12 min');
+  assert.equal(untilText(12 * 60_000 - 5000), '12 min');
+  assert.equal(untilText(1000), '1 min');
+  assert.equal(untilText((3 * 1440 + 4 * 60 + 30) * 60_000), '3 d 4 h');
+  assert.equal(untilText(60 * 60_000), '1 h');
 });
