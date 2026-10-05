@@ -4,6 +4,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Fixed
+
+- Search suggestions prefer a full-length film upload over a trailer or short clip.
+
 ## [3.0.0] - 2026-10-03
 
 ### Added
