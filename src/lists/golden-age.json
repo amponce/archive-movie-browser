@@ -5,104 +5,104 @@
   "curator": "the station",
   "generated": {
     "rule": "Action or Adventure or Animation or Comedy or Crime or Documentary or Drama or Family or Fantasy or History or Horror or Music or Mystery or Romance or Sci-Fi or Thriller or War or Western 1930s–1940s",
-    "week": 202640
+    "week": 202641
   },
   "films": [
     {
-      "id": "the-woman-in-the-window-1944_202511"
-    },
-    {
-      "id": "GreatExpectations1946"
-    },
-    {
-      "id": "1932-scarface-scarface-el-terror-del-hampa-howard-hawks-vose"
+      "id": "the-spider-woman"
     },
     {
       "id": "the-lady-from-shanghai-1947"
     },
     {
-      "id": "leave-her-to-heaven-1945_202110"
+      "id": "day.-of.-wrath.-1943"
     },
     {
-      "id": "MyManGodfrey1936"
-    },
-    {
-      "id": "you-were-never-lovelier"
-    },
-    {
-      "id": "nazi_concentration_camps"
-    },
-    {
-      "id": "LifeAndDeathOfColonelBlimp_the"
-    },
-    {
-      "id": "stagecoach-colorized"
-    },
-    {
-      "id": "the-wolf-man-1941_202106"
-    },
-    {
-      "id": "shanghai-express"
-    },
-    {
-      "id": "sahara-colorized"
-    },
-    {
-      "id": "tss32236"
-    },
-    {
-      "id": "jour-de-fete"
-    },
-    {
-      "id": "Martha_Ivers"
-    },
-    {
-      "id": "The_Hamilton_Woman"
-    },
-    {
-      "id": "bishops-wife-1947"
-    },
-    {
-      "id": "tbyool435345435110"
-    },
-    {
-      "id": "the-set-up-1949_202506"
+      "id": "1937-beco-sem-saida-william-wyler"
     },
     {
       "id": "1944-double-indemnity-billy-wilder-vose"
     },
     {
-      "id": "Detour"
+      "id": "a-hen-in-the-wind"
+    },
+    {
+      "id": "AStarIsBorn"
+    },
+    {
+      "id": "JohnWayneRedRiverRange193853mns_201605"
+    },
+    {
+      "id": "GreatExpectations1946"
+    },
+    {
+      "id": "DarkMirrorCrime505"
+    },
+    {
+      "id": "you-were-never-lovelier"
+    },
+    {
+      "id": "the.fallen.idol.1948"
+    },
+    {
+      "id": "invisible-man-1933"
+    },
+    {
+      "id": "49thParallel"
+    },
+    {
+      "id": "killers-1946"
     },
     {
       "id": "GirlFriday"
     },
     {
-      "id": "i-was-born-but"
-    },
-    {
-      "id": "CastleFilm"
-    },
-    {
-      "id": "1936-a-floresta-petrificada-archie-mayo"
-    },
-    {
-      "id": "aap44779882"
-    },
-    {
-      "id": "Gaslight_628"
-    },
-    {
-      "id": "all.-quiet.-on.-the.-western.-front.-1930"
-    },
-    {
       "id": "dead-of-night_20210519"
     },
     {
-      "id": "FarmersDaughter47"
+      "id": "PimpernelSmith"
     },
     {
-      "id": "ride-the-pink-horse-1947"
+      "id": "kind-hearts-and-coronets"
+    },
+    {
+      "id": "notorious-1946-restored-movie-720p-hd"
+    },
+    {
+      "id": "drunken-angel"
+    },
+    {
+      "id": "1932-scarface-scarface-el-terror-del-hampa-howard-hawks-vose"
+    },
+    {
+      "id": "shanghai-express"
+    },
+    {
+      "id": "gilda-1080p"
+    },
+    {
+      "id": "gaslight-1940-restored-movie-720p-hd"
+    },
+    {
+      "id": "house-of-strangers-1949_202511"
+    },
+    {
+      "id": "stagecoach-colorized"
+    },
+    {
+      "id": "Oh_Mr.Porter_1937"
+    },
+    {
+      "id": "tss32236"
+    },
+    {
+      "id": "this-gun-for-hire-1942"
+    },
+    {
+      "id": "the-big-clock-1948"
+    },
+    {
+      "id": "LoveAffair"
     }
   ]
 }
