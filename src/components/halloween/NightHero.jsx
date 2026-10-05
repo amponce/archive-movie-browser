@@ -41,7 +41,7 @@ export default function NightHero({ day, entry, seen, onToggle, next, now }) {
               <p className="text-lg text-muted leading-relaxed max-w-xl">{day.note}</p>
               <div className="flex items-center gap-3">
                 <Button href={watchUrl(day.film)} onClick={() => playOnArrival(day.film)} size="lg" className="flex-1 sm:flex-none" data-track="halloween-play" data-film={day.film}>
-                  <Play className="w-4 h-4" fill="currentColor" aria-hidden="true" /> <span>Play tonight<span className="hidden sm:inline">'s film</span></span>
+                  <Play className="w-4 h-4" fill="currentColor" aria-hidden="true" /> <span className="sm:hidden">Play tonight</span><span className="hidden sm:inline">Play tonight’s film</span>
                 </Button>
                 <SeenButton seen={seen} onClick={() => onToggle(day.film)} large />
               </div>
