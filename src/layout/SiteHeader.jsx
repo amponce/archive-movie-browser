@@ -1,16 +1,13 @@
 import React from 'react';
+import { Ghost } from 'lucide-react';
 import Button from '../ui/Button';
 import SearchField from '../ui/SearchField';
 import { spin } from '../services/reel';
 import ProfileButton from '../components/ProfileButton';
+import { navFor, SEASONAL } from './nav';
 
-const NAV = [
-  ['/', 'Tonight'],
-  ['/tv', 'TV'],
-  ['/browse', 'Browse'],
-  ['/lists', 'Lists'],
-  ['/collection', 'Collection'],
-];
+
+const Ghostly = ({ href }) => (href === SEASONAL[0] ? <Ghost className="w-3.5 h-3.5 mr-1.5 inline-block -mt-0.5" aria-hidden="true" /> : null);
 // The link that stands out in the nav: signal, with the on-air dot
 const FEATURED = '/collection';
 const Dot = () => <span className="inline-block w-1.5 h-1.5 rounded-full bg-signal mr-2" aria-hidden="true" />;
@@ -33,27 +30,29 @@ export function Logo() {
 // box when a page has a richer one (the browser passes its type-ahead). `current` is the nav
 // path to mark.
 export default function SiteHeader({ current = '/', search, children }) {
+  const links = navFor(new Date());
+  const seasonal = links.length > 5; // October: a sixth link, so the header gives it room
   return (
     <header className="rule">
       <div className="gutter flex flex-wrap items-center justify-between gap-x-6 gap-y-4 py-5">
         <Logo />
-        <nav className="hidden md:flex items-center gap-6" aria-label="Site">
-          {NAV.map(([href, name]) => (
-            <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link ${href === FEATURED ? 'text-signal hover:text-bone flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
+        <nav className={`hidden md:flex items-center ${seasonal ? 'gap-5' : 'gap-6'}`} aria-label="Site">
+          {links.map(([href, name]) => (
+            <a key={href} href={href} data-track={`nav-${name.toLowerCase().replace(/\s+/g, '-')}`} className={`nav-link ${href === FEATURED ? 'text-signal hover:text-bone flex items-center' : href === current ? 'text-bone' : ''} ${href === SEASONAL[0] ? 'flex items-center whitespace-nowrap' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}<Ghostly href={href} />{name}</a>
           ))}
         </nav>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="flex-1 md:flex-none md:w-[240px] xl:w-[280px]">{search || <SearchField />}</div>
           <Button variant="light" onClick={spin} data-track="spin" aria-label="Spin the reel: a random film">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M16 3h5v5" /><path d="M4 20L21 3" /><path d="M21 16v5h-5" /><path d="M15 15l6 6" /><path d="M4 4l5 5" /></svg>
-            <span className="hidden sm:inline">Spin the reel</span><span className="sm:hidden">Spin</span>
+            <span className={seasonal ? 'hidden 2xl:inline' : 'hidden sm:inline'}>Spin the reel</span><span className={seasonal ? '2xl:hidden' : 'sm:hidden'}>Spin</span>
           </Button>
           <ProfileButton current={current} />
         </div>
       </div>
       <nav className="md:hidden gutter flex gap-5 overflow-x-auto pb-3 -mt-1" aria-label="Site">
-        {NAV.map(([href, name]) => (
-          <a key={href} href={href} data-track={`nav-${name.toLowerCase()}`} className={`nav-link shrink-0 ${href === FEATURED ? 'text-signal flex items-center' : href === current ? 'text-bone' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}{name}</a>
+        {links.map(([href, name]) => (
+          <a key={href} href={href} data-track={`nav-${name.toLowerCase().replace(/\s+/g, '-')}`} className={`nav-link shrink-0 ${href === FEATURED ? 'text-signal flex items-center' : href === current ? 'text-bone' : ''} ${href === SEASONAL[0] ? 'flex items-center whitespace-nowrap' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}<Ghostly href={href} />{name}</a>
         ))}
       </nav>
       {children}
