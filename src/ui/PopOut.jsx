@@ -12,6 +12,9 @@ const android = typeof navigator !== 'undefined' && /Android/i.test(navigator.us
 // a page's own request to float a video, silently, so the button opens the iPhone's own player
 // instead: it always has the picture-in-picture button, and swiping home from it floats the film.
 const ios = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1));
+// Opened from the home screen, an iPhone or iPad gives the page no picture-in-picture at all:
+// the button offers the iPhone's own full-screen player instead and says so.
+const homeScreen = () => ios && typeof window !== 'undefined' && (navigator.standalone === true || window.matchMedia?.('(display-mode: standalone)').matches);
 const HINTS = {
   android: 'Going full screen. Then swipe home, and the film keeps playing in a small window.',
   ios: 'Tap the picture-in-picture button in the corner, or swipe home, and the film keeps playing in a small window.',
@@ -48,8 +51,14 @@ export default function PopOut({ video, className = 'btn-ghost' }) {
       setTimeout(() => setHint(null), 4000);
     }, HINT_MS);
   };
+  const fullScreen = homeScreen();
   const toggle = async () => {
     const v = video();
+    if (fullScreen) {
+      if (v?.paused) v.play().catch(() => {});
+      try { if (v?.webkitEnterFullscreen) v.webkitEnterFullscreen(); else await v?.requestFullscreen?.(); } catch { /* the browser said no */ }
+      return;
+    }
     try {
       if (document.pictureInPictureElement) { await document.exitPictureInPicture(); return; }
       if (v?.webkitPresentationMode === 'picture-in-picture') { v.webkitSetPresentationMode('inline'); return; }
@@ -78,7 +87,7 @@ export default function PopOut({ video, className = 'btn-ghost' }) {
     <>
       <button type="button" onClick={toggle} aria-pressed={out} className={className} data-track="pop-out">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2" /><rect x="12" y="11" width="8" height="6" rx="1" fill="currentColor" /></svg>
-        {out ? 'Pop back in' : 'Pop out'}
+        {fullScreen ? 'Full screen' : out ? 'Pop back in' : 'Pop out'}
       </button>
       {hint && (
         <span role="status" className="fixed inset-x-4 bottom-6 z-50 mx-auto max-w-sm rounded-md bg-panel px-4 py-3 text-sm text-bone shadow-xl ring-1 ring-white/10">
