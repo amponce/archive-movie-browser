@@ -35,6 +35,9 @@ export function crowdShare(crowd, film) {
   return people >= CROWD_MIN ? Math.min(100, Math.round(((seen[film] || 0) / people) * 100)) : null;
 }
 
+// The banner's dismissal lasts the day, so tomorrow's film shows again
+export const bannerKey = now => `halloween-banner-dismissed-${pacificDay(now)}`;
+
 // The films this browser has ticked. Not part of a profile.
 export const SEEN_KEY = `halloween-${data.year}-seen`;
 export function loadSeen(storage) {

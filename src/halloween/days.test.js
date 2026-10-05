@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { DAYS, FILMS, pacificDay, openedDays, tonight, inOctober, isFinale, isFinaleDay, ranked, crowdShare, loadSeen, toggleSeen, SEEN_KEY } from './days.js';
+import { DAYS, FILMS, bannerKey, pacificDay, openedDays, tonight, inOctober, isFinale, isFinaleDay, ranked, crowdShare, loadSeen, toggleSeen, SEEN_KEY } from './days.js';
 
 // Pacific daylight time is UTC-7 through October 2026; standard time (UTC-8) starts November 1
 const at = iso => new Date(iso);
@@ -78,4 +78,11 @@ test('seen films are kept in this browser, ticked and unticked', () => {
   const blocked = { getItem() { throw new Error('denied'); }, setItem() { throw new Error('denied'); } };
   assert.deepEqual(loadSeen(blocked), []);
   assert.deepEqual(toggleSeen(toggleSeen([], FILMS[2], blocked), FILMS[5], blocked), [FILMS[2], FILMS[5]], 'storage off: ticks last for the page');
+});
+
+test("the banner shows tonight's film through October 31 and is dismissed a day at a time", () => {
+  assert.equal(bannerKey(at('2026-10-04T19:00:00Z')), 'halloween-banner-dismissed-2026-10-04');
+  assert.notEqual(bannerKey(at('2026-10-05T07:00:00Z')), bannerKey(at('2026-10-05T06:59:00Z')), 'a new key at Pacific midnight');
+  assert.ok(tonight(at('2026-11-01T06:59:00Z')), 'still October 31 in Los Angeles: the banner shows');
+  assert.equal(tonight(at('2026-11-01T07:00:00Z')), null, 'from November 1 the MCP banner is back');
 });
