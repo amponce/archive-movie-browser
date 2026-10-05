@@ -6,6 +6,8 @@ test('eventData keeps events small, flat and free of anything personal', () => {
   assert.deepEqual(eventData({ film: 'Cops1922', player: 'own' }), { film: 'Cops1922', player: 'own' });
   assert.deepEqual(eventData({ query: '  Night Of The LIVING dead  ' }), { query: 'night of the living dead' });
   assert.equal(eventData({ query: 'x'.repeat(200) }).query.length, 60);
+  const long = 'the-return-of-the-living-dead-vhs-rip.-original-theatrical-audio';
+  assert.equal(eventData({ film: long }).film, long, 'a film identifier is kept whole');
   assert.deepEqual(eventData({ a: 1, b: 2, c: 3, d: 4, e: 'dropped' }), { a: 1, b: 2, c: 3, d: 4 }, 'four properties at most');
   assert.deepEqual(eventData({ film: undefined, page: null, ok: true }), { ok: true });
   assert.deepEqual(eventData({ query: 'someone@example.com found this' }), { query: '[email] found this' }, 'an email typed into search never leaves the browser');

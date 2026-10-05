@@ -5,6 +5,7 @@ import sitemap from './api/sitemap.js';
 import subtitles from './api/subtitles.js';
 import tmdb from './api/tmdb.js';
 import tv from './api/tv.js';
+import halloween from './api/halloween.js';
 import { POST as event } from './api/event.js';
 import { GET as stats } from './api/stats.js';
 import { handle as mcp } from './api/mcp.js';
@@ -60,6 +61,7 @@ const API = {
   subtitles: node(subtitles),
   tmdb: node(tmdb),
   tv: node(tv),
+  halloween: node(halloween),
   event: web(event, 'POST'),
   stats: web(stats, 'GET'),
   mcp: (request) => mcp(request),

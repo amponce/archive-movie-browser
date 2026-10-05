@@ -1,6 +1,6 @@
 // Which handler in worker.js answers an address, and with what query. The short /api/tv/...
 // addresses are the ones IPTV apps use.
-const NAMES = ['archive-list', 'sitemap', 'subtitles', 'tmdb', 'tv', 'event', 'stats', 'mcp'];
+const NAMES = ['archive-list', 'sitemap', 'subtitles', 'tmdb', 'tv', 'event', 'stats', 'mcp', 'halloween'];
 
 const TV_PATHS = { 'playlist.m3u': { format: 'm3u' }, 'guide.xml': { format: 'xml' }, 'channels.m3u': { format: 'channels' }, 'films.m3u': { format: 'films' }, 'library.zip': { format: 'library' } };
 export function route(pathname) {
