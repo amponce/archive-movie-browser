@@ -14,10 +14,29 @@ import { pickPlayableFile, videoUrl } from '../src/services/playback.js';
 import { libraryFiles, zip } from './_library.js';
 import { getChannel } from './_community.js';
 import { seenCounts } from './halloween.js';
+import { redis } from './_redis.js';
 import { isFinaleDay } from '../src/halloween/days.js';
 
-// On October 31 the Halloween channel airs its films by how many have seen them
-const finaleSeen = async () => (isFinaleDay(new Date()) ? (await seenCounts().catch(() => null))?.seen : undefined);
+// On October 31 the Halloween channel airs its films by how many have seen them. The counts are
+// frozen the first time they are read that day (one shared copy), so the web, IPTV and guide
+// agree; a slow or missing answer falls back to the day order.
+const FINALE_KEY = 'stats:halloween:finale';
+let finale = null;
+async function frozenSeen() {
+  const [stored] = await redis([['GET', FINALE_KEY]]);
+  if (stored) return JSON.parse(stored);
+  const { seen } = await seenCounts();
+  const [, kept] = await redis([['SET', FINALE_KEY, JSON.stringify(seen), 'NX', 'EX', 172800], ['GET', FINALE_KEY]]);
+  return JSON.parse(kept);
+}
+async function finaleSeen() {
+  if (!isFinaleDay(new Date())) return undefined;
+  if (finale) return finale;
+  const late = new Promise(resolve => setTimeout(() => resolve(null), 1500));
+  const seen = await Promise.race([frozenSeen().catch(() => null), late]);
+  if (seen) finale = seen;
+  return seen || undefined;
+}
 
 let pack; // the library zip, built once per instance: the catalogue only changes with a deploy
 
