@@ -51,8 +51,9 @@ export default function SiteHeader({ current = '/', search, children }) {
         </div>
       </div>
       <nav className="md:hidden gutter flex gap-5 overflow-x-auto pb-3 -mt-1" aria-label="Site">
-        {links.map(([href, name]) => (
-          <a key={href} href={href} data-track={`nav-${name.toLowerCase().replace(/\s+/g, '-')}`} className={`nav-link shrink-0 ${href === FEATURED ? 'text-signal flex items-center' : href === current ? 'text-bone' : ''} ${href === SEASONAL[0] ? 'flex items-center whitespace-nowrap' : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}<Ghostly href={href} />{name}</a>
+        {/* On phones the seasonal link leads the row, in signal, so it is on screen without scrolling */}
+        {(seasonal ? [SEASONAL, ...links.filter(([href]) => href !== SEASONAL[0])] : links).map(([href, name]) => (
+          <a key={href} href={href} data-track={`nav-${name.toLowerCase().replace(/\s+/g, '-')}`} className={`nav-link shrink-0 ${href === FEATURED ? 'text-signal flex items-center' : href === current ? 'text-bone' : ''} ${href === SEASONAL[0] ? `flex items-center whitespace-nowrap ${href === current ? 'text-bone' : 'text-signal'}` : ''}`} aria-current={href === current ? 'page' : undefined}>{href === FEATURED && <Dot />}<Ghostly href={href} />{name}</a>
         ))}
       </nav>
       {children}
