@@ -30,15 +30,20 @@ export default function NightHero({ day, entry, seen, onToggle, next, now }) {
                 <p className="font-display font-black uppercase leading-[0.8] text-[88px] sm:text-[120px] lg:text-[168px] text-bone">
                   Night <span className="text-signal flicker">{day.day}</span>
                 </p>
-                <h2 className="font-display font-black uppercase leading-[0.9] text-4xl sm:text-5xl text-bone mt-5">{titleOf(entry, day)}</h2>
-                <p className="label mt-3">{factsOf(entry, day)}</p>
+                <div className="mt-5 flex items-end gap-4">
+                  {poster && <img src={posterOf(entry)} alt="" className="md:hidden w-24 aspect-[2/3] object-cover rounded-md border border-white/[0.08] shadow-[0_16px_40px_-12px_rgba(0,0,0,0.9)] shrink-0" />}
+                  <div className="min-w-0">
+                    <h2 className="font-display font-black uppercase leading-[0.9] text-4xl sm:text-5xl text-bone break-words">{titleOf(entry, day)}</h2>
+                    <p className="label mt-3">{factsOf(entry, day)}</p>
+                  </div>
+                </div>
               </div>
               <p className="text-lg text-muted leading-relaxed max-w-xl">{day.note}</p>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button href={watchUrl(day.film)} onClick={() => playOnArrival(day.film)} size="lg" className="w-full sm:w-auto" data-track="halloween-play" data-film={day.film}>
-                  <Play className="w-4 h-4" fill="currentColor" aria-hidden="true" /> Play tonight's film
+              <div className="flex items-center gap-3">
+                <Button href={watchUrl(day.film)} onClick={() => playOnArrival(day.film)} size="lg" className="flex-1 sm:flex-none" data-track="halloween-play" data-film={day.film}>
+                  <Play className="w-4 h-4" fill="currentColor" aria-hidden="true" /> <span>Play tonight<span className="hidden sm:inline">'s film</span></span>
                 </Button>
-                <SeenButton seen={seen} onClick={() => onToggle(day.film)} large className="w-full sm:w-auto" />
+                <SeenButton seen={seen} onClick={() => onToggle(day.film)} large />
               </div>
               {countdown}
             </>

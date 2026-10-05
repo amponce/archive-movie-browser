@@ -32,7 +32,7 @@ function useNow() {
 function Progress({ seen, opened }) {
   const count = DAYS.filter(d => seen.includes(d.film)).length;
   return (
-    <section className="gutter py-8 rule flex flex-col gap-4" aria-label="Your progress">
+    <div className="flex flex-col gap-3" role="group" aria-label="Your progress">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
         <p className="font-mono text-xs tracking-[0.12em] uppercase text-bone">You've seen <span className="text-signal tabular-nums">{count}</span> of 31</p>
         <p className="label">{opened} of 31 open</p>
@@ -42,7 +42,7 @@ function Progress({ seen, opened }) {
           <span key={d.day} className={`h-2.5 flex-1 rounded-[1px] ${seen.includes(d.film) ? 'bg-signal' : d.day <= opened ? 'border border-bone/40' : 'bg-line/70'}`} />
         ))}
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -76,11 +76,15 @@ export default function HalloweenPage() {
         {isFinale(date)
           ? <FinaleHero index={index} crowd={crowd} onAir={inOctober(date)} />
           : <NightHero day={night} entry={night && index?.[night.film]} seen={!!night && seen.includes(night.film)} onToggle={toggle} next={nextOpening(date)} now={now} />}
-        <Progress seen={seen} opened={opened} />
         {isFinale(date) && <Ranking index={index} crowd={crowd} />}
         <section className="gutter pt-12 pb-16" aria-labelledby="shelf-title">
-          <h2 id="shelf-title" className="display text-3xl sm:text-4xl text-bone">The shelf</h2>
-          {opened > 0 && <p className="text-muted leading-relaxed mt-2 max-w-2xl text-balance">An 80s horror film for every night of October.{isFinale(date) ? ' Tick the ones you\'ve seen.' : ' A new one opens each day; tick the ones you\'ve seen.'}</p>}
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+            <div>
+              <h2 id="shelf-title" className="display text-3xl sm:text-4xl text-bone">The shelf</h2>
+              {opened > 0 && <p className="text-muted leading-relaxed mt-2 max-w-2xl text-balance">An 80s horror film for every night of October.{isFinale(date) ? ' Tick the ones you\'ve seen.' : ' A new one opens each day; tick the ones you\'ve seen.'}</p>}
+            </div>
+            <div className="w-full lg:w-[440px] shrink-0"><Progress seen={seen} opened={opened} /></div>
+          </div>
           <div className="mt-4">
             <Shelf index={index} opened={opened} tonightDay={isFinale(date) ? null : night?.day} seen={seen} onOpen={(day, opener) => setOpen({ day, opener })} />
           </div>

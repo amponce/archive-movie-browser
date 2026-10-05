@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Lock } from 'lucide-react';
 import { DAYS } from '../../halloween/days';
 import { posterOf, titleOf } from './parts';
@@ -21,11 +21,11 @@ function usePerShelf() {
 
 const HEIGHT = 'h-[184px] sm:h-[248px] xl:h-[300px]';
 
-function Spine({ day, entry, tonight, seen, onOpen }) {
+function Spine({ day, entry, tonight, seen, onOpen, active, onFocus, buttonRef }) {
   const title = titleOf(entry, day);
-  const label = `Night ${day.day}: ${title}${tonight ? ', tonight' : ''}${seen ? ', seen' : ''}`;
+  const label = [`Night ${day.day}`, title, entry?.y, tonight && 'tonight', seen && 'seen'].filter(Boolean).join(', ');
   return (
-    <button type="button" onClick={event => onOpen(day, event.currentTarget)} aria-label={label} aria-haspopup="dialog"
+    <button type="button" ref={buttonRef} tabIndex={active ? 0 : -1} onFocus={onFocus} onClick={event => onOpen(day, event.currentTarget)} aria-label={label} aria-haspopup="dialog"
       className={`relative block w-full ${HEIGHT} rounded-[3px] overflow-hidden bg-panel shadow-[0_8px_16px_-6px_rgba(0,0,0,0.8)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bone motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out motion-safe:hover:-translate-y-4 motion-safe:focus-visible:-translate-y-4 ${tonight ? 'ring-2 ring-signal motion-safe:-translate-y-2' : ''}`}>
       {posterOf(entry) && <img src={posterOf(entry)} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
       <span className="absolute inset-0 bg-gradient-to-b from-ink/95 via-ink/50 to-ink/90" aria-hidden="true" />
@@ -70,21 +70,36 @@ function StillToCome({ days }) {
 // The month as a video-store shelf: an opened night is a tape spine that slides out and opens
 // the night's card. On a wide screen the nights to come stand on the same shelf as dark spines;
 // narrower, they wait below as a block of dates, so the page is not a wall of empty tapes.
+// The shelf is one Tab stop (tonight's spine, or the last one used); the arrow keys, Home and End
+// move along the opened spines.
 export default function Shelf({ index, opened, tonightDay, seen, onOpen }) {
   const count = usePerShelf();
+  const [active, setActive] = useState(null);
+  const current = active && active <= opened ? active : tonightDay || 1;
+  const spines = useRef({});
+  const onKeyDown = event => {
+    const to = { ArrowLeft: current - 1, ArrowRight: current + 1, Home: 1, End: opened }[event.key];
+    if (to === undefined || !opened) return;
+    event.preventDefault();
+    const next = Math.min(opened, Math.max(1, to));
+    setActive(next);
+    spines.current[next]?.focus();
+    spines.current[next]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  };
   const whole = count >= DAYS.length;
   const onShelf = whole ? DAYS : DAYS.slice(0, opened);
   const shelves = [];
   for (let i = 0; i < onShelf.length; i += count) shelves.push(onShelf.slice(i, i + count));
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-10" onKeyDown={onKeyDown}>
       {shelves.map(row => (
         <div key={row[0].day}>
           <ol className="grid gap-1 xl:gap-[3px] items-end pt-5 px-1" style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}>
             {row.map(day => (
               <li key={day.day}>
                 {day.day <= opened
-                  ? <Spine day={day} entry={index?.[day.film]} tonight={day.day === tonightDay} seen={seen.includes(day.film)} onOpen={onOpen} />
+                  ? <Spine day={day} entry={index?.[day.film]} tonight={day.day === tonightDay} seen={seen.includes(day.film)} onOpen={onOpen}
+                      active={day.day === current} onFocus={() => setActive(day.day)} buttonRef={el => { spines.current[day.day] = el; }} />
                   : <LockedSpine day={day} />}
               </li>
             ))}
