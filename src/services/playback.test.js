@@ -123,6 +123,12 @@ test('filmsInUpload finds the separate films in one upload, one entry per film',
   // One film with its derivatives is an ordinary upload, not a list
   assert.equal(filmsInUpload(files.filter(f => f.name.startsWith('Aladdin'))), null);
   assert.equal(filmsInUpload([]), null);
+  // The small _512kb copy older uploads carry is the same film, not a second one
+  const withCopy = [
+    { name: 'film.mp4', source: 'original', format: 'MPEG4', length: '3600', size: '900000000' },
+    { name: 'film_512kb.mp4', source: 'derivative', format: '512Kb MPEG4', length: '3600', size: '90000000' },
+  ];
+  assert.equal(filmsInUpload(withCopy), null);
 });
 
 test('subtitleTracks finds the subtitle files for the film playing, labelled by language, English first', async () => {

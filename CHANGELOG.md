@@ -4,6 +4,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Fixed
+
+- A film with a small `_512kb` copy next to it is no longer listed twice as "2 films in this upload".
+
 ## [3.0.0] - 2026-10-03
 
 ### Added

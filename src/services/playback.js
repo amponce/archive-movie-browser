@@ -24,7 +24,7 @@ export function playableFiles(files) {
 // people use Archive.org to keep a list): one entry per film, named from its file, with the files
 // that can play it best first. Fewer than two films: null, it's an ordinary upload.
 const VIDEO = /\.(mp4|m4v|mkv|avi|ogv|mpeg|mpg|mov|wmv)$/i;
-const stem = name => name.replace(/\.ia\.mp4$/i, '').replace(VIDEO, '');
+const stem = name => name.replace(/\.ia\.mp4$/i, '').replace(VIDEO, '').replace(/_512kb$/i, '');
 // "Aladdin 2019" or "Aladdin (2019)" -> { title: 'Aladdin', year: 2019 }
 const titleAndYear = (name) => {
   const match = name.match(/^(.+?)\s*\(?((?:19|20)\d{2})\)?$/);
