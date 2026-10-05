@@ -3,7 +3,7 @@
 import { HANDLE } from './handle.js';
 
 const ID = /^[a-z2-7]{10}$/;
-const PATHS = ['/', '/tv', '/mcp', '/stats', '/lists', '/takedown', '/from-archive', '/iptv', '/collection', '/details', '/channels'];
+const PATHS = ['/', '/tv', '/mcp', '/stats', '/lists', '/takedown', '/from-archive', '/iptv', '/collection', '/details', '/channels', '/halloween'];
 
 // '/lists/noir-you-can-finish-tonight' -> the lists page with that slug; '/c/<id>' -> the channel
 // page with that id; '/u/<id>' and '/u/<handle>' -> the profile page with that id or handle.

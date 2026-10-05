@@ -9,6 +9,7 @@ test('the front page, the browser and the side pages route as before', () => {
   assert.equal(pageFor('/browse'), null);
   assert.deepEqual(pageFor('/tv/'), { key: '/tv' });
   assert.deepEqual(pageFor('/lists/noir-you-can-finish-tonight'), { key: '/lists', slug: 'noir-you-can-finish-tonight' });
+  assert.deepEqual(pageFor('/halloween'), { key: '/halloween' });
   assert.equal(pageFor('/nope'), null);
 });
 

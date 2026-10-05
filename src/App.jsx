@@ -18,6 +18,7 @@ const PAGES = {
   '/collection': lazy(() => import('./pages/CollectionPage')),
   '/details': lazy(() => import('./pages/ArchiveListPage')),
   '/channels': lazy(() => import('./pages/CommunityPage')),
+  '/halloween': lazy(() => import('./pages/HalloweenPage')),
   '/c': lazy(() => import('./pages/ChannelPage')),
   '/u': lazy(() => import('./pages/ProfilePage')),
 };
