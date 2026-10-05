@@ -155,3 +155,18 @@ select {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* /halloween's tapes: a cream spine label, yellowed and worn at the edges, and the sticker
+   on the tapes you've seen. Drawn in CSS, no artwork. */
+.tape-label {
+  color: #0E0E10;
+  background:
+    radial-gradient(ellipse 140% 90% at 50% 40%, transparent 55%, rgba(120, 92, 52, 0.18) 100%),
+    linear-gradient(180deg, #F1EAD8 0%, #E6DDC6 70%, #D9CEB3 100%);
+  box-shadow: inset 0 0 0 1px rgba(90, 66, 34, 0.14), inset 0 -4px 6px -4px rgba(90, 66, 34, 0.35);
+  clip-path: polygon(0 4%, 7% 0, 55% 2%, 93% 0, 100% 5%, 98.5% 52%, 100% 94%, 91% 100%, 46% 97.5%, 6% 100%, 0 95%, 1.5% 47%);
+}
+.rewind-sticker {
+  color: #0E0E10;
+  background: linear-gradient(180deg, #FF6A40, #F2522A);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}

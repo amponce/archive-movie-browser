@@ -21,6 +21,21 @@ function usePerShelf() {
 
 const HEIGHT = 'h-[184px] sm:h-[248px] xl:h-[300px]';
 
+// The tape's label: a cream band across the top of the spine with the night's number and the
+// tape's length and speed, a little worn, and stuck on not quite straight
+const tilt = day => ({ transform: `rotate(${((day.day * 7) % 5 - 2) * 0.35}deg)` });
+
+function TapeLabel({ day, tonight }) {
+  return (
+    <span className="tape-label absolute top-2 inset-x-[3px] sm:inset-x-[5px] flex flex-col items-center pt-1 pb-[3px] sm:pb-1" style={tilt(day)} aria-hidden="true">
+      <span className={`font-display font-black text-lg sm:text-2xl leading-none tabular-nums ${tonight ? 'text-signal' : 'text-ink'}`}>{day.day}</span>
+      <span className="mt-0.5 flex flex-wrap justify-center gap-x-[3px] font-mono text-[6px] sm:text-[7px] xl:text-[6px] leading-[1.15] text-ink/60 whitespace-nowrap">
+        <span>T-120</span><span>SP</span>
+      </span>
+    </span>
+  );
+}
+
 function Spine({ day, entry, tonight, seen, onOpen, active, onFocus, buttonRef }) {
   const title = titleOf(entry, day);
   const label = [`Night ${day.day}`, title, entry?.y, tonight && 'tonight', seen && 'seen'].filter(Boolean).join(', ');
@@ -28,13 +43,18 @@ function Spine({ day, entry, tonight, seen, onOpen, active, onFocus, buttonRef }
     <button type="button" ref={buttonRef} tabIndex={active ? 0 : -1} onFocus={onFocus} onClick={event => onOpen(day, event.currentTarget)} aria-label={label} aria-haspopup="dialog"
       className={`relative block w-full ${HEIGHT} rounded-[3px] overflow-hidden bg-panel shadow-[0_8px_16px_-6px_rgba(0,0,0,0.8)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bone motion-safe:transition-transform motion-safe:duration-200 motion-safe:ease-out motion-safe:hover:-translate-y-4 motion-safe:focus-visible:-translate-y-4 ${tonight ? 'ring-2 ring-signal motion-safe:-translate-y-2' : ''}`}>
       {posterOf(entry) && <img src={posterOf(entry)} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />}
-      <span className="absolute inset-0 bg-gradient-to-b from-ink/95 via-ink/50 to-ink/90" aria-hidden="true" />
+      <span className="absolute inset-0 bg-gradient-to-b from-ink/90 via-ink/45 to-ink/90" aria-hidden="true" />
       <span className="absolute inset-y-0 left-0 w-px bg-white/15" aria-hidden="true" />
-      <span className={`absolute top-1.5 inset-x-0 text-center font-display font-black text-lg sm:text-2xl leading-none ${tonight ? 'text-signal' : 'text-bone'}`} aria-hidden="true">{day.day}</span>
-      <span className="absolute inset-x-0 top-9 sm:top-10 bottom-8 flex items-center justify-center overflow-hidden" aria-hidden="true">
+      <span className="absolute inset-y-0 right-0 w-px bg-black/40" aria-hidden="true" />
+      <TapeLabel day={day} tonight={tonight} />
+      <span className={`absolute inset-x-0 top-[52px] sm:top-[60px] ${seen ? 'bottom-9 sm:bottom-10' : 'bottom-3'} flex items-center justify-center overflow-hidden`} aria-hidden="true">
         <span className="spine-text font-mono text-[9px] sm:text-[11px] font-medium tracking-[0.1em] uppercase text-bone whitespace-nowrap overflow-hidden text-ellipsis max-h-full [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]">{title}</span>
       </span>
-      {seen && <span className="absolute bottom-2.5 left-1/2 -translate-x-1/2 -rotate-6 bg-signal text-ink font-mono text-[7px] sm:text-[8px] font-medium tracking-[0.04em] px-[2px] sm:px-[3px] py-px rounded-[1px] shadow" aria-hidden="true">SEEN</span>}
+      {seen && (
+        <span className="rewind-sticker absolute bottom-2 sm:bottom-2.5 left-1/2 -translate-x-1/2 -rotate-[8deg] font-mono font-semibold text-[6px] sm:text-[7px] leading-[1.1] tracking-[0.03em] text-center whitespace-nowrap px-[3px] py-[2px] rounded-[2px]" aria-hidden="true">
+          <span className="block">BE KIND</span><span className="block">REWIND</span>
+        </span>
+      )}
     </button>
   );
 }
@@ -111,3 +131,4 @@ export default function Shelf({ index, opened, tonightDay, seen, onOpen }) {
     </div>
   );
 }
+
