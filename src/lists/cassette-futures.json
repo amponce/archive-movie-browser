@@ -5,74 +5,74 @@
   "curator": "the station",
   "generated": {
     "rule": "Sci-Fi 1980s–1980s",
-    "week": 202640
+    "week": 202641
   },
   "films": [
     {
       "id": "tetsuo-the-iron-man"
     },
     {
-      "id": "hombre-mirando-al-sudeste-1986_202410"
-    },
-    {
-      "id": "scanners-1981-1080p"
-    },
-    {
-      "id": "the-toxic-avenger-1986-pal-vhs"
-    },
-    {
-      "id": "o-enigma-de-outro-mundo-1982-blu-ray-1080p"
-    },
-    {
-      "id": "the-wraith-1986_202409"
+      "id": "paradis-pour-tous-1982-patrick-dewaaere-jacques-dutronc-fanny-cottencon-stephane"
     },
     {
       "id": "re-animator-1985_202508"
     },
     {
-      "id": "ROBOCOPCC"
+      "id": "the-toxic-avenger-1986-pal-vhs"
     },
     {
-      "id": "VirusFukkatsuNoHi1980"
-    },
-    {
-      "id": "killer-klowns-from-outer-space-1988-1080p-blu-ray-x-264-aac-ozlem"
-    },
-    {
-      "id": "phantasm-ii-1988-1080p"
-    },
-    {
-      "id": "paradis-pour-tous-1982-patrick-dewaaere-jacques-dutronc-fanny-cottencon-stephane"
-    },
-    {
-      "id": "1984-1984_202511"
+      "id": "mysterious-castle-in-the-carpathians-the-1981"
     },
     {
       "id": "bad-taste-1987-full-movie"
     },
     {
-      "id": "wolfshole"
+      "id": "o-enigma-de-outro-mundo-1982-blu-ray-1080p"
     },
     {
-      "id": "alligator-1980"
+      "id": "scanners-1981-1080p"
     },
     {
-      "id": "the-return-of-the-living-dead-vhs-rip.-original-theatrical-audio"
+      "id": "ROBOCOPCC"
+    },
+    {
+      "id": "the-wraith-1986_202409"
+    },
+    {
+      "id": "1984-1984_202511"
     },
     {
       "id": "from-beyond-1986-blu-ray"
     },
     {
-      "id": "dead-heat-1988_202511"
+      "id": "the-return-of-the-living-dead-vhs-rip.-original-theatrical-audio"
     },
     {
       "id": "Morning-patrol-movie"
     },
     {
+      "id": "alligator-1980"
+    },
+    {
+      "id": "wolfshole"
+    },
+    {
+      "id": "phantasm-ii-1988-1080p"
+    },
+    {
+      "id": "VirusFukkatsuNoHi1980"
+    },
+    {
       "id": "thekindred1987horror"
     },
     {
-      "id": "mysterious-castle-in-the-carpathians-the-1981"
+      "id": "hombre-mirando-al-sudeste-1986_202410"
+    },
+    {
+      "id": "killer-klowns-from-outer-space-1988-1080p-blu-ray-x-264-aac-ozlem"
+    },
+    {
+      "id": "dead-heat-1988_202511"
     }
   ]
 }

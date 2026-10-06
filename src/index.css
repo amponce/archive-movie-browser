@@ -108,6 +108,26 @@ select {
   transform: scale(1.05);
 }
 
+/* /halloween: a tube warming up on tonight's number, and tape spines whose titles run up the
+   spine. Still for anyone who asked for less motion. */
+@keyframes flicker {
+  0%, 90%, 100% { opacity: 1; }
+  91% { opacity: 0.45; }
+  92% { opacity: 1; }
+  94% { opacity: 0.7; }
+  95% { opacity: 1; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .flicker { animation: flicker 6s infinite; }
+}
+.spine-text { writing-mode: vertical-rl; transform: rotate(180deg); }
+
+/* The banner's messages take turns; each one fades in, unless less motion was asked for */
+@keyframes banner-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: no-preference) {
+  .banner-in { animation: banner-in 400ms ease-out; }
+}
+
 /* Skeleton loading animation */
 @keyframes shimmer {
   0% {
@@ -135,3 +155,22 @@ select {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* /halloween's tapes: a cream spine label, yellowed and worn at the edges, and the sticker
+   on the tapes you've seen. Drawn in CSS, no artwork. */
+.tape-label {
+  color: #0E0E10;
+  background:
+    radial-gradient(ellipse 140% 90% at 50% 40%, transparent 55%, rgba(120, 92, 52, 0.18) 100%),
+    linear-gradient(180deg, #F1EAD8 0%, #E6DDC6 70%, #D9CEB3 100%);
+  box-shadow: inset 0 0 0 1px rgba(90, 66, 34, 0.14), inset 0 -4px 6px -4px rgba(90, 66, 34, 0.35);
+  clip-path: polygon(0 4%, 7% 0, 55% 2%, 93% 0, 100% 5%, 98.5% 52%, 100% 94%, 91% 100%, 46% 97.5%, 6% 100%, 0 95%, 1.5% 47%);
+}
+.rewind-sticker {
+  color: #0E0E10;
+  background: linear-gradient(180deg, #FF6A40, #F2522A);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+/* The film player's subtitle note shows for a few seconds, then gets out of the picture */
+@keyframes subtitle-note { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
+.subtitle-note { animation: subtitle-note 6s ease-out forwards; }

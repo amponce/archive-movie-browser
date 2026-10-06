@@ -28,9 +28,8 @@ export function SubtitleTracks({ identifier, tracks }) {
   ));
 }
 
-// One line saying what there is, so a film without subtitles doesn't look broken
+// One line saying which subtitles there are; nothing when the upload has none
 export function subtitleNote(tracks) {
-  if (!tracks) return null;
-  if (!tracks.length) return 'No subtitle file with this upload';
+  if (!tracks?.length) return null;
   return `Subtitles: ${tracks.map((t, i) => (i === 0 && t.lang === 'en' ? `${t.label} (on)` : t.label)).join(' · ')}. More in the player's ⋮ menu`;
 }

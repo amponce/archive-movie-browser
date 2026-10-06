@@ -5,6 +5,7 @@
 
 const MAX_PROPERTIES = 4;
 const MAX_LENGTH = 60;
+const MAX_FILM = 200; // an Archive.org identifier, as api/_stats.js accepts it; cut short it names no film
 
 // Flat, short, lowercase, and with anything that looks like an email address removed
 export function eventData(properties = {}) {
@@ -12,7 +13,7 @@ export function eventData(properties = {}) {
     .filter(([, value]) => value !== undefined && value !== null)
     .slice(0, MAX_PROPERTIES)
     .map(([key, value]) => [key, typeof value === 'string'
-      ? (key === 'query' ? value.trim().toLowerCase() : value).replace(/\S+@\S+\.\S+/g, '[email]').slice(0, MAX_LENGTH)
+      ? (key === 'query' ? value.trim().toLowerCase() : value).replace(/\S+@\S+\.\S+/g, '[email]').slice(0, key === 'film' ? MAX_FILM : MAX_LENGTH)
       : value]);
   return Object.fromEntries(entries);
 }

@@ -5,104 +5,104 @@
   "curator": "the station",
   "generated": {
     "rule": "Horror 1930s–1940s",
-    "week": 202640
+    "week": 202641
   },
   "films": [
     {
-      "id": "the-invisible-woman-1940_202105"
-    },
-    {
-      "id": "abbott-and-costello-meet-frankenstein"
-    },
-    {
-      "id": "FogIsland720p1945"
+      "id": "OneFrightenedNight"
     },
     {
       "id": "frankenstein-1931-colorized"
     },
     {
-      "id": "Man_with_Two_Lives_1942"
+      "id": "abbott-and-costello-meet-frankenstein"
     },
     {
-      "id": "dead-of-night_20210519"
+      "id": "the-hound-of-the-baskervilles_20210718"
     },
     {
-      "id": "tss32236"
+      "id": "house-of-dracula"
     },
     {
-      "id": "TheFaceAtTheWindow"
+      "id": "the.-black.-cat.-1934"
     },
     {
-      "id": "The.Ghost.Walks"
-    },
-    {
-      "id": "TheLeopardMan1943"
-    },
-    {
-      "id": "TheCastleOfDoom1934"
-    },
-    {
-      "id": "invisible-man-1933"
-    },
-    {
-      "id": "CUSA19870321"
-    },
-    {
-      "id": "bw5558885"
-    },
-    {
-      "id": "TheVampireBat"
-    },
-    {
-      "id": "OneFrightenedNight"
-    },
-    {
-      "id": "TheAmazingMr.X1948Avi"
-    },
-    {
-      "id": "VictorHalperinsWhiteZombie1932"
-    },
-    {
-      "id": "blackfriday1940boriskarloff"
-    },
-    {
-      "id": "TheGhostTrain"
-    },
-    {
-      "id": "the-invisible-man-returns-1940_202105"
-    },
-    {
-      "id": "house-of-frankenstein-1944_202106"
-    },
-    {
-      "id": "TheDrumsofJeopardy"
-    },
-    {
-      "id": "dr.-cyclops"
+      "id": "the.-raven.-1935"
     },
     {
       "id": "isle-of-the-dead-1954"
     },
     {
-      "id": "bride-of-frankenstein-1935-colorized-movie-720p-hd_202303"
+      "id": "TheVampireBat"
     },
     {
-      "id": "draculas-daughter-colorized-1936-720p"
+      "id": "The.Ghost.Walks"
     },
     {
-      "id": "DarkMirrorCrime505"
+      "id": "TheFaceAtTheWindow"
     },
     {
-      "id": "Scrooge_1935"
+      "id": "CUSA19870321"
     },
     {
-      "id": "the-wolf-man-1941_202106"
+      "id": "the-invisible-man-returns-1940_202105"
+    },
+    {
+      "id": "dead-of-night_20210519"
+    },
+    {
+      "id": "TheGhoul"
     },
     {
       "id": "king-kong-1933-espanol_202401"
     },
     {
-      "id": "the-invisible-mans-revenge"
+      "id": "son-of-frankenstein-1939-colorized-movie-720p-hd"
+    },
+    {
+      "id": "bride-of-frankenstein-1935-colorized-movie-720p-hd_202303"
+    },
+    {
+      "id": "invisible-man-1933"
+    },
+    {
+      "id": "invisible-agent_202106"
+    },
+    {
+      "id": "blackfriday1940boriskarloff"
+    },
+    {
+      "id": "the.-black.-room.-1935"
+    },
+    {
+      "id": "TheDrumsofJeopardy"
+    },
+    {
+      "id": "before.-i.-hang.-1940"
+    },
+    {
+      "id": "SvengaliJohnBarrymoreBKCap1931"
+    },
+    {
+      "id": "the-wolf-man-1941_202106"
+    },
+    {
+      "id": "Scrooge_1935"
+    },
+    {
+      "id": "murder-in-the-blue-room-1944-5-star-classic-mys-com-rom"
+    },
+    {
+      "id": "TheCastleOfDoom1934"
+    },
+    {
+      "id": "sweeney.todd"
+    },
+    {
+      "id": "song_at_midnight"
+    },
+    {
+      "id": "DarkMirrorCrime505"
     }
   ]
 }

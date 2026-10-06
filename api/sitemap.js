@@ -4,7 +4,7 @@ import { LISTS } from './_lists.js';
 import { listChannels } from './_community.js';
 
 const SITE = 'https://www.orphanedfilms.com';
-const PAGES = ['/', '/browse', '/tv', '/lists', '/channels', '/iptv', '/mcp', '/from-archive', '/takedown'];
+const PAGES = ['/', '/browse', '/tv', '/lists', '/channels', '/iptv', '/mcp', '/from-archive', '/takedown', '/halloween'];
 
 export async function listedChannelPaths(db) {
   if (!db) return [];

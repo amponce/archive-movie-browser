@@ -3,9 +3,9 @@ import { programmesBetween } from '../../services/schedule';
 import CHANNEL_LINEUP from '../../programme/channels.json';
 
 const NARROW = '(max-width: 639px)';
-// The channel's call sign (src/programme/channels.json), or its initials
+// The channel's call sign (its own, src/programme/channels.json), or its initials
 const CALLS = Object.fromEntries(CHANNEL_LINEUP.lineup);
-export const callSign = channel => CALLS[channel.id] || String(channel.name || '').split(/\s+/).map(w => w[0]).join('').replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase();
+export const callSign = channel => channel.call || CALLS[channel.id] || String(channel.name || '').split(/\s+/).map(w => w[0]).join('').replace(/[^A-Za-z0-9]/g, '').slice(0, 4).toUpperCase();
 const clock = ms => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
 // How much of the future the guide shows: three hours, or ninety minutes on a phone, where three

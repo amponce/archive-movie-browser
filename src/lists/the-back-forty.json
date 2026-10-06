@@ -5,104 +5,104 @@
   "curator": "the station",
   "generated": {
     "rule": "Western 1930s–1970s",
-    "week": 202640
+    "week": 202641
   },
   "films": [
     {
-      "id": "1944FrontierOutlaws"
+      "id": "rolling_home_1946"
     },
     {
-      "id": "LuckyTerror"
+      "id": "el-arracadas"
     },
     {
-      "id": "hc5558711"
+      "id": "KidCarson"
     },
     {
-      "id": "UnderWesternStars"
+      "id": "the-outcasts-of-poker-flat-1952"
     },
     {
-      "id": "Hurricane_at_Pilgrim_Hill"
-    },
-    {
-      "id": "devil-and-miss-sarah-1975-gene-barry"
-    },
-    {
-      "id": "FuzzySattlesDown"
-    },
-    {
-      "id": "WildCountry"
-    },
-    {
-      "id": "winchester-73-1950"
-    },
-    {
-      "id": "the.-price.of.-power.-1969"
-    },
-    {
-      "id": "DesertGold"
-    },
-    {
-      "id": "rohb45458874"
-    },
-    {
-      "id": "hombre-1967_202511"
-    },
-    {
-      "id": "Utah_"
+      "id": "border_patrol"
     },
     {
       "id": "ambush_valley"
     },
     {
-      "id": "BlazingFrontier"
-    },
-    {
-      "id": "TheRidersoftheFrontier1939"
-    },
-    {
-      "id": "ComeOnCowboys"
-    },
-    {
-      "id": "KiGrajRidingRanger"
-    },
-    {
-      "id": "haunted_ranch"
-    },
-    {
-      "id": "KidRidesAgain"
-    },
-    {
-      "id": "stagecoach-colorized"
-    },
-    {
-      "id": "DeathRidesTheRange"
-    },
-    {
-      "id": "DowntheWyomingTrail"
-    },
-    {
-      "id": "RidinDowntheCanyon"
-    },
-    {
-      "id": "the_local_bad_man"
-    },
-    {
-      "id": "Heldorado"
-    },
-    {
-      "id": "the_silver_trail"
+      "id": "brand_of_the_devil"
     },
     {
       "id": "BoothillBrigade"
     },
     {
-      "id": "last-of-the-mohicans-1936-colorized"
+      "id": "day-of-anger-1967-fll"
     },
     {
-      "id": "BigBoyRidesAgain"
+      "id": "DowntheWyomingTrail"
     },
     {
-      "id": "little-big-man-1970_202511"
+      "id": "FuzzySattlesDown"
+    },
+    {
+      "id": "range_warfare"
+    },
+    {
+      "id": "the.-professionals.-1966"
+    },
+    {
+      "id": "Rage_at_Dawn_movie"
+    },
+    {
+      "id": "CarsonCityKid"
+    },
+    {
+      "id": "RustlersHideout"
+    },
+    {
+      "id": "tboa554609"
+    },
+    {
+      "id": "sunset_range"
+    },
+    {
+      "id": "ComeOnCowboys"
+    },
+    {
+      "id": "rohb45458874"
+    },
+    {
+      "id": "YodelinKidofPineRidge"
+    },
+    {
+      "id": "LawoftheWest"
+    },
+    {
+      "id": "KidRidesAgain"
+    },
+    {
+      "id": "ItCanBeDoneAmigo"
+    },
+    {
+      "id": "GitAlongLittleDogies"
+    },
+    {
+      "id": "ride-lonesome-1959"
+    },
+    {
+      "id": "beyond.-the.-law.-1968"
+    },
+    {
+      "id": "NightTimeinNevada"
+    },
+    {
+      "id": "ride-out-for-revenge-1957"
+    },
+    {
+      "id": "ApacheRose"
+    },
+    {
+      "id": "WarOfTheWildcats-JohnWayne1943"
+    },
+    {
+      "id": "InOldSantaFe"
     }
   ]
 }

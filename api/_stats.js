@@ -5,6 +5,7 @@
 // (The leading underscore marks a helper, not an endpoint; worker.js routes only the others.)
 
 import { isForbiddenSearch, isAdultSearch } from '../src/services/policy.js';
+import { isHalloweenFilm } from '../src/halloween/days.js';
 
 const FILM = /^[A-Za-z0-9._-]{1,200}$/;
 const CHANNEL = /^[a-z0-9-]{1,60}$/; // a list slug, or 'mine'
@@ -53,6 +54,8 @@ const EVENTS = {
     return { where: d.where, seconds: played, total: Math.max(played, seconds(d.total) || 0), ...(d.film && { film: d.film }), ...(d.channel && { channel: d.channel }) };
   },
   'MCP banner': d => (['opened', 'dismissed'].includes(d.action) ? { action: d.action } : null),
+  // A film ticked as seen on /halloween; only the 31 films there
+  'Seen': d => (isHalloweenFilm(d.film) ? { film: d.film } : null),
 };
 
 export function validEvent(body) {
@@ -122,6 +125,9 @@ export function commandsFor({ name, data, visit }, { now = new Date(), visitor }
   if (name === 'Filter') count('filters', `${data.type}: ${data.value}`);
   if (name === 'MCP banner') count('banner', data.action);
   if (name === 'Click') count('clicks', data.target);
+  // How many visits ticked each film, and ticked anything: estimates, no ids.
+  // ponytail: the visit id is per tab, so one person ticking in two tabs counts twice
+  if (name === 'Seen' && visit) commands.push(['PFADD', `stats:halloween:seen:${data.film}`, visit], ['PFADD', 'stats:halloween:seen-any', visit]);
   if (name === 'Watched') {
     const minutes = Math.round((data.seconds / 60) * 100) / 100;
     commands.push(['HINCRBY', `stats:day:${day}`, 'Seconds watched', data.seconds]);
