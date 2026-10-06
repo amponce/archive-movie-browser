@@ -45,9 +45,6 @@ export function localSuggestions(query, { genres = [], collections = [], movies 
   return out.slice(0, limit);
 }
 
-// Films the poster index has identified, matched by the film's real title rather than the
-// upload's ("Zombie Holocaust" finds an upload named "Zombi Holocaust 1980"). `index` is the
-// identifier -> entry map. Returns { identifier, title, year } per hit, best first.
 // Of two uploads of one film, prefer the one closest to the film's length, then the one
 // Archive.org's visitors favourited more. An unknown length loses to a known one.
 const uploadLengthDifference = entry => entry.d > 0 && entry.l > 0 ? Math.abs(entry.d - entry.l) : Infinity;
@@ -59,14 +56,18 @@ const shouldReplaceUpload = (candidate, current) => {
     (candidateDifference === currentDifference && (candidate.f || 0) > (current.f || 0));
 };
 
+// Films the poster index has identified, matched by the film's real title rather than the
+// upload's ("Zombie Holocaust" finds an upload named "Zombi Holocaust 1980"). `index` is the
+// identifier -> entry map. Returns { identifier, title, year } per hit, best first.
 export function indexSuggestions(query, index, limit = 6) {
   const typed = words(query);
   if (!typed.length || !index) return [];
   const first = typed[0];
-  const best = new Map(); // title -> hit
+  const best = new Map(); // film -> hit
   const keep = (entry, hit) => {
-    const seen = best.get(entry.t);
-    if (!seen || shouldReplaceUpload(entry, index[seen.identifier])) best.set(entry.t, hit);
+    const key = entry.i || entry.t;
+    const seen = best.get(key);
+    if (!seen || shouldReplaceUpload(entry, index[seen.identifier])) best.set(key, hit);
   };
   for (const identifier in index) {
     const entry = index[identifier];
@@ -107,12 +108,12 @@ function edits(a, b, limit) {
 
 // Films the index knows whose real title is what was typed, give or take spaces and a typo or two:
 // "sleep away camp" is Sleepaway Camp, "nosferato" is Nosferatu. For the type-ahead when word
-// matching finds nothing, and for "Did you mean" when a search does. Best first, one per title.
+// matching finds nothing, and for "Did you mean" when a search does. Best first, one per film.
 export function closeTitles(query, index, limit = 3) {
   const typed = compact(query);
   if (typed.length < 4 || !index) return [];
   const allowed = typed.length >= 9 ? 2 : 1;
-  const best = new Map(); // title -> hit
+  const best = new Map(); // film -> hit
   for (const identifier in index) {
     const entry = index[identifier];
     if (!entry.t || !entry.p || isRecent(entry.y)) continue; // the site suggests nothing from the last 25 years
@@ -123,8 +124,9 @@ export function closeTitles(query, index, limit = 3) {
     if (distance > allowed && typed.length >= 6 && title.length > typed.length) { distance = edits(typed, title.slice(0, typed.length), allowed); whole = false; }
     if (distance > allowed) continue;
     const hit = { identifier, title: entry.t, year: entry.y, distance, whole, rating: entry.v || 0 };
-    const seen = best.get(entry.t);
-    if (!seen || shouldReplaceUpload(entry, index[seen.identifier])) best.set(entry.t, hit);
+    const key = entry.i || entry.t;
+    const seen = best.get(key);
+    if (!seen || shouldReplaceUpload(entry, index[seen.identifier])) best.set(key, hit);
   }
   // Fewest edits first, then a whole title before one that only starts that way, then the better rated
   return [...best.values()].sort((a, b) => a.distance - b.distance || Number(b.whole) - Number(a.whole) || b.rating - a.rating).slice(0, limit);
