@@ -4,6 +4,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Changed
+
+- One "Wrong poster?" report can now list several films, one line each.
+
 ### Fixed
 
 - Fixed keyboard and screen reader accessibility for the "About the posters" dialog.
