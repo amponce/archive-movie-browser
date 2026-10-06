@@ -10,6 +10,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Fixed
 
+- Search suggestions prefer a full-length film upload over a trailer or short clip.
 - Fixed keyboard and screen reader accessibility for the "About the posters" dialog.
 - A film with a small `_512kb` copy next to it is no longer listed twice as "2 films in this upload".
 - Keyboard focus moves to the player when it opens and returns to Watch now when it closes, instead of falling to the page.

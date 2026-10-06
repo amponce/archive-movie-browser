@@ -22,6 +22,11 @@ function readRecent() {
   }
 }
 
+function filmSuggestionKey(movie, index) {
+  const entry = index?.[movie.identifier];
+  return entry?.i || archiveService.dedupeKey(entry?.t || movie.title);
+}
+
 // The matched part of each word in yellow, the rest as it is
 function Highlighted({ text, ranges }) {
   const parts = [];
@@ -99,24 +104,26 @@ export default function SearchBox({ value, onChange, onSearch, onOpenFilm, onPic
     list.push(...remote.tags.filter(tag => !offered.has(tag.label)).map(tag => ({ type: 'tag', ...tag })));
 
     const films = local.filter(s => s.type === 'film');
-    const listed = new Set(films.map(s => archiveService.dedupeKey(s.label)));
+    const listed = new Set(films.map(s => filmSuggestionKey(s.movie, index)));
     // Films the index knows by their real title: the upload may be called something else entirely
     const indexed = indexSuggestions(text, index);
     indexed.forEach(hit => {
-      const key = archiveService.dedupeKey(hit.title);
+      const movie = { identifier: hit.identifier, title: hit.title, year: hit.year, fromIndex: true };
+      const key = filmSuggestionKey(movie, index);
       if (listed.has(key)) return;
       listed.add(key);
-      films.push({ type: 'film', label: hit.title, ranges: hit.ranges, movie: { identifier: hit.identifier, title: hit.title, year: hit.year, fromIndex: true } });
+      films.push({ type: 'film', label: hit.title, ranges: hit.ranges, movie });
     });
     // Nothing by word: the real titles closest to what was typed ("sleep away camp", "nosferato")
     if (!indexed.length) closeTitles(text, index).forEach(hit => {
-      const key = archiveService.dedupeKey(hit.title);
+      const movie = { identifier: hit.identifier, title: hit.title, year: hit.year, fromIndex: true };
+      const key = filmSuggestionKey(movie, index);
       if (listed.has(key)) return;
       listed.add(key);
-      films.push({ type: 'film', label: hit.title, ranges: [], movie: { identifier: hit.identifier, title: hit.title, year: hit.year, fromIndex: true } });
+      films.push({ type: 'film', label: hit.title, ranges: [], movie });
     });
     remote.films.forEach(movie => {
-      const key = archiveService.dedupeKey(movie.title);
+      const key = filmSuggestionKey(movie, index);
       const ranges = matchRanges(movie.title, text);
       if (ranges && !listed.has(key)) {
         listed.add(key);

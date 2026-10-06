@@ -105,3 +105,22 @@ test('closeTitles finds the real title despite spaces and typos, whole titles fi
   assert.deepEqual(closeTitles('zzz', index), [], 'too short to guess');
   assert.deepEqual(closeTitles('citizen kane', index), []);
 });
+
+test('suggestions prefer the upload closest to the film length, then the most favourited', () => {
+  const index = {
+    trailer: { i: 1, t: 'Test Film', y: 1980, p: '/p.jpg', v: 7, d: 3, l: 100, f: 100 },
+    fullLessFavoured: { i: 1, t: 'Test Film', y: 1980, p: '/p.jpg', v: 7, d: 99, l: 100, f: 10 },
+    fullMoreFavoured: { i: 1, t: 'Test Film', y: 1980, p: '/p.jpg', v: 7, d: 101, l: 100, f: 20 },
+  };
+  assert.deepEqual(indexSuggestions('test film', index).map(hit => hit.identifier), ['fullMoreFavoured']);
+  assert.deepEqual(closeTitles('test film', index).map(hit => hit.identifier), ['fullMoreFavoured']);
+});
+
+test('suggestions keep different films with the same title', () => {
+  const index = {
+    cinderella1914: { i: 1, t: 'Cinderella', y: 1914, p: '/1914.jpg', v: 6, d: 52, l: 52, f: 10 },
+    cinderella1950: { i: 2, t: 'Cinderella', y: 1950, p: '/1950.jpg', v: 7, d: 74, l: 74, f: 20 },
+  };
+  assert.deepEqual(indexSuggestions('cinderella', index).map(hit => hit.identifier).sort(), ['cinderella1914', 'cinderella1950']);
+  assert.deepEqual(closeTitles('cinderella', index).map(hit => hit.identifier).sort(), ['cinderella1914', 'cinderella1950']);
+});
