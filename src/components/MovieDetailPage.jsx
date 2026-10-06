@@ -29,7 +29,6 @@ function MovieDetailContent({ movie, startFile, onClose, allMovies = [], onPlayR
   const details = useFilmDetails(movie);
   const related = useRelated(movie, (details.tmdbDetails?.genres || []).map(g => g.name));
 
-
   // Keep keyboard focus with the user: into the player when it opens, back to
   // Watch now when it closes (the button that had focus is removed from the page)
   useEffect(() => {
@@ -40,7 +39,6 @@ function MovieDetailContent({ movie, startFile, onClose, allMovies = [], onPlayR
     }
     wasPlaying.current = isPlaying;
   }, [isPlaying]);
-
 
   // A new film starts on its page, not in the player, unless a play button sent it here
   // (keyed on the identifier: the same film arriving again with more detail keeps playing)

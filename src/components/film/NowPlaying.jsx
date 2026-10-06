@@ -4,7 +4,7 @@ import PopOut from '../../ui/PopOut';
 
 // The player, at the top of the page while a film plays
 // `pick`: one of the films in an upload that holds several (UploadFilms), else the upload itself
-export default function NowPlaying({ movie, pick, onClose, playerRef, headingRef}) {
+export default function NowPlaying({ movie, pick, onClose, playerRef, headingRef }) {
   return (
     <div className="mb-8" ref={playerRef}>
       <div className="flex items-center justify-between mb-3">
