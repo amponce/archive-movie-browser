@@ -50,7 +50,7 @@ const node = (handler) => async (request, query, env) => {
     end(value) { body = value ?? null; },
   };
   await handler(req, res, env);
-  return new Response(body, { status, headers });
+  return new Response(request.method === 'HEAD' ? null : body, { status, headers });
 };
 
 const web = (handler, method) => (request, query, env) => (request.method === method ? handler(request, env) : new Response(null, { status: 405 }));
