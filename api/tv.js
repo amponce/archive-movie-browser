@@ -69,7 +69,8 @@ function overLimit(ip) {
 }
 
 export default async function handler(req, res, env = {}) {
-  if (req.method !== 'GET') { res.status(405).end(); return; }
+  // HEAD too: IPTV apps check a stream is up before they play it
+  if (req.method !== 'GET' && req.method !== 'HEAD') { res.status(405).end(); return; }
   const format = String(req.query?.format || 'json');
   try {
     if (req.query?.live) {

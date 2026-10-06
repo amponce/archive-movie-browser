@@ -202,3 +202,15 @@ test('a film is looked up on Archive.org once per instance; a failed lookup is a
     globalThis.fetch = realFetch;
   }
 });
+
+test('the IPTV playlist answers HEAD the way it answers GET, without a body', async () => {
+  const { default: worker } = await import('../../worker.js');
+  const ask = method => worker.fetch(new Request('https://www.orphanedfilms.com/api/tv/channels.m3u', { method }), {}, { waitUntil() {} });
+  const get = await ask('GET');
+  const head = await ask('HEAD');
+  assert.equal(get.status, 200);
+  assert.equal(head.status, 200, 'IPTV apps check a stream with HEAD before they play it');
+  assert.equal(head.headers.get('Content-Type'), get.headers.get('Content-Type'));
+  assert.equal(await head.text(), '');
+  assert.equal((await ask('POST')).status, 405);
+});
