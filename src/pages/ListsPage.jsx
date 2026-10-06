@@ -13,6 +13,18 @@ import SiteFooter from '../layout/SiteFooter';
 
 const REPO = 'https://github.com/amponce/archive-movie-browser';
 
+function Curator({ name }) {
+  if (name === 'the station') {
+    return <>the station</>;
+  }
+
+  return (
+    <a href={`https://github.com/${name}`} className="hover:text-muted underline">
+      @{name}
+    </a>
+  );
+}
+
 // A film on a list, from the poster index alone: no request until it is opened
 function ListFilm({ id, note, position, onOpen }) {
   const [film, setFilm] = useState(null);
@@ -88,7 +100,7 @@ export default function ListsPage({ slug }) {
           <>
             <h1 className="display text-5xl sm:text-6xl leading-none text-bone mb-4">{list.title}</h1>
             <p className="text-lg text-muted leading-relaxed mb-2">{list.blurb}</p>
-            <p className="text-sm text-dim mb-8">{list.films.length} films · curated by <a href={`https://github.com/${list.curator}`} className="hover:text-muted underline">@{list.curator}</a></p>
+            <p className="text-sm text-dim mb-8">{list.films.length} films · curated by <Curator name={list.curator} /></p>
             <ol className="space-y-1">
               {list.films.map((film, i) => <ListFilm key={film.id} id={film.id} note={film.note} position={i + 1} onOpen={open} />)}
             </ol>
@@ -103,7 +115,7 @@ export default function ListsPage({ slug }) {
                   <a href={`/lists/${entry.slug}`} className="block p-5 panel hover:border-yellow-400/60">
                     <span className="block text-2xl font-semibold text-bone">{entry.title}</span>
                     <span className="block text-muted mt-1 leading-snug">{entry.blurb.split('. ')[0]}.</span>
-                    <span className="block text-sm text-dim mt-2">{entry.films.length} films · @{entry.curator}</span>
+                    <span className="block text-sm text-dim mt-2">{entry.films.length} films · <Curator name={entry.curator} /></span>
                   </a>
                 </li>
               ))}
