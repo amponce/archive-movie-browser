@@ -19,6 +19,46 @@ export default function SettingsModal({ isOpen, onClose, onApiKeyChange }) {
     if (!isOpen && dialog.open) dialog.close();
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key !== 'Tab') return;
+
+      const controls = [...dialog.querySelectorAll(
+        'button, a[href], input, select, textarea, iframe, video[controls], [tabindex]'
+      )]
+        .filter(
+          (element) =>
+            element.tabIndex >= 0 &&
+            !element.matches(':disabled') &&
+            element.getClientRects().length
+        );
+
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+
+      if (!first || !last) return;
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    dialog.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      dialog.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
   // handle save
   const handleSave = async () => {
     if (!apiKey.trim()) {
@@ -60,9 +100,10 @@ export default function SettingsModal({ isOpen, onClose, onApiKeyChange }) {
       <div className="bg-panel rounded-xl shadow-2xl text-bone">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-line">
-          <h2 id="settings-title" className="text-lg font-semibold text-bone">Settings</h2>
+          <h2 id="settings-title" className="text-lg font-semibold text-bone">About the posters</h2>
           <button
             onClick={onClose}
+            aria-label="Close"
             className="p-1 hover:bg-ink rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
@@ -90,11 +131,15 @@ export default function SettingsModal({ isOpen, onClose, onApiKeyChange }) {
 
           {/* API Key Input */}
           <div className="mt-4">
-            <label className="block text-sm font-medium text-muted mb-2">
+            <label 
+              htmlFor="tmdb-api-key"
+              className="block text-sm font-medium text-muted mb-2"
+            >
               TMDB API Key
             </label>
 
             <input
+              id="tmdb-api-key"
               type="password"
               autoComplete="off"
               value={apiKey}
