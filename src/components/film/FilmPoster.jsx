@@ -3,15 +3,14 @@ import { Play, Star, Clock } from 'lucide-react';
 import { Sprockets, fieldFor } from '../../ui/FilmCard';
 import TitleCover from '../TitleCover';
 
-// A pre-filled issue for a poster the index got wrong: the identifier, the upload's title and
-// our guess, so the fix is a one-line edit for whoever picks it up (#120)
+// A pre-filled issue for a poster the index got wrong: the identifier and our guess, one line
+// per film so a report can carry several (the same shape as the wrong_poster template, #120)
 function wrongPosterIssueUrl(movie, guessedTitle) {
   const body = [
-    `Archive.org identifier: ${movie.identifier}`,
-    `Upload title: ${movie.title}`,
-    `We think this is: ${guessedTitle || 'unknown'}`,
+    'One line per film: its address, then what it should be. Add a line for any other film.',
     '',
-    'What should it actually be?',
+    `- /details/${movie.identifier} (we show ${guessedTitle || 'unknown'}): should be `,
+    '- ',
   ].join('\n');
   const params = new URLSearchParams({ title: `Wrong poster: ${movie.identifier}`, body, labels: 'data' });
   return `https://github.com/amponce/archive-movie-browser/issues/new?${params}`;
