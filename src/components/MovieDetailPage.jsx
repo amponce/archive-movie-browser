@@ -19,6 +19,8 @@ function MovieDetailContent({ movie, startFile, onClose, allMovies = [], onPlayR
   const [isPlaying, setIsPlaying] = useState(false);
   const [pick, setPick] = useState(null); // a film inside an upload that holds several
   const dialogRef = useRef(null);
+  const headingRef = useRef(null);
+  const wasPlaying = useRef(false);
   const backButtonRef = useRef(null);
   const playerRef = useRef(null);
   const titleId = useId();
@@ -26,6 +28,19 @@ function MovieDetailContent({ movie, startFile, onClose, allMovies = [], onPlayR
   useFilmDialog({ dialogRef, backButtonRef, identifier: movie.identifier, onClose });
   const details = useFilmDetails(movie);
   const related = useRelated(movie, (details.tmdbDetails?.genres || []).map(g => g.name));
+
+
+  // Keep keyboard focus with the user: into the player when it opens, back to
+  // Watch now when it closes (the button that had focus is removed from the page)
+  useEffect(() => {
+    if (isPlaying) {
+      headingRef.current?.focus({ preventScroll: true });
+    } else if (wasPlaying.current) {
+      dialogRef.current?.querySelector('[data-track="film-watch-now"]')?.focus();
+    }
+    wasPlaying.current = isPlaying;
+  }, [isPlaying]);
+
 
   // A new film starts on its page, not in the player, unless a play button sent it here
   // (keyed on the identifier: the same film arriving again with more detail keeps playing)
@@ -60,7 +75,7 @@ function MovieDetailContent({ movie, startFile, onClose, allMovies = [], onPlayR
       <FilmTopBar movie={movie} backButtonRef={backButtonRef} allMovies={allMovies} onSearch={onSearch} onOpen={onPlayRelated} onPickGenre={onPickGenre} onPickCollection={onPickCollection} />
 
       <div className="relative gutter max-w-7xl mx-auto py-8 lg:py-10">
-        {isPlaying && <NowPlaying movie={movie} pick={pick} onClose={() => setIsPlaying(false)} playerRef={playerRef} />}
+        {isPlaying && <NowPlaying movie={movie} pick={pick} onClose={() => setIsPlaying(false)} playerRef={playerRef} headingRef={headingRef} />}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
           <FilmPoster movie={movie} details={details} playing={isPlaying} onPlay={play} />
           <FilmDetails movie={movie} details={details} titleId={titleId} playing={isPlaying} onPlay={play} onSearch={onSearch} />

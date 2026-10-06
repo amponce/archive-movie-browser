@@ -4,11 +4,11 @@ import PopOut from '../../ui/PopOut';
 
 // The player, at the top of the page while a film plays
 // `pick`: one of the films in an upload that holds several (UploadFilms), else the upload itself
-export default function NowPlaying({ movie, pick, onClose, playerRef }) {
+export default function NowPlaying({ movie, pick, onClose, playerRef, headingRef}) {
   return (
     <div className="mb-8" ref={playerRef}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="eyebrow">Now playing{pick ? `: ${pick.title}` : ''}</h3>
+        <h3 className="eyebrow" ref={headingRef} tabIndex={-1}>Now playing{pick ? `: ${pick.title}` : ''}</h3>
         <span className="flex items-center gap-4">
           <PopOut video={() => playerRef.current?.querySelector('video')} className="nav-link flex items-center gap-2 hover:text-signal" />
           <button onClick={onClose} className="nav-link">Close player</button>

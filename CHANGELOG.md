@@ -7,6 +7,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ### Fixed
 
 - A film with a small `_512kb` copy next to it is no longer listed twice as "2 films in this upload".
+- Keyboard focus moves to the player when it opens and returns to Watch now when it closes, instead of falling to the page.
 
 ## [3.0.0] - 2026-10-03
 
