@@ -10,9 +10,10 @@ import { isRecent } from './policy.js';
 const usable = ([, entry]) => entry.i && entry.p && entry.c >= 0.8 && !(entry.d > 0 && entry.d < 40) && !isRecent(entry.y);
 // The index is keyed by upload and Archive.org often has several of one film. One per film
 // for the rows, keeping the full-length upload Jev was surest about.
-function oneCopyPerFilm(index) {
+function oneCopyPerFilm(index, except) {
   const best = new Map();
   for (const pair of Object.entries(index).filter(usable)) {
+    if (except != null && pair[1].i === except) continue;
     const kept = best.get(pair[1].i);
     if (!kept || betterUpload(pair, kept) < 0) best.set(pair[1].i, pair);
   }
@@ -99,9 +100,10 @@ export function rowFor(index, { decade, limit = 12 } = {}) {
 
 // Today's shelf: one decade a day, six well-regarded films from it in a fixed daily order.
 // A decade with too few films to fill a shelf never comes up, and nothing after the 1970s: the
-// front desk is for films old enough to have been forgotten.
-export function shelfFor(index, now = new Date(), limit = 6, lastDecade = 1970) {
-  const usableFilms = oneCopyPerFilm(index).filter(([, e]) => rated(e, 6.5)).map(film);
+// front desk is for films old enough to have been forgotten. `except` is a TMDB id to leave out
+// (tonight's film, already on the page).
+export function shelfFor(index, now = new Date(), limit = 6, lastDecade = 1970, except) {
+  const usableFilms = oneCopyPerFilm(index, except).filter(([, e]) => rated(e, 6.5)).map(film);
   const byDecade = new Map();
   for (const f of usableFilms) {
     const decade = Math.floor((f.entry.y || 0) / 10) * 10;
@@ -114,9 +116,10 @@ export function shelfFor(index, now = new Date(), limit = 6, lastDecade = 1970) 
 }
 
 // The tonight question: feature films you can finish in an evening, 40 to 90 minutes, well
-// regarded, a different dozen each day. Needs `l` (length) from the backfill.
-export function shortRow(index, now = new Date(), limit = 12) {
-  const fits = oneCopyPerFilm(index).filter(([, e]) => e.l >= 40 && e.l <= 90 && rated(e, 6.5)).map(film);
+// regarded, a different dozen each day. Needs `l` (length) from the backfill. `except` is a TMDB
+// id to leave out.
+export function shortRow(index, now = new Date(), limit = 12, except) {
+  const fits = oneCopyPerFilm(index, except).filter(([, e]) => e.l >= 40 && e.l <= 90 && rated(e, 6.5)).map(film);
   return seededShuffle(fits, dayOf(now) + 11).slice(0, limit);
 }
 
