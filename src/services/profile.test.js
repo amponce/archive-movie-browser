@@ -211,3 +211,17 @@ test('a removed profile is forgotten', async () => {
   forgetProfile();
   assert.equal(readProfile(), null);
 });
+
+test('signing into a profile from elsewhere never copies this browser\'s old list into it', async () => {
+  reset();
+  const fresh = await import('./profile.js?signin');
+  store['tv-my-channel'] = JSON.stringify(['film-one']);
+  let channelPosts = 0;
+  globalThis.fetch = async () => { channelPosts++; return json(201, { id: 'chan' }); };
+  fresh.switchToProfile({ id: ID, key: KEY });
+  await fresh.ensureProfile();
+  await new Promise(r => setTimeout(r, 10));
+  assert.equal(channelPosts, 0);
+  assert.equal(fresh.carriedInto(), ID);
+  assert.equal(fresh.carriedChannel(), null);
+});
