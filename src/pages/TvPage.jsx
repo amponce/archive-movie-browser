@@ -285,6 +285,17 @@ export default function TvPage({ channel = null, kept = false, children }) {
     }
     track('TV', { action: 'tune', channel: to.id });
   }, [channel]);
+  // A link to another channel while you are already on /tv (the guide's "Open on TV", or an edit to the hash)
+  useEffect(() => {
+    if (channel) return undefined;
+    const onHash = () => {
+      let id = '';
+      try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { /* a bad hash is ignored */ }
+      if (id) { setCurrentId(id); rememberLast(id); }
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, [channel]);
 
   // Channel up and down
   useEffect(() => {
