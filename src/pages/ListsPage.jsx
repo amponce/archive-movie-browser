@@ -13,16 +13,12 @@ import SiteFooter from '../layout/SiteFooter';
 
 const REPO = 'https://github.com/amponce/archive-movie-browser';
 
-function Curator({ name }) {
-  if (name === 'the station') {
-    return <>the station</>;
-  }
-
-  return (
-    <a href={`https://github.com/${name}`} className="hover:text-muted underline">
-      @{name}
-    </a>
-  );
+// A GitHub handle links to its profile; anything else (like "the station") is plain text.
+// The index cards are already links, so there the name is never a link.
+function Curator({ name, link = true }) {
+  if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/.test(name)) return <>{name}</>;
+  if (!link) return <>@{name}</>;
+  return <a href={`https://github.com/${name}`} className="hover:text-muted underline">@{name}</a>;
 }
 
 // A film on a list, from the poster index alone: no request until it is opened
@@ -115,7 +111,7 @@ export default function ListsPage({ slug }) {
                   <a href={`/lists/${entry.slug}`} className="block p-5 panel hover:border-yellow-400/60">
                     <span className="block text-2xl font-semibold text-bone">{entry.title}</span>
                     <span className="block text-muted mt-1 leading-snug">{entry.blurb.split('. ')[0]}.</span>
-                    <span className="block text-sm text-dim mt-2">{entry.films.length} films · <Curator name={entry.curator} /></span>
+                    <span className="block text-sm text-dim mt-2">{entry.films.length} films · <Curator name={entry.curator} link={false} /></span>
                   </a>
                 </li>
               ))}
