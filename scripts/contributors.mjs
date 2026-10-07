@@ -12,7 +12,7 @@ const END = '<!-- contributors:end -->';
 
 // People only. GitHub Apps come through as app/*; add the login of any AI agent or bounty
 // account that gets a change merged, so it never appears here.
-const NOT_PEOPLE = new Set(['amponce']);
+const NOT_PEOPLE = new Set(['amponce', 'amandeavor', 'dyk1454683243-sudo', 'fatihcvs', 'nightcityblade']);
 
 const logins = JSON.parse(execFileSync('gh', ['pr', 'list', '--repo', REPO, '--state', 'merged', '--limit', '1000', '--json', 'author'], { encoding: 'utf8' }))
   .map(pr => pr.author.login)
