@@ -3,7 +3,7 @@
 // Takes the index's `films` map: identifier -> { i, t, y, p, v, k, c, d } or { n: 1, c }.
 
 // Identified, with a poster, and not a known trailer or clip (d is the upload's length in minutes)
-import { betterUpload } from './indexBrowse.js';
+import { betterUpload, isFeature } from './indexBrowse.js';
 import { isRecent } from './policy.js';
 
 // Identified, not a clip, and not from the last 25 years (services/policy.js)
@@ -166,8 +166,9 @@ export function wantedFrom(index, limit = 5, now = new Date()) {
 
 // The real numbers for the stats strip
 export function countsOf(index) {
-  const entries = Object.values(index);
-  const identified = entries.filter(e => e.i).length;
+  const pairs = Object.entries(index);
+  const entries = pairs.map(([, e]) => e);
+  const identified = pairs.filter(pair => pair[1].i && isFeature(pair)).length; // trailers and shorts aren't films
   const posters = entries.filter(e => e.p).length;
-  return { identified, posters, wanted: entries.length - identified };
+  return { identified, posters, wanted: entries.length - entries.filter(e => e.i).length };
 }

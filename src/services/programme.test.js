@@ -48,7 +48,7 @@ test('wantedFrom lists only films decided to have no poster, a stable pick per d
 });
 
 test('countsOf gives the real numbers', () => {
-  assert.deepEqual(countsOf(index), { identified: 6, posters: 6, wanted: 2 });
+  assert.deepEqual(countsOf(index), { identified: 5, posters: 6, wanted: 2 });
 });
 
 test('changesIn counts down to UTC midnight', () => {
