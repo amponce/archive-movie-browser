@@ -90,9 +90,9 @@ export default function ArchiveMovieBrowser() {
     return () => { cancelled = true; window.removeEventListener('hashchange', openFromHash); };
   }, []);
 
-  // The tab names the open film, else the view being browsed
+  // The tab names the view being browsed; an open film names itself (MovieDetailPage)
   useEffect(() => {
-    document.title = pageTitle({ movie: selectedMovie, search: filters.activeSearch, genre: filters.genre, collection: filters.category });
+    if (!selectedMovie) document.title = pageTitle({ search: filters.activeSearch, genre: filters.genre, collection: filters.category });
   }, [selectedMovie, filters.activeSearch, filters.genre, filters.category]);
 
   useEffect(() => {

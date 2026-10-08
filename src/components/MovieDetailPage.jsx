@@ -10,6 +10,7 @@ import FilmDetails from './film/FilmDetails';
 import NowPlaying from './film/NowPlaying';
 import RelatedShelf from './film/RelatedShelf';
 import UploadFilms from './film/UploadFilms';
+import { pageTitle } from '../services/pageTitle';
 
 // The film page: a full-screen <dialog> over the browser. What the page knows comes from
 // useFilmDetails, how the dialog behaves from useFilmDialog, and the pieces are in
@@ -27,6 +28,11 @@ function MovieDetailContent({ movie, startFile, onClose, allMovies = [], onPlayR
 
   useFilmDialog({ dialogRef, backButtonRef, identifier: movie.identifier, onClose });
   const details = useFilmDetails(movie);
+  // The tab names the film as the heading does: TMDB's title once known, else the upload's
+  const tmdb = details.tmdbDetails;
+  useEffect(() => {
+    document.title = pageTitle({ movie: { title: tmdb?.title || movie.title, year: tmdb?.release_date?.split('-')[0] || movie.year } });
+  }, [tmdb?.title, tmdb?.release_date, movie.title, movie.year]);
   const related = useRelated(movie, (details.tmdbDetails?.genres || []).map(g => g.name));
 
   // Keep keyboard focus with the user: into the player when it opens, back to
