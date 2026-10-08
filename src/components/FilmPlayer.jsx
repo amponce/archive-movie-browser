@@ -88,6 +88,13 @@ export default function FilmPlayer({ movie, files }) {
     }
   };
 
+  // The resume note is there to offer "Start over", then gets out of the picture
+  useEffect(() => {
+    if (!resumedAt) return;
+    const timer = setTimeout(() => setResumedAt(0), 8000);
+    return () => clearTimeout(timer);
+  }, [resumedAt]);
+
   // Ten minutes of actual playback (not the position, which a resume or a skip can jump past)
   const countWatching = () => {
     const now = Date.now();
