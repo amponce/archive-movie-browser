@@ -29,13 +29,18 @@ const loadHorror = () => popularRow({ genre: 'Horror' });
 
 export default function HomePage() {
   const index = usePosterIndex();
-  const programme = useMemo(() => index && {
-    featured: featuredFor(index, new Date(), PICKS.films),
-    wall: wallFor(index),
-    shelf: shelfFor(index),
-    short: shortRow(index),
-    heardOf: heardOfRow(index),
-    counts: countsOf(index),
+  const programme = useMemo(() => {
+    if (!index) return null;
+    const featured = featuredFor(index, new Date(), PICKS.films);
+    const heroFilm = featured?.entry.i; // not repeated in the rows below it
+    return {
+      featured,
+      wall: wallFor(index),
+      shelf: shelfFor(index, new Date(), 6, 1970, heroFilm),
+      short: shortRow(index, new Date(), 12, heroFilm),
+      heardOf: heardOfRow(index),
+      counts: countsOf(index),
+    };
   }, [index]);
   const lead = LISTS.find(l => l.slug === today?.list);
   const westerns = LISTS.find(l => l.slug === SHELVES.westerns.list);

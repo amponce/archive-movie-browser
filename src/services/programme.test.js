@@ -134,3 +134,16 @@ test("heardOfRow shows only films old enough to be out of US copyright, best kno
   assert.deepEqual(row.films.map(f => f.id).sort(), ['metropolis', 'obscure']);
   assert.ok(heardOfRow(idx, new Date('2029-02-01T12:00:00Z')).films.some(f => f.id === 'thirties'), '1932 comes in on 1 January 2028');
 });
+
+test('rows can leave out tonight\'s film by TMDB id, whichever upload it is', () => {
+  const idx = {
+    carnival_dvd: { i: 7, t: 'Carnival of Souls', y: 1962, p: '/a.jpg', v: 6.9, k: 550, c: 0.9, l: 78, d: 78 },
+    carnival_rip: { i: 7, t: 'Carnival of Souls', y: 1962, p: '/a.jpg', v: 6.9, k: 550, c: 0.97, l: 78, d: 78 },
+    detour: { i: 8, t: 'Detour', y: 1945, p: '/b.jpg', v: 7.2, k: 426, c: 1, l: 68, d: 68 },
+  };
+  assert.deepEqual(shortRow(idx, new Date(), 12, 7).map(f => f.id), ['detour']);
+  assert.equal(shortRow(idx, new Date(), 12).length, 2);
+  const decade = {};
+  for (let n = 1; n <= 7; n++) decade['f' + n] = { i: n, t: 'F' + n, y: 1950, p: '/x.jpg', v: 7, k: 100, c: 1 };
+  assert.ok(shelfFor(decade, new Date(), 6, 1970, 3).films.every(f => f.entry.i !== 3));
+});
