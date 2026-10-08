@@ -8,6 +8,7 @@ import tmdbService from '../services/tmdb';
 import { track } from '../services/analytics';
 import useFilms from '../hooks/useFilms';
 import useBrowseFilters from '../hooks/useBrowseFilters';
+import { pageTitle } from '../services/pageTitle';
 import useViewMode from '../hooks/useViewMode';
 import SearchBox from './SearchBox';
 import SettingsModal from './SettingsModal';
@@ -88,6 +89,11 @@ export default function ArchiveMovieBrowser() {
     window.addEventListener('hashchange', openFromHash);
     return () => { cancelled = true; window.removeEventListener('hashchange', openFromHash); };
   }, []);
+
+  // The tab names the open film, else the view being browsed
+  useEffect(() => {
+    document.title = pageTitle({ movie: selectedMovie, search: filters.activeSearch, genre: filters.genre, collection: filters.category });
+  }, [selectedMovie, filters.activeSearch, filters.genre, filters.category]);
 
   useEffect(() => {
     tmdbService.setApiKey(tmdbApiKey);
