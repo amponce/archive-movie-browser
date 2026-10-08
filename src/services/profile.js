@@ -53,11 +53,13 @@ export function adoptFromLink(pathname, hash) {
   return true;
 }
 
-// Make p this browser's profile, keeping a different one it had so the owner can switch back
+// Make p this browser's profile, keeping a different one it had so the owner can switch back.
+// p already exists elsewhere, so this browser's old list is never copied into it.
 export function switchToProfile(p) {
   const had = readProfile();
   if (had && had.id !== p.id) keepPrevious(had);
   writeProfile(p);
+  if (!carried(p)) { markCarried(p); rememberCopy(null); }
   keepStorage();
 }
 
