@@ -23,3 +23,9 @@ test('plainText survives hostile descriptions: impossible characters and endless
 test('an entity named like an object property stays as written', () => {
   assert.equal(plainText('a &constructor; b &__proto__; c'), 'a &constructor; b &__proto__; c');
 });
+
+test('plainText decodes named entities and keeps quoted > inside a tag', () => {
+  assert.equal(plainText('Caf&eacute; &copy; 1956 &mdash; <a href="x>y">link</a> &hellip;'), 'Café © 1956 — link …');
+  assert.equal(plainText('&Eacute;t&eacute; &ntilde; &uuml; &ccedil; &rsquo;'), 'Été ñ ü ç ’');
+  assert.equal(plainText('&bogus; &AMP;'), '&bogus; &');
+});
