@@ -95,7 +95,7 @@ export default function useMyChannel(hours = 6, shared = null, hideOwn = false) 
     const slot = onAirAt(lineup, now);
     return {
       id: shared?.id || MY_CHANNEL_ID,
-      number: 0,
+      number: 'A',
       name: shared?.name || (fromLink ? 'A shared channel' : 'My channel'),
       mine: !fromLink,
       ids,

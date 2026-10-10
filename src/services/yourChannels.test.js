@@ -36,8 +36,8 @@ test('profile data not loaded yet: nothing saved, no crash', () => {
   assert.deepEqual(tvPersonal({ profileId: 'p1', carriedId: 'p1', channels: undefined }), { legacy: false, saved: [] });
 });
 
-test('personal channels are numbered 0, 0b, 0c ...', () => {
-  assert.deepEqual([0, 1, 2, 9].map(personalNumber), ['0', '0b', '0c', '0j']);
+test('personal channels are lettered A, B, C ...', () => {
+  assert.deepEqual([0, 1, 2, 9].map(personalNumber), ['A', 'B', 'C', 'J']);
 });
 
 test('the set holds the channel it fell back to', () => {
@@ -97,7 +97,7 @@ test('only new channels, and ones whose films changed, are loaded again', () => 
 test('a saved channel that failed or has nothing on leaves a gap; the rest keep their numbers', () => {
   const list = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
   const loaded = { a: [1], b: [], d: [1] };
-  assert.deepEqual(airable(list, loaded).map(c => [c.id, c.number]), [['a', '0'], ['d', '0d']]);
+  assert.deepEqual(airable(list, loaded).map(c => [c.id, c.number]), [['a', 'A'], ['d', 'D']]);
   assert.deepEqual(airable(list, {}), []);
 });
 
