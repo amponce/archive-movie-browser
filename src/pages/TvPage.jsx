@@ -249,7 +249,7 @@ export default function TvPage({ channel = null, kept = false, children }) {
   const onDemand = useMemo(() => onDemandIds({ own: saved.channels.map(c => c.id), mine, kept }), [saved.channels, mine, kept]);
   const span = useGuideSpan();
   const [open, setOpen] = useState(null); // the guide row playing under itself
-  // The personal channels go first, numbered 0, 0b, 0c..., when they have anything on them
+  // The personal channels go first, lettered A, B, C..., when they have anything on them
   // A community channel waits until every film is measured, so it starts on the shared clock
   const waiting = !!channel && !!mine?.pending;
   const empty = !!channel && !waiting && !mine?.lineup.length;

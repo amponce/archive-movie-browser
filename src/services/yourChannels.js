@@ -4,9 +4,9 @@ import { MY_CHANNEL_ID } from './myChannel.js';
 
 export const MAX_ON_TV = 10;
 
-// Personal channels sit above the stations: the first is 0, the rest 0b, 0c, ... so the
+// Personal channels sit above the stations as A, B, C, ..., like a set's video inputs, so the
 // stations keep their numbers 1..n
-export const personalNumber = i => (i === 0 ? '0' : `0${String.fromCharCode(97 + i)}`);
+export const personalNumber = i => String.fromCharCode(65 + i);
 
 // profileId: this browser's profile, if any. carriedId: the profile the old browser-only list
 // was copied into. channels: the profile's channels, oldest first as the server sends them, so a
