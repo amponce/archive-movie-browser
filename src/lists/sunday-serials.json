@@ -5,65 +5,29 @@
   "curator": "the station",
   "generated": {
     "rule": "Adventure 1920s–1960s",
-    "week": 202641
+    "week": 202642
   },
   "films": [
     {
-      "id": "1929-the-iron-mask_202506"
+      "id": "TheMostDangerousGame"
     },
     {
-      "id": "TexasBuddies1932"
+      "id": "wild-orchids_1929"
     },
     {
-      "id": "MyMovie_20180328"
+      "id": "the.-colossus.-of.-rhodes.-1961.272p"
     },
     {
-      "id": "his-first-command"
+      "id": "the-wages-of-fear"
     },
     {
-      "id": "1969.-la-estrella-del-sur"
+      "id": "mr_robinson_crusoe"
     },
     {
-      "id": "huangjiang-nuxia_1930"
+      "id": "SeaFury"
     },
     {
-      "id": "journey.to.the.-center.of.the.-earth.-1959"
-    },
-    {
-      "id": "sky_patrol_ipod"
-    },
-    {
-      "id": "the-war-lover-1962"
-    },
-    {
-      "id": "TheBoldCaballero"
-    },
-    {
-      "id": "BelovedRogue832"
-    },
-    {
-      "id": "TheDancingPirate"
-    },
-    {
-      "id": "BulldogDrummondsRevenge1937Andy"
-    },
-    {
-      "id": "the-gaucho-1927"
-    },
-    {
-      "id": "the-300-spartans-1962"
-    },
-    {
-      "id": "hue-cry"
-    },
-    {
-      "id": "one.million.b.c.1940"
-    },
-    {
-      "id": "nv8845354388"
-    },
-    {
-      "id": "hannibal-1959-victor-mature-dvdrip-x-264-chez-2012"
+      "id": "ice.-cold.-in.-alex.-1958_202510"
     },
     {
       "id": "WhiteSunOfTheDesert"
@@ -72,37 +36,73 @@
       "id": "AliceInWonderland1933"
     },
     {
-      "id": "jason-and-the-argonauts-1963"
+      "id": "FireOverEnglandVideoQualityUpgrade"
+    },
+    {
+      "id": "windjammer"
     },
     {
       "id": "DestroyAllPlanets1968"
     },
     {
-      "id": "Kilimanjaro"
+      "id": "chang-a-drama-of-the-wilderness-1927_202509"
     },
     {
-      "id": "moby-dick.-1956"
+      "id": "CALTIKITheImmortalMonster1960"
     },
     {
-      "id": "RadioRanch"
+      "id": "TheBoldCaballero"
     },
     {
-      "id": "ForcedLanding1941_201312"
+      "id": "web-of-darkness-republic"
     },
     {
-      "id": "the-flying-fleet_1929"
+      "id": "JungleBook"
     },
     {
-      "id": "TheGreatDanPatch720p1949"
+      "id": "Jack_London_"
+    },
+    {
+      "id": "stars-of-eger-1968.hu"
+    },
+    {
+      "id": "the-secret-of-the-loch"
+    },
+    {
+      "id": "SandsOfSacrifice1921"
+    },
+    {
+      "id": "nv8845354388"
     },
     {
       "id": "across-to-singapore_1928"
     },
     {
-      "id": "PimpernelSmith"
+      "id": "markofzorro-1920"
     },
     {
       "id": "corruption"
+    },
+    {
+      "id": "hue-cry"
+    },
+    {
+      "id": "MyMovie_20180328"
+    },
+    {
+      "id": "abominable-snowman-1957-colorized"
+    },
+    {
+      "id": "it-came-from-beneath-the-sea"
+    },
+    {
+      "id": "BulldogDrummondEscapes"
+    },
+    {
+      "id": "KidRidesAgain"
+    },
+    {
+      "id": "ForcedLanding1941_201312"
     }
   ]
 }

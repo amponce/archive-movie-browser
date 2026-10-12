@@ -5,92 +5,62 @@
   "curator": "the station",
   "generated": {
     "rule": "Thriller or Crime 1960s–1960s",
-    "week": 202641
+    "week": 202642
   },
   "films": [
     {
-      "id": "diabolik_202509"
+      "id": "WHOKILLEDTEDDYBEAR1965"
     },
     {
-      "id": "breathless-1960"
-    },
-    {
-      "id": "high-and-low"
-    },
-    {
-      "id": "the-housemaid-1960"
-    },
-    {
-      "id": "the-warped-ones"
-    },
-    {
-      "id": "blast-of-silence-1961-restored-movie-720p-hd"
-    },
-    {
-      "id": "1960-murder-inc-burt-balaban-stuart-rosenberg-vose"
-    },
-    {
-      "id": "payroll_1961"
-    },
-    {
-      "id": "OnTheBeat"
-    },
-    {
-      "id": "tokyo-drifter"
-    },
-    {
-      "id": "yojimbo_202012"
-    },
-    {
-      "id": "never-let-go-1960-peter-sellers-crime-thriller"
-    },
-    {
-      "id": "1960-the-criminal-el-criminal-joseph-losey-vose_202008"
-    },
-    {
-      "id": "v615585"
+      "id": "the-thousand-eyes-of-dr-mabuse-1960-colorized-movie-720p-hd"
     },
     {
       "id": "helll-is-a-city-1960"
     },
     {
-      "id": "the.day.of.the.owl.1968"
+      "id": "high-and-low"
     },
     {
-      "id": "SeanceonaWetAfternoon"
+      "id": "breathless-1960"
     },
     {
-      "id": "never-take-candy-from-a-stranger"
+      "id": "never-let-go-1960-peter-sellers-crime-thriller"
     },
     {
-      "id": "WHOKILLEDTEDDYBEAR1965"
+      "id": "blast-of-silence-1961-restored-movie-720p-hd"
     },
     {
-      "id": "Intimidation"
+      "id": "cape-fear-1962-colorized-movie-576p-sd"
     },
     {
-      "id": "a-colt-is-my-passport"
-    },
-    {
-      "id": "1960-seven-thieves-siete-ladrones-henry-hathaway-ve-version-en-espanol"
-    },
-    {
-      "id": "cash-on-demand-1961-colorized-movie-720p-hd"
-    },
-    {
-      "id": "TheNakedKiss_662"
+      "id": "the-train-1964_202511"
     },
     {
       "id": "experiment-in-terror-1962-restored-movie-720p-hd"
     },
     {
-      "id": "the-manchurian-candidate"
+      "id": "payroll_1961"
+    },
+    {
+      "id": "the-bad-sleep-well"
+    },
+    {
+      "id": "1960-seven-thieves-siete-ladrones-henry-hathaway-ve-version-en-espanol"
+    },
+    {
+      "id": "a-colt-is-my-passport"
     },
     {
       "id": "branded-to-kill"
     },
     {
-      "id": "the-night-of-the-generals-1967"
+      "id": "cruel-gun-story"
+    },
+    {
+      "id": "SeanceonaWetAfternoon"
+    },
+    {
+      "id": "tokyo-drifter"
     },
     {
       "id": "in.the.heat.of.the.night.1967"
@@ -99,10 +69,40 @@
       "id": "in.-cold.-blood.-1967_202510"
     },
     {
-      "id": "the.-collector.-1965"
+      "id": "1960-murder-inc-burt-balaban-stuart-rosenberg-vose"
+    },
+    {
+      "id": "diabolik_202509"
+    },
+    {
+      "id": "cash-on-demand-1961-colorized-movie-720p-hd"
+    },
+    {
+      "id": "v615585"
+    },
+    {
+      "id": "the.day.of.the.owl.1968"
+    },
+    {
+      "id": "1960-the-criminal-el-criminal-joseph-losey-vose_202008"
+    },
+    {
+      "id": "the-manchurian-candidate"
     },
     {
       "id": "Judex1963"
+    },
+    {
+      "id": "TheNakedKiss_662"
+    },
+    {
+      "id": "the-housemaid-1960"
+    },
+    {
+      "id": "the.-collector.-1965"
+    },
+    {
+      "id": "OnTheBeat"
     }
   ]
 }
