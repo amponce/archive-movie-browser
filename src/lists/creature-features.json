@@ -2,7 +2,7 @@
   "slug": "creature-features",
   "title": "Creature features",
   "blurb": "Atomic-age monsters and flying saucers from the drive-in decade. Rubber suits, stock footage of jets, and the odd genuine classic hiding in the lineup.",
-  "curator": "amponce",
+  "curator": "orphanedfilms",
   "films": [
     { "id": "day-the-earth-stood-still-1951", "note": "The classic. A visitor, a robot, and a warning the world ignores. Klaatu barada nikto." },
     { "id": "earth-vs-the-flying-saucers-color", "note": "Ray Harryhausen's saucers take Washington apart, one monument at a time." },
