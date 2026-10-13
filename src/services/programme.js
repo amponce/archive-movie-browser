@@ -134,6 +134,24 @@ export function heardOfRow(index, now = new Date(), limit = 12) {
   return { lastYear, films: seededShuffle(famous, dayOf(now) + 5).slice(0, limit) };
 }
 
+// Each film once on the page: rows in order of priority, every one skipping films already in
+// `shown` or in a row before it, and keeping at most `limit` of the rest. Films match by TMDB id
+// when the index knows them, so two uploads of one film count as one. A row still loading
+// (undefined) stays undefined.
+export function distinctRows(rows, index, shown = []) {
+  const seen = new Set(shown);
+  return rows.map(({ films, limit }) => {
+    if (!films) return films;
+    const out = [];
+    for (const f of films) {
+      if (out.length >= limit) break;
+      const key = index[f.id]?.i ?? f.id;
+      if (!seen.has(key)) { seen.add(key); out.push(f); }
+    }
+    return out;
+  });
+}
+
 // Films on the same shelf as one film, from the index alone: share a genre, prefer the same
 // decade, then the nearest ones, well regarded first. Null when the film is not in the index
 // or has no genre there, so the caller can ask Archive.org instead.
