@@ -5,6 +5,7 @@ import archiveService, { ALL_FILMS, runtimeFilter } from './archive';
 import tmdbService from './tmdb';
 import { indexedMatch } from './posterIndex';
 import { isRecent } from './policy';
+import { seriesOf } from './programme';
 
 export const cardFromIndex = ({ id, entry }) => ({ id, title: entry.t, year: entry.y, poster: tmdbService.getPosterUrl(entry.p, 'medium') });
 
@@ -44,14 +45,16 @@ export async function newestRow({ limit = 6 } = {}) {
   const { movies } = await archiveService.fetchMovies({ collection: ALL_FILMS, sortBy: 'publicdate', sortOrder: 'desc', rowsPerPage: 100 });
   const features = movies.filter(runtimeFilter({ minRuntime: 40 }));
   const seen = new Set();
+  const series = new Set(); // one film of a series, when someone uploads all of it at once
   const cards = [];
   for (let i = 0; i < features.length && cards.length < limit; i += 8) {
     const batch = features.slice(i, i + 8);
     const found = await Promise.all(batch.map(m => tmdbService.searchMovie(m.title, m.year, m.identifier).catch(() => null)));
     batch.forEach((movie, j) => {
       const hit = found[j];
-      if (!hit?.posterPath || seen.has(hit.id) || cards.length >= limit || isRecent(String(hit.releaseDate || '').slice(0, 4))) return;
+      if (!hit?.posterPath || seen.has(hit.id) || series.has(seriesOf(movie.title)) || cards.length >= limit || isRecent(String(hit.releaseDate || '').slice(0, 4))) return;
       seen.add(hit.id);
+      series.add(seriesOf(movie.title));
       cards.push(cardFromArchive(movie, hit.posterPath));
     });
   }

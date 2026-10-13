@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { featuredFor, rowFor, wantedFrom, countsOf, changesIn, shelfFor, wallFor, shortRow, sameShelf, heardOfRow } from './programme.js';
+import { featuredFor, rowFor, wantedFrom, countsOf, changesIn, shelfFor, wallFor, shortRow, sameShelf, heardOfRow, distinctRows, seriesOf } from './programme.js';
 
 const index = {
   loved_unseen: { i: 1, t: 'Messiah of Evil', y: 1975, p: '/a.jpg', v: 7.9, k: 200, c: 0.95 },
@@ -146,4 +146,27 @@ test('rows can leave out tonight\'s film by TMDB id, whichever upload it is', ()
   const decade = {};
   for (let n = 1; n <= 7; n++) decade['f' + n] = { i: n, t: 'F' + n, y: 1950, p: '/x.jpg', v: 7, k: 100, c: 1 };
   assert.ok(shelfFor(decade, new Date(), 6, 1970, 3).films.every(f => f.entry.i !== 3));
+});
+
+test('each film shows once across the rows, matched by TMDB id, and rows refill to their limit', () => {
+  const index = { a: { i: 1 }, a2: { i: 1 }, b: { i: 2 }, c: { i: 3 }, d: { i: 4 } };
+  const ids = (...xs) => xs.map(id => ({ id }));
+  const [first, second, loading, live] = distinctRows([
+    { films: ids('a', 'b', 'c'), limit: 2 },
+    { films: ids('a2', 'b', 'c', 'd'), limit: 2 },
+    { films: undefined, limit: 2 },
+    { films: ids('d', 'live-only', 'live-only'), limit: 5 },
+  ], index, [2]);
+  assert.deepEqual(first.map(f => f.id), ['a', 'c']); // b is shown already
+  assert.deepEqual(second.map(f => f.id), ['d']); // another upload of a, and c, are above
+  assert.equal(loading, undefined);
+  assert.deepEqual(live.map(f => f.id), ['live-only']); // films the index doesn't know match by upload
+});
+
+test('a sequel is in the same series as the first film, other titles are not', () => {
+  assert.equal(seriesOf('Aces Go Places II (1983)'), seriesOf('Aces Go Places (1982)'));
+  assert.equal(seriesOf('Rocky III'), 'rocky');
+  assert.equal(seriesOf('Halloween 4: The Return'), 'halloween 4 the return');
+  assert.notEqual(seriesOf('Police Story'), seriesOf('Police Academy'));
+  assert.equal(seriesOf(undefined), '');
 });
