@@ -88,7 +88,7 @@ export default function OnAir({ skip = [] } = {}) {
 
   return (
     <section id="on-air" aria-labelledby="on-air-channel" className="rule">
-      <p className="sr-only" aria-live="polite">{`Previewing channel ${channel.number}, ${channel.name}: ${film.title}, ${minutesIn} minutes in.`}</p>
+      <p className="sr-only" aria-live="polite">{`Previewing channel ${channel.number}, ${channel.name}: ${film.title}.`}</p>
       <div className="gutter pt-10 lg:pt-12 pb-6 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-end">
         <div className="lg:col-span-6 flex flex-col gap-6 order-2 lg:order-1">
           <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1">
