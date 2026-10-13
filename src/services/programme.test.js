@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { featuredFor, rowFor, wantedFrom, countsOf, changesIn, shelfFor, wallFor, shortRow, sameShelf, heardOfRow, distinctRows } from './programme.js';
+import { featuredFor, rowFor, wantedFrom, countsOf, changesIn, shelfFor, wallFor, shortRow, sameShelf, heardOfRow, distinctRows, seriesOf } from './programme.js';
 
 const index = {
   loved_unseen: { i: 1, t: 'Messiah of Evil', y: 1975, p: '/a.jpg', v: 7.9, k: 200, c: 0.95 },
@@ -161,4 +161,12 @@ test('each film shows once across the rows, matched by TMDB id, and rows refill 
   assert.deepEqual(second.map(f => f.id), ['d']); // another upload of a, and c, are above
   assert.equal(loading, undefined);
   assert.deepEqual(live.map(f => f.id), ['live-only']); // films the index doesn't know match by upload
+});
+
+test('a sequel is in the same series as the first film, other titles are not', () => {
+  assert.equal(seriesOf('Aces Go Places II (1983)'), seriesOf('Aces Go Places (1982)'));
+  assert.equal(seriesOf('Rocky III'), 'rocky');
+  assert.equal(seriesOf('Halloween 4: The Return'), 'halloween 4 the return');
+  assert.notEqual(seriesOf('Police Story'), seriesOf('Police Academy'));
+  assert.equal(seriesOf(undefined), '');
 });

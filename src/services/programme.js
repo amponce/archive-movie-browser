@@ -152,6 +152,11 @@ export function distinctRows(rows, index, shown = []) {
   });
 }
 
+// A film's series: its title without the year or a sequel number, so Aces Go Places and
+// Aces Go Places II are one series
+export const seriesOf = title => String(title || '').toLowerCase().replace(/\(.*?\)/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim()
+  .replace(/\s+(part\s+)?(ii|iii|iv|v|vi|vii|viii|\d{1,2})$/, '');
+
 // Films on the same shelf as one film, from the index alone: share a genre, prefer the same
 // decade, then the nearest ones, well regarded first. Null when the film is not in the index
 // or has no genre there, so the caller can ask Archive.org instead.
