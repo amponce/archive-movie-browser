@@ -7,7 +7,7 @@ Each `.json` file here is one list on the site's Lists page. Anyone can add one:
   "slug": "noir-under-90",
   "title": "Noir you can finish tonight",
   "blurb": "Twelve films under ninety minutes, from the years when the studios shot fast and cheap and the shadows did the acting.",
-  "curator": "amponce",
+  "curator": "orphanedfilms",
   "films": [
     { "id": "Detour", "note": "Six days of shooting, one of the bleakest endings in American film." },
     { "id": "Hitch_Hiker" }
