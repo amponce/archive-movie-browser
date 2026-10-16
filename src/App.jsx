@@ -19,6 +19,7 @@ const PAGES = {
   '/details': lazy(() => import('./pages/ArchiveListPage')),
   '/channels': lazy(() => import('./pages/CommunityPage')),
   '/halloween': lazy(() => import('./pages/HalloweenPage')),
+  '/feedback': lazy(() => import('./pages/FeedbackPage')),
   '/c': lazy(() => import('./pages/ChannelPage')),
   '/u': lazy(() => import('./pages/ProfilePage')),
 };
