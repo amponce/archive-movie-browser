@@ -1,9 +1,10 @@
-// /api/profile, /api/channel, /api/channels, /api/passkey, /api/handle
+// /api/profile, /api/channel, /api/channels, /api/passkey, /api/handle, /api/feedback
 import { createProfile, authProfile, getProfile, updateProfile, checkHandle, movedHandle, setFavourite, createChannel, getChannel, updateChannel, deleteChannel, submitChannel, setSaved, listChannels, hashKey, isListed } from './_community.js';
 import { record, channelSnapshot, channelChanges, profileChanges } from './_history.js';
 import { rpFor, isPasskeyId, registrationOptions, register, listPasskeys, removePasskey, signinOptions, signin } from './_passkeys.js';
 
 const MAX_BODY = 20_000;
+const FEEDBACK_KINDS = ['idea', 'bug', 'other'];
 const json = (body, status = 200, headers = {}) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-store', ...headers } });
 const empty = status => new Response(null, { status, headers: { 'Cache-Control': 'no-store' } });
 const originHost = origin => { try { return new URL(origin).host; } catch { return null; } };
@@ -126,6 +127,17 @@ async function route(request, deps) {
   const { body, tooBig } = await readBody(request);
   if (tooBig) return empty(413);
   if (body === null) return empty(400);
+
+  // A note from the footer's feedback form; nothing about the sender is kept
+  if (method === 'POST' && parts[0] === 'feedback' && parts.length === 1) {
+    const message = typeof body.message === 'string' ? body.message.trim() : '';
+    if (!FEEDBACK_KINDS.includes(body.kind) || !message || message.length > 2000) return empty(400);
+    if (await overLimit(db, `f:${address}`, 10, 3_600_000, now)) return empty(429);
+    const page = typeof body.page === 'string' ? body.page.slice(0, 200) : null;
+    await db.prepare('INSERT INTO feedback (at, kind, message, page) VALUES (?, ?, ?, ?)').bind(now, body.kind, message, page).run();
+    return empty(204);
+  }
+
   const me = await owner(request, db);
   if (!me) return empty(401);
 

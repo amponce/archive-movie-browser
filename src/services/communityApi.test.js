@@ -299,3 +299,17 @@ test('handle availability is limited per address', async () => {
   assert.equal((await ask('4.4.4.4')).status, 429);
   assert.equal((await ask('5.5.5.5')).status, 200);
 });
+
+test('feedback: stored without the sender, checked, and rate limited', async () => {
+  const c = await ctx();
+  assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'bug', message: '  The guide is blank  ', page: '/tv' } })).status, 204);
+  const row = await c.db.prepare('SELECT kind, message, page FROM feedback').first();
+  assert.deepEqual({ ...row }, { kind: 'bug', message: 'The guide is blank', page: '/tv' });
+  assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'spam', message: 'x' } })).status, 400);
+  assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'idea', message: '   ' } })).status, 400);
+  assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'idea', message: 'x'.repeat(2001) } })).status, 400);
+  for (let i = 0; i < 9; i++) assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'idea', message: 'hi' } })).status, 204);
+  assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'idea', message: 'hi' } })).status, 429);
+  const cross = await handle(new Request(`${ORIGIN}/api/feedback`, { method: 'POST', body: '{"kind":"idea","message":"x"}', headers: { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' } }), c);
+  assert.equal(cross.status, 403);
+});
