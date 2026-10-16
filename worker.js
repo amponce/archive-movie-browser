@@ -37,6 +37,17 @@ async function archiveFlag(film) {
   return verdict;
 }
 
+// Whether a Turnstile token from the feedback form is real, unused and from our widget
+async function passedTurnstile(secret, token, ip) {
+  if (!secret || typeof token !== 'string' || !token || token.length > 2048) return false;
+  const form = new FormData();
+  form.set('secret', secret);
+  form.set('response', token);
+  if (ip) form.set('remoteip', ip);
+  const result = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: form, signal: AbortSignal.timeout(5000) }).then(r => r.json()).catch(() => null);
+  return result?.success === true;
+}
+
 // The handlers written for (req, res), run with a web Request and answered with a Response
 const node = (handler) => async (request, query, env) => {
   const req = { method: request.method, query, headers: Object.fromEntries(request.headers) };
@@ -65,7 +76,7 @@ const API = {
   event: web(event, 'POST'),
   stats: web(stats, 'GET'),
   mcp: (request) => mcp(request),
-  community: (request, query, env) => community(request, { db: env.DB, flag: archiveFlag, minutes: redisMinutes, webauthn, netSalt: env.NET_SALT, now: Date.now() }),
+  community: (request, query, env) => community(request, { db: env.DB, flag: archiveFlag, minutes: redisMinutes, webauthn, netSalt: env.NET_SALT, now: Date.now(), human: (token, ip) => passedTurnstile(env.TURNSTILE_SECRET, token, ip) }),
 };
 
 // The share card's picture: the poster of the first film that has one
