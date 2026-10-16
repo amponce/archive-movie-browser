@@ -5,7 +5,7 @@ import { handle, addressKey, LOOKUPS } from '../../api/community.js';
 import { fakeWebauthn, resp } from './fakeWebauthn.js';
 
 const ORIGIN = 'https://www.orphanedfilms.com';
-const ctx = async () => ({ db: await openTestDb(), flag: async () => false, minutes: async () => ({}), now: 1_700_000_000_000 });
+const ctx = async () => ({ db: await openTestDb(), flag: async () => false, minutes: async () => ({}), now: 1_700_000_000_000, human: async token => token === 'ok' });
 const call = (c, method, path, { body, auth, ip = '1.1.1.1' } = {}) => handle(new Request(ORIGIN + path, {
   method, body: body && JSON.stringify(body),
   headers: { 'content-type': 'application/json', origin: ORIGIN, 'sec-fetch-site': 'same-origin', 'cf-connecting-ip': ip, ...(auth && { authorization: `Bearer ${auth.id}.${auth.key}` }) },
@@ -302,14 +302,18 @@ test('handle availability is limited per address', async () => {
 
 test('feedback: stored without the sender, checked, and rate limited', async () => {
   const c = await ctx();
-  assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'bug', message: '  The guide is blank  ', page: '/tv' } })).status, 204);
+  assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'bug', message: '  The guide is blank  ', page: '/tv', token: 'ok' } })).status, 204);
   const row = await c.db.prepare('SELECT kind, message, page FROM feedback').first();
   assert.deepEqual({ ...row }, { kind: 'bug', message: 'The guide is blank', page: '/tv' });
   assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'spam', message: 'x' } })).status, 400);
   assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'idea', message: '   ' } })).status, 400);
   assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'idea', message: 'x'.repeat(2001) } })).status, 400);
-  for (let i = 0; i < 9; i++) assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'idea', message: 'hi' } })).status, 204);
-  assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'idea', message: 'hi' } })).status, 429);
+  for (let i = 0; i < 9; i++) assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'idea', message: 'hi', token: 'ok' } })).status, 204);
+  assert.equal((await call(c, 'POST', '/api/feedback', { body: { kind: 'idea', message: 'hi', token: 'ok' } })).status, 429);
+  assert.equal((await call(c, 'POST', '/api/feedback', { ip: '3.3.3.3', body: { kind: 'idea', message: 'hi' } })).status, 403, 'no Turnstile token');
+  assert.equal((await call(c, 'POST', '/api/feedback', { ip: '3.3.3.3', body: { kind: 'idea', message: 'hi', token: 'forged' } })).status, 403, 'bad Turnstile token');
+  assert.equal((await call({ ...c, human: undefined }, 'POST', '/api/feedback', { ip: '3.3.3.3', body: { kind: 'idea', message: 'hi', token: 'ok' } })).status, 403, 'no checker means no note');
+  assert.equal((await c.db.prepare('SELECT COUNT(*) AS n FROM feedback').first()).n, 10);
   const cross = await handle(new Request(`${ORIGIN}/api/feedback`, { method: 'POST', body: '{"kind":"idea","message":"x"}', headers: { origin: 'https://evil.example', 'sec-fetch-site': 'cross-site' } }), c);
   assert.equal(cross.status, 403);
 });

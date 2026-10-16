@@ -132,6 +132,8 @@ async function route(request, deps) {
   if (method === 'POST' && parts[0] === 'feedback' && parts.length === 1) {
     const message = typeof body.message === 'string' ? body.message.trim() : '';
     if (!FEEDBACK_KINDS.includes(body.kind) || !message || message.length > 2000) return empty(400);
+    // Cloudflare Turnstile's token from the page; without a checker the note is refused
+    if (!(await deps.human?.(body.token, request.headers.get('cf-connecting-ip')))) return empty(403);
     if (await overLimit(db, `f:${address}`, 10, 3_600_000, now)) return empty(429);
     const page = typeof body.page === 'string' ? body.page.slice(0, 200) : null;
     await db.prepare('INSERT INTO feedback (at, kind, message, page) VALUES (?, ?, ?, ?)').bind(now, body.kind, message, page).run();

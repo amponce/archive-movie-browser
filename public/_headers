@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://image.tmdb.org https://archive.org https://*.archive.org; connect-src 'self' https://archive.org https://api.themoviedb.org; media-src 'self' https://archive.org https://*.archive.org; frame-src https://archive.org; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https://image.tmdb.org https://archive.org https://*.archive.org; connect-src 'self' https://archive.org https://api.themoviedb.org; media-src 'self' https://archive.org https://*.archive.org; frame-src https://archive.org https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
