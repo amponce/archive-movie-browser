@@ -7,13 +7,22 @@ import ContactEmail from '../ui/ContactEmail';
 const KINDS = [['idea', 'An idea'], ['bug', 'Something broken'], ['other', 'Anything else']];
 const SAYS = { 429: "That's a lot of notes in an hour. Try again a bit later.", error: "Couldn't send that. Try again in a moment." };
 
+// The page the footer link came from, if it is on this site; the browser's own parser decides,
+// so tricks like '/\t/elsewhere' that become '//elsewhere' are caught
+function sitePath(raw, origin = window.location.origin) {
+  if (!raw?.startsWith('/')) return null;
+  try {
+    const url = new URL(raw, origin);
+    return url.origin === origin ? url.pathname + url.search : null;
+  } catch { return null; }
+}
+
 // /feedback: a short note to the maintainer, no account. The footer link passes the page it was on.
 export default function FeedbackPage() {
   const [kind, setKind] = useState('idea');
   const [state, setState] = useState(null); // 'busy' | 'sent' | 429 | 'error'
   useEffect(() => { document.title = 'Feedback | Orphaned Films'; }, []);
-  const raw = new URLSearchParams(window.location.search).get('from');
-  const from = /^\/(?![/\\])/.test(raw || '') ? raw : null; // a path on this site only
+  const from = sitePath(new URLSearchParams(window.location.search).get('from'));
 
   const send = async (e) => {
     e.preventDefault();
