@@ -5,9 +5,12 @@
   "curator": "the station",
   "generated": {
     "rule": "Action 1980s–1980s",
-    "week": 202642
+    "week": 202643
   },
   "films": [
+    {
+      "id": "warlock-1989"
+    },
     {
       "id": "bad-taste-1987-full-movie"
     },
@@ -15,49 +18,46 @@
       "id": "dreadnaught_202203"
     },
     {
-      "id": "the-monster-squad-1987_202509"
-    },
-    {
-      "id": "la-busqueda-1985"
-    },
-    {
-      "id": "the-wraith-1986_202409"
+      "id": "dead-heat-1988_202511"
     },
     {
       "id": "ninja.-iii.-the.-domination.-1984.1080p.-blu-ray.-h-264.-aac-rarbg"
     },
     {
-      "id": "phantasm-ii-1988-1080p"
-    },
-    {
-      "id": "revenge.of.the.-ninja.-1983.1080p.-blu-ray.-h-264.-aac-rarbg"
-    },
-    {
-      "id": "kagemusha.-1980"
-    },
-    {
-      "id": "warlock-1989"
-    },
-    {
-      "id": "dead-heat-1988_202511"
-    },
-    {
-      "id": "we-are-going-to-eat-you"
-    },
-    {
       "id": "the-seventh-curse"
     },
     {
-      "id": "ROBOCOPCC"
+      "id": "big-trouble-little-china"
     },
     {
       "id": "video-4058-masacre-en-el-rio-tula-1985-dvdrip-lat-v.mkv"
     },
     {
+      "id": "kagemusha.-1980"
+    },
+    {
+      "id": "ROBOCOPCC"
+    },
+    {
+      "id": "la-busqueda-1985"
+    },
+    {
+      "id": "phantasm-ii-1988-1080p"
+    },
+    {
+      "id": "we-are-going-to-eat-you"
+    },
+    {
       "id": "the-toxic-avenger-1986-pal-vhs"
     },
     {
-      "id": "big-trouble-little-china"
+      "id": "revenge.of.the.-ninja.-1983.1080p.-blu-ray.-h-264.-aac-rarbg"
+    },
+    {
+      "id": "the-monster-squad-1987_202509"
+    },
+    {
+      "id": "the-wraith-1986_202409"
     }
   ]
 }
