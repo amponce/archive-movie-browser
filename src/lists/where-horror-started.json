@@ -5,92 +5,92 @@
   "curator": "the station",
   "generated": {
     "rule": "Horror 1910s–1920s",
-    "week": 202642
+    "week": 202643
   },
   "films": [
     {
-      "id": "sub-115-mb-test-to-see-if-it-can-get-through-the-beta-uploader"
-    },
-    {
-      "id": "MyMovie_201901"
-    },
-    {
-      "id": "the-man-who-laughs-1928-1080p-blu-ray-x-265-ghost"
-    },
-    {
       "id": "DasKabinettdesDoktorCaligariTheCabinetofDrCaligari"
-    },
-    {
-      "id": "a-page-of-madness-1926_202507"
-    },
-    {
-      "id": "DrJekyllandMrHyde"
-    },
-    {
-      "id": "TheBat1926"
-    },
-    {
-      "id": "the-mysterious-island_1929"
     },
     {
       "id": "der-hund-von-baskerville_1929"
     },
     {
-      "id": "TheLostWorld"
-    },
-    {
-      "id": "the-unholy-night-1929"
-    },
-    {
-      "id": "mocny-czlowiek_1929"
-    },
-    {
-      "id": "ThePhantomCarriage"
-    },
-    {
-      "id": "The_Cat_and_the_Canary"
-    },
-    {
-      "id": "the-haunted-castle-1921-restored-movie-720p-hd"
-    },
-    {
-      "id": "faust-1926_202505"
-    },
-    {
-      "id": "TheHandsOfOrlac1924"
-    },
-    {
-      "id": "the-last-performance_1929"
-    },
-    {
-      "id": "london-after-midnight_1927"
-    },
-    {
-      "id": "the-bells-1926-a-crime-story...-silent-movie-with-lionel-barrymore-and-boris-karloff"
-    },
-    {
       "id": "TheGolem_893"
     },
     {
-      "id": "Salomfebruary151923"
-    },
-    {
-      "id": "THEHUNCHBACKOFNOTREDAME1923LonChaneyPatsyRuthMiller"
-    },
-    {
-      "id": "the.-last.-warning.-1928"
+      "id": "DrJekyllandMrHyde"
     },
     {
       "id": "RobertWienesgenuineATaleOfAVampire1920"
     },
     {
-      "id": "TheAvengingConscience"
+      "id": "MyMovie_201901"
+    },
+    {
+      "id": "faust-1926_202505"
+    },
+    {
+      "id": "TheBat1926"
+    },
+    {
+      "id": "THEHUNCHBACKOFNOTREDAME1923LonChaneyPatsyRuthMiller"
+    },
+    {
+      "id": "TheLostWorld"
+    },
+    {
+      "id": "Haxan_tinted_and_subtitled"
     },
     {
       "id": "the.-magician.-1926.-dvdrip.-600-mb.h-264.-mp-4-zoetrope"
     },
     {
-      "id": "Haxan_tinted_and_subtitled"
+      "id": "london-after-midnight_1927"
+    },
+    {
+      "id": "a-page-of-madness-1926_202507"
+    },
+    {
+      "id": "the-haunted-castle-1921-restored-movie-720p-hd"
+    },
+    {
+      "id": "the-bells-1926-a-crime-story...-silent-movie-with-lionel-barrymore-and-boris-karloff"
+    },
+    {
+      "id": "mocny-czlowiek_1929"
+    },
+    {
+      "id": "The_Cat_and_the_Canary"
+    },
+    {
+      "id": "ThePhantomCarriage"
+    },
+    {
+      "id": "the-unholy-night-1929"
+    },
+    {
+      "id": "the-last-performance_1929"
+    },
+    {
+      "id": "the.-last.-warning.-1928"
+    },
+    {
+      "id": "the-mysterious-island_1929"
+    },
+    {
+      "id": "TheAvengingConscience"
+    },
+    {
+      "id": "Salomfebruary151923"
+    },
+    {
+      "id": "sub-115-mb-test-to-see-if-it-can-get-through-the-beta-uploader"
+    },
+    {
+      "id": "the-man-who-laughs-1928-1080p-blu-ray-x-265-ghost"
+    },
+    {
+      "id": "TheHandsOfOrlac1924"
     }
   ]
 }
