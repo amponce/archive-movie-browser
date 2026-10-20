@@ -51,3 +51,12 @@ test('the library pack is a valid zip of one folder per film, each matched to TM
   assert.equal(bytes.readUInt16LE(end + 10), files.length);
   assert.equal(bytes.readUInt32LE(bytes.readUInt32LE(end + 16)), 0x02014b50);
 });
+
+test('a film after 1945 is in the catalogue though the clock read 1970 while the module loaded', async () => {
+  // A Cloudflare Worker's clock stands at 1970 until the first request
+  const RealDate = Date;
+  globalThis.Date = class extends RealDate { constructor(...a) { super(...(a.length ? a : [0])); } static now() { return 0; } };
+  const tv = await import('../../api/_tv.js?frozen-clock').finally(() => { globalThis.Date = RealDate; });
+  const film = tv.catalogue().find(f => f.year > 1950);
+  assert.ok(tv.isCatalogued(film.id), film.id);
+});

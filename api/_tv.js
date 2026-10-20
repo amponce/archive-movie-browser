@@ -152,8 +152,10 @@ export function catalogue() {
     genre: e.g?.[0] || 'Other', genres: e.g || [], minutes: e.l || e.d || 0, rating: e.v || null,
   })).sort((a, b) => a.genre.localeCompare(b.genre) || a.title.localeCompare(b.title));
 }
-const inCatalogue = new Set(catalogue().map(film => film.id));
-export const isCatalogued = id => inCatalogue.has(String(id));
+// Built on first use, not as the module loads: a Worker's clock reads 1970 until the first
+// request, which made every film after 1945 too recent
+let inCatalogue;
+export const isCatalogued = id => (inCatalogue ||= new Set(catalogue().map(film => film.id))).has(String(id));
 
 // Every film as one playlist, grouped by its main genre, each entry a link that sends the
 // player on to the film's file on Archive.org (/api/tv/film/<id>)
