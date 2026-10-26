@@ -8,8 +8,8 @@ const MAX_STREAM_BYTES = 4e9; // a bigger "original" is a master copy, not somet
 // everywhere (Safari has no Ogg). Archive.org labels every uploaded mp4 "MPEG4" whatever its
 // codec, so an original may turn out to be DivX-era video the browser cannot decode: sound
 // and a black picture. The 512kb derivative is always H.264.
-export function playableFiles(files) {
-  const mp4s = (files || []).filter(file => /\.(mp4|m4v)$/i.test(file.name || '') && Number(file.size || 0) < MAX_STREAM_BYTES);
+export function playableFiles(files, maxBytes = MAX_STREAM_BYTES) {
+  const mp4s = (files || []).filter(file => /\.(mp4|m4v)$/i.test(file.name || '') && Number(file.size || 0) < maxBytes);
   const rank = (file) => {
     const format = String(file.format || '').toLowerCase();
     if (format.startsWith('h.264')) return 0;          // Archive.org's own streaming derivative
@@ -77,8 +77,8 @@ export function subtitleTracks(files, videoName = '') {
 const stemOf = name => String(name || '').replace(/\.ia\.mp4$/i, '').replace(/\.[^.]+$/, '');
 
 // The first choice, or null to fall back to the embedded player
-export function pickPlayableFile(files) {
-  return playableFiles(files)[0] || null;
+export function pickPlayableFile(files, maxBytes) {
+  return playableFiles(files, maxBytes)[0] || null;
 }
 
 // The copies Archive.org makes of an uploaded mp4, to try when the original won't play: the

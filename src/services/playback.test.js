@@ -29,6 +29,12 @@ test('pickPlayableFile skips a master too big to stream, and gives up when nothi
   assert.equal(pickPlayableFile(undefined), null);
 });
 
+test('pickPlayableFile takes a file of any size when the caller lifts the limit (TV players stream by range)', () => {
+  const huge = [{ name: 'film.ia.mp4', format: 'h.264 IA', source: 'derivative', size: String(6.9e9) }, { name: 'film.mp4', format: 'MPEG4', source: 'original', size: String(6.9e9) }];
+  assert.equal(pickPlayableFile(huge), null);
+  assert.equal(pickPlayableFile(huge, Infinity).name, 'film.ia.mp4');
+});
+
 test('streamCopies names the H.264 copies to try when an uploaded mp4 will not play', () => {
   const base = 'https://archive.org/download/BruceLeeFightsBackFromTheGrave1976/bruceleefightsback';
   assert.deepEqual(streamCopies(`${base}.mp4`), [`${base}_512kb.mp4`, `${base}.ia.mp4`]);
