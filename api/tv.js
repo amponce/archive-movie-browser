@@ -89,7 +89,8 @@ export default async function handler(req, res, env = {}) {
       const id = String(req.query.film);
       if (!isCatalogued(id)) { res.status(404).json({ error: 'Not a film in the catalogue.' }); return; }
       const data = await fetch(`https://archive.org/metadata/${encodeURIComponent(id)}`, { signal: AbortSignal.timeout(15000) }).then(r => (r.ok ? r.json() : null));
-      const file = data?.files ? pickPlayableFile(data.files) : null;
+      // No size limit: players stream by range, so a big file only matters to a browser
+      const file = data?.files ? pickPlayableFile(data.files, Infinity) : null;
       if (!file) { res.status(404).json({ error: 'Archive.org has no playable file for this film right now.' }); return; }
       res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800'); // a film's file rarely changes
       res.setHeader('Location', videoUrl(id, file.name));
