@@ -5,104 +5,104 @@
   "curator": "the station",
   "generated": {
     "rule": "Sci-Fi 1950s–1950s",
-    "week": 202643
+    "week": 202644
   },
   "films": [
     {
-      "id": "TheMonsterofPiedrasBlancas1959"
-    },
-    {
-      "id": "CALTIKITheImmortalMonster1960"
-    },
-    {
-      "id": "target-earth-1954-colorized"
-    },
-    {
-      "id": "quatermass-2"
-    },
-    {
-      "id": "day-the-earth-stood-still-1951"
-    },
-    {
-      "id": "the-land-unknown"
-    },
-    {
-      "id": "curse-of-the-faceless-man-colorized-movie-720p-hd"
-    },
-    {
-      "id": "20-million-miles-to-earth"
+      "id": "the-revenge-of-frankenstein"
     },
     {
       "id": "abbott-and-costello-meet-the-invisible-man"
     },
     {
-      "id": "the.-fly.-1958"
-    },
-    {
-      "id": "it-came-from-beneath-the-sea"
-    },
-    {
-      "id": "TheMonolithMonsters1957"
-    },
-    {
-      "id": "the-revenge-of-frankenstein"
-    },
-    {
-      "id": "the-quatermass-xperiment"
-    },
-    {
-      "id": "kronos-1957-colorized"
-    },
-    {
-      "id": "battle-in-outer-space-1959_202505"
-    },
-    {
       "id": "tarantula-1955-colorized"
     },
     {
-      "id": "invasion-of-the-body-snatchers-1956-colorized"
+      "id": "TheMonsterofPiedrasBlancas1959"
     },
     {
-      "id": "monster-that-challenged-the-world-1957-colorized"
-    },
-    {
-      "id": "CUSA19851031"
-    },
-    {
-      "id": "x-the-unknown-1956-colorized"
-    },
-    {
-      "id": "i-married-a-monster"
-    },
-    {
-      "id": "not-of-this-earth-1957"
-    },
-    {
-      "id": "it-the-terror-from-beyond-space-colorized"
-    },
-    {
-      "id": "how-to-make-a-monster-1958"
-    },
-    {
-      "id": "earth-vs-the-flying-saucers-1956_202507"
+      "id": "curse-of-the-faceless-man-colorized-movie-720p-hd"
     },
     {
       "id": "when-worlds-collide"
     },
     {
-      "id": "FriendWithoutAFace104"
+      "id": "invasion-of-the-body-snatchers-1956-colorized"
     },
     {
-      "id": "20-000-leagues-under-the-sea-1954_20251111"
+      "id": "earth-vs-the-flying-saucers-1956_202507"
     },
     {
-      "id": "man-from-planet-x"
+      "id": "CALTIKITheImmortalMonster1960"
+    },
+    {
+      "id": "it-came-from-beneath-the-sea"
+    },
+    {
+      "id": "the-quatermass-xperiment"
+    },
+    {
+      "id": "the-land-unknown"
+    },
+    {
+      "id": "day-the-earth-stood-still-1951"
+    },
+    {
+      "id": "battle-in-outer-space-1959_202505"
+    },
+    {
+      "id": "20-million-miles-to-earth"
+    },
+    {
+      "id": "i-married-a-monster"
     },
     {
       "id": "the-tingler-1959_202510"
     },
     {
+      "id": "man-from-planet-x"
+    },
+    {
+      "id": "quatermass-2"
+    },
+    {
+      "id": "not-of-this-earth-1957"
+    },
+    {
+      "id": "magnetic-monster"
+    },
+    {
+      "id": "target-earth-1954-colorized"
+    },
+    {
+      "id": "x-the-unknown-1956-colorized"
+    },
+    {
+      "id": "monster-on-campus"
+    },
+    {
+      "id": "CUSA19851031"
+    },
+    {
+      "id": "kronos-1957-colorized"
+    },
+    {
+      "id": "the-man-in-the-white-suit_202105"
+    },
+    {
       "id": "the-curse-of-frankenstein-1957_202406"
+    },
+    {
+      "id": "20-000-leagues-under-the-sea-1954_20251111"
+    },
+    {
+      "id": "monster-that-challenged-the-world-1957-colorized"
+    },
+    {
+      "id": "the.-blob.-1958"
+    },
+    {
+      "id": "FriendWithoutAFace104"
     }
   ]
 }

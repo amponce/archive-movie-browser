@@ -5,74 +5,74 @@
   "curator": "the station",
   "generated": {
     "rule": "Sci-Fi 1980s–1980s",
-    "week": 202643
+    "week": 202644
   },
   "films": [
     {
-      "id": "paradis-pour-tous-1982-patrick-dewaaere-jacques-dutronc-fanny-cottencon-stephane"
-    },
-    {
-      "id": "the-wraith-1986_202409"
-    },
-    {
-      "id": "o-enigma-de-outro-mundo-1982-blu-ray-1080p"
-    },
-    {
-      "id": "Morning-patrol-movie"
-    },
-    {
-      "id": "the-return-of-the-living-dead-vhs-rip.-original-theatrical-audio"
-    },
-    {
-      "id": "hombre-mirando-al-sudeste-1986_202410"
-    },
-    {
-      "id": "thekindred1987horror"
-    },
-    {
-      "id": "wolfshole"
+      "id": "re-animator-1985_202508"
     },
     {
       "id": "VirusFukkatsuNoHi1980"
     },
     {
-      "id": "1984-1984_202511"
-    },
-    {
       "id": "bad-taste-1987-full-movie"
     },
     {
-      "id": "ROBOCOPCC"
-    },
-    {
-      "id": "dead-heat-1988_202511"
-    },
-    {
-      "id": "the-toxic-avenger-1986-pal-vhs"
-    },
-    {
-      "id": "alligator-1980"
-    },
-    {
-      "id": "re-animator-1985_202508"
+      "id": "wolfshole"
     },
     {
       "id": "scanners-1981-1080p"
     },
     {
-      "id": "from-beyond-1986-blu-ray"
+      "id": "killer-klowns-from-outer-space-1988-1080p-blu-ray-x-264-aac-ozlem"
     },
     {
-      "id": "phantasm-ii-1988-1080p"
+      "id": "o-enigma-de-outro-mundo-1982-blu-ray-1080p"
+    },
+    {
+      "id": "the-return-of-the-living-dead-vhs-rip.-original-theatrical-audio"
+    },
+    {
+      "id": "tetsuo-the-iron-man"
     },
     {
       "id": "mysterious-castle-in-the-carpathians-the-1981"
     },
     {
-      "id": "killer-klowns-from-outer-space-1988-1080p-blu-ray-x-264-aac-ozlem"
+      "id": "paradis-pour-tous-1982-patrick-dewaaere-jacques-dutronc-fanny-cottencon-stephane"
     },
     {
-      "id": "tetsuo-the-iron-man"
+      "id": "phantasm-ii-1988-1080p"
+    },
+    {
+      "id": "the-toxic-avenger-1986-pal-vhs"
+    },
+    {
+      "id": "thekindred1987horror"
+    },
+    {
+      "id": "ROBOCOPCC"
+    },
+    {
+      "id": "Morning-patrol-movie"
+    },
+    {
+      "id": "dead-heat-1988_202511"
+    },
+    {
+      "id": "hombre-mirando-al-sudeste-1986_202410"
+    },
+    {
+      "id": "from-beyond-1986-blu-ray"
+    },
+    {
+      "id": "1984-1984_202511"
+    },
+    {
+      "id": "alligator-1980"
+    },
+    {
+      "id": "the-wraith-1986_202409"
     }
   ]
 }

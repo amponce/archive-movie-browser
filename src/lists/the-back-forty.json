@@ -5,74 +5,83 @@
   "curator": "the station",
   "generated": {
     "rule": "Western 1930s–1970s",
-    "week": 202643
+    "week": 202644
   },
   "films": [
     {
-      "id": "haunted_ranch"
+      "id": "GitAlongLittleDogies"
     },
     {
-      "id": "WarOfTheWildcats-JohnWayne1943"
+      "id": "fobc110191171"
     },
     {
-      "id": "BuckJonesInBorderLaw1931"
+      "id": "ManoftheForest"
     },
     {
-      "id": "BattleofGreed"
+      "id": "Heldorado"
     },
     {
-      "id": "1944FrontierOutlaws"
+      "id": "SterlingHayden1955"
     },
     {
-      "id": "SanFernandoValley441985"
+      "id": "BellStarrStory"
     },
     {
-      "id": "TheOver-the-HillGangRidesAgain"
+      "id": "call_of_the_wilderness"
     },
     {
-      "id": "TheLawRidesAgain"
+      "id": "TheBoldCaballero"
     },
     {
-      "id": "SouthwardHo"
+      "id": "lumberjack1944"
     },
     {
-      "id": "feud_maker"
+      "id": "DesertGold"
     },
     {
-      "id": "ambush_valley"
+      "id": "the.-mercenary.-1968"
     },
     {
-      "id": "SunsetOnTheDesert_322"
+      "id": "BrandedaCoward"
+    },
+    {
+      "id": "UnderWesternStars"
+    },
+    {
+      "id": "the-violent-men-1955"
+    },
+    {
+      "id": "GangstersDan"
+    },
+    {
+      "id": "WheretheBuffaloRoam"
     },
     {
       "id": "NightTimeinNevada"
     },
     {
-      "id": "the.-great.-silence.-1968"
+      "id": "KidCarson"
     },
     {
-      "id": "cco_thegunandthepulpit"
+      "id": "DeathRidesTheRange"
     },
     {
-      "id": "BulldogCourage1935yurip"
+      "id": "TheKansan"
     },
     {
-      "id": "BigBoyRidesAgain"
+      "id": "TexasBuddies1932"
     },
     {
-      "id": "TheTriggerTrio"
+      "id": "Missouri_Traveler_1958"
     },
     {
-      "id": "FuzzySattlesDown"
+      "id": "MyOutlawBrother"
     },
     {
-      "id": "CarsonCityKid"
+      "id": "idaho_"
     },
     {
-      "id": "EyesofTexas"
-    },
-    {
-      "id": "HighLonesome"
+      "id": "carry-on-cowboy"
     },
     {
       "id": "TheNevadan"
@@ -81,28 +90,19 @@
       "id": "OntheOldSpanishTrail"
     },
     {
-      "id": "blazing-across-the-pecos-1948"
+      "id": "TheTriggerTrio"
     },
     {
-      "id": "aces_and_eights"
+      "id": "Wildcat_Trooper"
     },
     {
-      "id": "GitAlongLittleDogies"
+      "id": "1944FrontierOutlaws"
     },
     {
-      "id": "AngelAndTheBadManVideoQualityUpgrade"
+      "id": "HiddenGold4090"
     },
     {
-      "id": "the-violent-men-1955"
-    },
-    {
-      "id": "SunsetSerenade"
-    },
-    {
-      "id": "NoMansRange"
-    },
-    {
-      "id": "chatos-land-1972_202510"
+      "id": "RedRiverValley_"
     }
   ]
 }

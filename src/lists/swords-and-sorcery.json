@@ -5,20 +5,35 @@
   "curator": "the station",
   "generated": {
     "rule": "Fantasy 1980s–1980s",
-    "week": 202643
+    "week": 202644
   },
   "films": [
     {
-      "id": "creepshow-2-1983"
+      "id": "the-monster-squad-1987_202509"
     },
     {
-      "id": "adi-vasfiye_movie"
+      "id": "the-worst-witch-1986_202304"
     },
     {
       "id": "gate_20221003"
     },
     {
+      "id": "aaahh-belinda_movie"
+    },
+    {
+      "id": "adi-vasfiye_movie"
+    },
+    {
       "id": "the-seventh-curse"
+    },
+    {
+      "id": "warlock-1989"
+    },
+    {
+      "id": "303748221688_202503"
+    },
+    {
+      "id": "ninja.-iii.-the.-domination.-1984.1080p.-blu-ray.-h-264.-aac-rarbg"
     },
     {
       "id": "quest-for-fire-1981"
@@ -27,22 +42,7 @@
       "id": "big-trouble-little-china"
     },
     {
-      "id": "the-worst-witch-1986_202304"
-    },
-    {
-      "id": "ninja.-iii.-the.-domination.-1984.1080p.-blu-ray.-h-264.-aac-rarbg"
-    },
-    {
-      "id": "the-monster-squad-1987_202509"
-    },
-    {
-      "id": "303748221688_202503"
-    },
-    {
-      "id": "aaahh-belinda_movie"
-    },
-    {
-      "id": "warlock-1989"
+      "id": "creepshow-2-1983"
     }
   ]
 }
