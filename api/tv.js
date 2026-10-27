@@ -16,6 +16,7 @@ import { getChannel } from './_community.js';
 import { seenCounts } from './halloween.js';
 import { redis } from './_redis.js';
 import { isFinaleDay } from '../src/halloween/days.js';
+import { tvCommands, appOf, isBot, queueWrite } from './_stats.js';
 
 // On October 31 the Halloween channel airs its films by how many have seen them. The counts are
 // frozen the first time they are read that day (one shared copy), so the web, IPTV and guide
@@ -68,6 +69,13 @@ function overLimit(ip) {
   return count > SHARED_PER_MINUTE;
 }
 
+// Usage counts for players; never in the way of an answer
+async function counted(req, what) {
+  const userAgent = req.headers?.['user-agent'] || '';
+  if (req.method !== 'GET' || isBot(userAgent)) return;
+  await queueWrite(tvCommands({ ...what, app: appOf(userAgent) })).catch(() => {});
+}
+
 export default async function handler(req, res, env = {}) {
   // HEAD too: IPTV apps check a stream is up before they play it
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.status(405).end(); return; }
@@ -93,6 +101,7 @@ export default async function handler(req, res, env = {}) {
       const file = data?.files ? pickPlayableFile(data.files, Infinity) : null;
       if (!file) { res.status(404).json({ error: 'Archive.org has no playable file for this film right now.' }); return; }
       res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800'); // a film's file rarely changes
+      await counted(req, { film: id });
       res.setHeader('Location', videoUrl(id, file.name));
       res.status(302).end();
       return;

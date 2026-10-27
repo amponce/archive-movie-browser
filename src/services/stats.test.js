@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validEvent, commandsFor, statsDay, mergeCommands, onlineKey } from '../../api/_stats.js';
+import { validEvent, commandsFor, statsDay, mergeCommands, onlineKey, appOf, tvCommands } from '../../api/_stats.js';
 
 test('TV events are accepted and counted per channel', () => {
   const tune = validEvent({ name: 'TV', data: { action: 'tune', channel: 'atomic-age' } });
@@ -130,4 +130,36 @@ test('a play can say which list it came from', () => {
   assert.deepEqual(validEvent({ name: 'Play', data: { film: 'Detour', player: 'own', list: 'BAD LIST' } }).data, { film: 'Detour', player: 'own' });
   const cmds = commandsFor({ name: 'Play', data: { film: 'Detour', player: 'own', list: 'cult-80s' } }, { now: new Date('2026-10-02T12:00:00Z') });
   assert.ok(cmds.some(c => c[0] === 'ZINCRBY' && c[1] === 'stats:played-from:2026-10' && c[3] === 'cult-80s'));
+});
+
+test('a play counts its screen, and a fallback to the Archive.org player per film', () => {
+  const play = cmds({ name: 'Play', data: { film: 'Detour', player: 'archive', screen: 'phone' } });
+  assert.ok(play.some(c => c.join(' ') === 'ZINCRBY stats:screens:2026-09 1 phone'));
+  assert.ok(play.some(c => c.join(' ') === 'ZINCRBY stats:played-archive:2026-09 1 Detour'));
+  assert.equal(validEvent({ name: 'Play', data: { film: 'Detour', player: 'own', screen: '1920x1080' } }).data.screen, undefined, 'only a bucket');
+});
+
+test('watching counts by Pacific hour, per channel hour, a first minute, and minutes with subtitles', () => {
+  const film = cmds({ name: 'Watched', data: { where: 'film', film: 'Detour', seconds: 30, total: 70, subs: true } });
+  // 12:00 UTC on 2026-09-23 is Wednesday 05:00 in California
+  assert.ok(film.some(c => c.join(' ') === 'HINCRBY stats:hours:2026-09 Wed 05 30'));
+  assert.ok(film.some(c => c.join(' ') === 'ZINCRBY stats:min1:2026-09 1 Detour'));
+  assert.ok(film.some(c => c.join(' ') === 'ZINCRBY stats:subs-minutes:2026-09 0.5 Detour'));
+  const later = cmds({ name: 'Watched', data: { where: 'film', film: 'Detour', seconds: 30, total: 100 } });
+  assert.ok(!later.some(c => c[1].startsWith('stats:min1:')), 'a viewing reaches its first minute once');
+  const tv = cmds({ name: 'Watched', data: { where: 'tv', channel: 'atomic-age', seconds: 60, total: 600 } });
+  assert.ok(tv.some(c => c.join(' ') === 'HINCRBY stats:channel-hours:2026-09 atomic-age 05 60'));
+});
+
+test('reaching a tenth, a search with no results and a bad copy are counted per film or query', () => {
+  assert.ok(cmds({ name: 'Reached', data: { film: 'Detour', at: 3 } }).some(c => c.join(' ') === 'ZINCRBY stats:reach-3:2026-09 1 Detour'));
+  assert.equal(validEvent({ name: 'Reached', data: { film: 'Detour', at: 10 } }), null);
+  assert.ok(cmds({ name: 'No results', data: { query: '  Lost Film ' } }).some(c => c.join(' ') === 'ZINCRBY stats:no-results:2026-09 1 lost film'));
+  assert.ok(cmds({ name: 'Copy failed', data: { film: 'Detour' } }).some(c => c.join(' ') === 'ZINCRBY stats:copy-failed:2026-09 1 Detour'));
+});
+
+test('player requests are counted by film and app name, never the user agent', () => {
+  assert.deepEqual(['Kodi/21.0 (Linux; Android 12)', 'VLC/3.0.20 LibVLC/3.0.20', 'Mozilla/5.0 (Macintosh)', 'okhttp/4.9'].map(appOf), ['Kodi', 'VLC', 'Browser', 'Other']);
+  const link = tvCommands({ film: 'Detour', app: 'Kodi' }, NOW.now);
+  assert.deepEqual(link.filter(c => c[0] === 'ZINCRBY').map(c => c.join(' ')), ['ZINCRBY stats:tv-links:2026-09 1 Detour', 'ZINCRBY stats:tv-apps:2026-09 1 Kodi']);
 });

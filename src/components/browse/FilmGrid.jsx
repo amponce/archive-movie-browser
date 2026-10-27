@@ -56,6 +56,12 @@ export default function FilmGrid({ films, browse, viewMode, onOpen, linkError })
     });
     return () => { current = false; };
   }, [settled, activeSearch, empty, closeSpellings, movies]);
+  // A search that found nothing, once per search
+  const noResults = useRef('');
+  useEffect(() => {
+    if (settled && empty && noResults.current !== activeSearch) { noResults.current = activeSearch; track('No results', { query: activeSearch }); }
+  }, [settled, empty, activeSearch]);
+
   const suggestion = didYouMean.length > 0 && (
     <p className="text-sm text-muted">
       Did you mean{' '}

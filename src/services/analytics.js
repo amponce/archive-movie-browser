@@ -3,7 +3,7 @@
 // closes; the server only counts distinct ids per funnel stage and stores none of them. See
 // api/_stats.js for exactly what is counted. A fork with no stats database gets a 503 nobody sees.
 
-const MAX_PROPERTIES = 4;
+const MAX_PROPERTIES = 6;
 const MAX_LENGTH = 60;
 const MAX_FILM = 200; // an Archive.org identifier, as api/_stats.js accepts it; cut short it names no film
 
@@ -42,6 +42,9 @@ export function track(name, properties) {
   } catch { /* analytics must never break the app */ }
 }
 
+// The screen, by width only: phone, tablet, desktop or large
+export const screenType = (width = window.innerWidth) => (width < 640 ? 'phone' : width < 1024 ? 'tablet' : width < 1920 ? 'desktop' : 'large');
+
 // Where someone came from, as a host name only ("news.ycombinator.com"), never a full address
 export function referrerHost(referrer, ownHost) {
   try {
@@ -54,7 +57,8 @@ export function referrerHost(referrer, ownHost) {
 
 // A viewing's actual playback time: add() the seconds as they play, flush() at every pause and
 // when the page goes away. Each report carries the seconds since the last one and the running total.
-export function watchReporter(where, subject, send = track) {
+// `more()` adds fields known only at report time
+export function watchReporter(where, subject, send = track, more = () => ({})) {
   let total = 0;
   let pending = 0;
   return {
@@ -63,7 +67,7 @@ export function watchReporter(where, subject, send = track) {
       const seconds = Math.round(pending);
       if (seconds < 5) return; // a stray second of scrubbing is not watching
       pending -= seconds;
-      send('Watched', { where, ...subject, seconds, total: Math.round(total) });
+      send('Watched', { where, ...subject, seconds, total: Math.round(total), ...more() });
     },
   };
 }
@@ -73,6 +77,9 @@ export function startAnalytics() {
   // Anything with data-track="name" (and optionally data-film) counts its clicks
   document.addEventListener('click', (event) => {
     const el = event.target.closest?.('[data-track]');
-    if (el) track('Click', { target: el.dataset.track, film: el.dataset.film });
+    if (!el) return;
+    track('Click', { target: el.dataset.track, film: el.dataset.film });
+    // A play of this film then counts toward what was clicked (a list page may name itself instead)
+    if (el.dataset.film) try { sessionStorage.setItem('played-from', JSON.stringify({ film: el.dataset.film, list: el.dataset.track })); } catch { /* private mode */ }
   }, { capture: true, passive: true });
 }
