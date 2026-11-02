@@ -5,23 +5,59 @@
   "curator": "the station",
   "generated": {
     "rule": "Horror 1960s–1960s",
-    "week": 202643
+    "week": 202645
   },
   "films": [
     {
-      "id": "house.of.-usher-1960"
+      "id": "the-haunted-palace"
+    },
+    {
+      "id": "pagkasuklam"
+    },
+    {
+      "id": "WhatACarveUp"
+    },
+    {
+      "id": "tsobmc5534511475"
+    },
+    {
+      "id": "the-shadow-of-the-cat-1961"
     },
     {
       "id": "black.-sabbath.-1963"
     },
     {
+      "id": "the-innocents-1961"
+    },
+    {
+      "id": "sinistercinema_spiderbaby"
+    },
+    {
+      "id": "blood-and-black-lace-1964_202407"
+    },
+    {
+      "id": "the.-girl.-who.-knew.-too.-much.-1963"
+    },
+    {
+      "id": "CurtisHarringtonsnightTide1961Hq169"
+    },
+    {
+      "id": "hercules.-in.-the.-haunted.-world.-1961"
+    },
+    {
+      "id": "Little_ShopOf_Horrors.avi"
+    },
+    {
       "id": "lastmanonearth-1964"
     },
     {
-      "id": "frankenstein-created-woman"
+      "id": "kwaidan-1964_202510"
     },
     {
-      "id": "the-shadow-of-the-cat-1961"
+      "id": "house.of.-usher-1960"
+    },
+    {
+      "id": "rosemarys-baby_202105"
     },
     {
       "id": "CityOfTheDeadVideoQualityUpgrade"
@@ -30,79 +66,43 @@
       "id": "quatermass-and-the-pit"
     },
     {
-      "id": "village-of-the-damned-1960-colorized-movie-576p-sd"
-    },
-    {
-      "id": "masque-of-the-red-death"
-    },
-    {
-      "id": "eyes-without-a-face-1960-restored-720p-hd"
-    },
-    {
-      "id": "WhatACarveUp"
-    },
-    {
-      "id": "Holy_Terror_Podcast_Halloween"
-    },
-    {
-      "id": "CurtisHarringtonsnightTide1961Hq169"
-    },
-    {
-      "id": "the.-tomb.of.-ligeia-1964"
-    },
-    {
-      "id": "CarnivalOfSouls1962"
-    },
-    {
-      "id": "sinistercinema_spiderbaby"
-    },
-    {
-      "id": "rosemarys-baby_202105"
-    },
-    {
-      "id": "the-gorgon-1964"
-    },
-    {
-      "id": "die-die-my-darling"
-    },
-    {
-      "id": "pagkasuklam"
-    },
-    {
-      "id": "PhantasmagoriaTheater-AttackOfTheMushroomPeople1963147"
-    },
-    {
-      "id": "the-innocents-1961"
-    },
-    {
-      "id": "scream-of-fear"
-    },
-    {
-      "id": "witchfinder-general"
-    },
-    {
-      "id": "hercules.-in.-the.-haunted.-world.-1961"
-    },
-    {
-      "id": "kwaidan-1964_202510"
-    },
-    {
-      "id": "the-curse-of-the-werewolf"
+      "id": "paranoiac_202107"
     },
     {
       "id": "Night.Of.The.Living.Dead_1080p"
     },
     {
-      "id": "TheFleshandtheFiends1960"
+      "id": "dracula-prince-of-darkness-1966_20240606"
+    },
+    {
+      "id": "village-of-the-damned-1960-colorized-movie-576p-sd"
+    },
+    {
+      "id": "pit-and-the-pendulum"
     },
     {
       "id": "The.Sadist.1961"
     },
     {
-      "id": "the.-snow.-woman.-1968"
+      "id": "the-curse-of-the-werewolf"
     },
     {
-      "id": "pit-and-the-pendulum"
+      "id": "el-esqueleto-de-la-senora-morales-1960"
+    },
+    {
+      "id": "Holy_Terror_Podcast_Halloween"
+    },
+    {
+      "id": "witchfinder-general"
+    },
+    {
+      "id": "TheFleshandtheFiends1960"
+    },
+    {
+      "id": "masque-of-the-red-death"
+    },
+    {
+      "id": "BCLJFrankensteinMustBeDestroyed"
     }
   ]
 }
