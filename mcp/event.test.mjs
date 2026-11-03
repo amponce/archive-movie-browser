@@ -97,3 +97,18 @@ test('an error from the database is an error, not a silent zero', async t => {
   const { redis } = await import('../api/_redis.js');
   await assert.rejects(() => redis([['PFCOUNT', 'x']]), /NOPERM/);
 });
+
+test('a page of the log needs a plain offset and comes back with its length and film names', async t => {
+  const calls = stubRedis(t, commands => commands.map(c => ({ result: c[0] === 'LRANGE' ? [JSON.stringify({ at: '2026-09-21T10:00:00.000Z', name: 'Search', data: { query: 'noir', kind: 'typed' } }), JSON.stringify({ at: '2026-09-21T09:00:00.000Z', name: 'Play', data: { film: 'Cops1922', player: 'own' } })]
+    : c[0] === 'LLEN' ? 7 : c[0] === 'HMGET' ? c.slice(2).map(id => ({ Cops1922: 'Cops' }[id] ?? null)) : null })));
+  const get = (query) => GET(new Request(`https://site.test/api/stats${query}`, { headers: { authorization: 'Bearer a-long-enough-stats-token' } }));
+  assert.equal((await get('?log=-1')).status, 400);
+  assert.equal((await get('?log=abc')).status, 400);
+  assert.equal((await get('?profile=../x')).status, 400);
+  const body = await (await get('?log=500')).json();
+  assert.deepEqual(calls[0].commands[0], ['LRANGE', 'stats:recent', 500, 999]);
+  assert.equal(body.total, 7);
+  assert.equal(body.rows.length, 2);
+  assert.equal(body.rows[0].data.query, 'noir');
+  assert.equal(body.titles.Cops1922, 'Cops');
+});

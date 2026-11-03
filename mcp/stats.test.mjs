@@ -67,7 +67,7 @@ test('every event lands on a short "latest events" feed: what happened and when,
   const push = commands.find(c => c[0] === 'LPUSH');
   assert.equal(push[1], 'stats:recent');
   assert.deepEqual(JSON.parse(push[2]), { at: '2026-09-21T10:00:00.000Z', name: 'Play', data: { film: 'Cops1922', player: 'own' } });
-  assert.deepEqual(commands.find(c => c[0] === 'LTRIM'), ['LTRIM', 'stats:recent', 0, 49]);
+  assert.deepEqual(commands.find(c => c[0] === 'LTRIM'), ['LTRIM', 'stats:recent', 0, 19999]);
   assert.ok(!push[2].includes('abc123'));
 });
 
