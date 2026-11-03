@@ -1,5 +1,5 @@
 import SiteHeader from '../layout/SiteHeader';
-import React, { useEffect, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 
 const KEY = 'stats-key';
 const MARK = '#c08a10'; // single series; passes the dark-surface lightness and contrast checks
@@ -108,8 +108,9 @@ function Board({ rows, films, titles }) {
 }
 
 // What just happened, newest first: the quickest way to see that something was counted
-function Latest({ events, titles }) {
+function Latest({ events, titles, day = false }) {
   if (!events.length) return <p className="text-gray-400">Nothing yet.</p>;
+  const when = at => new Date(at).toLocaleString(undefined, day ? { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' } : { timeStyle: 'medium' });
   const detail = ({ name, data }) => name === 'Watched' ? <>{Math.round(data.seconds / 60)} min of {data.film ? <Film id={data.film} titles={titles} /> : `channel ${data.channel}`} ({Math.round(data.total / 60)} min so far)</>
     : name === 'Click' ? <>{data.target}{data.film && <> · <Film id={data.film} titles={titles} /></>}</>
     : data.film ? <Film id={data.film} titles={titles} />
@@ -122,7 +123,7 @@ function Latest({ events, titles }) {
       <tbody>
         {events.map((event, i) => (
           <tr key={i} className="border-b border-gray-700">
-            <td className="py-1 pr-3 text-gray-400 tabular-nums whitespace-nowrap">{new Date(event.at).toLocaleTimeString()}</td>
+            <td className="py-1 pr-3 text-gray-400 tabular-nums whitespace-nowrap">{when(event.at)}</td>
             <td className="py-1 pr-3 whitespace-nowrap">{event.name}{event.data.player ? ` (${event.data.player} player)` : ''}</td>
             <td className="py-1 max-w-0 w-[55%] truncate">{detail(event)}</td>
           </tr>
@@ -272,7 +273,143 @@ function AllSearches({ month }) {
   );
 }
 
-const CHANGES = { 'profile-created': 'Profile created', 'profile-edited': 'Profile edited', 'channel-created': 'Channel created', 'channel-edited': 'Channel edited', 'channel-deleted': 'Channel deleted', 'channel-submitted': 'Channel submitted' };
+// The whole event log, 500 at a time, newest first: filter by kind (Search for every search,
+// typed as it was) and by text
+const describe = ({ name, data }) => [name, data.query, data.film, data.title, data.path, data.referrer, data.channel, data.action, data.target, data.type, data.value].filter(Boolean).join(' ').toLowerCase();
+function Log() {
+  const [pages, setPages] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [titles, setTitles] = useState({});
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [kind, setKind] = useState('');
+  const [text, setText] = useState('');
+  const rows = pages.flat();
+  const more = (offset) => {
+    setBusy(true); setError('');
+    fetchStats(readKey(), `?log=${offset}`).then(body => { setPages(p => [...p, body.rows]); setTotal(body.total); setTitles(t => ({ ...t, ...body.titles })); }, problem => setError(problem.message)).finally(() => setBusy(false));
+  };
+  const kinds = [...new Set(rows.map(r => r.name))].sort();
+  const needle = text.trim().toLowerCase();
+  const shown = rows.filter(r => (!kind || r.name === kind) && (!needle || describe(r).includes(needle) || (r.data.film && (titles[r.data.film] || '').toLowerCase().includes(needle))));
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {!rows.length && !busy && <button onClick={() => more(0)} className="border border-gray-700 rounded-md px-3 py-1 text-gray-300 hover:text-white">Show the log</button>}
+        {rows.length > 0 && (
+          <>
+            <select aria-label="Kind" value={kind} onChange={e => setKind(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-md px-2 py-1">
+              <option value="">Everything</option>
+              {kinds.map(k => <option key={k}>{k}</option>)}
+            </select>
+            <input type="search" aria-label="Filter the log" placeholder="Filter" value={text} onChange={e => setText(e.target.value)} className="flex-1 min-w-[10rem] bg-gray-800 border border-gray-700 rounded-md px-3 py-1" />
+          </>
+        )}
+      </div>
+      {error && <p role="alert" className="text-gray-400">{error}</p>}
+      {rows.length > 0 && (
+        <>
+          <p className="text-gray-400 text-sm mb-2">{fmt(rows.length)} of {fmt(total)} events loaded{(kind || needle) && `; ${fmt(shown.length)} match`}</p>
+          <div className="max-h-[32rem] overflow-y-auto"><Latest events={shown} titles={titles} day /></div>
+          {rows.length < total && <button disabled={busy} onClick={() => more(rows.length)} className="mt-3 border border-gray-700 rounded-md px-3 py-1 text-gray-300 hover:text-white disabled:opacity-50">{busy ? 'Loading…' : 'Load 500 more'}</button>}
+        </>
+      )}
+    </div>
+  );
+}
+
+const when = ms => (ms ? new Date(ms).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '');
+const whoIs = p => p.name || (p.handle && `@${p.handle}`) || p.id;
+
+// One profile opened from the list: favourites, channels with their films and notes, changes
+function ProfileDetail({ id }) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState('');
+  useEffect(() => { fetchStats(readKey(), `?profile=${encodeURIComponent(id)}`).then(setData, problem => setError(problem.message)); }, [id]);
+  if (error) return <p role="alert" className="text-gray-400">{error}</p>;
+  if (!data) return <p className="text-gray-400">Loading…</p>;
+  if (!data.profile) return <p className="text-gray-400">Gone.</p>;
+  const titles = data.titles || {};
+  return (
+    <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(16rem,1fr))] text-sm">
+      <div>
+        <h4 className="text-gray-400 mb-1">Favourites ({fmt(data.favourites.length)})</h4>
+        {data.favourites.length ? <ul className="space-y-0.5">{data.favourites.map(f => <li key={f.film} className="truncate"><span className="text-gray-400 tabular-nums mr-2">{when(f.created)}</span><Film id={f.film} titles={titles} /></li>)}</ul> : <p className="text-gray-400">None.</p>}
+      </div>
+      <div>
+        <h4 className="text-gray-400 mb-1">Channels ({fmt(data.channels.length)})</h4>
+        {data.channels.length ? data.channels.map(c => (
+          <details key={c.id} className="mb-2" open={data.channels.length === 1}>
+            <summary className="cursor-pointer"><a href={`/c/${c.id}`} className="hover:text-yellow-400 hover:underline">{c.name}</a> <span className="text-gray-400">· {c.status} · {fmt(c.films.length)} films · {when(c.updated)}</span></summary>
+            {c.description && <p className="text-gray-400 my-1">{c.description}</p>}
+            <ol className="list-decimal ml-5 space-y-0.5">{c.films.map(f => <li key={f.film}><Film id={f.film} titles={titles} />{f.note && <span className="text-gray-400"> — {f.note}</span>}</li>)}</ol>
+          </details>
+        )) : <p className="text-gray-400">None.</p>}
+      </div>
+      <div>
+        <h4 className="text-gray-400 mb-1">Changes ({fmt(data.history.length)})</h4>
+        {data.history.length ? (
+          <div className="max-h-72 overflow-y-auto"><table className="w-full"><tbody>
+            {data.history.map((row, i) => (
+              <tr key={i} className="border-b border-gray-700"><td className="py-0.5 pr-3 text-gray-400 tabular-nums whitespace-nowrap">{when(row.at)}</td><td className="py-0.5 pr-3 whitespace-nowrap">{CHANGES[row.kind] || row.kind}</td><td className="py-0.5 pr-3 max-w-0 truncate">{row.channel || ''}</td><td className="font-mono text-gray-400">{row.net || ''}</td></tr>
+            ))}
+          </tbody></table></div>
+        ) : <p className="text-gray-400">None.</p>}
+      </div>
+    </div>
+  );
+}
+
+// Every profile, the most recently active first; a row opens to what that person has made
+function Profiles() {
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState('');
+  const [open, setOpen] = useState(null);
+  const [text, setText] = useState('');
+  const load = () => { setError(''); fetchStats(readKey(), '?profiles').then(body => setRows(body.profiles), problem => setError(problem.message)); };
+  const needle = text.trim().toLowerCase();
+  const shown = (rows || []).filter(p => !needle || [p.name, p.handle, p.archive_user, p.id].some(v => (v || '').toLowerCase().includes(needle)));
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {rows === null && !error && <button onClick={load} className="border border-gray-700 rounded-md px-3 py-1 text-gray-300 hover:text-white">Show every profile</button>}
+        {rows && <input type="search" aria-label="Filter profiles" placeholder="Filter" value={text} onChange={e => setText(e.target.value)} className="flex-1 min-w-[10rem] bg-gray-800 border border-gray-700 rounded-md px-3 py-1" />}
+      </div>
+      {error && <p role="alert" className="text-gray-400">{error}</p>}
+      {rows && (
+        <>
+          <p className="text-gray-400 text-sm mb-2">{fmt(rows.length)} profiles{needle && `; ${fmt(shown.length)} match`}</p>
+          <div className="max-h-[40rem] overflow-y-auto">
+            <table className="text-sm w-full">
+              <thead><tr className="text-gray-400">{['Profile', 'Archive.org', 'Channels', 'Hearts', 'Saved', 'Made', 'Last change'].map(h => <th key={h} className={th}>{h}</th>)}</tr></thead>
+              <tbody>
+                {shown.map(p => (
+                  <Fragment key={p.id}>
+                    <tr className="border-t border-gray-700 tabular-nums">
+                      <td className="pr-4 py-1 max-w-0 w-[30%] truncate">
+                        <button onClick={() => setOpen(open === p.id ? null : p.id)} aria-expanded={open === p.id} className="hover:text-yellow-400 text-left">{open === p.id ? '▾' : '▸'} {whoIs(p)}</button>
+                        {p.hidden ? <span className="text-gray-400"> · hidden</span> : <a href={`/u/${p.id}`} className="text-gray-400 hover:text-yellow-400 ml-2">page</a>}
+                      </td>
+                      <td className="text-right pr-4 truncate">{p.archive_user}</td>
+                      <td className="text-right pr-4">{fmt(p.channels)}</td>
+                      <td className="text-right pr-4">{fmt(p.hearts)}</td>
+                      <td className="text-right pr-4">{fmt(p.saved)}</td>
+                      <td className="text-right pr-4 whitespace-nowrap">{when(p.created)}</td>
+                      <td className="text-right pr-4 whitespace-nowrap">{when(p.last)}</td>
+                    </tr>
+                    {open === p.id && <tr><td colSpan={7} className="py-3 pl-4 border-l-2 border-gray-700"><ProfileDetail id={p.id} /></td></tr>}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+const CHANGES = { 'profile-created': 'Profile created', 'profile-edited': 'Profile edited', 'profile-merged': 'Profile merged', 'channel-created': 'Channel created', 'channel-edited': 'Channel edited', 'channel-deleted': 'Channel deleted', 'channel-submitted': 'Channel submitted' };
 const th = 'font-medium text-right first:text-left pr-4 py-1 whitespace-nowrap';
 
 // Changes to profiles and channels: per day, networks (by tag) with several new profiles, latest
@@ -464,7 +601,15 @@ export default function StatsPage() {
               )}
             </Panel>
 
-            <Panel title="Every search">
+            <Panel title="Profiles" note="(everyone, newest change first; open one for what they hearted, their channels and their changes)">
+              <Profiles />
+            </Panel>
+
+            <Panel title="The log" note="(every event, newest first, up to 20,000; pick Search for every search as typed)">
+              <Log />
+            </Panel>
+
+            <Panel title="Every search" note="(counts per month)">
               <AllSearches month={data.month} />
             </Panel>
 
@@ -473,7 +618,7 @@ export default function StatsPage() {
                 <Panel key={key} title={title}><Board rows={data.boards[key] || []} films={FILM_BOARDS.includes(key)} titles={data.titles || {}} /></Panel>
               ))}
             </div>
-            <p className="text-gray-400 text-sm">Counts only: no cookies, no IP addresses. Each browser tab carries a random visit id that is only counted into the funnel, never stored. Bots are not counted. Leaderboards are for the current month.</p>
+            <p className="text-gray-400 text-sm">Counts and a dated log of what happened: no cookies, no IP addresses, nothing that says who. Each browser tab carries a random visit id that is only counted into the funnel, never stored. Bots are not counted. Leaderboards are for the current month.</p>
           </main>
         )}
       </div>

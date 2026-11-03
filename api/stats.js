@@ -1,4 +1,6 @@
 // GET /api/stats  (Authorization: Bearer <STATS_TOKEN>): the numbers behind the /stats page.
+// ?searches=<month> every search that month; ?log=<offset> a page of the event log;
+// ?profiles every profile; ?profile=<id> one profile's favourites, channels and changes.
 import { timingSafeEqual } from 'node:crypto';
 import { redis } from './_redis.js';
 import { statsDay, onlineKey } from './_stats.js';
@@ -15,6 +17,8 @@ const FILM_BOARDS = ['opened', 'played', 'watched', 'minutes', 'tv-links'];
 const DAYS = 30;
 const COMMUNITY_DAYS = 14;
 const COUNTED = { 'profile-created': 'profiles', 'channel-created': 'channels', 'channel-edited': 'edits', 'channel-deleted': 'deleted' };
+const LOG_PAGE = 500;
+const PROFILE_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 function allowed(request) {
   const expected = process.env.STATS_TOKEN || '';
@@ -28,20 +32,22 @@ const pairs = (flat) => { const out = []; for (let i = 0; i < (flat || []).lengt
 
 export async function GET(request, env) {
   if (!allowed(request)) return new Response('Not found', { status: 404 });
-  const searchMonth = new URL(request.url).searchParams.get('searches');
-  if (searchMonth) {
-    if (!/^\d{4}-\d{2}$/.test(searchMonth)) return new Response('Bad month', { status: 400 });
-    try {
-      return Response.json(await searchesOf(searchMonth), { headers: { 'Cache-Control': 'no-store' } });
-    } catch (error) {
-      return Response.json({ error: `The stats database did not answer (${error.message}).` }, { status: 503 });
-    }
-  }
+  const params = new URL(request.url).searchParams;
+  const searchMonth = params.get('searches');
+  const offset = params.get('log');
+  const profileId = params.get('profile');
+  if (searchMonth && !/^\d{4}-\d{2}$/.test(searchMonth)) return new Response('Bad month', { status: 400 });
+  if (offset !== null && !/^\d{1,7}$/.test(offset)) return new Response('Bad offset', { status: 400 });
+  if (profileId !== null && !PROFILE_ID.test(profileId)) return new Response('Bad profile', { status: 400 });
   // The last 30 Pacific days, counted back from today's date (noon UTC, so no daylight saving edge)
   const today = new Date(`${statsDay()}T12:00:00Z`);
   const days = Array.from({ length: DAYS }, (_, i) => new Date(today - i * 86400_000).toISOString().slice(0, 10)).reverse();
   const month = days.at(-1).slice(0, 7);
   try {
+    if (searchMonth) return Response.json(await searchesOf(searchMonth), { headers: { 'Cache-Control': 'no-store' } });
+    if (offset !== null) return Response.json(await logOf(Number(offset)), { headers: { 'Cache-Control': 'no-store' } });
+    if (params.has('profiles')) return Response.json(await profilesOf(env?.DB), { headers: { 'Cache-Control': 'no-store' } });
+    if (profileId !== null) return Response.json(await profileOf(env?.DB, profileId), { headers: { 'Cache-Control': 'no-store' } });
     return await read(days, month, env?.DB);
   } catch (error) {
     const full = /max requests limit/i.test(error.message);
@@ -170,6 +176,62 @@ export function sharesOf(minutesByFilm, films = posterIndex.films, shown = SHOWN
     return Object.entries(out).map(([label, v]) => ({ label, ...v, minutes: Math.round(v.minutes) })).sort((a, b) => b.minutes - a.minutes || b.films - a.films);
   };
   return { genres: tally(e => e.g?.[0] || 'Other'), decades: tally(e => decadeOf(e.y)) };
+}
+
+// Names for films: the poster index first, then the titles events carried (best effort: a
+// profile still shows its films by id when the stats database is out)
+async function titlesFor(films) {
+  const ids = [...new Set(films.filter(Boolean))];
+  const titles = Object.fromEntries(ids.map(film => [film, posterIndex.films[film]?.t]).filter(([, title]) => title));
+  const rest = ids.filter(film => !titles[film]);
+  if (rest.length) {
+    const [names] = await redis([['HMGET', 'stats:titles', ...rest]], { readOnly: true }).catch(() => [[]]);
+    rest.forEach((film, i) => { if (names[i]) titles[film] = names[i]; });
+  }
+  return titles;
+}
+
+// One page of the event log from `offset`, newest first, with how long the log is
+export async function logOf(offset) {
+  const [flat, total] = await redis([['LRANGE', 'stats:recent', offset, offset + LOG_PAGE - 1], ['LLEN', 'stats:recent']], { readOnly: true });
+  const rows = (flat || []).flatMap(entry => { try { return [JSON.parse(entry)]; } catch { return []; } });
+  return { offset, total: Number(total) || 0, rows, titles: await titlesFor(rows.map(event => event.data?.film)) };
+}
+
+// Every profile, the most recently changed first, with what each has made. Never the key hash.
+export async function profilesOf(db) {
+  if (!db) return { profiles: [] };
+  const { results } = await db.prepare(`SELECT p.id, p.name, p.handle, p.archive_user, p.hidden, p.created, p.updated,
+      (SELECT COUNT(*) FROM channels c WHERE c.profile_id = p.id) channels,
+      (SELECT COUNT(*) FROM favourites f WHERE f.profile_id = p.id) hearts,
+      (SELECT COUNT(*) FROM channel_saves s WHERE s.profile_id = p.id) saved,
+      COALESCE((SELECT MAX(h.at) FROM history h WHERE h.profile_id = p.id), p.updated) last
+    FROM profiles p ORDER BY last DESC LIMIT 5000`).all();
+  return { profiles: results };
+}
+
+// One profile: its favourites (newest first), its channels with their films and notes, and its
+// last 200 changes (kind, time, channel and the first 6 characters of the network tag)
+export async function profileOf(db, id) {
+  if (!db) return { profile: null };
+  const [profile, favourites, channels, films, history] = await db.batch([
+    db.prepare('SELECT id, name, handle, archive_user, hidden, agreed_at, created, updated FROM profiles WHERE id = ?').bind(id),
+    db.prepare('SELECT film_id film, created FROM favourites WHERE profile_id = ? ORDER BY created DESC').bind(id),
+    db.prepare('SELECT id, name, description, status, created, updated FROM channels WHERE profile_id = ? ORDER BY created DESC').bind(id),
+    db.prepare('SELECT f.channel_id, f.film_id film, f.note FROM channel_films f JOIN channels c ON c.id = f.channel_id WHERE c.profile_id = ? ORDER BY f.channel_id, f.position').bind(id),
+    db.prepare("SELECT h.at, h.kind, substr(h.net, 1, 6) net, COALESCE(c.name, json_extract(h.detail, '$.name')) channel FROM history h LEFT JOIN channels c ON c.id = h.channel_id WHERE h.profile_id = ? ORDER BY h.id DESC LIMIT 200").bind(id),
+  ]);
+  if (!profile.results[0]) return { profile: null };
+  const byChannel = {};
+  for (const row of films.results) (byChannel[row.channel_id] ||= []).push({ film: row.film, note: row.note });
+  const titles = await titlesFor([...favourites.results.map(r => r.film), ...films.results.map(r => r.film)]);
+  return {
+    profile: profile.results[0],
+    favourites: favourites.results,
+    channels: channels.results.map(c => ({ ...c, films: byChannel[c.id] || [] })),
+    history: history.results,
+    titles,
+  };
 }
 
 // Every search in one month, most asked first; the most asked also say how many visits asked

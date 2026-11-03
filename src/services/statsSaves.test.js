@@ -28,3 +28,23 @@ test('shares put each film\'s minutes under its main genre and decade, beside ho
   assert.deepEqual(genres, [{ label: 'Horror', minutes: 40, films: 2 }, { label: 'Western', minutes: 0, films: 1 }]);
   assert.deepEqual(decades.map(d => d.label), ['1960s', '1930s', '1950s']);
 });
+
+test('the owner sees every profile, hidden ones too, with what each made and never the key hash', async () => {
+  const { profilesOf, profileOf } = await import('../../api/stats.js');
+  const db = await openTestDb();
+  const a = await createProfile(db, { now });
+  const hidden = await createProfile(db, { now: now + 1 });
+  await db.prepare('UPDATE profiles SET hidden = 1 WHERE id = ?').bind(hidden.id).run();
+  await setFavourite(db, a.id, 'Detour', true, { now: now + 2 });
+  await createChannel(db, a.id, { name: 'One', films: [{ film: 'Detour', note: 'a ride' }, { film: 'Nosferatu' }] }, { now: now + 3, flag: async () => false });
+
+  const { profiles } = await profilesOf(db);
+  assert.deepEqual(profiles.map(p => [p.id, p.hidden, p.channels, p.hearts]).sort(), [[a.id, 0, 1, 1], [hidden.id, 1, 0, 0]].sort());
+  assert.ok(!JSON.stringify(profiles).includes('key_hash'));
+
+  const one = await profileOf(db, a.id);
+  assert.deepEqual(one.favourites.map(f => f.film), ['Detour']);
+  assert.deepEqual(one.channels.map(c => [c.name, c.films]), [['One', [{ film: 'Detour', note: 'a ride' }, { film: 'Nosferatu', note: '' }]]]);
+  assert.ok(!('key_hash' in one.profile));
+  assert.equal((await profileOf(db, 'nobody')).profile, null);
+});

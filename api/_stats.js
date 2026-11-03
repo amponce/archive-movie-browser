@@ -19,7 +19,7 @@ const seconds = v => (Number.isInteger(v) && v > 0 ? v : null);
 const TV_ACTIONS = ['tune', 'watched 10 minutes', 'watch together', 'from start', 'on-demand', 'share my channel', 'add to my channel', 'remove from my channel'];
 const SCREENS = ['phone', 'tablet', 'desktop', 'large'];
 const KEEP_DAYS = 400;
-const RECENT = 50;
+const LOG = 20_000; // events kept in the log, newest first
 // eslint-disable-next-line no-control-regex -- stripping control characters is the point
 const clean = (value, max = 60) => String(value ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
 
@@ -175,9 +175,9 @@ export function commandsFor({ name, data, visit }, { now = new Date(), visitor }
     if (data.channel && data.action === 'watched 10 minutes') count('stayed', data.channel);
   }
 
-  // The latest events, newest first: what happened and when, never who. It answers "I just
-  // opened a film, did it count?" without waiting for a leaderboard to move.
-  commands.push(['LPUSH', 'stats:recent', JSON.stringify({ at: now.toISOString(), name, data })], ['LTRIM', 'stats:recent', 0, RECENT - 1]);
+  // The log: every event, newest first, what happened and when, never who. /stats reads the
+  // latest few on every refresh and pages through the rest on request.
+  commands.push(['LPUSH', 'stats:recent', JSON.stringify({ at: now.toISOString(), name, data })], ['LTRIM', 'stats:recent', 0, LOG - 1]);
 
   for (const key of new Set(commands.map(command => command[1]))) commands.push(['EXPIRE', key, KEEP_DAYS * 86400]);
   // Who is here now: every visit that does anything goes into this five minutes' estimate (a
@@ -213,7 +213,7 @@ export function mergeCommands(commands) {
     else out.set(`${out.size} ${op}`, command);
   }
   const merged = [...out.values()].filter(c => c[0] !== 'EXPIRE');
-  if (recent.length) merged.push(['LPUSH', 'stats:recent', ...recent], trim || ['LTRIM', 'stats:recent', 0, RECENT - 1]);
+  if (recent.length) merged.push(['LPUSH', 'stats:recent', ...recent], trim || ['LTRIM', 'stats:recent', 0, LOG - 1]);
   // Expiry last, once per key: a key must exist before EXPIRE can set its time
   return [...merged, ...[...out.values()].filter(c => c[0] === 'EXPIRE')];
 }
