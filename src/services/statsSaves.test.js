@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { savesOf } from '../../api/stats.js';
+import { savesOf, sharesOf } from '../../api/stats.js';
 import { createProfile, setFavourite, createChannel } from '../../api/_community.js';
 import { openTestDb } from './testDb.js';
 
@@ -20,4 +20,11 @@ test('stats count hearts and channel films per film, leaving out hidden profiles
   assert.deepEqual(saves.channels, [['Detour', 2], ['Nosferatu', 1]]);
   assert.equal(saves.totals.channels, 2);
   assert.deepEqual(await savesOf(null), { hearted: [], channels: [], totals: null });
+});
+
+test('shares put each film\'s minutes under its main genre and decade, beside how many films each has', () => {
+  const films = { a: { i: 1, p: '/a', g: ['Horror', 'Comedy'], y: 1968 }, b: { i: 2, p: '/b', g: ['Western'], y: 1952 }, c: { i: 3, p: '/c', g: ['Horror'], y: 1931 } };
+  const { genres, decades } = sharesOf([['a', 30], ['c', 10], ['gone', 99]], films, Object.values(films));
+  assert.deepEqual(genres, [{ label: 'Horror', minutes: 40, films: 2 }, { label: 'Western', minutes: 0, films: 1 }]);
+  assert.deepEqual(decades.map(d => d.label), ['1960s', '1930s', '1950s']);
 });

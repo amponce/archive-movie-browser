@@ -5,12 +5,18 @@ const KEY = 'stats-key';
 const MARK = '#c08a10'; // single series; passes the dark-surface lightness and contrast checks
 const EVENTS = ['Page view', 'Click', 'Film opened', 'Play', 'Watched 10 minutes', 'Seconds watched', 'Search', 'Filter', 'Load more'];
 const STAGES = ['visited', 'clicked', 'played', 'tuned in', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
-const FILM_BOARDS = ['played', 'watched', 'opened', 'minutes'];
+const FILM_BOARDS = ['played', 'watched', 'opened', 'minutes', 'tv-links'];
 const BOARDS = [
   ['minutes', 'Minutes watched, by film'], ['channel-minutes', 'Minutes watched, by channel'], ['clicks', 'What people click'],
   ['tuned', 'Channels tuned to'], ['stayed', 'Channels watched 10+ minutes'], ['played', 'Films played'], ['watched', 'Watched 10+ minutes'], ['opened', 'Films opened'], ['searches', 'Searches'], ['filters', 'Filters used'],
-  ['referrers', 'Where visitors came from'], ['pages', 'Pages'], ['players', 'Player used'], ['played-from', 'Plays, by list or channel'], ['banner', 'MCP banner'],
+  ['no-results', 'Searches that found nothing'], ['screens', 'Plays, by screen'],
+  ['tv-links', 'Film links followed by players'], ['tv-apps', 'Players following film links'],
+  ['referrers', 'Where visitors came from'], ['pages', 'Pages'], ['players', 'Player used'], ['played-from', 'Plays, by list, channel or row'], ['banner', 'MCP banner'],
 ];
+const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
+const NEW_SINCE = '2026-10-27'; // when the per-film columns after "Of its length" began counting
+const pct = (part, whole) => (whole ? `${Math.round((part / whole) * 100)}%` : '');
 
 const fmt = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
 const sum = (days, name) => days.reduce((total, day) => total + (day.events[name] || 0), 0);
@@ -18,8 +24,8 @@ const readKey = () => { try { return localStorage.getItem(KEY) || ''; } catch { 
 // A key pasted from a .env file often arrives with quotes or a newline; the server wants only the value
 export const cleanKey = (text) => String(text || '').trim().replace(/^["']|["']$/g, '').trim();
 
-async function fetchStats(key) {
-  const response = await fetch('/api/stats', { headers: { Authorization: `Bearer ${key}` }, cache: 'no-store' });
+async function fetchStats(key, query = '') {
+  const response = await fetch(`/api/stats${query}`, { headers: { Authorization: `Bearer ${key}` }, cache: 'no-store' });
   if (!response.ok) {
     const said = await response.json().then(body => body.error, () => null);
     throw new Error(response.status === 404 ? 'That key does not match. It is the whole STATS_TOKEN value, no quotes around it.' : said || `The stats could not be loaded (${response.status}).`);
@@ -123,6 +129,146 @@ function Latest({ events, titles }) {
         ))}
       </tbody>
     </table>
+  );
+}
+
+// Per film: how often it was opened and played, how much of it was watched, and signs of a bad copy
+function FilmsTable({ films, titles }) {
+  if (!films?.length) return <p className="text-gray-400">Nothing yet this month.</p>;
+  const rows = [...films].sort((a, b) => b.played - a.played || b.opened - a.opened);
+  // A column whose counter has nothing yet this month stays blank rather than reading 0% or 100%
+  const has = key => films.some(f => (key === 'reach' ? f.reach.some(Boolean) : f[key] > 0));
+  const counting = { min1: has('min1'), archive: has('archive') || has('reach'), copyFailed: has('copyFailed') || has('reach'), subsMinutes: has('subsMinutes') || has('reach'), reach: has('reach') };
+  const heads = [['Film'], ['Opened'], ['Played'], ['Min per play'], ['Of its length', 'minutes watched over plays × length'], ['Where people stop', 'viewings that reached each tenth of the film'], ['Under 1 min', 'plays that did not reach a minute'], ['Archive player', 'plays that fell back to Archive.org’s player'], ['Bad copies', 'files that would not play'], ['Subtitles', 'share of minutes with subtitles on']];
+  return (
+    <div className="overflow-x-auto">
+      <table className="text-sm w-full">
+        <thead><tr className="text-gray-400">{heads.map(([h, tip]) => <th key={h} title={tip} className={th}>{h}</th>)}</tr></thead>
+        <tbody>
+          {rows.map(f => {
+            const top = Math.max(1, ...f.reach);
+            return (
+              <tr key={f.film} className="border-t border-gray-700 tabular-nums">
+                <td className="py-1 pr-4 max-w-[16rem] truncate"><Film id={f.film} titles={titles} /></td>
+                <td className="text-right pr-4">{fmt(f.opened)}</td>
+                <td className="text-right pr-4">{fmt(f.played)}</td>
+                <td className="text-right pr-4">{f.played ? fmt(f.minutes / f.played) : ''}</td>
+                <td className="text-right pr-4">{f.length ? pct(f.minutes, f.played * f.length) : ''}</td>
+                <td className="py-1 pr-4">
+                  {counting.reach && f.reach.some(Boolean) && (
+                    <div role="img" aria-label={`Viewings reaching each tenth: ${f.reach.join(', ')}`} className="flex items-end gap-[2px] h-5 w-28">
+                      {f.reach.map((n, k) => <div key={k} title={`${k * 10}%: ${fmt(n)}`} className="flex-1 rounded-t-sm min-h-px" style={{ height: `${(n / top) * 100}%`, background: MARK }} />)}
+                    </div>
+                  )}
+                </td>
+                <td className="text-right pr-4">{counting.min1 && f.played ? pct(Math.max(0, f.played - f.min1), f.played) : ''}</td>
+                <td className="text-right pr-4">{counting.archive ? pct(f.archive, f.played) : ''}</td>
+                <td className="text-right pr-4">{f.copyFailed ? fmt(f.copyFailed) : ''}</td>
+                <td className="text-right pr-4">{counting.subsMinutes ? pct(f.subsMinutes, f.minutes) : ''}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// Share of minutes watched beside share of the films the site has, by main genre or decade
+function Shares({ rows, label }) {
+  if (!rows?.length) return null;
+  const minutes = rows.reduce((t, r) => t + r.minutes, 0);
+  const films = rows.reduce((t, r) => t + r.films, 0);
+  const top = Math.max(1, ...rows.map(r => r.minutes));
+  return (
+    <table className="text-sm w-full">
+      <thead><tr className="text-gray-400"><th className={th}>{label}</th><th className={th} /><th className={th}>Of minutes</th><th className={th}>Of films</th></tr></thead>
+      <tbody>
+        {rows.map(r => (
+          <tr key={r.label} className="border-t border-gray-700 tabular-nums">
+            <td className="py-1 pr-3 whitespace-nowrap">{r.label}</td>
+            <td className="w-[40%] pr-3"><div className="h-2 rounded-r min-w-[2px]" style={{ width: `${(r.minutes / top) * 100}%`, background: MARK }} /></td>
+            <td className="text-right pr-4">{pct(r.minutes, minutes)}</td>
+            <td className="text-right pr-4 text-gray-400">{pct(r.films, films)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// Minutes watched in each hour (Pacific): one row per weekday, or per channel
+function HourGrid({ rows }) {
+  const max = Math.max(1, ...rows.flatMap(r => r.hours));
+  return (
+    <div className="overflow-x-auto">
+      <table className="text-xs">
+        <thead><tr className="text-gray-400"><th />{HOURS.map(h => <th key={h} className="font-normal px-[1px]">{Number(h) % 3 ? '' : h}</th>)}</tr></thead>
+        <tbody>
+          {rows.map(r => (
+            <tr key={r.label}>
+              <td className="pr-2 text-gray-400 whitespace-nowrap max-w-[10rem] truncate">{r.label}</td>
+              {r.hours.map((seconds, h) => (
+                <td key={h} className="p-[1px]">
+                  <div tabIndex={0} title={`${r.label} ${HOURS[h]}:00, ${fmt(seconds / 60)} min`} aria-label={`${r.label} ${HOURS[h]}:00, ${fmt(seconds / 60)} minutes`}
+                    className="w-4 h-4 rounded-sm border border-gray-700" style={seconds ? { background: MARK, opacity: 0.15 + 0.85 * (seconds / max) } : undefined} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+const weekRows = hours => WEEK.map(day => ({ label: day, hours: HOURS.map(h => hours?.[`${day} ${h}`] || 0) }));
+function channelRows(channelHours) {
+  const by = {};
+  for (const [key, seconds] of Object.entries(channelHours || {})) {
+    const at = key.lastIndexOf(' ');
+    (by[key.slice(0, at)] ||= Array(24).fill(0))[Number(key.slice(at + 1))] += seconds;
+  }
+  return Object.entries(by).map(([label, hours]) => ({ label, hours })).sort((a, b) => b.hours.reduce((x, y) => x + y) - a.hours.reduce((x, y) => x + y)).slice(0, 15);
+}
+
+// Every search in a chosen month, loaded when asked for
+const lastMonths = (month) => Array.from({ length: 13 }, (_, i) => { const d = new Date(`${month}-15T12:00:00Z`); d.setUTCMonth(d.getUTCMonth() - i); return d.toISOString().slice(0, 7); });
+function AllSearches({ month }) {
+  const [chosen, setChosen] = useState(month);
+  const [rows, setRows] = useState(null);
+  const [error, setError] = useState('');
+  const [filter, setFilter] = useState('');
+  const load = (m) => { setChosen(m); setRows(null); setError(''); fetchStats(readKey(), `?searches=${m}`).then(body => setRows(body.rows), problem => setError(problem.message)); };
+  const shown = (rows || []).filter(([query]) => query.includes(filter.trim().toLowerCase()));
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2 mb-3">
+        <select aria-label="Month" value={chosen} onChange={e => load(e.target.value)} className="bg-gray-800 border border-gray-700 rounded-md px-2 py-1">
+          {lastMonths(month).map(m => <option key={m}>{m}</option>)}
+        </select>
+        {rows === null && !error && chosen === month && <button onClick={() => load(month)} className="border border-gray-700 rounded-md px-3 py-1 text-gray-300 hover:text-white">Show every search</button>}
+        {rows && <input type="search" aria-label="Filter searches" placeholder="Filter" value={filter} onChange={e => setFilter(e.target.value)} className="flex-1 min-w-[10rem] bg-gray-800 border border-gray-700 rounded-md px-3 py-1" />}
+      </div>
+      {error && <p role="alert" className="text-gray-400">{error}</p>}
+      {rows && (
+        <>
+          <p className="text-gray-400 text-sm mb-2">{fmt(rows.length)} different searches, {fmt(rows.reduce((t, r) => t + r[1], 0))} in all{filter && `; ${fmt(shown.length)} match`}</p>
+          <div className="max-h-96 overflow-y-auto">
+            <table className="text-sm w-full">
+              <tbody>
+                {shown.map(([query, count, people]) => (
+                  <tr key={query} className="border-b border-gray-700 tabular-nums">
+                    <td className="py-1 pr-3 break-all">{query}</td>
+                    <td className="w-14 text-right">{fmt(count)}</td>
+                    <td className="w-20 text-right text-gray-400" title="different visits">{people === null ? '' : `${fmt(people)} ppl`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -294,6 +440,33 @@ export default function StatsPage() {
                 <Community community={data.community} />
               </Panel>
             )}
+
+            <Panel title="Films this month" note={`(the most played and most opened${data.month <= NEW_SINCE.slice(0, 7) ? `; columns from "Where people stop" on count from ${NEW_SINCE}, so read them from next month` : ''})`}>
+              <FilmsTable films={data.films} titles={data.titles || {}} />
+            </Panel>
+
+            {data.shares && (
+              <Panel title="What gets watched" note="(share of this month's minutes beside share of the films on the site)">
+                <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(19rem,1fr))]">
+                  <Shares rows={data.shares.genres} label="Main genre" />
+                  <Shares rows={data.shares.decades} label="Decade" />
+                </div>
+              </Panel>
+            )}
+
+            <Panel title="When people watch" note="(minutes this month, by Pacific hour)">
+              <HourGrid rows={weekRows(data.hours)} />
+              {channelRows(data.channelHours).length > 0 && (
+                <>
+                  <h3 className="text-sm text-gray-400 mt-4 mb-1">By channel</h3>
+                  <HourGrid rows={channelRows(data.channelHours)} />
+                </>
+              )}
+            </Panel>
+
+            <Panel title="Every search">
+              <AllSearches month={data.month} />
+            </Panel>
 
             <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(19rem,1fr))]">
               {BOARDS.map(([key, title]) => (

@@ -1,13 +1,17 @@
 // GET /api/stats  (Authorization: Bearer <STATS_TOKEN>): the numbers behind the /stats page.
 import { timingSafeEqual } from 'node:crypto';
 import { redis } from './_redis.js';
-import { statsDay, onlineKey, groupSearches } from './_stats.js';
+import { statsDay, onlineKey } from './_stats.js';
 import posterIndex from '../public/poster-index.json' with { type: 'json' };
 
-const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'played-from', 'banner', 'tv', 'tuned', 'stayed', 'minutes', 'channel-minutes', 'clicks'];
+const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'played-from', 'banner', 'tv', 'tuned', 'stayed', 'minutes', 'channel-minutes', 'clicks',
+  'no-results', 'screens', 'tv-links', 'tv-apps'];
+// Per film, for the films table: read for the most played and most opened films
+const PER_FILM = ['played', 'opened', 'minutes', 'min1', 'played-archive', 'copy-failed', 'subs-minutes', ...Array.from({ length: 10 }, (_, i) => `reach-${i}`)];
+const SEARCH_PEOPLE = 200; // searches in a full month's list that also get a count of visits
 const STAGES = ['visited', 'clicked', 'played', 'tuned in', 'watched 1+ min', 'watched 10+ min', 'watched 30+ min'];
 const FUNNEL_DAYS = 14;
-const FILM_BOARDS = ['opened', 'played', 'watched', 'minutes'];
+const FILM_BOARDS = ['opened', 'played', 'watched', 'minutes', 'tv-links'];
 const DAYS = 30;
 const COMMUNITY_DAYS = 14;
 const COUNTED = { 'profile-created': 'profiles', 'channel-created': 'channels', 'channel-edited': 'edits', 'channel-deleted': 'deleted' };
@@ -24,6 +28,15 @@ const pairs = (flat) => { const out = []; for (let i = 0; i < (flat || []).lengt
 
 export async function GET(request, env) {
   if (!allowed(request)) return new Response('Not found', { status: 404 });
+  const searchMonth = new URL(request.url).searchParams.get('searches');
+  if (searchMonth) {
+    if (!/^\d{4}-\d{2}$/.test(searchMonth)) return new Response('Bad month', { status: 400 });
+    try {
+      return Response.json(await searchesOf(searchMonth), { headers: { 'Cache-Control': 'no-store' } });
+    } catch (error) {
+      return Response.json({ error: `The stats database did not answer (${error.message}).` }, { status: 503 });
+    }
+  }
   // The last 30 Pacific days, counted back from today's date (noon UTC, so no daylight saving edge)
   const today = new Date(`${statsDay()}T12:00:00Z`);
   const days = Array.from({ length: DAYS }, (_, i) => new Date(today - i * 86400_000).toISOString().slice(0, 10)).reverse();
@@ -42,8 +55,11 @@ async function read(days, month, db) {
   const [reads, visitors] = await Promise.all([
     redis([
       ...days.map(day => ['HGETALL', `stats:day:${day}`]),
-      ...BOARDS.map(board => ['ZREVRANGE', `stats:${board}:${month}`, 0, board === 'searches' ? 199 : 24, 'WITHSCORES']),
+      ...BOARDS.map(board => ['ZREVRANGE', `stats:${board}:${month}`, 0, 24, 'WITHSCORES']),
       ['LRANGE', 'stats:recent', 0, 39],
+      ['ZRANGE', `stats:minutes:${month}`, 0, -1, 'WITHSCORES'],
+      ['HGETALL', `stats:hours:${month}`],
+      ['HGETALL', `stats:channel-hours:${month}`],
     ], { readOnly: true }),
     redis([
       ...days.map(day => ['PFCOUNT', `stats:visitors:${day}`]), ['PFCOUNT', `stats:visitors:${month}`],
@@ -55,18 +71,32 @@ async function read(days, month, db) {
   ]);
 
   const boards = Object.fromEntries(BOARDS.map((board, i) => [board, pairs(reads[DAYS + i])]));
-  const searches = groupSearches(boards.searches, month);
-  const people = searches.length ? await redis(searches.map(row => ['PFCOUNT', ...row.keys])) : [];
-  boards.searches = searches.map((row, i) => [row.label, row.count, people[i] || 0]);
-  const recent = (reads[DAYS + BOARDS.length] || []).flatMap(entry => { try { return [JSON.parse(entry)]; } catch { return []; } });
+  const people = boards.searches.length ? await redis(boards.searches.map(([query]) => ['PFCOUNT', `stats:searchers:${month}:${query}`])) : [];
+  boards.searches = boards.searches.map(([query, count], i) => [query, count, people[i] || 0]);
+  const after = DAYS + BOARDS.length;
+  const recent = (reads[after] || []).flatMap(entry => { try { return [JSON.parse(entry)]; } catch { return []; } });
+  const allMinutes = pairs(reads[after + 1]);
+  const hours = Object.fromEntries(pairs(reads[after + 2]));
+  const channelHours = Object.fromEntries(pairs(reads[after + 3]));
+
+  // The films table: the most played and most opened films, each with every per-film count
+  const tableFilms = [...new Set([...boards.played, ...boards.opened].map(([film]) => film))];
+  const scores = tableFilms.length ? await redis(PER_FILM.map(board => ['ZMSCORE', `stats:${board}:${month}`, ...tableFilms]), { readOnly: true }) : [];
+  const filmRows = tableFilms.map((film, i) => {
+    const at = board => Number(scores[PER_FILM.indexOf(board)]?.[i]) || 0;
+    return {
+      film, length: posterIndex.films[film]?.l || null, played: at('played'), opened: at('opened'), minutes: at('minutes'), min1: at('min1'),
+      archive: at('played-archive'), copyFailed: at('copy-failed'), subsMinutes: at('subs-minutes'), reach: Array.from({ length: 10 }, (_, k) => at(`reach-${k}`)),
+    };
+  });
 
   // Names for every film the page will mention
-  const films = [...new Set([...FILM_BOARDS.flatMap(board => boards[board].map(([film]) => film)), ...recent.map(event => event.data?.film).filter(Boolean)])];
+  const films = [...new Set([...FILM_BOARDS.flatMap(board => boards[board].map(([film]) => film)), ...tableFilms, ...recent.map(event => event.data?.film).filter(Boolean)])];
   const names = films.length ? (await redis([['HMGET', 'stats:titles', ...films]], { readOnly: true }))[0] : [];
   const titles = Object.fromEntries(films.map((film, i) => [film, names[i]]).filter(([, title]) => title));
 
   const [saves, community] = await Promise.all([savesOf(db), communityOf(db, days.slice(-COMMUNITY_DAYS))]);
-  for (const [film] of [...saves.hearted, ...saves.channels]) if (!titles[film] && posterIndex.films[film]?.t) titles[film] = posterIndex.films[film].t;
+  for (const [film] of [...saves.hearted, ...saves.channels, ...boards['tv-links']]) if (!titles[film] && posterIndex.films[film]?.t) titles[film] = posterIndex.films[film].t;
 
   const body = {
     month,
@@ -77,6 +107,10 @@ async function read(days, month, db) {
     activeNow: visitors.at(-1) || 0,
     funnel: days.slice(-FUNNEL_DAYS).map((day, i) => ({ day, ...Object.fromEntries(STAGES.map((stage, j) => [stage, visitors[DAYS + 1 + i * STAGES.length + j] || 0])) })),
     boards,
+    films: filmRows,
+    shares: sharesOf(allMinutes),
+    hours,
+    channelHours,
     titles,
     recent,
   };
@@ -123,4 +157,25 @@ export async function communityOf(db, days, now = Date.now()) {
   } catch {
     return null;
   }
+}
+
+// Minutes watched by main genre and by decade, beside how many films the site has in each
+const SHOWN = Object.values(posterIndex.films).filter(e => e.i && e.p && !e.n);
+const decadeOf = year => (year ? `${Math.floor(year / 10) * 10}s` : 'unknown');
+export function sharesOf(minutesByFilm, films = posterIndex.films, shown = SHOWN) {
+  const tally = (pick) => {
+    const out = {};
+    for (const e of shown) (out[pick(e)] ||= { minutes: 0, films: 0 }).films++;
+    for (const [film, minutes] of minutesByFilm) if (films[film]) (out[pick(films[film])] ||= { minutes: 0, films: 0 }).minutes += minutes;
+    return Object.entries(out).map(([label, v]) => ({ label, ...v, minutes: Math.round(v.minutes) })).sort((a, b) => b.minutes - a.minutes || b.films - a.films);
+  };
+  return { genres: tally(e => e.g?.[0] || 'Other'), decades: tally(e => decadeOf(e.y)) };
+}
+
+// Every search in one month, most asked first; the most asked also say how many visits asked
+export async function searchesOf(month) {
+  const [flat] = await redis([['ZREVRANGE', `stats:searches:${month}`, 0, -1, 'WITHSCORES']], { readOnly: true });
+  const rows = pairs(flat);
+  const people = rows.length ? await redis(rows.slice(0, SEARCH_PEOPLE).map(([query]) => ['PFCOUNT', `stats:searchers:${month}:${query}`])) : [];
+  return { month, rows: rows.map(([query, count], i) => [query, count, i < SEARCH_PEOPLE ? people[i] || 0 : null]) };
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import archiveService from '../services/archive';
 import { playableFiles, videoUrl, shortcutFor, resumeTime, rememberPosition, readPositions, POSITIONS_KEY, previewFrames, frameAt } from '../services/playback';
-import { track } from '../services/analytics';
+import { track, screenType } from '../services/analytics';
 import useWatchReport from '../hooks/useWatchReport';
 import useSubtitles, { SubtitleTracks, subtitleNote } from '../hooks/useSubtitles';
 
@@ -25,8 +25,9 @@ export default function FilmPlayer({ movie, files }) {
   const videoRef = useRef(null);
   const queue = useRef([]); // files still to try, best first, after the one playing
   const lastSaved = useRef(0);
-  const watched = useRef({ seconds: 0, lastTick: 0, reported: false });
-  const minutes = useWatchReport('film', { film: movie.identifier }, movie.identifier);
+  const watched = useRef({ seconds: 0, lastTick: 0, reported: false, reached: new Set() });
+  const subtitlesOn = () => ([...(videoRef.current?.textTracks || [])].some(t => t.mode === 'showing') ? { subs: true } : {});
+  const minutes = useWatchReport('film', { film: movie.identifier }, movie.identifier, subtitlesOn);
   const subtitles = useSubtitles(movie.identifier, source);
 
   // Which player ended up showing the film: ours, or Archive.org's as the fallback
@@ -34,7 +35,7 @@ export default function FilmPlayer({ movie, files }) {
     if (source !== undefined) {
       let list;
       try { const from = JSON.parse(sessionStorage.getItem('played-from') || 'null'); if (from?.film === movie.identifier) list = from.list; } catch { /* ignore */ }
-      track('Play', { film: movie.identifier, player: source ? 'own' : 'archive', ...(list && { list }) });
+      track('Play', { film: movie.identifier, player: source ? 'own' : 'archive', ...(list && { list }), screen: screenType() });
     }
   }, [source, movie.identifier]);
 
@@ -56,7 +57,7 @@ export default function FilmPlayer({ movie, files }) {
 
   // The file would not play, or played sound over a black picture (a codec the browser has
   // no decoder for): the next file, or Archive.org's player when there is none left
-  const nextFile = () => setSource(queue.current.shift() || null);
+  const nextFile = () => { track('Copy failed', { film: movie.identifier }); setSource(queue.current.shift() || null); };
 
   const loaded = () => {
     if (videoRef.current.videoWidth === 0) return nextFile();
@@ -103,6 +104,10 @@ export default function FilmPlayer({ movie, files }) {
       const played = Math.min((now - w.lastTick) / 1000, 1);
       w.seconds += played;
       minutes.current.add(played);
+      // Each tenth of the film, the first time playback passes through it
+      const { currentTime, duration } = videoRef.current;
+      const tenth = duration ? Math.min(9, Math.floor((currentTime / duration) * 10)) : -1;
+      if (tenth >= 0 && !w.reached.has(tenth)) { w.reached.add(tenth); track('Reached', { film: movie.identifier, at: tenth }); }
     }
     w.lastTick = now;
     if (w.seconds >= 600 && !w.reported) {

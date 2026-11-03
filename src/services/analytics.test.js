@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { eventData } from './analytics.js';
+import { screenType, eventData } from './analytics.js';
 
 test('eventData keeps events small, flat and free of anything personal', () => {
   assert.deepEqual(eventData({ film: 'Cops1922', player: 'own' }), { film: 'Cops1922', player: 'own' });
@@ -8,7 +8,7 @@ test('eventData keeps events small, flat and free of anything personal', () => {
   assert.equal(eventData({ query: 'x'.repeat(200) }).query.length, 60);
   const long = 'the-return-of-the-living-dead-vhs-rip.-original-theatrical-audio';
   assert.equal(eventData({ film: long }).film, long, 'a film identifier is kept whole');
-  assert.deepEqual(eventData({ a: 1, b: 2, c: 3, d: 4, e: 'dropped' }), { a: 1, b: 2, c: 3, d: 4 }, 'four properties at most');
+  assert.deepEqual(eventData({ a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 'dropped' }), { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 }, 'six properties at most');
   assert.deepEqual(eventData({ film: undefined, page: null, ok: true }), { ok: true });
   assert.deepEqual(eventData({ query: 'someone@example.com found this' }), { query: '[email] found this' }, 'an email typed into search never leaves the browser');
   assert.deepEqual(eventData(), {});
@@ -35,4 +35,8 @@ test('watchReporter reports played seconds as deltas with a running total, and s
     ['Watched', { where: 'film', film: 'x', seconds: 63, total: 63 }],
     ['Watched', { where: 'film', film: 'x', seconds: 30, total: 93 }],
   ]);
+});
+
+test('screenType buckets a width and never reports it exactly', () => {
+  assert.deepEqual([360, 800, 1440, 2560].map(screenType), ['phone', 'tablet', 'desktop', 'large']);
 });

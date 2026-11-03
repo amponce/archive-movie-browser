@@ -4,7 +4,8 @@
 // which keeps an estimate of how many distinct ids it saw and none of the ids.
 // (The leading underscore marks a helper, not an endpoint; worker.js routes only the others.)
 
-import { isForbiddenSearch, isAdultSearch } from '../src/services/policy.js';
+import { isForbiddenSearch } from '../src/services/policy.js';
+import { redis } from './_redis.js';
 import { isHalloweenFilm } from '../src/halloween/days.js';
 
 const FILM = /^[A-Za-z0-9._-]{1,200}$/;
@@ -16,6 +17,7 @@ const MAX_VIEWING = 4 * 3600; // seconds in one report
 const WATCHED = [[60, 'watched 1+ min'], [600, 'watched 10+ min'], [1800, 'watched 30+ min']];
 const seconds = v => (Number.isInteger(v) && v > 0 ? v : null);
 const TV_ACTIONS = ['tune', 'watched 10 minutes', 'watch together', 'from start', 'on-demand', 'share my channel', 'add to my channel', 'remove from my channel'];
+const SCREENS = ['phone', 'tablet', 'desktop', 'large'];
 const KEEP_DAYS = 400;
 const RECENT = 50;
 // eslint-disable-next-line no-control-regex -- stripping control characters is the point
@@ -25,7 +27,7 @@ const clean = (value, max = 60) => String(value ?? '').replace(/[\u0000-\u001f]/
 const EVENTS = {
   'Page view': d => ({ path: clean(d.path, 40) || '/', referrer: clean(d.referrer, 60) }),
   'Film opened': d => (FILM.test(d.film) ? { film: d.film, ...(clean(d.title, 80) && { title: clean(d.title, 80) }) } : null),
-  'Play': d => (FILM.test(d.film) && ['own', 'archive'].includes(d.player) ? { film: d.film, player: d.player, ...(CHANNEL.test(d.list || '') && { list: d.list }) } : null),
+  'Play': d => (FILM.test(d.film) && ['own', 'archive'].includes(d.player) ? { film: d.film, player: d.player, ...(CHANNEL.test(d.list || '') && { list: d.list }), ...(SCREENS.includes(d.screen) && { screen: d.screen }) } : null),
   'Watched 10 minutes': d => (FILM.test(d.film) ? { film: d.film } : null),
   // A pasted link is counted as one, without the link (it can name someone's Archive.org page);
   // a search the site refuses is counted without its words
@@ -51,8 +53,16 @@ const EVENTS = {
     if (!['film', 'tv'].includes(d.where) || !played || played > MAX_VIEWING) return null;
     if (d.film !== undefined && !FILM.test(d.film)) return null;
     if (d.channel !== undefined && !CHANNEL.test(d.channel)) return null;
-    return { where: d.where, seconds: played, total: Math.max(played, seconds(d.total) || 0), ...(d.film && { film: d.film }), ...(d.channel && { channel: d.channel }) };
+    return { where: d.where, seconds: played, total: Math.max(played, seconds(d.total) || 0), ...(d.film && { film: d.film }), ...(d.channel && { channel: d.channel }), ...(d.subs === true && { subs: true }) };
   },
+  // A film's playback passed into this tenth of its length (0-9), once per viewing
+  'Reached': d => (FILM.test(d.film) && Number.isInteger(d.at) && d.at >= 0 && d.at <= 9 ? { film: d.film, at: d.at } : null),
+  'No results': (d) => {
+    const query = clean(d.query).toLowerCase();
+    return query && !isForbiddenSearch(query) ? { query } : null;
+  },
+  // A film file that would not play, so the player moved on to the next copy
+  'Copy failed': d => (FILM.test(d.film) ? { film: d.film } : null),
   'MCP banner': d => (['opened', 'dismissed'].includes(d.action) ? { action: d.action } : null),
   // A film ticked as seen on /halloween; only the 31 films there
   'Seen': d => (isHalloweenFilm(d.film) ? { film: d.film } : null),
@@ -92,6 +102,12 @@ export async function visitorToken(ip, userAgent, day) {
 // the owner's today (UTC turned over at 5 PM and split every evening in two)
 const PACIFIC = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' });
 export const statsDay = (now = new Date()) => PACIFIC.format(now);
+const PACIFIC_HOUR = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', weekday: 'short', hour: '2-digit', hourCycle: 'h23' });
+// "Mon 21": the Pacific weekday and hour
+export const statsHour = (now = new Date()) => {
+  const parts = Object.fromEntries(PACIFIC_HOUR.formatToParts(now).map(part => [part.type, part.value]));
+  return `${parts.weekday} ${parts.hour}`;
+};
 
 // Five-minute windows for "active now"; /stats counts this one and the one before
 const ONLINE_WINDOW = 5 * 60_000;
@@ -115,7 +131,15 @@ export function commandsFor({ name, data, visit }, { now = new Date(), visitor }
     // Boards are keyed by identifier (titles are not unique); the name is kept beside them
     if (data.title) commands.push(['HSET', 'stats:titles', data.film, data.title]);
   }
-  if (name === 'Play') { count('played', data.film); count('players', data.player); if (data.list) count('played-from', data.list); }
+  if (name === 'Play') {
+    count('played', data.film); count('players', data.player);
+    if (data.list) count('played-from', data.list);
+    if (data.screen) count('screens', data.screen);
+    if (data.player === 'archive') count('played-archive', data.film);
+  }
+  if (name === 'Reached') count(`reach-${data.at}`, data.film);
+  if (name === 'No results') count('no-results', data.query);
+  if (name === 'Copy failed') count('copy-failed', data.film);
   if (name === 'Watched 10 minutes') count('watched', data.film);
   if (name === 'Search' && data.kind === 'typed' && data.query) {
     count('searches', data.query);
@@ -133,6 +157,15 @@ export function commandsFor({ name, data, visit }, { now = new Date(), visitor }
     commands.push(['HINCRBY', `stats:day:${day}`, 'Seconds watched', data.seconds]);
     if (data.film) commands.push(['ZINCRBY', `stats:minutes:${month}`, minutes, data.film]);
     if (data.channel) commands.push(['ZINCRBY', `stats:channel-minutes:${month}`, minutes, data.channel]);
+    const hour = statsHour(now);
+    commands.push(['HINCRBY', `stats:hours:${month}`, hour, data.seconds]);
+    if (data.channel) commands.push(['HINCRBY', `stats:channel-hours:${month}`, `${data.channel} ${hour.slice(-2)}`, data.seconds]);
+    // Viewings of a film that reached a minute (this report took the total past 60 seconds)
+    if (data.film && data.total >= 60 && data.total - data.seconds < 60) count('min1', data.film);
+    if (data.subs) {
+      commands.push(['HINCRBY', `stats:day:${day}`, 'Seconds with subtitles', data.seconds]);
+      if (data.film) commands.push(['ZINCRBY', `stats:subs-minutes:${month}`, minutes, data.film]);
+    }
   }
   if (visit) for (const stage of stagesOf({ name, data })) commands.push(['PFADD', `stats:funnel:${stage}:${day}`, visit]);
   // Per channel: how often it was tuned to, and how often someone stayed ten minutes
@@ -186,13 +219,28 @@ export function mergeCommands(commands) {
 }
 
 
-// The search board as the stats page shows it: adult searches as one line, the rest as they are,
-// top 25. Each row keeps the searcher estimates it needs (several for the adult line).
-export const ADULT_SEARCHES = 'adult searches';
-export function groupSearches(rows, month) {
-  const adult = rows.filter(([query]) => isAdultSearch(query));
-  const grouped = [...rows.filter(([query]) => !isAdultSearch(query)), ...(adult.length ? [[ADULT_SEARCHES, adult.reduce((sum, [, n]) => sum + n, 0)]] : [])];
-  return grouped.sort((a, b) => b[1] - a[1]).slice(0, 25).map(([label, count]) => ({
-    label, count, keys: (label === ADULT_SEARCHES ? adult.map(([query]) => query) : [label]).map(query => `stats:searchers:${month}:${query}`),
-  }));
+// Film links followed by players (/api/tv/film), per film and per app. The app is a name from
+// the user agent, never the agent itself.
+const APPS = [['Kodi', /kodi|xbmc/i], ['VLC', /vlc/i], ['TiviMate', /tivimate/i], ['Jellyfin', /jellyfin/i], ['Plex', /plex/i], ['Infuse', /infuse/i], ['IPTV Smarters', /smarters/i], ['Browser', /mozilla/i]];
+export const appOf = userAgent => APPS.find(([, pattern]) => pattern.test(userAgent || ''))?.[0] || 'Other';
+export function tvCommands({ film, app }, now = new Date()) {
+  const month = statsDay(now).slice(0, 7);
+  const commands = [['ZINCRBY', `stats:tv-links:${month}`, 1, film], ['ZINCRBY', `stats:tv-apps:${month}`, 1, app]];
+  return [...commands, ...commands.map(([, key]) => ['EXPIRE', key, KEEP_DAYS * 86400])];
+}
+
+// Writes are gathered and sent together, at most every 30 seconds (or every 200 events) per
+// server instance: the database bills per command, and one merged write replaces hundreds.
+// ponytail: an instance that stops before its next write loses those seconds of counts
+const FLUSH_MS = 30_000;
+const pending = [];
+let lastWrite = 0;
+let queued = 0;
+export async function queueWrite(commands) {
+  pending.push(...commands);
+  if (Date.now() - lastWrite < FLUSH_MS && ++queued < 200) return;
+  const batch = mergeCommands(pending.splice(0));
+  lastWrite = Date.now();
+  queued = 0;
+  await redis(batch);
 }

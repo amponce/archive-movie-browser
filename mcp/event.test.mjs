@@ -77,7 +77,7 @@ test('stats need the secret, read with the read-only token, and come back shaped
   // may not run it: visitor counts go through the main token, everything else stays read-only
   const readOnly = calls.find(c => c.auth === 'Bearer read-token');
   const counting = calls.find(c => c.auth === 'Bearer write-token');
-  assert.ok(readOnly.commands.every(c => ['HGETALL', 'ZREVRANGE', 'LRANGE'].includes(c[0])));
+  assert.ok(readOnly.commands.every(c => ['HGETALL', 'ZREVRANGE', 'ZRANGE', 'ZMSCORE', 'LRANGE'].includes(c[0])));
   assert.ok(counting.commands.every(c => c[0] === 'PFCOUNT'));
   const body = await response.json();
   assert.equal(body.days.length, 30);
