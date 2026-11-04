@@ -5,50 +5,65 @@
   "curator": "the station",
   "generated": {
     "rule": "Action or Adventure or Animation or Comedy or Crime or Documentary or Drama or Family or Fantasy or History or Horror or Music or Mystery or Romance or Sci-Fi or Thriller or War or Western 1930s–1940s",
-    "week": 202643
+    "week": 202645
   },
   "films": [
+    {
+      "id": "gaslight-1940-restored-movie-720p-hd"
+    },
+    {
+      "id": "PimpernelSmith"
+    },
+    {
+      "id": "CastleFilm"
+    },
+    {
+      "id": "the.fallen.idol.1948"
+    },
+    {
+      "id": "nazi_concentration_camps"
+    },
+    {
+      "id": "thb445465887188"
+    },
+    {
+      "id": "i-was-born-but"
+    },
     {
       "id": "49thParallel"
     },
     {
-      "id": "kind-hearts-and-coronets"
-    },
-    {
-      "id": "abbott-and-costello-meet-frankenstein"
-    },
-    {
-      "id": "LoveAffair"
-    },
-    {
-      "id": "scott-of-the-antarctic"
-    },
-    {
-      "id": "1938-the-lady-vanishes-alarma-en-el-expreso-alfred-hitchcock-vose"
+      "id": "TheScarletPimpernel"
     },
     {
       "id": "a-hen-in-the-wind"
     },
     {
-      "id": "Scarlet.Street.194517"
+      "id": "FarmersDaughter47"
     },
     {
-      "id": "1936-a-floresta-petrificada-archie-mayo"
+      "id": "DarkMirrorCrime505"
     },
     {
-      "id": "RebeccaClassic4050"
+      "id": "1937-beco-sem-saida-william-wyler"
     },
     {
-      "id": "and.-then.-there.-were.-none.-1945"
+      "id": "mark-of-zorro-1940"
     },
     {
-      "id": "ride-the-pink-horse-1947"
+      "id": "le-corbeau"
     },
     {
-      "id": "day.-of.-wrath.-1943"
+      "id": "m.-1931"
     },
     {
-      "id": "peopleOnSundaymenschenAmSonntag1930"
+      "id": "The_Hamilton_Woman"
+    },
+    {
+      "id": "the-woman-in-the-window-1944_202511"
+    },
+    {
+      "id": "tss32236"
     },
     {
       "id": "MyManGodfrey1936"
@@ -57,52 +72,37 @@
       "id": "GreatExpectations1946"
     },
     {
-      "id": "Pygmalion"
-    },
-    {
-      "id": "GirlFriday"
-    },
-    {
-      "id": "invisible-man-1933"
-    },
-    {
-      "id": "killers-1946"
-    },
-    {
-      "id": "AStarIsBorn"
-    },
-    {
-      "id": "the-scarlet-claw"
+      "id": "CharlieChansSecret1936"
     },
     {
       "id": "laura-1944"
     },
     {
-      "id": "JohnWayneRedRiverRange193853mns_201605"
+      "id": "the-scarlet-claw"
     },
     {
-      "id": "stray-dog"
+      "id": "gilda-1080p"
     },
     {
-      "id": "aap44779882"
+      "id": "invisible-man-1933"
     },
     {
-      "id": "the-blue-angel_1930"
+      "id": "LoveAffair"
+    },
+    {
+      "id": "house-of-strangers-1949_202511"
+    },
+    {
+      "id": "GirlFriday"
+    },
+    {
+      "id": "bride-of-frankenstein-1935-colorized-movie-720p-hd_202303"
     },
     {
       "id": "Oh_Mr.Porter_1937"
     },
     {
-      "id": "drunken-angel"
-    },
-    {
-      "id": "stagecoach-colorized"
-    },
-    {
-      "id": "FarmersDaughter47"
-    },
-    {
-      "id": "the-woman-in-the-window-1944_202511"
+      "id": "bishops-wife-1947"
     }
   ]
 }
