@@ -11,8 +11,11 @@ const BOARDS = [
   ['tuned', 'Channels tuned to'], ['stayed', 'Channels watched 10+ minutes'], ['played', 'Films played'], ['watched', 'Watched 10+ minutes'], ['opened', 'Films opened'], ['searches', 'Searches'], ['filters', 'Filters used'],
   ['no-results', 'Searches that found nothing'], ['screens', 'Plays, by screen'],
   ['tv-links', 'Film links followed by players'], ['tv-apps', 'Players following film links'],
-  ['referrers', 'Where visitors came from'], ['pages', 'Pages'], ['players', 'Player used'], ['played-from', 'Plays, by list, channel or row'], ['banner', 'MCP banner'],
+  ['referrers', 'Where visitors came from'], ['countries', 'Where visitors are'], ['browsers', 'Browsers'], ['systems', 'Systems'],
+  ['pages', 'Pages'], ['players', 'Player used'], ['played-from', 'Plays, by list, channel or row'], ['banner', 'MCP banner'],
 ];
+const REGION = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames(['en'], { type: 'region' }) : null;
+const countryName = code => { try { return (code.length === 2 && REGION?.of(code)) || code; } catch { return code; } };
 const WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const HOURS = Array.from({ length: 24 }, (_, h) => String(h).padStart(2, '0'));
 const NEW_SINCE = '2026-10-27'; // when the per-film columns after "Of its length" began counting
@@ -20,6 +23,9 @@ const pct = (part, whole) => (whole ? `${Math.round((part / whole) * 100)}%` : '
 
 const fmt = (n) => Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
 const sum = (days, name) => days.reduce((total, day) => total + (day.events[name] || 0), 0);
+// The last 7 full days against the 7 before, as a percentage (today is partial, so it is left out)
+const weekChange = (days, pick) => { const of = list => list.reduce((t, d) => t + pick(d), 0); const now = of(days.slice(-8, -1)), before = of(days.slice(-15, -8)); return before ? Math.round(((now - before) / before) * 100) : null; };
+const ago = (at, now = Date.now()) => { const m = Math.max(0, Math.round((now - Date.parse(at)) / 60_000)); return m ? `${m} min ago` : 'just now'; };
 const readKey = () => { try { return localStorage.getItem(KEY) || ''; } catch { return ''; } };
 // A key pasted from a .env file often arrives with quotes or a newline; the server wants only the value
 export const cleanKey = (text) => String(text || '').trim().replace(/^["']|["']$/g, '').trim();
@@ -57,6 +63,44 @@ function DailyChart({ days }) {
       </div>
       <div className="flex justify-between text-xs text-gray-400 mt-1.5"><span>{days[0].day}</span><span>{days.at(-1).day}</span></div>
     </>
+  );
+}
+
+// Visitors per month, this one and the twelve before; the current month is partial
+function Months({ months: all }) {
+  const months = all.slice(Math.max(0, all.findIndex(m => m.visitors > 0))); // from the first month counted
+  const max = Math.max(1, ...months.map(m => m.visitors));
+  return (
+    <table className="w-full text-sm">
+      <tbody>
+        {[...months].reverse().map((m, i) => (
+          <tr key={m.month} className="border-b border-gray-700 tabular-nums">
+            <td className="py-1 pr-3 w-24 whitespace-nowrap">{m.month}{i === 0 && <span className="text-gray-500"> so far</span>}</td>
+            <td><div className="h-2 rounded-r min-w-[2px]" style={{ width: `${(m.visitors / max) * 100}%`, background: MARK }} /></td>
+            <td className="w-16 text-right">{fmt(m.visitors)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+// What is playing now, from the log: newest first, with how far the latest report had got
+function Playing({ rows, titles }) {
+  if (!rows.length) return <p className="text-gray-400">Nothing in the last 15 minutes.</p>;
+  const where = r => r.minutes ? `${r.minutes} min in` : r.tenth !== undefined ? `${r.tenth * 10}% in` : 'started';
+  return (
+    <table className="w-full text-sm">
+      <tbody>
+        {rows.map(r => (
+          <tr key={r.film || r.channel} className="border-b border-gray-700">
+            <td className="py-1 pr-3 max-w-0 w-[60%] truncate">{r.film ? <Film id={r.film} titles={titles} /> : `channel ${r.channel}`}</td>
+            <td className="pr-3 whitespace-nowrap text-gray-300">{where(r)}</td>
+            <td className="text-right whitespace-nowrap text-gray-400 tabular-nums">{ago(r.at)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -199,7 +243,7 @@ function Shares({ rows, label }) {
 }
 
 // Minutes watched in each hour (Pacific): one row per weekday, or per channel
-function HourGrid({ rows }) {
+function HourGrid({ rows, show = n => `${fmt(n / 60)} min` }) {
   const max = Math.max(1, ...rows.flatMap(r => r.hours));
   return (
     <div className="overflow-x-auto">
@@ -211,7 +255,7 @@ function HourGrid({ rows }) {
               <td className="pr-2 text-gray-400 whitespace-nowrap max-w-[10rem] truncate">{r.label}</td>
               {r.hours.map((seconds, h) => (
                 <td key={h} className="p-[1px]">
-                  <div tabIndex={0} title={`${r.label} ${HOURS[h]}:00, ${fmt(seconds / 60)} min`} aria-label={`${r.label} ${HOURS[h]}:00, ${fmt(seconds / 60)} minutes`}
+                  <div tabIndex={0} title={`${r.label} ${HOURS[h]}:00, ${show(seconds)}`} aria-label={`${r.label} ${HOURS[h]}:00, ${show(seconds)}`}
                     className="w-4 h-4 rounded-sm border border-gray-700" style={seconds ? { background: MARK, opacity: 0.15 + 0.85 * (seconds / max) } : undefined} />
                 </td>
               ))}
@@ -494,9 +538,10 @@ export default function StatsPage() {
 
   const forget = () => { try { localStorage.removeItem(KEY); } catch { /* private mode */ } setData(null); setEntered(''); };
   const week = data?.days.slice(-7) || [];
+  const change = name => weekChange(data.days, d => d.events[name] || 0);
   const tiles = data && [
-    [data.activeNow ?? 0, 'active in the last 10 minutes'], [data.days.at(-1).visitors, 'visitors today'], [data.visitorsThisMonth, 'visitors this month'], [sum(week, 'Page view'), 'page views, 7 days'],
-    [sum(week, 'Film opened'), 'films opened, 7 days'], [sum(week, 'Seconds watched') / 60, 'minutes watched, 7 days'], [sum(week, 'Play'), 'plays, 7 days'], [sum(week, 'Watched 10 minutes'), 'watched 10+ min, 7 days'], [sum(week, 'Search'), 'searches, 7 days'],
+    [data.activeNow ?? 0, 'active in the last 10 minutes'], [data.days.at(-1).visitors, 'visitors today'], [week.reduce((t, d) => t + d.visitors, 0), 'visitors, 7 days', weekChange(data.days, d => d.visitors)], [data.visitorsThisMonth, 'visitors this month'], [sum(week, 'Page view'), 'page views, 7 days', change('Page view')],
+    [sum(week, 'Film opened'), 'films opened, 7 days', change('Film opened')], [sum(week, 'Seconds watched') / 60, 'minutes watched, 7 days', change('Seconds watched')], [sum(week, 'Play'), 'plays, 7 days', change('Play')], [sum(week, 'Watched 10 minutes'), 'watched 10+ min, 7 days', change('Watched 10 minutes')], [sum(week, 'Search'), 'searches, 7 days', change('Search')],
   ];
 
   return (
@@ -529,10 +574,11 @@ export default function StatsPage() {
         {data && (
           <main className="space-y-5">
             <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
-              {tiles.map(([value, label]) => (
+              {tiles.map(([value, label, change]) => (
                 <div key={label} className="bg-gray-800/60 border border-gray-700 rounded-xl p-4">
                   <div className="text-3xl font-bold tabular-nums leading-tight">{fmt(value)}</div>
                   <div className="text-sm text-gray-400">{label}</div>
+                  {change !== undefined && change !== null && <div className="text-xs text-gray-500 tabular-nums" title="the last 7 full days against the 7 before">{change >= 0 ? '+' : ''}{change}% week on week</div>}
                 </div>
               ))}
             </div>
@@ -559,6 +605,16 @@ export default function StatsPage() {
                   </table>
                 </div>
               </details>
+            </Panel>
+
+            {data.months && (
+              <Panel title="Visitors per month" note="(each day's distinct people added up, so someone here on ten days counts ten times; this month and the twelve before)">
+                <Months months={data.months} />
+              </Panel>
+            )}
+
+            <Panel title="Playing now" note="(a play, a tune-in or a playback report in the last 15 minutes; reports come at pauses and when a page closes)">
+              <Playing rows={data.playing || []} titles={data.titles || {}} />
             </Panel>
 
             <Panel title="Latest events" note="(newest first; refreshes every 5 minutes)">
@@ -601,6 +657,10 @@ export default function StatsPage() {
               )}
             </Panel>
 
+            <Panel title="When people visit" note="(page views this month, by Pacific hour)">
+              <HourGrid rows={weekRows(data.visitHours)} show={n => `${fmt(n)} views`} />
+            </Panel>
+
             <Panel title="Profiles" note="(everyone, newest change first; open one for what they hearted, their channels and their changes)">
               <Profiles />
             </Panel>
@@ -615,10 +675,10 @@ export default function StatsPage() {
 
             <div className="grid gap-5 grid-cols-[repeat(auto-fit,minmax(19rem,1fr))]">
               {BOARDS.map(([key, title]) => (
-                <Panel key={key} title={title}><Board rows={data.boards[key] || []} films={FILM_BOARDS.includes(key)} titles={data.titles || {}} /></Panel>
+                <Panel key={key} title={title}><Board rows={(data.boards[key] || []).map(([label, ...rest]) => [key === 'countries' ? countryName(label) : label, ...rest])} films={FILM_BOARDS.includes(key)} titles={data.titles || {}} /></Panel>
               ))}
             </div>
-            <p className="text-gray-400 text-sm">Counts and a dated log of what happened: no cookies, no IP addresses, nothing that says who. Each browser tab carries a random visit id that is only counted into the funnel, never stored. Bots are not counted. Leaderboards are for the current month.</p>
+            <p className="text-gray-400 text-sm">Counts and a dated log of what happened: no cookies, no IP addresses, nothing that says who. Each browser tab carries a random visit id that is only counted into the funnel, never stored. Country, browser and system are monthly totals, each kept on its own. Bots are not counted. Leaderboards are for the current month.</p>
           </main>
         )}
       </div>

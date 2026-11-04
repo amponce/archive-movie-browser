@@ -1,7 +1,8 @@
 // Our own usage counts. This file is the rulebook: which events are accepted and which Redis
 // counters each one bumps. It stores counts only: no cookies, no IP addresses, no visitor ids.
 // A visit id (random, one per browser tab) only ever goes into a HyperLogLog for the funnel,
-// which keeps an estimate of how many distinct ids it saw and none of the ids.
+// which keeps an estimate of how many distinct ids it saw and none of the ids. A page view's
+// country, browser family and system family are counted in three separate monthly boards.
 // (The leading underscore marks a helper, not an endpoint; worker.js routes only the others.)
 
 import { isForbiddenSearch } from '../src/services/policy.js';
@@ -115,7 +116,7 @@ const ONLINE_KEEP = 15 * 60;
 export const onlineKey = (now = new Date(), windowsBack = 0) => `stats:online:${Math.floor(now.getTime() / ONLINE_WINDOW) - windowsBack}`;
 
 // The Redis commands for one event. Days and months are Pacific time.
-export function commandsFor({ name, data, visit }, { now = new Date(), visitor } = {}) {
+export function commandsFor({ name, data, visit }, { now = new Date(), visitor, country, browser, system } = {}) {
   const day = statsDay(now);
   const month = day.slice(0, 7);
   const commands = [['HINCRBY', `stats:day:${day}`, name, 1]];
@@ -125,6 +126,12 @@ export function commandsFor({ name, data, visit }, { now = new Date(), visitor }
     count('pages', data.path);
     if (data.referrer) count('referrers', data.referrer);
     if (visitor) commands.push(['PFADD', `stats:visitors:${day}`, visitor], ['PFADD', `stats:visitors:${month}`, visitor]);
+    // Where from and on what, as monthly counts in three separate boards (a country, a browser
+    // family, a system family), never together and never beside what was viewed
+    if (country) count('countries', country);
+    if (browser) count('browsers', browser);
+    if (system) count('systems', system);
+    commands.push(['HINCRBY', `stats:visit-hours:${month}`, statsHour(now), 1]);
   }
   if (name === 'Film opened') {
     count('opened', data.film);
@@ -223,6 +230,15 @@ export function mergeCommands(commands) {
 // the user agent, never the agent itself.
 const APPS = [['Kodi', /kodi|xbmc/i], ['VLC', /vlc/i], ['TiviMate', /tivimate/i], ['Jellyfin', /jellyfin/i], ['Plex', /plex/i], ['Infuse', /infuse/i], ['IPTV Smarters', /smarters/i], ['Browser', /mozilla/i]];
 export const appOf = userAgent => APPS.find(([, pattern]) => pattern.test(userAgent || ''))?.[0] || 'Other';
+
+// A page view's browser and system, as families only (never the agent string, never a version).
+// Order matters: Edge and Opera say Chrome too, Chrome says Safari, iPad says Mac OS when "desktop"
+const BROWSERS = [['Edge', /edg(e|a|ios)?\//i], ['Opera', /opr\/|opera/i], ['Samsung Internet', /samsungbrowser/i], ['Firefox', /firefox|fxios/i], ['Chrome', /chrome|crios/i], ['Safari', /safari/i]];
+const SYSTEMS = [['iOS', /iphone|ipad|ipod/i], ['Android', /android/i], ['Windows', /windows/i], ['Mac', /macintosh|mac os/i], ['ChromeOS', /cros/i], ['Linux', /linux/i]];
+const familyOf = (list, userAgent) => list.find(([, pattern]) => pattern.test(userAgent || ''))?.[0] || 'Other';
+export const agentOf = userAgent => ({ browser: familyOf(BROWSERS, userAgent), system: familyOf(SYSTEMS, userAgent) });
+// Cloudflare's country code for the request: Tor exits are "T1", unknown is "XX" (not counted)
+export const countryOf = code => (code === 'T1' ? 'Tor' : /^[A-Z]{2}$/.test(code || '') && code !== 'XX' ? code : undefined);
 export function tvCommands({ film, app }, now = new Date()) {
   const month = statsDay(now).slice(0, 7);
   const commands = [['ZINCRBY', `stats:tv-links:${month}`, 1, film], ['ZINCRBY', `stats:tv-apps:${month}`, 1, app]];

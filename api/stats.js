@@ -1,4 +1,5 @@
 // GET /api/stats  (Authorization: Bearer <STATS_TOKEN>): the numbers behind the /stats page.
+// Without a query: the last 30 days, 13 months of visitors, this month's boards and the latest log.
 // ?searches=<month> every search that month; ?log=<offset> a page of the event log;
 // ?profiles every profile; ?profile=<id> one profile's favourites, channels and changes.
 import { timingSafeEqual } from 'node:crypto';
@@ -7,7 +8,8 @@ import { statsDay, onlineKey } from './_stats.js';
 import posterIndex from '../public/poster-index.json' with { type: 'json' };
 
 const BOARDS = ['opened', 'played', 'watched', 'searches', 'filters', 'referrers', 'pages', 'players', 'played-from', 'banner', 'tv', 'tuned', 'stayed', 'minutes', 'channel-minutes', 'clicks',
-  'no-results', 'screens', 'tv-links', 'tv-apps'];
+  'no-results', 'screens', 'tv-links', 'tv-apps', 'countries', 'browsers', 'systems'];
+const MONTHS = 13; // visitors per month, this one and the twelve before
 // Per film, for the films table: read for the most played and most opened films
 const PER_FILM = ['played', 'opened', 'minutes', 'min1', 'played-archive', 'copy-failed', 'subs-minutes', ...Array.from({ length: 10 }, (_, i) => `reach-${i}`)];
 const SEARCH_PEOPLE = 200; // searches in a full month's list that also get a count of visits
@@ -15,6 +17,7 @@ const STAGES = ['visited', 'clicked', 'played', 'tuned in', 'watched 1+ min', 'w
 const FUNNEL_DAYS = 14;
 const FILM_BOARDS = ['opened', 'played', 'watched', 'minutes', 'tv-links'];
 const DAYS = 30;
+const RECENT = 100; // log entries on every refresh: the latest panel and what is playing now
 const COMMUNITY_DAYS = 14;
 const COUNTED = { 'profile-created': 'profiles', 'channel-created': 'channels', 'channel-edited': 'edits', 'channel-deleted': 'deleted' };
 const LOG_PAGE = 500;
@@ -42,39 +45,44 @@ export async function GET(request, env) {
   // The last 30 Pacific days, counted back from today's date (noon UTC, so no daylight saving edge)
   const today = new Date(`${statsDay()}T12:00:00Z`);
   const days = Array.from({ length: DAYS }, (_, i) => new Date(today - i * 86400_000).toISOString().slice(0, 10)).reverse();
-  const month = days.at(-1).slice(0, 7);
+  const months = Array.from({ length: MONTHS }, (_, i) => { const d = new Date(today); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - i); return d.toISOString().slice(0, 7); }).reverse();
   try {
     if (searchMonth) return Response.json(await searchesOf(searchMonth), { headers: { 'Cache-Control': 'no-store' } });
     if (offset !== null) return Response.json(await logOf(Number(offset)), { headers: { 'Cache-Control': 'no-store' } });
     if (params.has('profiles')) return Response.json(await profilesOf(env?.DB), { headers: { 'Cache-Control': 'no-store' } });
     if (profileId !== null) return Response.json(await profileOf(env?.DB, profileId), { headers: { 'Cache-Control': 'no-store' } });
-    return await read(days, month, env?.DB);
+    return await read(days, months, env?.DB);
   } catch (error) {
     const full = /max requests limit/i.test(error.message);
     return Response.json({ error: full ? 'The stats database has reached its monthly limit, so there is nothing to read until it resets or its plan is upgraded.' : `The stats database did not answer (${error.message}).` }, { status: 503, headers: { 'Cache-Control': 'no-store' } });
   }
 }
 
-async function read(days, month, db) {
+async function read(days, months, db) {
+  const month = months.at(-1);
   // Redis treats PFCOUNT as a write (it caches its answer in the key), so the read-only token
   // is refused for it. Visitor counts use the main token; everything else reads read-only.
   const [reads, visitors] = await Promise.all([
     redis([
       ...days.map(day => ['HGETALL', `stats:day:${day}`]),
       ...BOARDS.map(board => ['ZREVRANGE', `stats:${board}:${month}`, 0, 24, 'WITHSCORES']),
-      ['LRANGE', 'stats:recent', 0, 39],
+      ['LRANGE', 'stats:recent', 0, RECENT - 1],
       ['ZRANGE', `stats:minutes:${month}`, 0, -1, 'WITHSCORES'],
       ['HGETALL', `stats:hours:${month}`],
       ['HGETALL', `stats:channel-hours:${month}`],
+      ['HGETALL', `stats:visit-hours:${month}`],
     ], { readOnly: true }),
     redis([
       ...days.map(day => ['PFCOUNT', `stats:visitors:${day}`]), ['PFCOUNT', `stats:visitors:${month}`],
       // The funnel: how many visits reached each stage, per day
       ...days.slice(-FUNNEL_DAYS).flatMap(day => STAGES.map(stage => ['PFCOUNT', `stats:funnel:${stage}:${day}`])),
+      // Visitors per month, oldest first
+      ...months.map(m => ['PFCOUNT', `stats:visitors:${m}`]),
       // Active now: distinct visits in this five-minute window and the last one (5 to 10 minutes)
       ['PFCOUNT', onlineKey(new Date()), onlineKey(new Date(), 1)],
     ]),
   ]);
+  const afterFunnel = DAYS + 1 + FUNNEL_DAYS * STAGES.length;
 
   const boards = Object.fromEntries(BOARDS.map((board, i) => [board, pairs(reads[DAYS + i])]));
   const people = boards.searches.length ? await redis(boards.searches.map(([query]) => ['PFCOUNT', `stats:searchers:${month}:${query}`])) : [];
@@ -84,6 +92,7 @@ async function read(days, month, db) {
   const allMinutes = pairs(reads[after + 1]);
   const hours = Object.fromEntries(pairs(reads[after + 2]));
   const channelHours = Object.fromEntries(pairs(reads[after + 3]));
+  const visitHours = Object.fromEntries(pairs(reads[after + 4]));
 
   // The films table: the most played and most opened films, each with every per-film count
   const tableFilms = [...new Set([...boards.played, ...boards.opened].map(([film]) => film))];
@@ -110,17 +119,35 @@ async function read(days, month, db) {
     community,
     days: days.map((day, i) => ({ day, visitors: visitors[i] || 0, events: Object.fromEntries(pairs(reads[i])) })),
     visitorsThisMonth: visitors[DAYS] || 0,
-    activeNow: visitors.at(-1) || 0,
+    activeNow: visitors[afterFunnel + MONTHS] || 0,
     funnel: days.slice(-FUNNEL_DAYS).map((day, i) => ({ day, ...Object.fromEntries(STAGES.map((stage, j) => [stage, visitors[DAYS + 1 + i * STAGES.length + j] || 0])) })),
+    months: months.map((m, i) => ({ month: m, visitors: visitors[afterFunnel + i] || 0 })),
     boards,
     films: filmRows,
     shares: sharesOf(allMinutes),
     hours,
     channelHours,
+    visitHours,
     titles,
     recent,
+    playing: playingNow(recent),
   };
   return Response.json(body, { headers: { 'Cache-Control': 'no-store' } });
+}
+
+// What is playing now: each film or channel with a play, a tune-in or a playback report in the
+// last 15 minutes, newest first, with how far the latest report had got. Playback reports come
+// at pauses and when a page closes, so a long sitting can go quiet between them.
+const PLAYING_MS = 15 * 60_000;
+export function playingNow(events, now = Date.now()) {
+  const seen = new Map();
+  for (const { at, name, data } of events) {
+    if (!['Play', 'Reached', 'Watched', 'Watched 10 minutes', 'TV'].includes(name) || now - Date.parse(at) > PLAYING_MS) continue;
+    const key = data?.film ? `film ${data.film}` : data?.channel ? `channel ${data.channel}` : null;
+    if (!key || seen.has(key)) continue; // newest first, so the first seen is the latest word
+    seen.set(key, { at, ...(data.film ? { film: data.film } : { channel: data.channel }), ...(name === 'Watched' && { minutes: Math.round(data.total / 60) }), ...(name === 'Reached' && { tenth: data.at }) });
+  }
+  return [...seen.values()];
 }
 
 // Hearts and channel films from the community database, all time: counts per film, never who
