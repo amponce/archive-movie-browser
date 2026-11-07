@@ -2,7 +2,7 @@
 // is where the server-side code is tested.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validEvent, commandsFor, isBot, visitorToken } from '../api/_stats.js';
+import { validEvent, commandsFor, isBot, visitorToken, agentOf, countryOf } from '../api/_stats.js';
 
 test('only known events with well-formed data are accepted', () => {
   assert.deepEqual(validEvent({ name: 'Play', data: { film: 'Cops1922', player: 'own', extra: 'x' } }), { name: 'Play', data: { film: 'Cops1922', player: 'own' } });
@@ -78,3 +78,29 @@ test('a search counts once on the board and adds the visit to the estimate of pe
   assert.ok(commands.some(c => c[0] === 'PFADD' && c[1] === 'stats:searchers:2026-09:noir' && c[2] === '0123456789abcdef'));
 });
 
+
+test('a page view counts its country, browser family, system family and hour, each on its own', () => {
+  const view = validEvent({ name: 'Page view', data: { path: '/browse' } });
+  const now = new Date('2026-09-21T10:00:00Z'); // Mon 03 Pacific
+  const commands = commandsFor(view, { now, country: 'IE', browser: 'Safari', system: 'iOS' });
+  assert.deepEqual(commands.filter(c => c[0] === 'ZINCRBY').map(c => `${c[1]} ${c[3]}`), ['stats:pages:2026-09 /browse', 'stats:countries:2026-09 IE', 'stats:browsers:2026-09 Safari', 'stats:systems:2026-09 iOS']);
+  assert.ok(commands.some(c => c[0] === 'HINCRBY' && c[1] === 'stats:visit-hours:2026-09' && c[2] === 'Mon 03'));
+  const logged = JSON.parse(commands.find(c => c[0] === 'LPUSH')[2]);
+  assert.deepEqual(Object.keys(logged.data), ['path', 'referrer'], 'the log row says where, never from where or on what');
+  // Nothing known: nothing counted
+  const bare = commandsFor(view, { now }).filter(c => c[0] === 'ZINCRBY').map(c => c[1]);
+  assert.deepEqual(bare, ['stats:pages:2026-09']);
+});
+
+test('browsers and systems are families, never the agent string or a version', () => {
+  assert.deepEqual(agentOf('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'), { browser: 'Safari', system: 'iOS' });
+  assert.deepEqual(agentOf('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'), { browser: 'Edge', system: 'Windows' });
+  assert.deepEqual(agentOf('Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36'), { browser: 'Chrome', system: 'Android' });
+  assert.deepEqual(agentOf('Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0'), { browser: 'Firefox', system: 'Mac' });
+  assert.deepEqual(agentOf(''), { browser: 'Other', system: 'Other' });
+  assert.equal(countryOf('IE'), 'IE');
+  assert.equal(countryOf('T1'), 'Tor');
+  assert.equal(countryOf('XX'), undefined);
+  assert.equal(countryOf(undefined), undefined);
+  assert.equal(countryOf('<b>'), undefined);
+});

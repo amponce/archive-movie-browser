@@ -7,7 +7,7 @@ process.env.KV_REST_API_TOKEN = 'write-token';
 process.env.KV_REST_API_READ_ONLY_TOKEN = 'read-token';
 process.env.STATS_TOKEN = 'a-long-enough-stats-token';
 const { POST } = await import('../api/event.js');
-const { GET } = await import('../api/stats.js');
+const { GET, playingNow } = await import('../api/stats.js');
 
 const BROWSER = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Safari/604.1';
 const post = (body, headers = {}) => POST(new Request('https://site.test/api/event', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body),
@@ -26,6 +26,32 @@ test('a valid event from our own page is counted, with the write token, and noth
   assert.equal(calls[0].auth, 'Bearer write-token');
   assert.ok(calls[0].commands.some(c => c[0] === 'PFADD'));
   assert.ok(!JSON.stringify(calls[0].commands).includes('203.0.113.7') && !JSON.stringify(calls[0].commands).includes('iPhone'));
+  // Where from and on what, as families, from what Cloudflare and the agent say
+  assert.ok(calls[0].commands.some(c => c[0] === 'ZINCRBY' && c[1].startsWith('stats:systems:') && c[3] === 'iOS'));
+  assert.ok(!calls[0].commands.some(c => c[1].startsWith('stats:countries:')), 'no country known, none counted');
+});
+
+test('the country Cloudflare saw is counted for a page view, as a code in its own board', async t => {
+  t.mock.timers.enable({ apis: ['Date'], now: Date.now() + 60_000 }); // past the 30-second write buffer, so this write goes out
+  const calls = stubRedis(t);
+  const request = Object.assign(new Request('https://site.test/api/event', { method: 'POST', body: JSON.stringify({ name: 'Page view', data: { path: '/' } }),
+    headers: { 'user-agent': BROWSER, 'sec-fetch-site': 'same-origin', origin: 'https://site.test', 'cf-connecting-ip': '203.0.113.8' } }), { cf: { country: 'IE' } });
+  assert.equal((await POST(request)).status, 204);
+  assert.ok(calls[0].commands.some(c => c[0] === 'ZINCRBY' && c[1].startsWith('stats:countries:') && c[3] === 'IE'));
+});
+
+test('what is playing now comes from the log: the last 15 minutes, one line per film, newest word first', () => {
+  const now = Date.parse('2026-09-21T10:30:00Z');
+  const at = minutesAgo => new Date(now - minutesAgo * 60_000).toISOString();
+  const rows = playingNow([
+    { at: at(1), name: 'Watched', data: { where: 'film', film: 'Cops1922', seconds: 300, total: 1500 } },
+    { at: at(2), name: 'Search', data: { query: 'cops' } },
+    { at: at(3), name: 'Reached', data: { film: 'Nosferatu', at: 4 } },
+    { at: at(5), name: 'Play', data: { film: 'Cops1922', player: 'own' } },
+    { at: at(6), name: 'TV', data: { action: 'tune', channel: 'atomic-age' } },
+    { at: at(20), name: 'Play', data: { film: 'Metropolis', player: 'own' } },
+  ], now);
+  assert.deepEqual(rows, [{ at: at(1), film: 'Cops1922', minutes: 25 }, { at: at(3), film: 'Nosferatu', tenth: 4 }, { at: at(6), channel: 'atomic-age' }]);
 });
 
 test('other sites, bots, junk and made-up events are turned away before the database', async t => {
@@ -79,8 +105,16 @@ test('stats need the secret, read with the read-only token, and come back shaped
   const counting = calls.find(c => c.auth === 'Bearer write-token');
   assert.ok(readOnly.commands.every(c => ['HGETALL', 'ZREVRANGE', 'ZRANGE', 'ZMSCORE', 'LRANGE'].includes(c[0])));
   assert.ok(counting.commands.every(c => c[0] === 'PFCOUNT'));
+  // The last count is the active-now window, after 13 monthly estimates
+  assert.ok(counting.commands.at(-1)[1].startsWith('stats:online:'));
+  assert.equal(counting.commands.filter(c => /^stats:visitors:\d{4}-\d{2}$/.test(c[1])).length, 14, '13 months, and this month again for the tile');
   const body = await response.json();
   assert.equal(body.days.length, 30);
+  assert.equal(body.months.length, 13);
+  assert.ok(body.months.every(m => /^\d{4}-\d{2}$/.test(m.month) && m.visitors === 12));
+  assert.equal(body.months.at(-1).month, body.month);
+  assert.deepEqual(body.playing, []);
+  assert.deepEqual(body.visitHours, { Play: 3, 'Film opened': 9 }, 'the stubbed hash, read as pairs');
   assert.deepEqual(body.days.at(-1).events, { Play: 3, 'Film opened': 9 });
   assert.equal(body.days.at(-1).visitors, 12);
   assert.deepEqual(body.boards.played[0], ['Cops1922', 7]);

@@ -1,5 +1,5 @@
 // POST /api/event  { name, data }: one usage event from the site. Counts only; see _stats.js.
-import { validEvent, commandsFor, isBot, visitorToken, statsDay, queueWrite } from './_stats.js';
+import { validEvent, commandsFor, isBot, visitorToken, statsDay, queueWrite, agentOf, countryOf } from './_stats.js';
 
 const PER_MINUTE = 60;
 const hits = new Map(); // ponytail: per-instance memory, like api/mcp.js; enough to blunt a loop or a prank
@@ -40,9 +40,11 @@ export async function POST(request) {
   if (!event) return done(400);
 
   const now = new Date();
-  const visitor = event.name === 'Page view' ? await visitorToken(ip, userAgent, statsDay(now)) : undefined;
+  // Page views also count where from and on what: the country Cloudflare saw, and the browser
+  // and system families; none of it is kept with the view
+  const view = event.name === 'Page view' ? { visitor: await visitorToken(ip, userAgent, statsDay(now)), country: countryOf(request.cf?.country), ...agentOf(userAgent) } : {};
   try {
-    await queueWrite(commandsFor(event, { now, visitor }));
+    await queueWrite(commandsFor(event, { now, ...view }));
   } catch (error) {
     console.error('stats:', error.message);
     return done(503);
