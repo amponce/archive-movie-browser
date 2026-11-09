@@ -5,104 +5,104 @@
   "curator": "the station",
   "generated": {
     "rule": "Action or Adventure or Animation or Comedy or Crime or Documentary or Drama or Family or Fantasy or History or Horror or Music or Mystery or Romance or Sci-Fi or Thriller or War or Western 1930s–1930s",
-    "week": 202643
+    "week": 202646
   },
   "films": [
     {
-      "id": "Milky_Way_movie"
+      "id": "DoubleDeal"
+    },
+    {
+      "id": "Mr.WongDetective720p1938"
+    },
+    {
+      "id": "mystery.-of.-edwin.-drood.-1935"
+    },
+    {
+      "id": "TheShadowofSilkLennox"
+    },
+    {
+      "id": "FitForAKingcomplete"
+    },
+    {
+      "id": "honor_of_the_range"
+    },
+    {
+      "id": "JustImagine_201701"
     },
     {
       "id": "1931-the-vice-squad-john-cromwell-vo"
     },
     {
-      "id": "son-of-frankenstein-1939-colorized-movie-720p-hd"
+      "id": "Gangsters.Boy"
     },
     {
-      "id": "MeetDr.Christian"
+      "id": "Crackerjack_201810"
     },
     {
-      "id": "1937-you-only-live-once-solo-se-vive-una-vez-fritz-lang-vose"
+      "id": "three-men-in-a-boat"
     },
     {
-      "id": "sabotage-republic"
+      "id": "sexton_blake_sexton_hooded_terror"
     },
     {
-      "id": "JacksTheBoy"
+      "id": "LetterofIntroduction"
     },
     {
-      "id": "DangerValley"
+      "id": "KiGrajRidingRanger"
     },
     {
-      "id": "love-among-the-millionaires_1930"
+      "id": "LawoftheWest"
     },
     {
-      "id": "AStarIsBorn"
-    },
-    {
-      "id": "the.-old.-dark.-house.-1932"
-    },
-    {
-      "id": "MidnightIntrusion"
-    },
-    {
-      "id": "held_for_ransom"
-    },
-    {
-      "id": "Hot_Curves_3054"
-    },
-    {
-      "id": "f0093543534112"
-    },
-    {
-      "id": "TheMostDangerousGame"
-    },
-    {
-      "id": "AllOverTown_OlsenJohnson"
-    },
-    {
-      "id": "AManOfSentiment1933"
-    },
-    {
-      "id": "BrandedaCoward"
-    },
-    {
-      "id": "ZaneGreysToTheLastMan1933-RandolphScott"
-    },
-    {
-      "id": "NothingSacred"
+      "id": "AlfsButtonAfloat"
     },
     {
       "id": "ForeverEngland"
     },
     {
-      "id": "Murder_At_The_Baskervilles"
+      "id": "UndertheRedRobeVSjostrom1937RMassey"
     },
     {
-      "id": "the_silver_trail"
+      "id": "UtahTrail"
     },
     {
-      "id": "1931-city-streets-las-calles-de-la-ciudad-rouben-mamoulian-vose"
+      "id": "1937-beco-sem-saida-william-wyler"
     },
     {
-      "id": "BigFella"
+      "id": "KingofJazz1930"
     },
     {
-      "id": "madreselva-1938"
+      "id": "phantom_patrol"
     },
     {
-      "id": "SpringtimeInTheRockies"
+      "id": "animal-crackers_1930"
     },
     {
-      "id": "hook_line_and_sinker"
+      "id": "the.-witching.-hour.-1934"
     },
     {
-      "id": "BadGirl1931"
+      "id": "TheHumanMonster720p1939"
     },
     {
-      "id": "1935theglasskeylallavedecristalfranktuttle"
+      "id": "TheDudeRanger"
     },
     {
-      "id": "The.Ghost.Walks"
+      "id": "BoothillBrigade"
+    },
+    {
+      "id": "LadiesCraveExcitement"
+    },
+    {
+      "id": "MidnightLady89"
+    },
+    {
+      "id": "Evergreen"
+    },
+    {
+      "id": "NonStopNewYork1937"
+    },
+    {
+      "id": "AManOfSentiment1933"
     }
   ]
 }
