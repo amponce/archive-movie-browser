@@ -5,104 +5,104 @@
   "curator": "the station",
   "generated": {
     "rule": "Adventure 1920s–1960s",
-    "week": 202643
+    "week": 202646
   },
   "films": [
     {
-      "id": "across-to-singapore_1928"
-    },
-    {
-      "id": "SkyHigh1922"
-    },
-    {
-      "id": "it-came-from-beneath-the-sea"
-    },
-    {
-      "id": "daredevils-of-the-clouds-republic-1"
-    },
-    {
-      "id": "1929-the-iron-mask_202506"
-    },
-    {
-      "id": "MyMovie_20180328"
-    },
-    {
-      "id": "TheGreatDanPatch720p1949"
-    },
-    {
-      "id": "the.-colossus.-of.-rhodes.-1961.272p"
-    },
-    {
-      "id": "sky_patrol_ipod"
-    },
-    {
-      "id": "don-juan-1926-dvd-mkv"
-    },
-    {
-      "id": "TheBlackPirate1926DouglasFairbanksSRAndy"
-    },
-    {
-      "id": "NomadsOfTheNorth1920"
-    },
-    {
-      "id": "SeaFury"
-    },
-    {
-      "id": "paradise_isle_ipod"
-    },
-    {
-      "id": "huangjiang-nuxia_1930"
-    },
-    {
-      "id": "chang-a-drama-of-the-wilderness-1927_202509"
-    },
-    {
-      "id": "captain-salvation_1927"
-    },
-    {
-      "id": "HELLSHIPMUTINY1957JRJonHallPeterLorreSaltytheChimp2"
-    },
-    {
-      "id": "BaytekinFezadaCarpinsanlarflashGordonsBattleInSpace"
-    },
-    {
-      "id": "JungleBook"
-    },
-    {
-      "id": "20-000-leagues-under-the-sea-1954_20251111"
-    },
-    {
-      "id": "the.-adventures.-of.-tom.-sawyer.-1986"
-    },
-    {
-      "id": "moby-dick.-1956"
-    },
-    {
-      "id": "Jack_London_"
+      "id": "flash-gordon-1936_202509"
     },
     {
       "id": "RadioRanch"
     },
     {
-      "id": "the-vikings-1958_202510"
+      "id": "DestroyAllPlanets1968"
     },
     {
-      "id": "high_gear"
+      "id": "AliceInWonderland1933"
+    },
+    {
+      "id": "mymovie_202004"
+    },
+    {
+      "id": "hannibal-1959-victor-mature-dvdrip-x-264-chez-2012"
+    },
+    {
+      "id": "y-2-mate.is-viento-negro-1965-pelicula-completa-hd-ry-gcr-5-is-ly-720p-1639619097354"
+    },
+    {
+      "id": "come-on-leathernecks"
+    },
+    {
+      "id": "l.-homme.-de.-rio.-1964.-french.-720p.-blu-ray.x-264-rough"
+    },
+    {
+      "id": "the-war-lover-1962"
+    },
+    {
+      "id": "journey.to.the.-center.of.the.-earth.-1959"
+    },
+    {
+      "id": "wild-orchids_1929"
+    },
+    {
+      "id": "TexasBuddies1932"
+    },
+    {
+      "id": "c4498710322"
+    },
+    {
+      "id": "HELLSHIPMUTINY1957JRJonHallPeterLorreSaltytheChimp2"
+    },
+    {
+      "id": "JungleBook"
+    },
+    {
+      "id": "the-trail-of-98-1928"
+    },
+    {
+      "id": "the-hidden-fortress"
+    },
+    {
+      "id": "CaptainKidd_"
+    },
+    {
+      "id": "SandsOfSacrifice1921"
+    },
+    {
+      "id": "Kilimanjaro"
+    },
+    {
+      "id": "BaytekinFezadaCarpinsanlarflashGordonsBattleInSpace"
+    },
+    {
+      "id": "NomadsOfTheNorth1920"
+    },
+    {
+      "id": "white-savage-1943-maria-montez"
+    },
+    {
+      "id": "ThePrisonerOfZenda"
+    },
+    {
+      "id": "his-first-command"
+    },
+    {
+      "id": "ForcedLanding1941_201312"
+    },
+    {
+      "id": "africa_speaks"
     },
     {
       "id": "WhiteSunOfTheDesert"
     },
     {
-      "id": "DestroyAllPlanets1968"
+      "id": "paradise_isle_ipod"
     },
     {
-      "id": "TheDancingPirate"
+      "id": "destination-gobi-1953"
     },
     {
-      "id": "pursuit-to-algiers"
-    },
-    {
-      "id": "come-on-leathernecks"
+      "id": "PimpernelSmith"
     }
   ]
 }

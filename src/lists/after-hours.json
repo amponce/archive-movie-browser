@@ -5,35 +5,26 @@
   "curator": "the station",
   "generated": {
     "rule": "Thriller 1980s–1990s",
-    "week": 202643
+    "week": 202646
   },
   "films": [
     {
-      "id": "Bullet1996FullPrimoEdition"
-    },
-    {
-      "id": "revenge.of.the.-ninja.-1983.1080p.-blu-ray.-h-264.-aac-rarbg"
-    },
-    {
-      "id": "Escape_From_Sobibor.avi"
-    },
-    {
-      "id": "darkman-trilogy-1990"
-    },
-    {
-      "id": "mirch-masala-1987"
-    },
-    {
-      "id": "303748221688_202503"
+      "id": "throw.momma.from.the.train.1987"
     },
     {
       "id": "aaahh-belinda_movie"
     },
     {
+      "id": "Bullet1996FullPrimoEdition"
+    },
+    {
       "id": "the-silence-of-the-lambs-1991_202405"
     },
     {
-      "id": "the.-spanish.-prisoner.-1997.-dvd.-rip"
+      "id": "revenge.of.the.-ninja.-1983.1080p.-blu-ray.-h-264.-aac-rarbg"
+    },
+    {
+      "id": "303748221688_202503"
     },
     {
       "id": "ROBOCOPCC"
@@ -42,7 +33,16 @@
       "id": "1984-1984_202511"
     },
     {
-      "id": "throw.momma.from.the.train.1987"
+      "id": "Escape_From_Sobibor.avi"
+    },
+    {
+      "id": "the.-spanish.-prisoner.-1997.-dvd.-rip"
+    },
+    {
+      "id": "mirch-masala-1987"
+    },
+    {
+      "id": "darkman-trilogy-1990"
     }
   ]
 }
