@@ -5,104 +5,104 @@
   "curator": "the station",
   "generated": {
     "rule": "Western 1930s–1970s",
-    "week": 202643
+    "week": 202647
   },
   "films": [
     {
-      "id": "haunted_ranch"
+      "id": "HandsAcrosstheBorder"
     },
     {
-      "id": "WarOfTheWildcats-JohnWayne1943"
+      "id": "northwest_trail"
     },
     {
-      "id": "BuckJonesInBorderLaw1931"
+      "id": "BellStarrStory"
     },
     {
-      "id": "BattleofGreed"
-    },
-    {
-      "id": "1944FrontierOutlaws"
-    },
-    {
-      "id": "SanFernandoValley441985"
-    },
-    {
-      "id": "TheOver-the-HillGangRidesAgain"
-    },
-    {
-      "id": "TheLawRidesAgain"
-    },
-    {
-      "id": "SouthwardHo"
-    },
-    {
-      "id": "feud_maker"
-    },
-    {
-      "id": "ambush_valley"
-    },
-    {
-      "id": "SunsetOnTheDesert_322"
-    },
-    {
-      "id": "NightTimeinNevada"
-    },
-    {
-      "id": "the.-great.-silence.-1968"
-    },
-    {
-      "id": "cco_thegunandthepulpit"
-    },
-    {
-      "id": "BulldogCourage1935yurip"
-    },
-    {
-      "id": "BigBoyRidesAgain"
-    },
-    {
-      "id": "TheTriggerTrio"
-    },
-    {
-      "id": "FuzzySattlesDown"
-    },
-    {
-      "id": "CarsonCityKid"
-    },
-    {
-      "id": "EyesofTexas"
-    },
-    {
-      "id": "HighLonesome"
+      "id": "day-of-anger-1967-fll"
     },
     {
       "id": "TheNevadan"
     },
     {
-      "id": "OntheOldSpanishTrail"
+      "id": "loaded_pistols"
     },
     {
-      "id": "blazing-across-the-pecos-1948"
+      "id": "WheretheBuffaloRoam"
     },
     {
-      "id": "aces_and_eights"
+      "id": "BoothillBrigade"
     },
     {
-      "id": "GitAlongLittleDogies"
+      "id": "1944FrontierOutlaws"
     },
     {
-      "id": "AngelAndTheBadManVideoQualityUpgrade"
+      "id": "BlazingFrontier"
     },
     {
-      "id": "the-violent-men-1955"
+      "id": "Utah_"
     },
     {
-      "id": "SunsetSerenade"
+      "id": "phantom_cowboy"
     },
     {
-      "id": "NoMansRange"
+      "id": "RadioRanch"
     },
     {
-      "id": "chatos-land-1972_202510"
+      "id": "horizons-west-1952-color-western"
+    },
+    {
+      "id": "BattleofGreed"
+    },
+    {
+      "id": "the.-price.of.-power.-1969"
+    },
+    {
+      "id": "Heldorado"
+    },
+    {
+      "id": "DangerValley"
+    },
+    {
+      "id": "CowboyAndTheSenorita"
+    },
+    {
+      "id": "Mclintock.avi"
+    },
+    {
+      "id": "doc-1971"
+    },
+    {
+      "id": "sunset_range"
+    },
+    {
+      "id": "LawoftheWest"
+    },
+    {
+      "id": "stagecoach-colorized"
+    },
+    {
+      "id": "Hurricane_at_Pilgrim_Hill"
+    },
+    {
+      "id": "hc5558711"
+    },
+    {
+      "id": "haunted_ranch"
+    },
+    {
+      "id": "calvary"
+    },
+    {
+      "id": "KidCarson"
+    },
+    {
+      "id": "FuzzySattlesDown"
+    },
+    {
+      "id": "SpringtimeInTheRockies"
+    },
+    {
+      "id": "border_patrolman"
     }
   ]
 }
