@@ -2,7 +2,7 @@ import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useStat
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import Button from '../ui/Button';
-import { FilmGrid, withPosters } from './ArchiveListPage';
+import { FilmGrid, withPosters, fillPosters } from './ArchiveListPage';
 import ChannelEditor from '../components/ChannelEditor';
 import SubmitForReview from '../components/SubmitForReview';
 import { api, readProfile, ensureProfile } from '../services/profile';
@@ -39,7 +39,7 @@ export default function ChannelPage({ slug }) {
   useEffect(() => {
     if (!channel) return undefined;
     let live = true;
-    withPosters(channel.films.map(f => ({ identifier: f.film }))).then(c => live && setCards(c));
+    withPosters(channel.films.map(f => ({ identifier: f.film }))).then((c) => { if (live) { setCards(c); fillPosters(c, setCards); } });
     return () => { live = false; };
   }, [channel]);
 

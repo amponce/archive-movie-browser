@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { indexedMatch } from '../services/posterIndex';
+import { livePoster } from '../services/livePoster';
+import { measureEach } from '../services/filmLengths';
 import { isTakenDown, isForbidden } from '../services/policy';
 import { identifierQueries } from '../services/archive';
 import tmdbService from '../services/tmdb';
@@ -36,6 +38,12 @@ export const withPosters = (docs) => Promise.all(docs.filter(doc => !refused(doc
     poster: match?.posterPath ? tmdbService.getPosterUrl(match.posterPath, 'medium') : null,
   };
 }));
+
+// Cards the index has no answer for, filled in as each film is looked up, six at a time.
+// setCards: the state setter the cards were put in
+export const fillPosters = (cards, setCards) => measureEach(cards, livePoster, (card, found) => {
+  if (found && found !== card) setCards(now => now.map(c => (c === card ? found : c)));
+});
 
 // The items of a list in the list's order
 async function describe(identifiers) {

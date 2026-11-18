@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import SiteHeader from '../layout/SiteHeader';
 import SiteFooter from '../layout/SiteFooter';
 import Button from '../ui/Button';
-import { FilmGrid, withPosters } from './ArchiveListPage';
+import { FilmGrid, withPosters, fillPosters } from './ArchiveListPage';
 import { api, readProfile, editLink, readPrevious, switchBack } from '../services/profile';
 import { refreshProfile } from '../hooks/useProfile';
 import { protectProfile, listPasskeys, removePasskey, NEW_LINK } from '../services/passkey';
@@ -67,7 +67,7 @@ export default function ProfilePage({ slug }) {
     if (!p) return undefined;
     document.title = `${p.name || 'A profile'} | Orphaned Films`;
     let live = true;
-    withPosters(p.favourites.map(identifier => ({ identifier }))).then(c => live && setFilms(c)).catch(() => {});
+    withPosters(p.favourites.map(identifier => ({ identifier }))).then((c) => { if (live) { setFilms(c); fillPosters(c, setFilms); } }).catch(() => {});
     return () => { live = false; };
   }, [p]);
 
