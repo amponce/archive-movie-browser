@@ -5,104 +5,104 @@
   "curator": "the station",
   "generated": {
     "rule": "Music 1920s–1960s",
-    "week": 202643
+    "week": 202647
   },
   "films": [
     {
+      "id": "champagne-charlie"
+    },
+    {
       "id": "cuatro-corazones-1939"
-    },
-    {
-      "id": "down.-to.-earth.-1947.1080p.-blu-ray.x-264.-aac-yts.-mx"
-    },
-    {
-      "id": "FabulousDorseys"
-    },
-    {
-      "id": "BeesInParadise"
-    },
-    {
-      "id": "madam-satan_1930"
-    },
-    {
-      "id": "campus-sleuth"
-    },
-    {
-      "id": "pot_o_gold"
-    },
-    {
-      "id": "road_to_happiness"
-    },
-    {
-      "id": "adios-buenos-aires-1938"
-    },
-    {
-      "id": "PeopleareFunny_"
-    },
-    {
-      "id": "Kid_Sister_1945"
-    },
-    {
-      "id": "JivininBe-Bob"
-    },
-    {
-      "id": "el-alma-del-bandoneon-1935"
-    },
-    {
-      "id": "JustImagine_201701"
-    },
-    {
-      "id": "the-flame-of-love-1930-anna-may-wong"
-    },
-    {
-      "id": "como-te-extrano-1966"
-    },
-    {
-      "id": "call-of-the-flesh_1930"
-    },
-    {
-      "id": "pobre-mi-madre-querida-1948"
-    },
-    {
-      "id": "historia-del-900-1949"
-    },
-    {
-      "id": "hi_de_ho"
-    },
-    {
-      "id": "OHROSALINDA1955"
-    },
-    {
-      "id": "ritmo-sal-y-pimienta-1951"
-    },
-    {
-      "id": "animal-crackers_1930"
-    },
-    {
-      "id": "BandWaggon"
     },
     {
       "id": "carnaval-de-antano-1940"
     },
     {
-      "id": "matw98454523"
+      "id": "young-man-of-manhattan_1930"
     },
     {
-      "id": "the-jazz-singer_1927"
+      "id": "SunnysideUp_201512"
     },
     {
       "id": "RoyalWedding720p1951"
     },
     {
-      "id": "melody-parade"
+      "id": "JivininBe-Bob"
     },
     {
-      "id": "TheEmpererJones"
+      "id": "GlorifyingTheAmericanGirl_119"
     },
     {
-      "id": "champagne-charlie"
+      "id": "call-of-the-flesh_1930"
     },
     {
-      "id": "SunnysideUp_201512"
+      "id": "down.-to.-earth.-1947.1080p.-blu-ray.x-264.-aac-yts.-mx"
+    },
+    {
+      "id": "TheDukeisTops"
+    },
+    {
+      "id": "TheRidersoftheFrontier1939"
+    },
+    {
+      "id": "un-muchacho-como-yo-1968"
+    },
+    {
+      "id": "torrente-indiano-1954"
+    },
+    {
+      "id": "rose-of-washington-square-1939"
+    },
+    {
+      "id": "KingofJazz1930"
+    },
+    {
+      "id": "madam-satan_1930"
+    },
+    {
+      "id": "on-with-the-show_1929"
+    },
+    {
+      "id": "BandWaggon"
+    },
+    {
+      "id": "OHROSALINDA1955"
+    },
+    {
+      "id": "venga-a-bailar-el-rock-1957"
+    },
+    {
+      "id": "davy_20210618"
+    },
+    {
+      "id": "honeymoon-for-three"
+    },
+    {
+      "id": "el-tango-vuelve-a-paris-1948"
+    },
+    {
+      "id": "outlaws_of_boulder_pass"
+    },
+    {
+      "id": "song_at_midnight"
+    },
+    {
+      "id": "im_from_arkansas"
+    },
+    {
+      "id": "nubes-de-humo-1959"
+    },
+    {
+      "id": "ZouzouAkaZouZoudecember211934"
+    },
+    {
+      "id": "hi_de_ho"
+    },
+    {
+      "id": "TheDancingPirate"
+    },
+    {
+      "id": "till-the-clouds-roll-by-film-1946-usa"
     }
   ]
 }

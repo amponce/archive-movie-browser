@@ -5,92 +5,41 @@
   "curator": "the station",
   "generated": {
     "rule": "Horror 1930s–1940s",
-    "week": 202643
+    "week": 202647
   },
   "films": [
     {
-      "id": "the-mummys-ghost"
-    },
-    {
-      "id": "draculas-daughter-colorized-1936-720p"
-    },
-    {
-      "id": "Bluebeard"
-    },
-    {
-      "id": "OneFrightenedNight"
-    },
-    {
-      "id": "mad-love-leg-pt"
-    },
-    {
       "id": "blackfriday1940boriskarloff"
-    },
-    {
-      "id": "TheHumanMonster720p1939"
     },
     {
       "id": "bw5558885"
     },
     {
-      "id": "SvengaliJohnBarrymoreBKCap1931"
+      "id": "tower.-of.-london.-1939"
     },
     {
-      "id": "the.-black.-room.-1935"
-    },
-    {
-      "id": "the-cat-and-the-canary-1939-legendado-pt"
-    },
-    {
-      "id": "TheGhostTrain"
-    },
-    {
-      "id": "the.-black.-cat.-1934"
-    },
-    {
-      "id": "island.-of.-lost.-souls.-1932"
-    },
-    {
-      "id": "dra-cula.-eng.-mp-4."
-    },
-    {
-      "id": "VictorHalperinsWhiteZombie1932"
-    },
-    {
-      "id": "TheLeopardMan1943"
-    },
-    {
-      "id": "supernatural_202108"
+      "id": "isle-of-the-dead-1954"
     },
     {
       "id": "FogIsland720p1945"
     },
     {
-      "id": "tss32236"
+      "id": "Bluebeard"
     },
     {
-      "id": "TheVampireBat"
+      "id": "sweeney.todd"
     },
     {
-      "id": "the-wolf-man-1941_202106"
+      "id": "TheHumanMonster720p1939"
     },
     {
-      "id": "the-hound-of-the-baskervilles_20210718"
+      "id": "house-of-dracula"
     },
     {
-      "id": "dead-of-night_20210519"
+      "id": "TheFaceAtTheWindow"
     },
     {
-      "id": "the-invisible-woman-1940_202105"
-    },
-    {
-      "id": "TheCastleOfDoom1934"
-    },
-    {
-      "id": "TheAmazingMr.X1948Avi"
-    },
-    {
-      "id": "frankenstein-1931-colorized"
+      "id": "the-mummys-hand"
     },
     {
       "id": "TheDrumsofJeopardy"
@@ -99,10 +48,61 @@
       "id": "the.-man.-with.-nine.-lives.-1940"
     },
     {
-      "id": "DarkMirrorCrime505"
+      "id": "mad-love-leg-pt"
+    },
+    {
+      "id": "supernatural_202108"
+    },
+    {
+      "id": "invisible-man-1933"
+    },
+    {
+      "id": "tss32236"
+    },
+    {
+      "id": "TheMostDangerousGame"
     },
     {
       "id": "the-invisible-man-returns-1940_202105"
+    },
+    {
+      "id": "DarkMirrorCrime505"
+    },
+    {
+      "id": "before.-i.-hang.-1940"
+    },
+    {
+      "id": "the-wolf-man-1941_202106"
+    },
+    {
+      "id": "the-hound-of-the-baskervilles_20210718"
+    },
+    {
+      "id": "island.-of.-lost.-souls.-1932"
+    },
+    {
+      "id": "abbott-and-costello-meet-frankenstein"
+    },
+    {
+      "id": "bride-of-frankenstein-1935-colorized-movie-720p-hd_202303"
+    },
+    {
+      "id": "frankenstein-1931-colorized"
+    },
+    {
+      "id": "the.-uninvited.-1944_202512"
+    },
+    {
+      "id": "Face_in_the_Fog_1936"
+    },
+    {
+      "id": "TheLeopardMan1943"
+    },
+    {
+      "id": "king-kong-1933-espanol_202401"
+    },
+    {
+      "id": "invisible-agent_202106"
     }
   ]
 }
