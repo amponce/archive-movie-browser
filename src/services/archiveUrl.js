@@ -5,7 +5,9 @@ import { VIDEO_CATEGORIES } from './archive.js';
 const IDENTIFIER = /^[A-Za-z0-9._-]{1,200}$/;
 
 export function parseArchiveUrl(text) {
-  const trimmed = String(text || '').trim();
+  let trimmed = String(text || '').trim();
+  // details/classic_tv_1990s or /details/...: an Archive.org address pasted without its domain
+  if (/^\/?details\//i.test(trimmed)) trimmed = `archive.org/${trimmed.replace(/^\//, '')}`;
   if (!/^(https?:\/\/)?(www\.)?archive\.org\//i.test(trimmed)) return null;
 
   let url;

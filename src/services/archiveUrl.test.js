@@ -17,6 +17,16 @@ test('a link to a collection the app carries switches to it', () => {
   assert.deepEqual(parseArchiveUrl('https://archive.org/details/feature_films?tab=collection'), { type: 'collection', id: 'feature_films' });
 });
 
+test('an Archive.org address pasted without its domain opens what it points at', () => {
+  // opens exactly what the full address opens
+  assert.deepEqual(parseArchiveUrl('details/classic_tv_1990s?page=2'), parseArchiveUrl('https://archive.org/details/classic_tv_1990s?page=2'));
+  assert.deepEqual(parseArchiveUrl('/details/Film_Noir'), parseArchiveUrl('https://archive.org/details/Film_Noir'));
+  assert.deepEqual(parseArchiveUrl('details/@jason_scott/lists/1'), { type: 'list', user: 'jason_scott', id: 1 });
+  assert.deepEqual(parseArchiveUrl('  details/Cops1922  '), parseArchiveUrl('https://archive.org/details/Cops1922'));
+  assert.equal(parseArchiveUrl('details/'), null);
+  assert.equal(parseArchiveUrl('details'), null);
+});
+
 test('an Archive.org search link runs the same search here', () => {
   assert.deepEqual(parseArchiveUrl('https://archive.org/search?query=buster+keaton'), { type: 'search', query: 'buster keaton' });
   assert.deepEqual(parseArchiveUrl('https://archive.org/search.php?query=title%3A%28nosferatu%29'), { type: 'search', query: 'title:(nosferatu)' });
